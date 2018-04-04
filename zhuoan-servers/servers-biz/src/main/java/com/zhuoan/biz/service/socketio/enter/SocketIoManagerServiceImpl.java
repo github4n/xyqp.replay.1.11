@@ -1,10 +1,13 @@
 package com.zhuoan.biz.service.socketio.enter;
 
+import com.corundumstudio.socketio.AckRequest;
 import com.corundumstudio.socketio.Configuration;
 import com.corundumstudio.socketio.SocketIOClient;
 import com.corundumstudio.socketio.SocketIOServer;
 import com.corundumstudio.socketio.listener.ConnectListener;
+import com.corundumstudio.socketio.listener.DataListener;
 import com.corundumstudio.socketio.listener.DisconnectListener;
+import com.za.game.remote.iservice.IService;
 import com.zhuoan.biz.dao.DBUtil;
 import com.zhuoan.biz.event.sss.SSSGameEvent;
 import com.zhuoan.biz.model.RoomManage;
@@ -22,9 +25,17 @@ import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
+import java.rmi.NotBoundException;
+import java.rmi.RemoteException;
+import java.rmi.registry.LocateRegistry;
+import java.rmi.registry.Registry;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.TimerTask;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 /**
  * SocketIoManagerService
@@ -45,20 +56,42 @@ public class SocketIoManagerServiceImpl implements SocketIoManagerService {
      */
     private static SocketIOServer server;
 
+    // 注册管理器
+    public static Registry registry = null;
+
     @Override
     public void startServer() {
+//        注册服务
+        registerService();
+
         // 创建服务
         server = new SocketIOServer(serverConfig());
-
-
 
         MessageQueue messageQueue = new MessageQueue(16);
         new SqlQueue(1);
         SingleTimer singleTime = new SingleTimer();
         singleTime.start();
 
+        /**
+         * 心跳包
+         */
+        server.addEventListener("game_ping", Object.class, new DataListener<Object>(){
+            @Override
+            public void onData(SocketIOClient client, Object obj, AckRequest request){
+                client.sendEvent("game_pong", obj);
+            }
+        });
 
-
+        /**
+         * 链接connection
+         */
+        server.addEventListener("connection", Object.class, new DataListener<Object>(){
+            @Override
+            public void onData(SocketIOClient client, Object obj, AckRequest request){
+                logger.info("链接成功");
+                client.sendEvent("connect", request, "成功");
+            }
+        });
 
         logger.info("SocketIO 添加监听事件INg");
 
@@ -88,7 +121,7 @@ public class SocketIoManagerServiceImpl implements SocketIoManagerService {
         server.addConnectListener(new ConnectListener() {
             @Override
             public void onConnect(SocketIOClient client) {
-                logger.info(obtainClientIp(client) + "在线了！！！");
+                logger.info("Client: {} with sessionId: {} 在线了！！！", obtainClientIp(client), client.getSessionId());
             }
         });
 
@@ -98,7 +131,7 @@ public class SocketIoManagerServiceImpl implements SocketIoManagerService {
         server.addDisconnectListener(new DisconnectListener() {
             @Override
             public void onDisconnect(SocketIOClient client) {
-                logger.info(obtainClientIp(client) + "离线了！！！");
+                logger.info("Client: {} with sessionId: {} 离线了！！！", obtainClientIp(client), client.getSessionId());
             }
         });
 
@@ -188,4 +221,48 @@ public class SocketIoManagerServiceImpl implements SocketIoManagerService {
         return sa.substring(1, sa.indexOf(":"));
     }
 
+
+    private void registerService() {
+        try {
+
+            // 获取服务注册管理器
+            registry = LocateRegistry.getRegistry(env.getProperty(EnvKeyEnum.SERVER_IP.getKey()),
+                Integer.valueOf(env.getProperty(EnvKeyEnum.SERVER_PORT.getKey())));
+
+            // 列出所有注册的服务
+            //String[] list = registry.list();
+
+            // 根据命名获取服务
+            IService server = (IService) registry.lookup("sysService");
+
+            // 调用远程方法
+            server.joinServer(env.getProperty(EnvKeyEnum.LOCAL_REMOTE_IP.getKey()),
+                Integer.valueOf(env.getProperty(EnvKeyEnum.LOCAL_PORT.getKey())),
+                env.getProperty(EnvKeyEnum.LOCAL_NAME.getKey()));
+
+            // 开启定时任务
+            ScheduledExecutorService executor = Executors.newScheduledThreadPool(1);
+            executor.scheduleWithFixedDelay(new GameTask(), 0, 1, TimeUnit.MINUTES);
+
+        } catch (NotBoundException | RemoteException e) {
+            e.printStackTrace();
+        }
+    }
+
+    class GameTask extends TimerTask {
+
+        public void run() {
+
+            try {
+                // 根据命名获取服务
+                IService server = (IService) registry.lookup("sysService");
+
+                // 心跳请求
+                server.heartBeat(env.getProperty(EnvKeyEnum.LOCAL_NAME.getKey()));
+
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+    }
 }

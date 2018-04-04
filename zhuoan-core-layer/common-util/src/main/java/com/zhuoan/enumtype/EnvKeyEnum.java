@@ -11,8 +11,19 @@ public enum EnvKeyEnum {
 
 
 
+    LOCAL_NAME("local_name"),
     LOCAL_IP("local_ip"),
-    LOCAL_PORT("local_port");
+    LOCAL_REMOTE_IP("local_remote_ip"),
+    LOCAL_PORT("local_port"),
+
+
+    SERVER_IP("server_ip"),
+    SERVER_REMOTE_IP("server_remote_ip"),
+    SERVER_PORT("server_port"),
+    SERVER_DOMAIN("server_domain"),
+
+
+    ;
 
 
 

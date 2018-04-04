@@ -33,7 +33,7 @@ public class SocketIoController extends BaseController {
      *
      * @see ServerStartListener 此处默认启动socket 服务，无需手动调用
      */
-    @RequestMapping(value = "startServer", method = RequestMethod.PUT)
+    @RequestMapping(value = "startServer", method = RequestMethod.POST)
     @ResponseBody
     public String startServer(final HttpServletRequest request) {
         logger.info("当前IP = [" + getIp(request) + "] 手动启动 socket服务");
@@ -57,7 +57,7 @@ public class SocketIoController extends BaseController {
      * @param request the request
      * @throws Exception the com.zhuoan.exception
      */
-    @RequestMapping(value = "stopServer", method = RequestMethod.DELETE)
+    @RequestMapping(value = "stopServer", method = RequestMethod.POST)
     @ResponseBody
     public String stopServer(HttpServletRequest request) {
         logger.info("当前IP = [" + getIp(request) + "] 手动停止 socket服务");

@@ -25,7 +25,8 @@ public class SSSGameEvent {
 		server = servers;
 		queue = messageQueue;
 		//final SSSGameEventDeal sssService=new SSSGameEventDeal();
-		
+
+
 		/**
 		 * 加入房间，或创建房间事件
 		 */
@@ -92,6 +93,94 @@ public class SSSGameEvent {
 			
 			}
 		});
+        server.addEventListener("getGameSetting", Object.class,new DataListener<Object>() {
+
+            @Override
+            public void onData(SocketIOClient client, Object data, AckRequest ackSender){
+
+                try {
+                    queue.addQueue(new Messages(client, data, 0, 1));
+                    //nnService.enterRoom(client, data);
+                } catch (Exception e) {
+                    //Logger.getLogger(NNGameEvent.class).error(e.getMessage(), e);
+                    e.printStackTrace();
+                }
+            }
+        });
+
+        /**
+         * 玩家获取房间列表
+         */
+        server.addEventListener("getAllRoomList", Object.class,new DataListener<Object>() {
+
+            @Override
+            public void onData(SocketIOClient client, Object object, AckRequest ackSender){
+                try {
+                    queue.addQueue(new Messages(client, object, 0, 2));
+                } catch (Exception e) {
+                    // TODO: handle exception
+                    e.printStackTrace();
+                }
+            }
+        });
+
+
+
+        server.addEventListener("checkUser", Object.class,new DataListener<Object>() {
+
+            @Override
+            public void onData(SocketIOClient client, Object object, AckRequest ackSender){
+                try {
+                    queue.addQueue(new Messages(client, object, 0, 3));
+                } catch (Exception e) {
+                    // TODO: handle exception
+                    e.printStackTrace();
+                }
+            }
+        });
+
+
+        server.addEventListener("getGameLogsList", Object.class,new DataListener<Object>() {
+
+            @Override
+            public void onData(SocketIOClient client, Object data, AckRequest ackSender){
+
+                try {
+                    queue.addQueue(new Messages(client, data, 0, 4));
+                    //nnService.enterRoom(client, data);
+                } catch (Exception e) {
+                    //Logger.getLogger(NNGameEvent.class).error(e.getMessage(), e);
+                    e.printStackTrace();
+                }
+            }
+        });
+        server.addEventListener("joinRoomNN", Object.class,new DataListener<Object>() {
+
+            @Override
+            public void onData(SocketIOClient client, Object data, AckRequest ackSender){
+
+                try {
+                    queue.addQueue(new Messages(client, data, 1, 16));
+                    //nnService.enterRoom(client, data);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+        });
+        server.addEventListener("createRoomNN", Object.class,new DataListener<Object>() {
+
+            @Override
+            public void onData(SocketIOClient client, Object data, AckRequest ackSender){
+
+                try {
+                    System.out.println(1111111);
+                    //queue.addQueue(new Messages(client, data, 1, 15));
+                    //nnService.enterRoom(client, data);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+        });
 		
 		
 		/**
