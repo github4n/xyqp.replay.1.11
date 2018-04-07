@@ -1,6 +1,8 @@
 package com.zhuoan.biz.model;
 
 
+import com.zhuoan.biz.constant.Constant;
+
 import java.math.BigDecimal;
 import java.util.UUID;
 
@@ -135,7 +137,6 @@ public class Playerinfo {
 	 * @return
 	 */
 	public String getRealHeadimg(){
-        return "这块待迁移";
-//		return Constant.cfgProperties.getProperty("server_domain") + getHeadimg();
+		return Constant.cfgProperties.getProperty("server_domain") + getHeadimg();
 	}
 }

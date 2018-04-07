@@ -11,20 +11,35 @@ import org.slf4j.LoggerFactory;
 
 
 /**
- * 十三水游戏监听事件
+ * The type Sss game event.
  */
 public class SSSGameEvent {
 
     private final static Logger logger = LoggerFactory.getLogger(SSSGameEvent.class);
-	
-	public static SocketIOServer server=null;
-	public static MessageQueue queue=null;
-	public static SSSGameEventDeal sssGameEventDeal = new SSSGameEventDeal();
-	public static void listenerSSSGameEvent(SocketIOServer servers,MessageQueue messageQueue){
+
+    /**
+     * The constant server.
+     */
+    public static SocketIOServer server=null;
+    public static MessageQueue queue=null;
+    /**
+     * The constant sssGameEventDeal.
+     */
+    public static SSSGameEventDeal sssGameEventDeal = new SSSGameEventDeal();
+
+//    final NNGameEventDeal nnService=new NNGameEventDeal();
+
+    /**
+     * Listener sss game event.
+     *
+     * @param servers      the servers
+     * @param messageQueue the message queue
+     */
+    public static void listenerSSSGameEvent(SocketIOServer servers,MessageQueue messageQueue){
 		
 		server = servers;
 		queue = messageQueue;
-		//final SSSGameEventDeal sssService=new SSSGameEventDeal();
+		final SSSGameEventDeal sssService=new SSSGameEventDeal();
 
 
 		/**
@@ -52,7 +67,7 @@ public class SSSGameEvent {
 					
 					queue.addQueue(new Messages(client, data, 4, 1));
 					//queue.execute();
-					//sssService.enterRoom(client, data);
+					sssService.enterRoom(client, data);
 				} catch (Exception e) {
 					e.printStackTrace();
 				}
@@ -100,6 +115,7 @@ public class SSSGameEvent {
 
                 try {
                     queue.addQueue(new Messages(client, data, 0, 1));
+
                     //nnService.enterRoom(client, data);
                 } catch (Exception e) {
                     //Logger.getLogger(NNGameEvent.class).error(e.getMessage(), e);
@@ -107,6 +123,8 @@ public class SSSGameEvent {
                 }
             }
         });
+
+
 
         /**
          * 玩家获取房间列表
@@ -173,9 +191,8 @@ public class SSSGameEvent {
             public void onData(SocketIOClient client, Object data, AckRequest ackSender){
 
                 try {
-                    System.out.println(1111111);
                     //queue.addQueue(new Messages(client, data, 1, 15));
-                    //nnService.enterRoom(client, data);
+//                    nnService.enterRoom(client, data);
                 } catch (Exception e) {
                     e.printStackTrace();
                 }

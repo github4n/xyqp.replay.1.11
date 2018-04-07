@@ -20,7 +20,7 @@ public class UnCatchExceptionHandler implements HandlerExceptionResolver {
 
     @Override
     public ModelAndView resolveException(HttpServletRequest request, HttpServletResponse httpServletResponse, Object o, Exception e) {
-        logger.error("ZHUO_AN:异常URL【" + request.getRequestURL() + "】未成功捕捉异常：", e);
+        logger.error("ZHUO_AN:异常URL【" + request.getRequestURL() + "】捕捉到非业务异常：", e);
         // 跳转至404错误页面
         return new ModelAndView("/error");
     }
