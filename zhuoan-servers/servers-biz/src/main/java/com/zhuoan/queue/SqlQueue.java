@@ -1,11 +1,11 @@
-package com.zhuoan.biz.queue;
+package com.zhuoan.queue;
 
 
-import com.zhuoan.biz.dao.DBUtil;
+import com.zhuoan.dao.DBUtil;
 import com.zhuoan.biz.model.UserInfoCache;
 import com.zhuoan.biz.service.majiang.MaJiangBiz;
 import com.zhuoan.biz.service.majiang.impl.MajiangBizImpl;
-import com.zhuoan.biz.util.LogUtil;
+import com.zhuoan.util.LogUtil;
 
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;

@@ -1,6 +1,6 @@
 package com.zhuoan.biz.core.sss;
 
-import com.zhuoan.biz.util.LogUtil;
+import com.zhuoan.util.LogUtil;
 
 import java.util.ArrayList;
 import java.util.Collections;

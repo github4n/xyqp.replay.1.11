@@ -1,8 +1,8 @@
 package com.zhuoan.biz.event.sss;
 
 import com.corundumstudio.socketio.SocketIOClient;
-import com.zhuoan.biz.constant.Constant;
-import com.zhuoan.biz.constant.NewConstant;
+import com.zhuoan.constant.Constant;
+import com.zhuoan.constant.NewConstant;
 import com.zhuoan.biz.core.sss.SSSGameRoom;
 import com.zhuoan.biz.core.sss.SSSSpecialCards;
 import com.zhuoan.biz.event.GameMain;
@@ -13,8 +13,8 @@ import com.zhuoan.biz.model.UserInfoCache;
 import com.zhuoan.biz.service.majiang.MaJiangBiz;
 import com.zhuoan.biz.service.majiang.impl.MajiangBizImpl;
 import com.zhuoan.biz.service.sss.impl.SSSServiceImpl;
-import com.zhuoan.biz.util.Dto;
-import com.zhuoan.biz.util.LogUtil;
+import com.zhuoan.util.Dto;
+import com.zhuoan.util.LogUtil;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 

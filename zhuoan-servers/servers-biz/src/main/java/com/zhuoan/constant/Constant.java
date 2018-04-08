@@ -1,4 +1,4 @@
-package com.zhuoan.biz.constant;
+package com.zhuoan.constant;
 
 import com.corundumstudio.socketio.SocketIOClient;
 import com.zhuoan.biz.core.sss.SSSGameRoom;

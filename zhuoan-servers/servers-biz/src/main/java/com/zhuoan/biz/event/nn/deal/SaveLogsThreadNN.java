@@ -1,6 +1,6 @@
 package com.zhuoan.biz.event.nn.deal;
 
-import com.zhuoan.biz.dao.DBUtil;
+import com.zhuoan.dao.DBUtil;
 import com.zhuoan.biz.model.nn.NNGameRoom;
 import com.zhuoan.biz.service.majiang.MaJiangBiz;
 import net.sf.json.JSONArray;

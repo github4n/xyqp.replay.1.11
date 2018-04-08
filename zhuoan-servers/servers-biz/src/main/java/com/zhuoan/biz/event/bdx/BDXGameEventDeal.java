@@ -1,18 +1,18 @@
 package com.zhuoan.biz.event.bdx;
 
 import com.corundumstudio.socketio.SocketIOClient;
-import com.zhuoan.biz.constant.Constant;
-import com.zhuoan.biz.dao.DBUtil;
+import com.zhuoan.constant.Constant;
+import com.zhuoan.dao.DBUtil;
 import com.zhuoan.biz.event.GameMain;
 import com.zhuoan.biz.model.*;
 import com.zhuoan.biz.model.bdx.BDXGameRoom;
-import com.zhuoan.biz.queue.SqlModel;
+import com.zhuoan.queue.SqlModel;
 import com.zhuoan.biz.service.bdx.BDXService;
 import com.zhuoan.biz.service.bdx.impl.BDXServiceImpl;
 import com.zhuoan.biz.service.majiang.MaJiangBiz;
 import com.zhuoan.biz.service.majiang.impl.MajiangBizImpl;
-import com.zhuoan.biz.util.Dto;
-import com.zhuoan.biz.util.LogUtil;
+import com.zhuoan.util.Dto;
+import com.zhuoan.util.LogUtil;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 

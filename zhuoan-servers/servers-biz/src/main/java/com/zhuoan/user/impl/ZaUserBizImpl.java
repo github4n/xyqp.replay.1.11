@@ -1,7 +1,7 @@
-package com.zhuoan.biz.user.impl;
+package com.zhuoan.user.impl;
 
 import com.github.miemiedev.mybatis.paginator.domain.PageList;
-import com.zhuoan.biz.user.ZaUserBiz;
+import com.zhuoan.user.ZaUserBiz;
 import com.zhuoan.mapper.ZaUsersMapper;
 import com.zhuoan.model.ZaUsers;
 import com.zhuoan.model.condition.ZaUsersCondition;

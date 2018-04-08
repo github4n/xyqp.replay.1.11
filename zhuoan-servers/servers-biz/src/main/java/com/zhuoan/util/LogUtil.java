@@ -1,6 +1,6 @@
-package com.zhuoan.biz.util;
+package com.zhuoan.util;
 
-import com.zhuoan.biz.dao.DBUtil;
+import com.zhuoan.dao.DBUtil;
 import net.sf.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

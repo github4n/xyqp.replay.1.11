@@ -1,6 +1,6 @@
 package com.zhuoan.biz.core.sss;
 
-import com.zhuoan.biz.constant.NewConstant;
+import com.zhuoan.constant.NewConstant;
 import com.zhuoan.biz.model.GameRoom;
 import com.zhuoan.biz.model.Player;
 import com.zhuoan.biz.model.Playerinfo;

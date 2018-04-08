@@ -1,7 +1,7 @@
 package com.zhuoan.biz.model;
 
 
-import com.zhuoan.biz.constant.Constant;
+import com.zhuoan.constant.Constant;
 
 import java.math.BigDecimal;
 import java.util.UUID;

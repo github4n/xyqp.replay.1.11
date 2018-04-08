@@ -1,13 +1,13 @@
 package com.zhuoan.biz.service.majiang.impl;
 
-import com.zhuoan.biz.dao.DBJsonUtil;
-import com.zhuoan.biz.dao.DBUtil;
+import com.zhuoan.dao.DBJsonUtil;
+import com.zhuoan.dao.DBUtil;
 import com.zhuoan.biz.event.GameMain;
-import com.zhuoan.biz.queue.SqlModel;
+import com.zhuoan.queue.SqlModel;
 import com.zhuoan.biz.service.GlobalService;
 import com.zhuoan.biz.service.majiang.MaJiangBiz;
-import com.zhuoan.biz.util.Dto;
-import com.zhuoan.biz.util.TimeUtil;
+import com.zhuoan.util.Dto;
+import com.zhuoan.util.TimeUtil;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 import org.springframework.stereotype.Service;

@@ -4,8 +4,8 @@ import com.corundumstudio.socketio.AckRequest;
 import com.corundumstudio.socketio.SocketIOClient;
 import com.corundumstudio.socketio.SocketIOServer;
 import com.corundumstudio.socketio.listener.DataListener;
-import com.zhuoan.biz.queue.MessageQueue;
-import com.zhuoan.biz.queue.Messages;
+import com.zhuoan.queue.MessageQueue;
+import com.zhuoan.queue.Messages;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

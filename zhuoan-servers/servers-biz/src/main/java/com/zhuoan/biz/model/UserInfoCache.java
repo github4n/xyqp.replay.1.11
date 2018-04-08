@@ -2,7 +2,7 @@ package com.zhuoan.biz.model;
 
 import com.zhuoan.biz.service.majiang.MaJiangBiz;
 import com.zhuoan.biz.service.majiang.impl.MajiangBizImpl;
-import com.zhuoan.biz.util.Dto;
+import com.zhuoan.util.Dto;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 

@@ -1,7 +1,7 @@
 package com.zhuoan.webapp.controller;
 
 import com.github.miemiedev.mybatis.paginator.domain.PageList;
-import com.zhuoan.biz.user.ZaUserBiz;
+import com.zhuoan.user.ZaUserBiz;
 import com.zhuoan.enumtype.EnvKeyEnum;
 import com.zhuoan.enumtype.PaginationEnum;
 import com.zhuoan.enumtype.ResCodeEnum;

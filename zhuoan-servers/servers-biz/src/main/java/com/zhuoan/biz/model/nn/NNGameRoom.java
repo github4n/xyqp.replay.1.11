@@ -3,7 +3,7 @@ package com.zhuoan.biz.model.nn;
 import com.zhuoan.biz.model.GameRoom;
 import com.zhuoan.biz.model.Playerinfo;
 import com.zhuoan.biz.model.zjh.UserPacket;
-import com.zhuoan.biz.util.Dto;
+import com.zhuoan.util.Dto;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 

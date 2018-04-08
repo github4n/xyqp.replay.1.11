@@ -1,11 +1,11 @@
 package com.zhuoan.biz.event.zjh;
 
-import com.zhuoan.biz.dao.DBUtil;
+import com.zhuoan.dao.DBUtil;
 import com.zhuoan.biz.model.RoomManage;
 import com.zhuoan.biz.model.zjh.ZJHGame;
 import com.zhuoan.biz.service.majiang.MaJiangBiz;
 import com.zhuoan.biz.service.majiang.impl.MajiangBizImpl;
-import com.zhuoan.biz.util.TimeUtil;
+import com.zhuoan.util.TimeUtil;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 

@@ -1,4 +1,4 @@
-package com.zhuoan.biz.dao;
+package com.zhuoan.dao;
 
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;

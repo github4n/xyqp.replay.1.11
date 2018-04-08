@@ -1,4 +1,4 @@
-package com.zhuoan.biz.dao;
+package com.zhuoan.dao;
 
 import org.apache.tomcat.jdbc.pool.DataSource;
 import org.apache.tomcat.jdbc.pool.PoolProperties;

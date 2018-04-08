@@ -1,6 +1,6 @@
 package com.zhuoan.biz.event.sss;
 
-import com.zhuoan.biz.constant.NewConstant;
+import com.zhuoan.constant.NewConstant;
 import com.zhuoan.biz.core.sss.SSSComputeCards;
 import com.zhuoan.biz.core.sss.SSSGameRoom;
 import com.zhuoan.biz.model.Player;

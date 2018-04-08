@@ -1,7 +1,7 @@
-package com.zhuoan.biz.times;
+package com.zhuoan.times;
 
 import com.corundumstudio.socketio.SocketIOClient;
-import com.zhuoan.biz.queue.Messages;
+import com.zhuoan.queue.Messages;
 import net.sf.json.JSONObject;
 
 public class TimerMsgData {

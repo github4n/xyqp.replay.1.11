@@ -1,4 +1,4 @@
-package com.zhuoan.biz.user;
+package com.zhuoan.user;
 
 import com.github.miemiedev.mybatis.paginator.domain.PageList;
 import com.zhuoan.model.ZaUsers;

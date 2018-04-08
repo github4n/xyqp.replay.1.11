@@ -1,4 +1,4 @@
-package com.zhuoan.biz.queue;
+package com.zhuoan.queue;
 
 import com.corundumstudio.socketio.SocketIOClient;
 import com.zhuoan.biz.event.sss.SSSGameEventDeal;

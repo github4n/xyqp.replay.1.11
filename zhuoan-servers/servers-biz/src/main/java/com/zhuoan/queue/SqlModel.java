@@ -1,4 +1,4 @@
-package com.zhuoan.biz.queue;
+package com.zhuoan.queue;
 
 import net.sf.json.JSONArray;
 
