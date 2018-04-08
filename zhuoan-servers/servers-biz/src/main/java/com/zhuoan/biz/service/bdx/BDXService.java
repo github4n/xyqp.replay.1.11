@@ -1,4 +1,4 @@
-package com.zhuoan.biz.service.bdx.service;
+package com.zhuoan.biz.service.bdx;
 
 import com.zhuoan.biz.model.Playerinfo;
 import com.zhuoan.biz.model.bdx.BDXGameRoom;

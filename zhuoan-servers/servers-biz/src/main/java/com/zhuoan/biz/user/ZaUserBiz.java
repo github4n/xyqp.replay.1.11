@@ -8,6 +8,7 @@ import com.zhuoan.model.vo.ZaUsersVO;
 /**
  * The interface Za user.
  */
+@Deprecated
 public interface ZaUserBiz {
     /**
      * Insert selective int.

@@ -1,9 +1,9 @@
-package com.zhuoan.biz.service.bdx.service.impl;
+package com.zhuoan.biz.service.bdx.impl;
 
 import com.zhuoan.biz.model.Playerinfo;
 import com.zhuoan.biz.model.RoomManage;
 import com.zhuoan.biz.model.bdx.BDXGameRoom;
-import com.zhuoan.biz.service.bdx.service.BDXService;
+import com.zhuoan.biz.service.bdx.BDXService;
 import net.sf.json.JSONObject;
 
 import java.util.*;

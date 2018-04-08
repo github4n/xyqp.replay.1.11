@@ -11,6 +11,7 @@ import org.springframework.stereotype.Service;
 import javax.annotation.Resource;
 
 @Service
+@Deprecated
 public class ZaUserBizImpl implements ZaUserBiz {
 
     @Resource
