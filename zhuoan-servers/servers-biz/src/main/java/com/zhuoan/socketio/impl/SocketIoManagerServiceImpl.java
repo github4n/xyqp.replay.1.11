@@ -1,4 +1,4 @@
-package com.zhuoan.biz.service.socketio.enter;
+package com.zhuoan.socketio.impl;
 
 import com.corundumstudio.socketio.AckRequest;
 import com.corundumstudio.socketio.Configuration;
@@ -13,6 +13,7 @@ import com.zhuoan.biz.event.sss.SSSGameEvent;
 import com.zhuoan.biz.model.RoomManage;
 import com.zhuoan.queue.MessageQueue;
 import com.zhuoan.queue.SqlQueue;
+import com.zhuoan.socketio.SocketIoManagerService;
 import com.zhuoan.times.SingleTimer;
 import com.zhuoan.util.LogUtil;
 import com.zhuoan.constant.SocketListenerConstant;
@@ -144,7 +145,7 @@ public class SocketIoManagerServiceImpl implements SocketIoManagerService {
 
         sql = "select id,game_id,opt_key,opt_name,opt_val,is_mul,is_use,createTime,memo,sort,is_open from za_gamesetting";
         RoomManage.result = DBUtil.getObjectListBySQL(sql, new Object[]{});
-        System.err.println(RoomManage.result);
+        logger.error(String.valueOf(RoomManage.result));
         LogUtil.print("当前房间：" + result);
     }
 
