@@ -51,6 +51,15 @@ public class SocketIoController extends BaseController {
         return "SocketIO server is started successfully!!!!!!";
     }
 
+    @RequestMapping("addEventListener")
+    @ResponseBody
+    public String addEventListener(){
+
+
+
+        return null;
+    }
+
     /**
      * Stop server.停止socket服务
      *
