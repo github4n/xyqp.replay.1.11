@@ -40,9 +40,9 @@ public class Constant {
 	public static String DOMAIN = "/zagame";
 	
 	static{
-		
+
 		try {
-			cfgProperties.load(Constant.class.getClassLoader().getResourceAsStream("config.properties"));
+			cfgProperties.load(Constant.class.getClassLoader().getResourceAsStream("config/common.properties"));
 		} catch (IOException e) {
 			e.printStackTrace();
 		}

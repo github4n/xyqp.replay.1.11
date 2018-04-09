@@ -86,7 +86,7 @@ public class MessageQueue {
 								break;
 							}
 							break;
-//						case NN:
+						case NN:
 //							// 牛牛
 //							switch (messages.getSorts()) {
 //							case 1:
@@ -131,14 +131,14 @@ public class MessageQueue {
 //							case 14:
 //								nnService.changeTable(client, data);
 //								break;
-//							case 15:
-//								//new com.za.gameservers.sss.test.SSSGameEventDeal().createRoom(client, data);
-//								roomManage.createRoomNN(client, data);
-//								break;
-//							case 16:
-//								//new com.za.gameservers.sss.test.SSSGameEventDeal().joinRoom(client, data);
-//								roomManage.joinRoomNN(client, data);
-//								break;
+							case 15:
+								//new com.za.gameservers.sss.test.SSSGameEventDeal().createRoom(client, data);
+								roomManage.createRoomNN(client, data);
+								break;
+							case 16:
+								//new com.za.gameservers.sss.test.SSSGameEventDeal().joinRoom(client, data);
+								roomManage.joinRoomNN(client, data);
+								break;
 //							case 17:
 //								// 准备定时器
 //								nnService.autoReady(client, data);

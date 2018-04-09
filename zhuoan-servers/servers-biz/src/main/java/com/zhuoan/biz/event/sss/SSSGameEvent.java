@@ -67,7 +67,7 @@ public class SSSGameEvent {
 					
 					queue.addQueue(new Messages(client, data, 4, 1));
 					//queue.execute();
-					sssService.enterRoom(client, data);
+//					sssService.enterRoom(client, data);
 				} catch (Exception e) {
 					e.printStackTrace();
 				}
@@ -96,10 +96,10 @@ public class SSSGameEvent {
 			public void onData(SocketIOClient client, Object data, AckRequest ackSender){
 
 				try {
-					//queue.addQueue(new Messages(client, data, 4, 2));
+					queue.addQueue(new Messages(client, data, 4, 2));
 					//queue.execute();
 					//sssService.gameReady(client, data);
-					sssGameEventDeal.gameReady(client, data);
+//					sssGameEventDeal.gameReady(client, data);
 				} catch (Exception e) {
 					e.printStackTrace();
 				}
@@ -191,8 +191,8 @@ public class SSSGameEvent {
             public void onData(SocketIOClient client, Object data, AckRequest ackSender){
 
                 try {
-                    //queue.addQueue(new Messages(client, data, 1, 15));
-//                    nnService.enterRoom(client, data);
+                    queue.addQueue(new Messages(client, data, 1, 15));
+                   // nnService.enterRoom(client, data);
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
@@ -209,10 +209,10 @@ public class SSSGameEvent {
 			public void onData(SocketIOClient client, Object data, AckRequest ackSender){
 
 				try {
-					//queue.addQueue(new Messages(client, data, 4, 3));
+					queue.addQueue(new Messages(client, data, 4, 3));
 					//queue.execute();
 					//sssService.gameEvent(client, data);
-					sssGameEventDeal.gameEvent(client, data);
+//					sssGameEventDeal.gameEvent(client, data);
 				} catch (Exception e) {
 					e.printStackTrace();
 				}
@@ -248,10 +248,10 @@ public class SSSGameEvent {
 			public void onData(SocketIOClient client, Object data, AckRequest ackSender){
 
 				try {
-					//queue.addQueue(new Messages(client, data, 4, 5));
+					queue.addQueue(new Messages(client, data, 4, 5));
 					//queue.execute();
 					//sssService.exitRoom(client, data);
-					sssGameEventDeal.exitRoom(client, data);
+//					sssGameEventDeal.exitRoom(client, data);
 				} catch (Exception e) {
 					e.printStackTrace();
 				}
@@ -268,10 +268,10 @@ public class SSSGameEvent {
 			public void onData(SocketIOClient client, Object data, AckRequest ackSender){
 
 				try {
-					//queue.addQueue(new Messages(client, data, 4, 6));
+					queue.addQueue(new Messages(client, data, 4, 6));
 					//queue.execute();
 					//sssService.reconnectGame(client, data);
-					sssGameEventDeal.reconnectGame(client, data);
+//					sssGameEventDeal.reconnectGame(client, data);
 				} catch (Exception e) {
 					e.printStackTrace();
 				}
@@ -288,10 +288,10 @@ public class SSSGameEvent {
 			public void onData(SocketIOClient client, Object data, AckRequest ackSender){
 
 				try {
-					//queue.addQueue(new Messages(client, data, 4, 7));
+					queue.addQueue(new Messages(client, data, 4, 7));
 					//queue.execute();
 					//sssService.gameConnReset(client, data);
-					sssGameEventDeal.gameConnReset(client, data);
+//					sssGameEventDeal.gameConnReset(client, data);
 				} catch (Exception e) {
 					e.printStackTrace();
 				}
@@ -307,10 +307,10 @@ public class SSSGameEvent {
 			public void onData(SocketIOClient client, Object data, AckRequest ackSender){
 				
 				try {
-					//queue.addQueue(new Messages(client, data, 4, 8));
+					queue.addQueue(new Messages(client, data, 4, 8));
 					//queue.execute();
 					//sssService.gameSummary(client, data);
-					sssGameEventDeal.gameSummary(client, data);
+//					sssGameEventDeal.gameSummary(client, data);
 				} catch (Exception e) {
 					e.printStackTrace();
 				}

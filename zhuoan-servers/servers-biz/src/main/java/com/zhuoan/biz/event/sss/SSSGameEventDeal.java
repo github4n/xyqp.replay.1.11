@@ -1,11 +1,8 @@
 package com.zhuoan.biz.event.sss;
 
 import com.corundumstudio.socketio.SocketIOClient;
-import com.zhuoan.constant.Constant;
-import com.zhuoan.constant.NewConstant;
 import com.zhuoan.biz.core.sss.SSSGameRoom;
 import com.zhuoan.biz.core.sss.SSSSpecialCards;
-import com.zhuoan.biz.event.GameMain;
 import com.zhuoan.biz.model.Player;
 import com.zhuoan.biz.model.Playerinfo;
 import com.zhuoan.biz.model.RoomManage;
@@ -13,6 +10,9 @@ import com.zhuoan.biz.model.UserInfoCache;
 import com.zhuoan.biz.service.majiang.MaJiangBiz;
 import com.zhuoan.biz.service.majiang.impl.MajiangBizImpl;
 import com.zhuoan.biz.service.sss.impl.SSSServiceImpl;
+import com.zhuoan.constant.Constant;
+import com.zhuoan.constant.NewConstant;
+import com.zhuoan.socketio.impl.GameMain;
 import com.zhuoan.util.Dto;
 import com.zhuoan.util.LogUtil;
 import net.sf.json.JSONArray;
@@ -456,7 +456,7 @@ public class SSSGameEventDeal {
 
 							for (String string : gameRoom.getPlayerMap().keySet()) {
 								if (!gameRoom.getRobotList().contains(string)) {
-									SocketIOClient clientother=GameMain.server.getClient(gameRoom.getPlayerMap().get(string).getUuid());
+									SocketIOClient clientother= GameMain.server.getClient(gameRoom.getPlayerMap().get(string).getUuid());
 									if(clientother!=null){
 										clientother.sendEvent("playerEnterPush_SSS", re);
 									}

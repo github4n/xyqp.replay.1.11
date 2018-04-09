@@ -45,9 +45,9 @@ import java.util.concurrent.TimeUnit;
  * @date 2018 -04-02 09:15
  */
 @Service
-public class SocketIoManagerServiceImpl implements SocketIoManagerService {
+public class GameMain implements SocketIoManagerService {
 
-    private final static Logger logger = LoggerFactory.getLogger(SocketIoManagerServiceImpl.class);
+    private final static Logger logger = LoggerFactory.getLogger(GameMain.class);
 
     @Resource
     private Environment env;
@@ -55,10 +55,14 @@ public class SocketIoManagerServiceImpl implements SocketIoManagerService {
     /**
      * The Server.
      */
-    private static SocketIOServer server;
+    public static SocketIOServer server;
 
     // 注册管理器
     public static Registry registry = null;
+
+    public static SqlQueue sqlQueue = null;
+    public static MessageQueue messageQueue = null;
+    public static SingleTimer singleTime = null;
 
     @Override
     public void startServer() {
@@ -68,17 +72,17 @@ public class SocketIoManagerServiceImpl implements SocketIoManagerService {
         // 创建服务
         server = new SocketIOServer(serverConfig());
 
-        MessageQueue messageQueue = new MessageQueue(16);
-        new SqlQueue(1);
-        SingleTimer singleTime = new SingleTimer();
+        messageQueue = new MessageQueue(16);
+        sqlQueue = new SqlQueue(1);
+        singleTime = new SingleTimer();
         singleTime.start();
 
         /**
          * 心跳包
          */
-        server.addEventListener("game_ping", Object.class, new DataListener<Object>(){
+        server.addEventListener("game_ping", Object.class, new DataListener<Object>() {
             @Override
-            public void onData(SocketIOClient client, Object obj, AckRequest request){
+            public void onData(SocketIOClient client, Object obj, AckRequest request) {
                 client.sendEvent("game_pong", obj);
             }
         });
@@ -86,9 +90,9 @@ public class SocketIoManagerServiceImpl implements SocketIoManagerService {
         /**
          * 链接connection
          */
-        server.addEventListener("connection", Object.class, new DataListener<Object>(){
+        server.addEventListener("connection", Object.class, new DataListener<Object>() {
             @Override
-            public void onData(SocketIOClient client, Object obj, AckRequest request){
+            public void onData(SocketIOClient client, Object obj, AckRequest request) {
                 logger.info("链接成功");
                 client.sendEvent("connect", request, "成功");
             }

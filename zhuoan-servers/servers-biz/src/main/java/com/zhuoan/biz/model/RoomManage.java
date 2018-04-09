@@ -1,15 +1,16 @@
 package com.zhuoan.biz.model;
 
 import com.corundumstudio.socketio.SocketIOClient;
-import com.zhuoan.constant.Constant;
 import com.zhuoan.biz.core.sss.SSSGameRoom;
-import com.zhuoan.biz.event.GameMain;
 import com.zhuoan.biz.model.bdx.BDXGameRoom;
 import com.zhuoan.biz.model.nn.NNGameRoom;
 import com.zhuoan.biz.model.zjh.ZJHGame;
-import com.zhuoan.queue.SqlModel;
 import com.zhuoan.biz.service.majiang.MaJiangBiz;
 import com.zhuoan.biz.service.majiang.impl.MajiangBizImpl;
+import com.zhuoan.constant.Constant;
+import com.zhuoan.dao.DBUtil;
+import com.zhuoan.queue.SqlModel;
+import com.zhuoan.socketio.impl.GameMain;
 import com.zhuoan.util.Dto;
 import com.zhuoan.util.LogUtil;
 import com.zhuoan.util.MathDelUtil;
@@ -413,7 +414,7 @@ public class RoomManage {
 					userInfo.getString("name"), userInfo.getInt("score"), gameRoom.getIp(), gameRoom.getPort(), 0, gameRoom.getGameCount(),
 					gameRoom.getPaytype(),isopen};
 			GameMain.sqlQueue.addSqlTask(new SqlModel(sql, params, SqlModel.EXECUTEUPDATEBYSQL));
-			//DBUtil.executeUpdateBySQL(sql, params);
+			DBUtil.executeUpdateBySQL(sql, params);
 			
 		}
 	}
