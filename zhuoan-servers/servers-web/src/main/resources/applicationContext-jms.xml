@@ -24,10 +24,15 @@
     </bean>
 
 
-    <!-- 定义消息队列（Queue） -->
-    <bean id="demoQueueDestination" class="org.apache.activemq.command.ActiveMQQueue">
+    <!-- ★★★第一步：★★★ 定义消息队列（Queue） -->
+    <!--<bean id="baseQueueDestination" class="org.apache.activemq.command.ActiveMQQueue">-->
+        <!--&lt;!&ndash; 设置消息队列的名字 &ndash;&gt;-->
+        <!--<constructor-arg value="ZA_GAMES_BASE"/>-->
+    <!--</bean>-->
+
+    <bean id="sssQueueDestination" class="org.apache.activemq.command.ActiveMQQueue">
         <!-- 设置消息队列的名字 -->
-        <constructor-arg value="ZA_GAMES"/>
+        <constructor-arg value="ZA_GAMES_SSS"/>
     </bean>
 
 
@@ -36,33 +41,20 @@
     <!-- 配置JMS模板（Queue），Spring提供的JMS工具类，它发送、接收消息。 -->
     <bean id="jmsTemplate" class="org.springframework.jms.core.JmsTemplate">
         <property name="connectionFactory" ref="connectionFactory"/>
-        <property name="defaultDestination" ref="demoQueueDestination"/>
+        <property name="defaultDestination" ref="sssQueueDestination"/>
         <property name="receiveTimeout" value="10000"/>
         <!-- true是topic，false是queue，默认是false，此处显示写出false -->
         <property name="pubSubDomain" value="false"/>
     </bean>
 
-    <!-- 定义JmsTemplate的Queue类型 -->
-    <!--<bean id="jmsQueueTemplate" class="org.springframework.jms.core.JmsTemplate">-->
-    <!--&lt;!&ndash; 这个connectionFactory对应的是我们定义的Spring提供的那个ConnectionFactory对象 &ndash;&gt;-->
-    <!--<constructor-arg ref="connectionFactory"/>-->
-    <!--&lt;!&ndash; 非pub/sub模型（发布/订阅），即队列模式 (这种模式被概括为：只有一个消费者将获得消息)&ndash;&gt;-->
-    <!--<property name="pubSubDomain" value="false"/>-->
-    <!--</bean>-->
-
-    <!-- 定义JmsTemplate的Topic类型 -->
-    <!--<bean id="jmsTopicTemplate" class="org.springframework.jms.core.JmsTemplate">-->
-    <!--&lt;!&ndash; 这个connectionFactory对应的是我们定义的Spring提供的那个ConnectionFactory对象 &ndash;&gt;-->
-    <!--<constructor-arg ref="connectionFactory"/>-->
-    <!--&lt;!&ndash; pub/sub模型（发布/订阅）,即发布者／订阅者模型(这种模式被概括为：多个消费者可以获得消息) &ndash;&gt;-->
-    <!--<property name="pubSubDomain" value="true"/>-->
-    <!--</bean>-->
-
     <!--Spring JmsTemplate 的消息生产者 end-->
 
 
     <!-- 配置消息队列监听者（Queue） -->
-    <bean id="queueMessageListener" class="com.zhuoan.webapp.listener.mq.QueueMessageListener"/>
+    <bean id="sssQueueMessageListener" class="com.zhuoan.webapp.listener.mq.SSSQueueMessageListener"/>
+
+
+
 
 
     <!-- 消息消费者 采用异步接收 start-->
@@ -72,16 +64,12 @@
         <!--配置连接工厂-->
         <property name="connectionFactory" ref="connectionFactory"/>
         <!--自定义监听器-->
-        <property name="messageListener" ref="queueMessageListener"/>
+        <property name="messageListener" ref="sssQueueMessageListener"/>
         <!--监听目标-->
-        <property name="destination" ref="demoQueueDestination"/>
+        <property name="destination" ref="sssQueueDestination"/>
     </bean>
 
-    <!--&lt;!&ndash; 定义Topic监听器 &ndash;&gt;-->
-    <!--<jms:listener-container destination-type="topic">-->
-    <!--<jms:listener destination="test.topic" ref="topicReceiver1"/>-->
-    <!--<jms:listener destination="test.topic" ref="topicReceiver2"/>-->
-    <!--</jms:listener-container>-->
+
 
     <!-- 消息消费者 end -->
 </beans>

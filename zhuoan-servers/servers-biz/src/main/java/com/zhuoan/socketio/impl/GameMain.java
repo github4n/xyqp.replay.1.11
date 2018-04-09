@@ -1,13 +1,10 @@
 package com.zhuoan.socketio.impl;
 
-import com.corundumstudio.socketio.AckRequest;
 import com.corundumstudio.socketio.Configuration;
 import com.corundumstudio.socketio.SocketIOClient;
 import com.corundumstudio.socketio.SocketIOServer;
-import com.corundumstudio.socketio.listener.ConnectListener;
-import com.corundumstudio.socketio.listener.DataListener;
-import com.corundumstudio.socketio.listener.DisconnectListener;
 import com.za.game.remote.iservice.IService;
+import com.zhuoan.biz.event.BaseGameEvent;
 import com.zhuoan.biz.event.sss.SSSGameEvent;
 import com.zhuoan.biz.model.RoomManage;
 import com.zhuoan.constant.SocketListenerConstant;
@@ -49,27 +46,31 @@ public class GameMain implements SocketIoManagerService {
 
     private final static Logger logger = LoggerFactory.getLogger(GameMain.class);
 
-    @Resource
-    private Environment env;
+    public static SocketIOServer server; // socketio服务
 
-    /**
-     * The Server.
-     */
-    public static SocketIOServer server;
-
-    // 注册管理器
-    public static Registry registry = null;
 
     public static SqlQueue sqlQueue = null;
     public static MessageQueue messageQueue = null;
     public static SingleTimer singleTime = null;
 
+
+    @Resource
+    private Environment env;
+
+    @Resource
+    private SSSGameEvent sssGameEvent;
+
     @Override
     public void startServer() {
-//        注册服务
-        registerService();
 
-        // 创建服务
+        /**
+         *  调用远程服务：   joinServerList + pingpong   后续引入 ZaGame项目，TODO 此方法：asRemoteServer() 舍去
+         *
+         *  然后，远程服务注册中心调用此服务器 ip port 进行 socketio 事件通讯
+         */
+        asRemoteServer();
+
+        // 创建socketio服务
         server = new SocketIOServer(serverConfig());
 
         // 调用构造器
@@ -90,61 +91,23 @@ public class GameMain implements SocketIoManagerService {
         LogUtil.print("当前房间：" + result);
     }
 
+    @Resource
+    private BaseGameEvent baseGameEvent;
+
     private void addEventListener() {
 
-        /**
-         * 心跳包
-         */
-        server.addEventListener("game_ping", Object.class, new DataListener<Object>() {
-            @Override
-            public void onData(SocketIOClient client, Object obj, AckRequest request) {
-                client.sendEvent("game_pong", obj);
-            }
-        });
-
-        /**
-         * 链接
-         */
-        server.addEventListener("connection", Object.class, new DataListener<Object>() {
-            @Override
-            public void onData(SocketIOClient client, Object obj, AckRequest request) {
-                logger.info("链接成功");
-                client.sendEvent("connect", request, "成功");
-            }
-        });
-
-        /**
-         * 当client连接时触发此事件
-         */
-        server.addConnectListener(new ConnectListener() {
-            @Override
-            public void onConnect(SocketIOClient client) {
-                logger.info("用户 IP = [{}] with sessionId = [{}] 上线了！！！", obtainClientIp(client), client.getSessionId());
-            }
-        });
-
-        /**
-         * 当client离线时触发此事件
-         */
-        server.addDisconnectListener(new DisconnectListener() {
-            @Override
-            public void onDisconnect(SocketIOClient client) {
-                logger.info("用户 IP = [{}] with sessionId = [{}] 离线了！！！", obtainClientIp(client), client.getSessionId());
-            }
-        });
-
-
-
+        /** 公共事件监听 */
+        baseGameEvent.listenerBaseGameEvent(server);
 
 
 
         /**
          * 监听十三水游戏事件
          */
-        SSSGameEvent.listenerSSSGameEvent(server, messageQueue);
-
+        sssGameEvent.listenerSSSGameEvent(server); //  方便后续配置至不同服务器
 
     }
+
 
     private void initQueue() {
         messageQueue = new MessageQueue(16);
@@ -215,23 +178,14 @@ public class GameMain implements SocketIoManagerService {
         return config;
     }
 
-    /**
-     * 获取设备ip
-     *
-     * @param client
-     * @return
-     */
-    private String obtainClientIp(SocketIOClient client) {
-        String sa = String.valueOf(client.getRemoteAddress());
-        return sa.substring(1, sa.indexOf(":"));
-    }
 
 
-    private void registerService() {
+
+    private void asRemoteServer() {
         try {
 
             // 获取服务注册管理器
-            registry = LocateRegistry.getRegistry(env.getProperty(EnvKeyEnum.SERVER_IP.getKey()),
+            Registry registry = LocateRegistry.getRegistry(env.getProperty(EnvKeyEnum.SERVER_IP.getKey()),
                 Integer.valueOf(env.getProperty(EnvKeyEnum.SERVER_PORT.getKey())));
 
             // 列出所有注册的服务
@@ -259,6 +213,10 @@ public class GameMain implements SocketIoManagerService {
         public void run() {
 
             try {
+                // 获取服务注册管理器
+                Registry registry = LocateRegistry.getRegistry(env.getProperty(EnvKeyEnum.SERVER_IP.getKey()),
+                    Integer.valueOf(env.getProperty(EnvKeyEnum.SERVER_PORT.getKey())));
+
                 // 根据命名获取服务
                 IService server = (IService) registry.lookup("sysService");
 

@@ -22,9 +22,9 @@ import javax.jms.TextMessage;
  * @author weixiang.wu
  * @date 2018 -04-03 10:01
  */
-public class QueueMessageListener implements MessageListener {
+public class SSSQueueMessageListener implements MessageListener {
 
-    private final static Logger logger = LoggerFactory.getLogger(QueueMessageListener.class);
+    private final static Logger logger = LoggerFactory.getLogger(SSSQueueMessageListener.class);
 
      public final RoomManage roomManage = new RoomManage();
 
@@ -39,6 +39,7 @@ public class QueueMessageListener implements MessageListener {
      */
     @Override
     public void onMessage(Message message) {
+        logger.info("监听开始");
         if (message instanceof TextMessage) {
             TextMessage tm = (TextMessage) message;
             try {
