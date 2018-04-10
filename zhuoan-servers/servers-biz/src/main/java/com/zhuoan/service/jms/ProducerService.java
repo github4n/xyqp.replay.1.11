@@ -1,5 +1,7 @@
 package com.zhuoan.service.jms;
 
+import com.zhuoan.queue.Messages;
+
 import javax.jms.Destination;
 
 /**
@@ -32,5 +34,6 @@ public interface ProducerService {
      * @param msg         the msg
      */
     void sendMessage(Destination destination, final Object msg);
+    void sendMessage(Destination destination, final Messages msg);
 
 }

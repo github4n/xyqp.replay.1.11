@@ -6,6 +6,7 @@ import com.corundumstudio.socketio.SocketIOServer;
 import com.corundumstudio.socketio.listener.ConnectListener;
 import com.corundumstudio.socketio.listener.DataListener;
 import com.corundumstudio.socketio.listener.DisconnectListener;
+import com.zhuoan.queue.Messages;
 import com.zhuoan.service.jms.ProducerService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -26,8 +27,6 @@ public class BaseGameEvent {
     private final static Logger logger = LoggerFactory.getLogger(BaseGameEvent.class);
 
     @Resource
-    private Destination sssQueueDestination;
-    @Resource
     private Destination baseQueueDestination;
 
     @Resource
@@ -45,8 +44,10 @@ public class BaseGameEvent {
 
             @Override
             public void onData(SocketIOClient client, Object object, AckRequest ackSender) {
-                producerService.sendMessage(sssQueueDestination, 123);
-                producerService.sendMessage(baseQueueDestination, 123);
+
+
+                producerService.sendMessage(baseQueueDestination, new Messages(client, object, 0, 3));
+
 //                    queue.addQueue(new Messages(client, object, 0, 3));
             }
         });

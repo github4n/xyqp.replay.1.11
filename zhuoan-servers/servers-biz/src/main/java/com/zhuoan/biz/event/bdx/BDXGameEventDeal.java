@@ -10,7 +10,7 @@ import com.zhuoan.biz.service.majiang.impl.MajiangBizImpl;
 import com.zhuoan.constant.Constant;
 import com.zhuoan.dao.DBUtil;
 import com.zhuoan.queue.SqlModel;
-import com.zhuoan.socketio.impl.GameMain;
+import com.zhuoan.service.socketio.impl.GameMain;
 import com.zhuoan.util.Dto;
 import com.zhuoan.util.LogUtil;
 import net.sf.json.JSONArray;

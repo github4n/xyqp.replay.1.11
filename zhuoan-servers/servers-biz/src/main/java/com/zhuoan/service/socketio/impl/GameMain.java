@@ -1,4 +1,4 @@
-package com.zhuoan.socketio.impl;
+package com.zhuoan.service.socketio.impl;
 
 import com.corundumstudio.socketio.Configuration;
 import com.corundumstudio.socketio.SocketIOClient;
@@ -12,7 +12,7 @@ import com.zhuoan.dao.DBUtil;
 import com.zhuoan.enumtype.EnvKeyEnum;
 import com.zhuoan.queue.MessageQueue;
 import com.zhuoan.queue.SqlQueue;
-import com.zhuoan.socketio.SocketIoManagerService;
+import com.zhuoan.service.socketio.SocketIoManagerService;
 import com.zhuoan.times.SingleTimer;
 import com.zhuoan.util.LogUtil;
 import net.sf.json.JSONArray;
@@ -115,8 +115,6 @@ public class GameMain implements SocketIoManagerService {
          */
 //        String configHostIp = env.getProperty(EnvKeyEnum.SERVER_IP.getKey());
 //        String currentHostIp = server.getConfiguration().getHostname();
-
-
 
         /* 公共事件监听 */
         baseGameEvent.listenerBaseGameEvent(server);

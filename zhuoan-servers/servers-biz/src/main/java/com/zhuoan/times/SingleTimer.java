@@ -3,7 +3,7 @@ package com.zhuoan.times;
 
 import com.zhuoan.biz.core.sss.SSSGameRoom;
 import com.zhuoan.biz.model.RoomManage;
-import com.zhuoan.socketio.impl.GameMain;
+import com.zhuoan.service.socketio.impl.GameMain;
 import com.zhuoan.util.LogUtil;
 
 import java.util.HashMap;

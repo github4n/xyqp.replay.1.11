@@ -1,7 +1,7 @@
 package com.zhuoan.webapp.controller.socketio;
 
 import com.corundumstudio.socketio.Configuration;
-import com.zhuoan.socketio.SocketIoManagerService;
+import com.zhuoan.service.socketio.SocketIoManagerService;
 import com.zhuoan.webapp.controller.BaseController;
 import com.zhuoan.webapp.listener.socketio.ServerStartListener;
 import org.slf4j.Logger;

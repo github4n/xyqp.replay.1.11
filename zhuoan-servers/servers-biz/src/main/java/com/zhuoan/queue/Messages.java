@@ -2,8 +2,12 @@ package com.zhuoan.queue;
 
 import com.corundumstudio.socketio.SocketIOClient;
 
-public class Messages {
-	SocketIOClient client;
+import java.io.Serializable;
+
+public class Messages implements Serializable{
+
+
+    SocketIOClient client;
 	Object dataObject;
 	int gid;// 游戏id
 	int sorts;// 事件顺序

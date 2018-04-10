@@ -34,11 +34,6 @@ public class SSSQueueMessageListener implements MessageListener {
 
     public final SSSGameEventDeal sssService = new SSSGameEventDeal();
 
-
-//    public SSSQueueMessageListener() {
-//        logger.info("123");
-//    }
-
     /**
      * 当收到消息时，自动调用该方法。
      *
@@ -46,13 +41,6 @@ public class SSSQueueMessageListener implements MessageListener {
      */
     @Override
     public void onMessage(Message message) {
-        logger.info("SSSQueueMessageListener监听开始");
-        logger.info("SSSQueueMessageListener监听开始");
-        logger.info("SSSQueueMessageListener监听开始");
-        logger.info("SSSQueueMessageListener监听开始");
-        logger.info("SSSQueueMessageListener监听开始");
-        logger.info("SSSQueueMessageListener监听开始");
-        logger.info("SSSQueueMessageListener监听开始");
         logger.info("SSSQueueMessageListener监听开始");
 
 

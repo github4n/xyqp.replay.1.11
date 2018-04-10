@@ -1,6 +1,6 @@
 package com.zhuoan.webapp.listener.socketio;
 
-import com.zhuoan.socketio.SocketIoManagerService;
+import com.zhuoan.service.socketio.SocketIoManagerService;
 import com.zhuoan.constant.SocketListenerConstant;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

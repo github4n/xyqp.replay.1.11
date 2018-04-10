@@ -13,7 +13,7 @@ import com.zhuoan.constant.Constant;
 import com.zhuoan.constant.NewConstant;
 import com.zhuoan.queue.Messages;
 import com.zhuoan.queue.SqlModel;
-import com.zhuoan.socketio.impl.GameMain;
+import com.zhuoan.service.socketio.impl.GameMain;
 import com.zhuoan.times.TimerMsgData;
 import com.zhuoan.util.Dto;
 import net.sf.json.JSONArray;

@@ -5,7 +5,7 @@ import com.zhuoan.biz.service.majiang.MaJiangBiz;
 import com.zhuoan.dao.DBJsonUtil;
 import com.zhuoan.dao.DBUtil;
 import com.zhuoan.queue.SqlModel;
-import com.zhuoan.socketio.impl.GameMain;
+import com.zhuoan.service.socketio.impl.GameMain;
 import com.zhuoan.util.Dto;
 import com.zhuoan.util.TimeUtil;
 import net.sf.json.JSONArray;

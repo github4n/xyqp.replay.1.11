@@ -1,4 +1,4 @@
-package com.zhuoan.socketio;
+package com.zhuoan.service.socketio;
 
 import com.corundumstudio.socketio.SocketIOServer;
 
