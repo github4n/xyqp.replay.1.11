@@ -27,6 +27,8 @@ public class BaseGameEvent {
 
     @Resource
     private Destination sssQueueDestination;
+    @Resource
+    private Destination baseQueueDestination;
 
     @Resource
     private ProducerService producerService;
@@ -50,6 +52,7 @@ public class BaseGameEvent {
                 try {
                     logger.info("11");
                     producerService.sendMessage(sssQueueDestination, 123);
+                    producerService.sendMessage(baseQueueDestination, 123);
 //
 //                    queue.addQueue(new Messages(client, object, 0, 3));
                 } catch (Exception e) {

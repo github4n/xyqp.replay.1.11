@@ -1,13 +1,12 @@
 package com.zhuoan.webapp.controller;
 
 import com.github.miemiedev.mybatis.paginator.domain.PageList;
-import com.zhuoan.user.ZaUserBiz;
 import com.zhuoan.enumtype.EnvKeyEnum;
 import com.zhuoan.enumtype.PaginationEnum;
 import com.zhuoan.enumtype.ResCodeEnum;
 import com.zhuoan.model.condition.ZaUsersCondition;
 import com.zhuoan.model.vo.ZaUsersVO;
-import com.zhuoan.service.jms.ProducerService;
+import com.zhuoan.user.ZaUserBiz;
 import com.zhuoan.webapp.ehcache.EhCacheUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -18,7 +17,6 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 import javax.annotation.Resource;
-import javax.jms.Destination;
 import javax.servlet.http.HttpServletRequest;
 import java.util.HashMap;
 import java.util.Map;
@@ -164,26 +162,25 @@ public class DemoController extends BaseController {
 
 
 
-    @Resource
-    private Destination demoQueueDestination;
 
-    //队列消息生产者
-    @Resource
-    private ProducerService producerService;
-
-    /**
-     * Send.
-     *
-     * @param msg the msg
-     */
-    @RequestMapping(value = "/SendMessage", method = RequestMethod.POST)
-    @ResponseBody
-    public void send(String msg) {
-        logger.info(Thread.currentThread().getName()+"------------SEND TO JMS START！！！");
-        producerService.sendMessage(msg);
-        producerService.sendMessage(demoQueueDestination,msg);
-        logger.info(Thread.currentThread().getName()+"------------SEND TO JMS END！！！");
-    }
+//
+//    //队列消息生产者
+//    @Resource
+//    private ProducerService producerService;
+//
+//    /**
+//     * Send.
+//     *
+//     * @param msg the msg
+//     */
+//    @RequestMapping(value = "/SendMessage", method = RequestMethod.POST)
+//    @ResponseBody
+//    public void send(String msg) {
+//        logger.info(Thread.currentThread().getName()+"------------SEND TO JMS START！！！");
+//        producerService.sendMessage(msg);
+//        producerService.sendMessage(demoQueueDestination,msg);
+//        logger.info(Thread.currentThread().getName()+"------------SEND TO JMS END！！！");
+//    }
 
 
 

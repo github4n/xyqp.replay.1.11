@@ -46,11 +46,23 @@ public class GameMain implements SocketIoManagerService {
 
     private final static Logger logger = LoggerFactory.getLogger(GameMain.class);
 
+    /**
+     * The constant server.
+     */
     public static SocketIOServer server; // socketio服务
 
 
+    /**
+     * The constant sqlQueue.
+     */
     public static SqlQueue sqlQueue = null;
+    /**
+     * The constant messageQueue.
+     */
     public static MessageQueue messageQueue = null;
+    /**
+     * The constant singleTime.
+     */
     public static SingleTimer singleTime = null;
 
 
@@ -58,10 +70,16 @@ public class GameMain implements SocketIoManagerService {
     private Environment env;
 
     @Resource
+    private BaseGameEvent baseGameEvent;
+
+    @Resource
     private SSSGameEvent sssGameEvent;
 
     @Override
     public void startServer() {
+
+        // 创建socketio服务
+        server = new SocketIOServer(serverConfig());
 
         /**
          *  调用远程服务：   joinServerList + pingpong   后续引入 ZaGame项目，TODO 此方法：asRemoteServer() 舍去
@@ -69,9 +87,6 @@ public class GameMain implements SocketIoManagerService {
          *  然后，远程服务注册中心调用此服务器 ip port 进行 socketio 事件通讯
          */
         asRemoteServer();
-
-        // 创建socketio服务
-        server = new SocketIOServer(serverConfig());
 
         // 调用构造器
         initQueue();
@@ -91,19 +106,16 @@ public class GameMain implements SocketIoManagerService {
         LogUtil.print("当前房间：" + result);
     }
 
-    @Resource
-    private BaseGameEvent baseGameEvent;
+
 
     private void addEventListener() {
 
-        /** 公共事件监听 */
+        /* 公共事件监听 */
         baseGameEvent.listenerBaseGameEvent(server);
 
 
 
-        /**
-         * 监听十三水游戏事件
-         */
+        /* 十三水游戏事件监听 */
         sssGameEvent.listenerSSSGameEvent(server); //  方便后续配置至不同服务器
 
     }
@@ -208,6 +220,9 @@ public class GameMain implements SocketIoManagerService {
         }
     }
 
+    /**
+     * The type Game task.
+     */
     class GameTask extends TimerTask {
 
         public void run() {

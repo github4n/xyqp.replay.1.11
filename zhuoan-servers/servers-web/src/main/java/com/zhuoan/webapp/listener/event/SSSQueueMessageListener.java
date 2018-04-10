@@ -1,4 +1,4 @@
-package com.zhuoan.webapp.listener.mq;
+package com.zhuoan.webapp.listener.event;
 
 import com.corundumstudio.socketio.SocketIOClient;
 import com.zhuoan.biz.event.sss.SSSGameEventDeal;
@@ -9,6 +9,7 @@ import com.zhuoan.constant.GamesConstant;
 import com.zhuoan.queue.Messages;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Component;
 
 import javax.jms.JMSException;
 import javax.jms.Message;
@@ -22,6 +23,7 @@ import javax.jms.TextMessage;
  * @author weixiang.wu
  * @date 2018 -04-03 10:01
  */
+@Component
 public class SSSQueueMessageListener implements MessageListener {
 
     private final static Logger logger = LoggerFactory.getLogger(SSSQueueMessageListener.class);
@@ -32,6 +34,11 @@ public class SSSQueueMessageListener implements MessageListener {
 
     public final SSSGameEventDeal sssService = new SSSGameEventDeal();
 
+
+//    public SSSQueueMessageListener() {
+//        logger.info("123");
+//    }
+
     /**
      * 当收到消息时，自动调用该方法。
      *
@@ -39,7 +46,17 @@ public class SSSQueueMessageListener implements MessageListener {
      */
     @Override
     public void onMessage(Message message) {
-        logger.info("监听开始");
+        logger.info("SSSQueueMessageListener监听开始");
+        logger.info("SSSQueueMessageListener监听开始");
+        logger.info("SSSQueueMessageListener监听开始");
+        logger.info("SSSQueueMessageListener监听开始");
+        logger.info("SSSQueueMessageListener监听开始");
+        logger.info("SSSQueueMessageListener监听开始");
+        logger.info("SSSQueueMessageListener监听开始");
+        logger.info("SSSQueueMessageListener监听开始");
+
+
+
         if (message instanceof TextMessage) {
             TextMessage tm = (TextMessage) message;
             try {
