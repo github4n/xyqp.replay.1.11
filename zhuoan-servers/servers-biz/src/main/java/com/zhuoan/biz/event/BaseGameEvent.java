@@ -41,35 +41,15 @@ public class BaseGameEvent {
     public void listenerBaseGameEvent(SocketIOServer server) {
 
 
-
-
-
-
-        server.addEventListener("checkUser", Object.class,new DataListener<Object>() {
+        server.addEventListener("checkUser", Object.class, new DataListener<Object>() {
 
             @Override
-            public void onData(SocketIOClient client, Object object, AckRequest ackSender){
-                try {
-                    logger.info("11");
-                    producerService.sendMessage(sssQueueDestination, 123);
-                    producerService.sendMessage(baseQueueDestination, 123);
-//
+            public void onData(SocketIOClient client, Object object, AckRequest ackSender) {
+                producerService.sendMessage(sssQueueDestination, 123);
+                producerService.sendMessage(baseQueueDestination, 123);
 //                    queue.addQueue(new Messages(client, object, 0, 3));
-                } catch (Exception e) {
-                    // TODO: handle exception
-                    e.printStackTrace();
-                }
             }
         });
-
-
-
-
-
-
-
-
-
 
 
         /**
@@ -114,10 +94,7 @@ public class BaseGameEvent {
         });
 
 
-
-
     }
-
 
 
     /**

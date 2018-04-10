@@ -77,22 +77,20 @@ public class GameMain implements SocketIoManagerService {
 
     @Override
     public void startServer() {
-
-        // 创建socketio服务
+        /* 创建socketio服务 */
         server = new SocketIOServer(serverConfig());
 
-        /**
-         *  调用远程服务：   joinServerList + pingpong   后续引入 ZaGame项目，TODO 此方法：asRemoteServer() 舍去
-         *
-         *  然后，远程服务注册中心调用此服务器 ip port 进行 socketio 事件通讯
+        /*
+         *  调用远程服务：  joinServerList + pingpong
+         *  作用：远程服务注册中心调用此服务器 ip port 进行 socketio 事件通讯
          */
         asRemoteServer();
 
-        // 调用构造器
+        /* 调用构造器 todo 队列全部更换为 active ，此部分将舍去 */
         initQueue();
 
-        // 添加监听事件
-        addEventListener();
+        /* 添加监听事件 */
+        addEventListener(server);
 
         server.start();
         logger.info("SocketIO server is started successfully!!!!!!");
@@ -104,11 +102,21 @@ public class GameMain implements SocketIoManagerService {
         RoomManage.result = DBUtil.getObjectListBySQL(sql, new Object[]{});
         logger.error(String.valueOf(RoomManage.result));
         LogUtil.print("当前房间：" + result);
+
     }
 
+    /**
+     * @param server 方便后续配置至不同服务器
+     */
+    private void addEventListener(SocketIOServer server) {
+
+        /**
+         * todo：  后续需在配置文件配置： (ip1：events标识1)|(ip2：events标识2)……并完善代码！  作用：event绑定对应的server，后续打包只要动配置
+         */
+//        String configHostIp = env.getProperty(EnvKeyEnum.SERVER_IP.getKey());
+//        String currentHostIp = server.getConfiguration().getHostname();
 
 
-    private void addEventListener() {
 
         /* 公共事件监听 */
         baseGameEvent.listenerBaseGameEvent(server);
@@ -116,7 +124,7 @@ public class GameMain implements SocketIoManagerService {
 
 
         /* 十三水游戏事件监听 */
-        sssGameEvent.listenerSSSGameEvent(server); //  方便后续配置至不同服务器
+        sssGameEvent.listenerSSSGameEvent(server);
 
     }
 
@@ -189,8 +197,6 @@ public class GameMain implements SocketIoManagerService {
         config.setMaxHttpContentLength(SocketListenerConstant.MAX_HTTP_CONTENT_LENGTH);
         return config;
     }
-
-
 
 
     private void asRemoteServer() {
