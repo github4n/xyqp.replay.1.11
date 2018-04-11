@@ -65,7 +65,6 @@ public class GameEventsImpl {
                     default:
                         break;
                 }
-                break;
             case GidConstant.NN:
                 switch (sorts) {
                     case 15:
@@ -75,6 +74,8 @@ public class GameEventsImpl {
                     case 16:
                         //new com.za.gameservers.sss.test.SSSGameEventDeal().joinRoom(client, data);
                         roomManage.joinRoomNN(client, data);
+                        break;
+                    default:
                         break;
                 }
             case GidConstant.SSS:
