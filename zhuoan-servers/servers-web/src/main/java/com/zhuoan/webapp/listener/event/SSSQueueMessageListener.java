@@ -13,7 +13,7 @@ import javax.jms.MessageListener;
  * @author weixiang.wu
  * @date 2018 -04-03 10:01
  */
-@Component
+@Component("sSSQueueMessageListener")
 public class SSSQueueMessageListener implements MessageListener {
 
     @Resource

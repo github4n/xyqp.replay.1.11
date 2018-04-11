@@ -20,7 +20,7 @@ import javax.jms.MessageListener;
  * @author weixiang.wu
  * @date 2018 -04-11 21:43
  */
-@Component
+@Component("sqlQueueMessageListener")
 public class SqlQueueMessageListener implements MessageListener {
 
     private final static Logger logger = LoggerFactory.getLogger(SqlQueueMessageListener.class);

@@ -1,8 +1,5 @@
 package com.zhuoan.webapp.config;
 
-import com.zhuoan.webapp.listener.event.BaseQueueMessageListener;
-import com.zhuoan.webapp.listener.event.SSSQueueMessageListener;
-import com.zhuoan.webapp.listener.event.SqlQueueMessageListener;
 import org.apache.activemq.command.ActiveMQQueue;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -11,6 +8,7 @@ import org.springframework.jms.listener.DefaultMessageListenerContainer;
 
 import javax.annotation.Resource;
 import javax.jms.ConnectionFactory;
+import javax.jms.MessageListener;
 import javax.jms.Queue;
 
 /**
@@ -23,13 +21,13 @@ import javax.jms.Queue;
 public class ActiveConfig {
 
     @Resource
-    private BaseQueueMessageListener baseQueueMessageListener;
+    private MessageListener baseQueueMessageListener;
 
     @Resource
-    private SSSQueueMessageListener sssQueueMessageListener;
+    private MessageListener sSSQueueMessageListener;
 
     @Resource
-    private SqlQueueMessageListener sqlQueueMessageListener;
+    private MessageListener sqlQueueMessageListener;
 
 
     /**
@@ -103,7 +101,7 @@ public class ActiveConfig {
     public DefaultMessageListenerContainer queueListenerContainer2(ConnectionFactory connectionFactory) {
         DefaultMessageListenerContainer queueListenerContainer = new DefaultMessageListenerContainer();
         queueListenerContainer.setConnectionFactory(connectionFactory);
-        queueListenerContainer.setMessageListener(sssQueueMessageListener);
+        queueListenerContainer.setMessageListener(sSSQueueMessageListener);
         queueListenerContainer.setDestination(sssQueueDestination());
         return queueListenerContainer;
     }

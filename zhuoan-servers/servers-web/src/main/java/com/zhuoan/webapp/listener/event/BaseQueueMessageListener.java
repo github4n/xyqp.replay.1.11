@@ -13,7 +13,7 @@ import javax.jms.MessageListener;
  * @author weixiang.wu
  * @date 2018-04-09 20:14
  **/
-@Component
+@Component("baseQueueMessageListener")
 public class BaseQueueMessageListener implements MessageListener {
 
     @Resource
