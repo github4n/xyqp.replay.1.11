@@ -7,6 +7,7 @@ import com.za.game.remote.iservice.IService;
 import com.zhuoan.biz.event.BaseGameEvent;
 import com.zhuoan.biz.event.sss.SSSGameEvent;
 import com.zhuoan.biz.model.RoomManage;
+import com.zhuoan.biz.model.UserInfoCache;
 import com.zhuoan.constant.SocketListenerConstant;
 import com.zhuoan.dao.DBUtil;
 import com.zhuoan.enumtype.EnvKeyEnum;
@@ -14,6 +15,7 @@ import com.zhuoan.queue.SqlQueue;
 import com.zhuoan.service.socketio.SocketIoManagerService;
 import com.zhuoan.times.SingleTimer;
 import com.zhuoan.util.LogUtil;
+import com.zhuoan.util.thread.ThreadPoolHelper;
 import net.sf.json.JSONArray;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
@@ -90,17 +92,9 @@ public class GameMain implements SocketIoManagerService {
         server.start();
         logger.info("SocketIO server is started successfully!!!!!!");
 
-
-        // todo  下方处理为一个方法 + 注释
-        String sql = "select room_no from za_gamerooms where status>=0";
-        JSONArray result = DBUtil.getObjectListBySQL(sql, new Object[]{});
-
-        sql = "select id,game_id,opt_key,opt_name,opt_val,is_mul,is_use,createTime,memo,sort,is_open from za_gamesetting";
-        RoomManage.result = DBUtil.getObjectListBySQL(sql, new Object[]{});
-        logger.error(String.valueOf(RoomManage.result));
-        LogUtil.print("当前房间：" + result);
-
+        preSelectRoomSetting();
     }
+
 
     /**
      * @param server 方便后续配置至不同服务器
@@ -126,7 +120,22 @@ public class GameMain implements SocketIoManagerService {
 
     private void initQueue() {
 //        messageQueue = new MessageQueue(16);
-        sqlQueue = new SqlQueue(1);
+
+//        sqlQueue = new SqlQueue(1); // todo 待测试
+        ThreadPoolHelper.executorService.submit(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    while (true) {
+                        UserInfoCache.updateCache();
+                        Thread.sleep(5000);
+                    }
+                } catch (Exception e) {
+                    logger.error("数据库队列处理异常", e.getMessage());
+                }
+            }
+        });
+
         singleTime = new SingleTimer();
         singleTime.start();
     }
@@ -191,6 +200,18 @@ public class GameMain implements SocketIoManagerService {
         config.setMaxFramePayloadLength(SocketListenerConstant.MAX_FRAME_PAYLOAD_LENGTH);
         config.setMaxHttpContentLength(SocketListenerConstant.MAX_HTTP_CONTENT_LENGTH);
         return config;
+    }
+
+    private void preSelectRoomSetting() {
+        /* 查询上次服务器断开所有在线的房间*/
+        String sql = "select room_no from za_gamerooms where status>=0";
+        JSONArray result = DBUtil.getObjectListBySQL(sql, new Object[]{});
+        LogUtil.print("查询上次服务器断开所有在线的房间：" + result);
+
+        /* 获取房间设置*/
+        sql = "select id,game_id,opt_key,opt_name,opt_val,is_mul,is_use,createTime,memo,sort,is_open from za_gamesetting";
+        RoomManage.result = DBUtil.getObjectListBySQL(sql, new Object[]{});
+        LogUtil.print("获取房间设置：" + String.valueOf(RoomManage.result));
     }
 
 

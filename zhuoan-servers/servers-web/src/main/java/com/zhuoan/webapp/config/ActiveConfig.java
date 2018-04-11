@@ -2,6 +2,7 @@ package com.zhuoan.webapp.config;
 
 import com.zhuoan.webapp.listener.event.BaseQueueMessageListener;
 import com.zhuoan.webapp.listener.event.SSSQueueMessageListener;
+import com.zhuoan.webapp.listener.event.SqlQueueMessageListener;
 import org.apache.activemq.command.ActiveMQQueue;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -27,6 +28,9 @@ public class ActiveConfig {
     @Resource
     private SSSQueueMessageListener sssQueueMessageListener;
 
+    @Resource
+    private SqlQueueMessageListener sqlQueueMessageListener;
+
 
     /**
      * Base queue destination queue.
@@ -46,6 +50,16 @@ public class ActiveConfig {
     @Bean
     public Queue sssQueueDestination() {
         return new ActiveMQQueue("ZA_GAMES_SSS");
+    }
+
+    /**
+     * Sql queue destination queue.
+     *
+     * @return the queue
+     */
+    @Bean
+    public Queue sqlQueueDestination() {
+        return new ActiveMQQueue("ZA_GAMES_SQL");
     }
 
     /**
@@ -91,6 +105,15 @@ public class ActiveConfig {
         queueListenerContainer.setConnectionFactory(connectionFactory);
         queueListenerContainer.setMessageListener(sssQueueMessageListener);
         queueListenerContainer.setDestination(sssQueueDestination());
+        return queueListenerContainer;
+    }
+
+    @Bean
+    public DefaultMessageListenerContainer queueListenerContainer3(ConnectionFactory connectionFactory) {
+        DefaultMessageListenerContainer queueListenerContainer = new DefaultMessageListenerContainer();
+        queueListenerContainer.setConnectionFactory(connectionFactory);
+        queueListenerContainer.setMessageListener(sqlQueueMessageListener);
+        queueListenerContainer.setDestination(sqlQueueDestination());
         return queueListenerContainer;
     }
 
