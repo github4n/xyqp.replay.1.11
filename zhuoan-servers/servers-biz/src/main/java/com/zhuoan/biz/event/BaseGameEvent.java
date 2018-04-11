@@ -43,34 +43,6 @@ public class BaseGameEvent {
      */
     public void listenerBaseGameEvent(SocketIOServer server) {
 
-        server.addEventListener(AddingEventConstant.CHECK_USER, Object.class, new DataListener<Object>() {
-            @Override
-            public void onData(SocketIOClient client, Object object, AckRequest ackSender) {
-                producerService.sendMessage(baseQueueDestination, new Messages(client, object, GidConstant.COMMON, SortsConstant.IN_GAME));
-            }
-        });
-
-        /**
-         * 心跳包
-         */
-        server.addEventListener(AddingEventConstant.GAME_PING, Object.class, new DataListener<Object>() {
-            @Override
-            public void onData(SocketIOClient client, Object obj, AckRequest request) {
-                client.sendEvent(SendingEventConstant.GAME_PONG, obj);
-            }
-        });
-
-        /**
-         * 链接
-         */
-        server.addEventListener(AddingEventConstant.CONNECTION, Object.class, new DataListener<Object>() {
-            @Override
-            public void onData(SocketIOClient client, Object obj, AckRequest request) {
-                logger.info("链接成功");
-                client.sendEvent(SendingEventConstant.CONNECT, request, "成功");
-            }
-        });
-
         /**
          * 当client连接时触发此事件
          */
@@ -88,6 +60,68 @@ public class BaseGameEvent {
             @Override
             public void onDisconnect(SocketIOClient client) {
                 logger.info("用户 IP = [{}] with sessionId = [{}] 离线了！！！", obtainClientIp(client), client.getSessionId());
+            }
+        });
+
+        /**
+         * 心跳包
+         */
+        server.addEventListener(AddingEventConstant.GAME_PING, Object.class, new DataListener<Object>() {
+            @Override
+            public void onData(SocketIOClient client, Object obj, AckRequest request) {
+                client.sendEvent(SendingEventConstant.GAME_PONG, obj);
+            }
+        });
+
+        /**
+         * CHECK_USER 03
+         */
+        server.addEventListener(AddingEventConstant.CHECK_USER, Object.class, new DataListener<Object>() {
+            @Override
+            public void onData(SocketIOClient client, Object object, AckRequest ackSender) {
+                producerService.sendMessage(baseQueueDestination, new Messages(client, object, GidConstant.COMMON, SortsConstant.IN_GAME));
+            }
+        });
+
+        /**
+         * 玩家获取房间列表 02
+         */
+        server.addEventListener(AddingEventConstant.GET_ALL_ROOM_LIST, Object.class, new DataListener<Object>() {
+            @Override
+            public void onData(SocketIOClient client, Object object, AckRequest ackSender) {
+                producerService.sendMessage(baseQueueDestination, new Messages(client, object, GidConstant.COMMON, 2));
+            }
+        });
+
+
+        /**
+         * 大厅中选中一款游戏，点击‘创建房间’  01              or 加入房间
+         */
+        server.addEventListener("getGameSetting", Object.class, new DataListener<Object>() {
+
+            @Override
+            public void onData(SocketIOClient client, Object object, AckRequest ackSender) {
+                producerService.sendMessage(baseQueueDestination, new Messages(client, object, GidConstant.COMMON, SortsConstant.ENTER_ROOM));
+            }
+        });
+
+        server.addEventListener("getGameLogsList", Object.class, new DataListener<Object>() {
+
+            @Override
+            public void onData(SocketIOClient client, Object object, AckRequest ackSender) {
+                producerService.sendMessage(baseQueueDestination, new Messages(client, object, GidConstant.COMMON, 4));
+            }
+        });
+
+
+        /**
+         *    点 " 确认开房 "
+         */
+        server.addEventListener("createRoomNN", Object.class, new DataListener<Object>() {
+            @Override
+            public void onData(SocketIOClient client, Object object, AckRequest ackSender) {
+                //todo   公共的统一   eventName   gid  sorts 常量类统一
+                producerService.sendMessage(baseQueueDestination, new Messages(client, object, 1, 15));
             }
         });
 

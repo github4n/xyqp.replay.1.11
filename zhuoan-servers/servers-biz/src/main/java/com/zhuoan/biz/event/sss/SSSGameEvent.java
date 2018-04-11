@@ -4,6 +4,7 @@ import com.corundumstudio.socketio.AckRequest;
 import com.corundumstudio.socketio.SocketIOClient;
 import com.corundumstudio.socketio.SocketIOServer;
 import com.corundumstudio.socketio.listener.DataListener;
+import com.zhuoan.queue.Messages;
 import com.zhuoan.service.jms.ProducerService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -33,9 +34,9 @@ public class SSSGameEvent {
     public void listenerSSSGameEvent(SocketIOServer server) {
 
 
-        /**
-         * 加入房间 or 创建房间
-         */
+/**
+ * 加入房间 or 创建房间
+ */
         server.addEventListener("enterRoom_SSS", Object.class, new DataListener<Object>() {
 
             @Override
@@ -54,8 +55,7 @@ public class SSSGameEvent {
 					leave(room,uuid) 将指定客户端离开指定房间，如果房间中已无客户端，删除该房间。
 					getBroadcastOperations 返回针对空间中所有客户端的广播对象。
 					getRoomOperations(room) 返回针对指定房间的广播对象。*/
-
-                producerService.sendMessage(sssQueueDestination, 123);
+                producerService.sendMessage(sssQueueDestination, new Messages(client, data, 4, 1));
 //                    queue.addQueue(new Messages(client, data, 4, 1));
 
 
@@ -76,246 +76,159 @@ public class SSSGameEvent {
             }
         });
 
-        /**
-         * 玩家获取房间列表
-         */
-        server.addEventListener("getAllRoomList", Object.class,new DataListener<Object>() {
-
-            @Override
-            public void onData(SocketIOClient client, Object object, AckRequest ackSender){
-                try {
-                    producerService.sendMessage(sssQueueDestination, 123);
-//                    queue.addQueue(new Messages(client, object, 0, 2));
-                } catch (Exception e) {
-                    // TODO: handle exception
-                    e.printStackTrace();
-                }
-            }
-        });
-
 
         /**
          * 准备方法
          */
-//        server.addEventListener("gameReady_SSS", Object.class,new DataListener<Object>() {
-//
-//            @Override
-//            public void onData(SocketIOClient client, Object data, AckRequest ackSender){
-//
-//                try {
+        server.addEventListener("gameReady_SSS", Object.class, new DataListener<Object>() {
+
+            @Override
+            public void onData(SocketIOClient client, Object data, AckRequest ackSender) {
+                producerService.sendMessage(sssQueueDestination, new Messages(client, data, 4, 2));
 //                    queue.addQueue(new Messages(client, data, 4, 2));
-//                    //queue.execute();
-//                    //sssService.gameReady(client, data);
-////					sssGameEventDeal.gameReady(client, data);
-//                } catch (Exception e) {
-//                    e.printStackTrace();
-//                }
-//
-//
-//
-//            }
-//        });
-        server.addEventListener("getGameSetting", Object.class,new DataListener<Object>() {
-
-            @Override
-            public void onData(SocketIOClient client, Object data, AckRequest ackSender){
-
-                try {
-//                    queue.addQueue(new Messages(client, data, 0, 1));
-logger.info("11");
-                    //nnService.enterRoom(client, data);
-                } catch (Exception e) {
-                    //Logger.getLogger(NNGameEvent.class).error(e.getMessage(), e);
-                    e.printStackTrace();
-                }
             }
         });
-//
-//
-//
 
-//
-//
-//
-
-//
-//
-        server.addEventListener("getGameLogsList", Object.class,new DataListener<Object>() {
+        server.addEventListener("joinRoomNN", Object.class, new DataListener<Object>() {
 
             @Override
-            public void onData(SocketIOClient client, Object data, AckRequest ackSender){
-
-                try {
-                    logger.info("11");
-//                    queue.addQueue(new Messages(client, data, 0, 4));
-                    //nnService.enterRoom(client, data);
-                } catch (Exception e) {
-                    //Logger.getLogger(NNGameEvent.class).error(e.getMessage(), e);
-                    e.printStackTrace();
-                }
-            }
-        });
-//        server.addEventListener("joinRoomNN", Object.class,new DataListener<Object>() {
-//
-//            @Override
-//            public void onData(SocketIOClient client, Object data, AckRequest ackSender){
-//
-//                try {
+            public void onData(SocketIOClient client, Object data, AckRequest ackSender) {
+                    producerService.sendMessage(sssQueueDestination, new Messages(client, data, 1, 16));
 //                    queue.addQueue(new Messages(client, data, 1, 16));
-//                    //nnService.enterRoom(client, data);
-//                } catch (Exception e) {
-//                    e.printStackTrace();
-//                }
-//            }
-//        });
-//        server.addEventListener("createRoomNN", Object.class,new DataListener<Object>() {
-//
-//            @Override
-//            public void onData(SocketIOClient client, Object data, AckRequest ackSender){
-//
-//                try {
-//                    queue.addQueue(new Messages(client, data, 1, 15));
-//                    // nnService.enterRoom(client, data);
-//                } catch (Exception e) {
-//                    e.printStackTrace();
-//                }
-//            }
-//        });
-//
-//
-//        /**
-//         * 游戏事件
-//         */
-//        server.addEventListener("gameEvent_SSS", Object.class,new DataListener<Object>() {
-//
-//            @Override
-//            public void onData(SocketIOClient client, Object data, AckRequest ackSender){
-//
-//                try {
+                    //nnService.enterRoom(client, data);
+            }
+        });
+
+
+        /**
+         * 游戏事件
+         */
+        server.addEventListener("gameEvent_SSS", Object.class, new DataListener<Object>() {
+
+            @Override
+            public void onData(SocketIOClient client, Object data, AckRequest ackSender) {
+                producerService.sendMessage(sssQueueDestination, new Messages(client, data, 4, 3));
 //                    queue.addQueue(new Messages(client, data, 4, 3));
-//                    //queue.execute();
-//                    //sssService.gameEvent(client, data);
-////					sssGameEventDeal.gameEvent(client, data);
-//                } catch (Exception e) {
-//                    e.printStackTrace();
-//                }
-//            }
-//        });
-//
-//
-//        /**
-//         * 申请解散房间事件
-//         */
-//        server.addEventListener("closeRoom_SSS", Object.class,new DataListener<Object>() {
-//
-//            @Override
-//            public void onData(SocketIOClient client, Object data, AckRequest ackSender){
-//
+                    //queue.execute();
+                    //sssService.gameEvent(client, data);
+//					sssGameEventDeal.gameEvent(client, data);
+            }
+        });
+
+
+        /**
+         * 申请解散房间事件
+         */
+        server.addEventListener("closeRoom_SSS", Object.class, new DataListener<Object>() {
+
+            @Override
+            public void onData(SocketIOClient client, Object data, AckRequest ackSender) {
+                producerService.sendMessage(sssQueueDestination, new Messages(client, data, 4, 4));
 //                try {
-//                    queue.addQueue(new Messages(client, data, 4, 4));
+////                    queue.addQueue(new Messages(client, data, 4, 4));
 //                    //queue.execute();
 //                    //sssService.closeRoom(client, data);
 //                } catch (Exception e) {
 //                    e.printStackTrace();
 //                }
-//            }
-//        });
-//
-//
-//        /**
-//         * 退出房间事件
-//         */
-//        server.addEventListener("exitRoom_SSS", Object.class,new DataListener<Object>() {
-//
-//            @Override
-//            public void onData(SocketIOClient client, Object data, AckRequest ackSender){
-//
+            }
+        });
+
+
+        /**
+         * 退出房间事件
+         */
+        server.addEventListener("exitRoom_SSS", Object.class, new DataListener<Object>() {
+
+            @Override
+            public void onData(SocketIOClient client, Object data, AckRequest ackSender) {
+                producerService.sendMessage(sssQueueDestination, new Messages(client, data, 4, 5));
 //                try {
-//                    queue.addQueue(new Messages(client, data, 4, 5));
+////                    queue.addQueue(new Messages(client, data, 4, 5));
 //                    //queue.execute();
 //                    //sssService.exitRoom(client, data);
 ////					sssGameEventDeal.exitRoom(client, data);
 //                } catch (Exception e) {
 //                    e.printStackTrace();
 //                }
-//            }
-//        });
-//
-//
-//        /**
-//         * 断线重连事件
-//         */
-//        server.addEventListener("reconnectGame_SSS", Object.class,new DataListener<Object>() {
-//
-//            @Override
-//            public void onData(SocketIOClient client, Object data, AckRequest ackSender){
-//
+            }
+        });
+
+
+        /**
+         * 断线重连事件
+         */
+        server.addEventListener("reconnectGame_SSS", Object.class, new DataListener<Object>() {
+
+            @Override
+            public void onData(SocketIOClient client, Object data, AckRequest ackSender) {
+                producerService.sendMessage(sssQueueDestination, new Messages(client, data, 4, 6));
 //                try {
-//                    queue.addQueue(new Messages(client, data, 4, 6));
+////                    queue.addQueue(new Messages(client, data, 4, 6));
 //                    //queue.execute();
 //                    //sssService.reconnectGame(client, data);
 ////					sssGameEventDeal.reconnectGame(client, data);
 //                } catch (Exception e) {
 //                    e.printStackTrace();
 //                }
-//            }
-//        });
-//
-//
-//        /**
-//         * 判断玩家是否是重新连接
-//         */
-//        server.addEventListener("gameConnReset_SSS", Object.class,new DataListener<Object>() {
-//
-//            @Override
-//            public void onData(SocketIOClient client, Object data, AckRequest ackSender){
-//
+            }
+        });
+
+
+        /**
+         * 判断玩家是否是重新连接
+         */
+        server.addEventListener("gameConnReset_SSS", Object.class, new DataListener<Object>() {
+
+            @Override
+            public void onData(SocketIOClient client, Object data, AckRequest ackSender) {
+                producerService.sendMessage(sssQueueDestination, new Messages(client, data, 4, 7));
 //                try {
-//                    queue.addQueue(new Messages(client, data, 4, 7));
+////                    queue.addQueue(new Messages(client, data, 4, 7));
 //                    //queue.execute();
 //                    //sssService.gameConnReset(client, data);
 ////					sssGameEventDeal.gameConnReset(client, data);
 //                } catch (Exception e) {
 //                    e.printStackTrace();
 //                }
-//            }
-//        });
-//
-//        /**
-//         * 游戏房间总结算
-//         */
-//        server.addEventListener("gameSummary_SSS", Object.class,new DataListener<Object>() {
-//
-//            @Override
-//            public void onData(SocketIOClient client, Object data, AckRequest ackSender){
-//
+            }
+        });
+
+        /**
+         * 游戏房间总结算
+         */
+        server.addEventListener("gameSummary_SSS", Object.class, new DataListener<Object>() {
+
+            @Override
+            public void onData(SocketIOClient client, Object data, AckRequest ackSender) {
+                producerService.sendMessage(sssQueueDestination, new Messages(client, data, 4, 8));
 //                try {
-//                    queue.addQueue(new Messages(client, data, 4, 8));
+////                    queue.addQueue(new Messages(client, data, 4, 8));
 //                    //queue.execute();
 //                    //sssService.gameSummary(client, data);
 ////					sssGameEventDeal.gameSummary(client, data);
 //                } catch (Exception e) {
 //                    e.printStackTrace();
 //                }
-//            }
-//        });
-//
-//        /**
-//         * 更新用户实时信息
-//         */
-//        server.addEventListener("playerInfo_SSS", Object.class,new DataListener<Object>() {
-//
-//            @Override
-//            public void onData(SocketIOClient client, Object data, AckRequest ackSender){
-//
+            }
+        });
+
+        /**
+         * 更新用户实时信息
+         */
+        server.addEventListener("playerInfo_SSS", Object.class, new DataListener<Object>() {
+
+            @Override
+            public void onData(SocketIOClient client, Object data, AckRequest ackSender) {
+                producerService.sendMessage(sssQueueDestination, new Messages(client, data, 4,9));
 //                try {
-//                    queue.addQueue(new Messages(client, data, 4,9));
+////                    queue.addQueue(new Messages(client, data, 4,9));
 //                    //queue.execute();
 //                    //sssService.playerInfo(client, data);
 //                } catch (Exception e) {
 //                    e.printStackTrace();
 //                }
-//            }
-//        });
+            }
+        });
     }
 }

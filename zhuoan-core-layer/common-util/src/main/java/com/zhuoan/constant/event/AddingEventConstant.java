@@ -16,7 +16,7 @@ public class AddingEventConstant {
      */
     public static final String GAME_PING = "game_ping";
     /**
-     * The constant CONNECTION.
+     * The constant GET_ALL_ROOM_LIST.
      */
-    public static final String CONNECTION = "connection";
+    public static final String GET_ALL_ROOM_LIST = "getAllRoomList";
 }

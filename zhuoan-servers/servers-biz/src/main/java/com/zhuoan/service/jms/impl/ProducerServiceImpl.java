@@ -73,12 +73,13 @@ public class ProducerServiceImpl implements ProducerService {
 
     @Override
     public void sendMessage(Destination destination, final Messages msg) {
+        // todo 判断msg 可能出现的问题
         final String msgText = JSONObject.toJSONString(msg);
         jmsTemplate.send(destination, new MessageCreator() {
             public Message createMessage(Session session) throws JMSException {
                 return session.createTextMessage(msgText);
             }
         });
-        logger.info("队列 [" + String.valueOf(destination) + "] 发送了消息 = [" + msgText + "]");
+        logger.info("[" + String.valueOf(destination) + "] 发送了消息 = [" + msgText + "]");
     }
 }

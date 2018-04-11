@@ -48,9 +48,9 @@ public class BaseQueueMessageListener implements MessageListener {
                 logger.info("[" + this.getClass().getName() + "] 接收了消息 = [" + messageStr + "]");
             } catch (JMSException e) {
                 logger.error("信息接收出现异常", e.getMessage());
+                //todo 统一异常处理
+                throw new BizException("");
             }
-        } else {
-            throw new BizException("");
         }
 
         JSONObject jsonObject = JSONObject.fromObject(messageStr);
@@ -59,10 +59,10 @@ public class BaseQueueMessageListener implements MessageListener {
         Integer gid = (Integer) jsonObject.get("gid");
         Integer sorts = (Integer) jsonObject.get("sorts");
         Messages messages = new Messages(client, data, gid, sorts);
-        /* todo 以上保证代码执行的准确性，需要再做优化：Messages重新封装 */
+        /* todo 以上处理只是保证代码执行的准确性，需要再做优化：Messages重新封装 */
 
 
-        switch (messages.getGid()) {
+        switch (gid) {
             case GidConstant.COMMON:
                 switch (messages.getSorts()) {
                     case 1:
