@@ -5,7 +5,7 @@ import com.zhuoan.biz.event.sss.SSSGameEventDeal;
 import com.zhuoan.biz.model.GameLogsCache;
 import com.zhuoan.biz.model.RoomManage;
 import com.zhuoan.biz.service.sss.impl.SSSServiceImpl;
-import com.zhuoan.constant.GamesConstant;
+import com.zhuoan.constant.event.GidConstant;
 import com.zhuoan.queue.Messages;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -63,7 +63,7 @@ public class SSSQueueMessageListener implements MessageListener {
 
             // 处理队列中的信息。。。。。
             switch (messages.getGid()) {
-                case GamesConstant.COMMON:
+                case GidConstant.COMMON:
                     switch (messages.getSorts()) {
                         case 1:
                             roomManage.getGameSetting(client, data);
@@ -81,7 +81,7 @@ public class SSSQueueMessageListener implements MessageListener {
                             break;
                     }
                     break;
-                case GamesConstant.NN:
+                case GidConstant.NN:
                     switch (messages.getSorts()) {
 
                         case 15:
@@ -93,7 +93,7 @@ public class SSSQueueMessageListener implements MessageListener {
                             roomManage.joinRoomNN(client, data);
                             break;
                     }
-                case GamesConstant.SSS:
+                case GidConstant.SSS:
                     // 十三水
                     switch (messages.getSorts()) {
                         case 1:

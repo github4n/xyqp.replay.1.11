@@ -28,12 +28,19 @@ public interface ProducerService {
     void sendMessage(final String msg);
 
     /**
-     * Send message.向指定队列发送 自定义消息
+     * Send message.向指定队列发送 自定义消息.  注意：对象需要序列化，且该对象不可嵌其它对象
      *
      * @param destination the destination
      * @param msg         the msg
      */
     void sendMessage(Destination destination, final Object msg);
+
+    /**
+     * Send message.
+     *
+     * @param destination the destination
+     * @param msg         the msg
+     */
     void sendMessage(Destination destination, final Messages msg);
 
 }

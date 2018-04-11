@@ -1,4 +1,4 @@
-package com.zhuoan.constant;
+package com.zhuoan.constant.event;
 
 /**
  * GamesConstant
@@ -6,7 +6,7 @@ package com.zhuoan.constant;
  * @author weixiang.wu
  * @date 2018 -04-09 15:28
  */
-public class GamesConstant {
+public class GidConstant {
 
     /**
      * The constant COMMON.

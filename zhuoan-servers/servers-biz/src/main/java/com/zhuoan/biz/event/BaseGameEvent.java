@@ -6,6 +6,10 @@ import com.corundumstudio.socketio.SocketIOServer;
 import com.corundumstudio.socketio.listener.ConnectListener;
 import com.corundumstudio.socketio.listener.DataListener;
 import com.corundumstudio.socketio.listener.DisconnectListener;
+import com.zhuoan.constant.event.AddingEventConstant;
+import com.zhuoan.constant.event.GidConstant;
+import com.zhuoan.constant.event.SendingEventConstant;
+import com.zhuoan.constant.event.SortsConstant;
 import com.zhuoan.queue.Messages;
 import com.zhuoan.service.jms.ProducerService;
 import org.slf4j.Logger;
@@ -39,38 +43,31 @@ public class BaseGameEvent {
      */
     public void listenerBaseGameEvent(SocketIOServer server) {
 
-
-        server.addEventListener("checkUser", Object.class, new DataListener<Object>() {
-
+        server.addEventListener(AddingEventConstant.CHECK_USER, Object.class, new DataListener<Object>() {
             @Override
             public void onData(SocketIOClient client, Object object, AckRequest ackSender) {
-
-
-                producerService.sendMessage(baseQueueDestination, new Messages(client, object, 0, 3));
-
-//                    queue.addQueue(new Messages(client, object, 0, 3));
+                producerService.sendMessage(baseQueueDestination, new Messages(client, object, GidConstant.COMMON, SortsConstant.IN_GAME));
             }
         });
-
 
         /**
          * 心跳包
          */
-        server.addEventListener("game_ping", Object.class, new DataListener<Object>() {
+        server.addEventListener(AddingEventConstant.GAME_PING, Object.class, new DataListener<Object>() {
             @Override
             public void onData(SocketIOClient client, Object obj, AckRequest request) {
-                client.sendEvent("game_pong", obj);
+                client.sendEvent(SendingEventConstant.GAME_PONG, obj);
             }
         });
 
         /**
          * 链接
          */
-        server.addEventListener("connection", Object.class, new DataListener<Object>() {
+        server.addEventListener(AddingEventConstant.CONNECTION, Object.class, new DataListener<Object>() {
             @Override
             public void onData(SocketIOClient client, Object obj, AckRequest request) {
                 logger.info("链接成功");
-                client.sendEvent("connect", request, "成功");
+                client.sendEvent(SendingEventConstant.CONNECT, request, "成功");
             }
         });
 
