@@ -2,7 +2,7 @@
 <configuration debug="false">
 
     <!--定义日志文件的存储地址 勿在 LogBack 的配置中使用相对路径 /app/sv/logs -->
-    <property name="LOG_HOME" value="/data/weblogs/games.games.server.ui"/>
+    <property name="LOG_HOME" value="D:/data/eventlogs/games.games.server.ui"/>
 
     <!-- ========================== 配置APPENDER(是负责写日志的组件) START==========================-->
 
@@ -96,7 +96,7 @@
         <appender-ref ref="STDOUT"/>
     </root>
 
-    <!-- 番豆应用日志 -->
+    <!-- 卓安应用日志 -->
     <!--如果<logger>没有设置打印级别，都继承上级<root>的日志级别“DEBUG”-->
     <logger name="com.zhuoan" level="INFO" additivity="true">
         <!--没有设置addtivity，默认为true，将此loger的打印信息向上级传递；-->
