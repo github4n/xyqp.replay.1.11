@@ -106,7 +106,7 @@
     </logger>
 
     <!-- sql-log -->
-    <logger name="com.zhuoan" level="DEBUG" additivity="true">
+    <logger name="com.zhuoan.biz" level="DEBUG" additivity="true">
         <appender-ref ref="ASYNC-SQL"/>
     </logger>
 

@@ -95,6 +95,8 @@ public class GameMain implements SocketIoManagerService {
         server.start();
         logger.info("SocketIO server is started successfully!!!!!!");
 
+
+        // todo  下方处理为一个方法 + 注释
         String sql = "select room_no from za_gamerooms where status>=0";
         JSONArray result = DBUtil.getObjectListBySQL(sql, new Object[]{});
 

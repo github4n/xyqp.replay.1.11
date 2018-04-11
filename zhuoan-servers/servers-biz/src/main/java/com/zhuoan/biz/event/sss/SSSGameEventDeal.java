@@ -17,12 +17,14 @@ import com.zhuoan.util.Dto;
 import com.zhuoan.util.LogUtil;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
+import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentSkipListSet;
 
 // 游戏事件处理
+@Service
 public class SSSGameEventDeal {
 
 	MaJiangBiz mjBiz=new MajiangBizImpl();

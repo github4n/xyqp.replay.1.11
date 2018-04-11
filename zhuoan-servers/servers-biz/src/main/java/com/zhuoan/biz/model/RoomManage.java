@@ -16,6 +16,7 @@ import com.zhuoan.util.LogUtil;
 import com.zhuoan.util.MathDelUtil;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
+import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -25,6 +26,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArraySet;
 
+@Component
 public class RoomManage {
 	/**
 	 * 20180315

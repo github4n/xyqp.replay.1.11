@@ -6,7 +6,7 @@ import com.zhuoan.biz.model.GameLogsCache;
 import com.zhuoan.biz.model.RoomManage;
 import com.zhuoan.biz.service.sss.impl.SSSServiceImpl;
 import com.zhuoan.constant.event.GidConstant;
-import com.zhuoan.exception.BizException;
+import com.zhuoan.exception.EventException;
 import com.zhuoan.queue.Messages;
 import com.zhuoan.service.socketio.impl.GameMain;
 import net.sf.json.JSONObject;
@@ -14,6 +14,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
+import javax.annotation.Resource;
 import javax.jms.JMSException;
 import javax.jms.Message;
 import javax.jms.MessageListener;
@@ -31,12 +32,12 @@ public class BaseQueueMessageListener implements MessageListener {
 
     private final static Logger logger = LoggerFactory.getLogger(BaseQueueMessageListener.class);
 
-
-    public final RoomManage roomManage = new RoomManage();
-
-    public final GameLogsCache gameLogsCache = new GameLogsCache();
-
-    public final SSSGameEventDeal sssService = new SSSGameEventDeal();
+    @Resource
+    private RoomManage roomManage;
+    @Resource
+    private SSSGameEventDeal sssService;
+    @Resource
+    private GameLogsCache gameLogsCache;
 
     @Override
     public void onMessage(Message message) {
@@ -47,9 +48,7 @@ public class BaseQueueMessageListener implements MessageListener {
                 messageStr = tm.getText();
                 logger.info("[" + this.getClass().getName() + "] 接收了消息 = [" + messageStr + "]");
             } catch (JMSException e) {
-                logger.error("信息接收出现异常", e.getMessage());
-                //todo 统一异常处理
-                throw new BizException("");
+                throw new EventException("[" + this.getClass().getName() + "] 信息接收出现异常");
             }
         }
 

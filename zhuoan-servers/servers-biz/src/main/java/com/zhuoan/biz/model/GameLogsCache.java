@@ -6,6 +6,7 @@ import com.zhuoan.biz.service.majiang.impl.MajiangBizImpl;
 import com.zhuoan.util.Dto;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
+import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -19,6 +20,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * @author wqm
  * @date 2018年3月19日
  */
+@Component
 public class GameLogsCache {
 
 	// <玩家账号,<游戏id,战绩>>
