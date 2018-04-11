@@ -3,7 +3,6 @@ package com.zhuoan.times;
 
 import com.zhuoan.biz.core.sss.SSSGameRoom;
 import com.zhuoan.biz.model.RoomManage;
-import com.zhuoan.service.socketio.impl.GameMain;
 import com.zhuoan.util.LogUtil;
 
 import java.util.HashMap;
@@ -86,7 +85,7 @@ public class SingleTimer extends Thread {
 //					}
                     if (entry.getValue().nTimeLimit <= 1) {
                         LogUtil.print("-----------定时器投递事件-----------");
-                        GameMain.messageQueue.addQueue(entry.getValue().gmd);
+//                        GameMain.messageQueue.addQueue(entry.getValue().gmd);
 
                         // GameMain.messageQueue.addQueue(new Messages(entry.getValue().client, entry.getValue().data, entry.getValue().gid, entry.getValue().nType));
                         it.remove();

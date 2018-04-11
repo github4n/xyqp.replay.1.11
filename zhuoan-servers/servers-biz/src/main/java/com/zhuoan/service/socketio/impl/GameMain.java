@@ -10,7 +10,6 @@ import com.zhuoan.biz.model.RoomManage;
 import com.zhuoan.constant.SocketListenerConstant;
 import com.zhuoan.dao.DBUtil;
 import com.zhuoan.enumtype.EnvKeyEnum;
-import com.zhuoan.queue.MessageQueue;
 import com.zhuoan.queue.SqlQueue;
 import com.zhuoan.service.socketio.SocketIoManagerService;
 import com.zhuoan.times.SingleTimer;
@@ -56,10 +55,6 @@ public class GameMain implements SocketIoManagerService {
      * The constant sqlQueue.
      */
     public static SqlQueue sqlQueue = null;
-    /**
-     * The constant messageQueue.
-     */
-    public static MessageQueue messageQueue = null;
     /**
      * The constant singleTime.
      */
