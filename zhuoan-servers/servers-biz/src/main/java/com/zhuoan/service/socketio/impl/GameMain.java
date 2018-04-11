@@ -130,7 +130,7 @@ public class GameMain implements SocketIoManagerService {
 
 
     private void initQueue() {
-        messageQueue = new MessageQueue(16);
+//        messageQueue = new MessageQueue(16);
         sqlQueue = new SqlQueue(1);
         singleTime = new SingleTimer();
         singleTime.start();

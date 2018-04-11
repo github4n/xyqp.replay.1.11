@@ -107,6 +107,13 @@
                 <version>0.1.4</version>
             </dependency>
             <!-- logback end -->
+
+            <!--线程池-->
+            <dependency>
+                <groupId>com.google.guava</groupId>
+                <artifactId>guava</artifactId>
+                <version>18.0</version>
+            </dependency>
         </dependencies>
     </dependencyManagement>
 

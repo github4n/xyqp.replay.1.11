@@ -48,7 +48,7 @@ public class BaseQueueMessageListener implements MessageListener {
                 messageStr = tm.getText();
                 logger.info("[" + this.getClass().getName() + "] 接收了消息 = [" + messageStr + "]");
             } catch (JMSException e) {
-                throw new EventException("[" + this.getClass().getName() + "] 信息接收出现异常");
+                throw new EventException("信息接收出现异常");
             }
         }
 

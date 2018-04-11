@@ -33,6 +33,12 @@
             <version>2.3</version>
             <classifier>jdk15</classifier>
         </dependency>
+
+        <!--线程池-->
+        <dependency>
+            <groupId>com.google.guava</groupId>
+            <artifactId>guava</artifactId>
+        </dependency>
     </dependencies>
     <parent>
         <groupId>com.zhuoan.games.chess-cards</groupId>
