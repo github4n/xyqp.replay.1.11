@@ -4,6 +4,7 @@ import com.zhuoan.biz.service.majiang.MaJiangBiz;
 import com.zhuoan.dao.DBUtil;
 import com.zhuoan.exception.EventException;
 import com.zhuoan.queue.SqlModel;
+import net.sf.json.JSONObject;
 import org.apache.activemq.command.ActiveMQObjectMessage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -31,9 +32,10 @@ public class SqlQueueMessageListener implements MessageListener {
 
     @Override
     public void onMessage(Message message) {
-        SqlModel sqlModel = null;
+        SqlModel sqlModel;
         try {
             sqlModel = (SqlModel) ((ActiveMQObjectMessage) message).getObject();
+            logger.info("[" + this.getClass().getName() + "] 接收了消息 = [" + JSONObject.fromObject(sqlModel) + "]");
         } catch (JMSException e) {
             throw new EventException("sqlModel对象接收异常", e.getMessage());
         }

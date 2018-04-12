@@ -6,6 +6,7 @@ import org.springframework.stereotype.Component;
 
 /**
  * The type Environment use config.
+ * 若对配置文件分类，也就是多配置文件情况下，需要用注解调用配置变量，需要再下方配置
  *
  * @author weixiang.wu
  * @date 2018 -04-01 12:42

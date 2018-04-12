@@ -51,8 +51,6 @@ public class GameMain implements SocketIoManagerService {
      * The constant server.
      */
     public static SocketIOServer server; // socketio服务
-
-
     /**
      * The constant sqlQueue.
      */
@@ -83,61 +81,14 @@ public class GameMain implements SocketIoManagerService {
          */
         asRemoteServer();
 
-        /* 调用构造器 todo 队列全部更换为 active ，此部分将舍去 */
-        initQueue();
+        /* 调度器处理：更新缓存+房间定时器 */
+        scheduleDeal();
 
         /* 添加监听事件 */
         addEventListener(server);
 
         server.start();
         logger.info("SocketIO server is started successfully!!!!!!");
-
-        preSelectRoomSetting();
-    }
-
-
-    /**
-     * @param server 方便后续配置至不同服务器
-     */
-    private void addEventListener(SocketIOServer server) {
-
-        /**
-         * todo：  后续需在配置文件配置： (ip1：events标识1)|(ip2：events标识2)……并完善代码！  作用：event绑定对应的server，后续打包只要动配置
-         */
-//        String configHostIp = env.getProperty(EnvKeyEnum.SERVER_IP.getKey());
-//        String currentHostIp = server.getConfiguration().getHostname();
-
-        /* 公共事件监听 */
-        baseGameEvent.listenerBaseGameEvent(server);
-
-
-
-        /* 十三水游戏事件监听 */
-        sssGameEvent.listenerSSSGameEvent(server);
-
-    }
-
-
-    private void initQueue() {
-//        messageQueue = new MessageQueue(16);
-
-//        sqlQueue = new SqlQueue(1); // todo 待测试
-        ThreadPoolHelper.executorService.submit(new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    while (true) {
-                        UserInfoCache.updateCache();
-                        Thread.sleep(5000);
-                    }
-                } catch (Exception e) {
-                    logger.error("数据库队列处理异常", e.getMessage());
-                }
-            }
-        });
-
-        singleTime = new SingleTimer();
-        singleTime.start();
     }
 
     /**
@@ -150,7 +101,6 @@ public class GameMain implements SocketIoManagerService {
             server = null;
         }
     }
-
 
     /**
      * 给所有连接客户端推送消息
@@ -202,22 +152,8 @@ public class GameMain implements SocketIoManagerService {
         return config;
     }
 
-    private void preSelectRoomSetting() {
-        /* 查询上次服务器断开所有在线的房间*/
-        String sql = "select room_no from za_gamerooms where status>=0";
-        JSONArray result = DBUtil.getObjectListBySQL(sql, new Object[]{});
-        LogUtil.print("查询上次服务器断开所有在线的房间：" + result);
-
-        /* 获取房间设置*/
-        sql = "select id,game_id,opt_key,opt_name,opt_val,is_mul,is_use,createTime,memo,sort,is_open from za_gamesetting";
-        RoomManage.result = DBUtil.getObjectListBySQL(sql, new Object[]{});
-        LogUtil.print("获取房间设置：" + String.valueOf(RoomManage.result));
-    }
-
-
     private void asRemoteServer() {
         try {
-
             // 获取服务注册管理器
             Registry registry = LocateRegistry.getRegistry(env.getProperty(EnvKeyEnum.SERVER_IP.getKey()),
                 Integer.valueOf(env.getProperty(EnvKeyEnum.SERVER_PORT.getKey())));
@@ -242,13 +178,48 @@ public class GameMain implements SocketIoManagerService {
         }
     }
 
+    private void scheduleDeal() {
+//        messageQueue = new MessageQueue(16);
+//        sqlQueue = new SqlQueue(1);
+        ThreadPoolHelper.executorService.submit(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    while (true) {
+                        UserInfoCache.updateCache();
+                        Thread.sleep(5000);
+                    }
+                } catch (Exception e) {
+                    logger.error("数据库队列处理异常", e.getMessage());
+                }
+            }
+        });
+
+        singleTime = new SingleTimer();
+        singleTime.start();
+
+        /* 获取房间设置放入Json数组里面*/
+        preSelectRoomSetting();
+    }
+
+    private void preSelectRoomSetting() {
+        /* 查询上次服务器断开所有在线的房间*/
+        String sql = "select room_no from za_gamerooms where status>=0";
+        JSONArray result = DBUtil.getObjectListBySQL(sql, new Object[]{});
+        LogUtil.print("查询上次服务器断开所有在线的房间：" + result);
+
+        /* 获取房间设置*/
+        sql = "select id,game_id,opt_key,opt_name,opt_val,is_mul,is_use,createTime,memo,sort,is_open from za_gamesetting";
+        RoomManage.result = DBUtil.getObjectListBySQL(sql, new Object[]{});
+        LogUtil.print("获取房间设置：" + String.valueOf(RoomManage.result));
+    }
+
     /**
      * The type Game task.
      */
     class GameTask extends TimerTask {
 
         public void run() {
-
             try {
                 // 获取服务注册管理器
                 Registry registry = LocateRegistry.getRegistry(env.getProperty(EnvKeyEnum.SERVER_IP.getKey()),
@@ -261,8 +232,28 @@ public class GameMain implements SocketIoManagerService {
                 server.heartBeat(env.getProperty(EnvKeyEnum.LOCAL_NAME.getKey()));
 
             } catch (Exception e) {
-                e.printStackTrace();
+               logger.error("获取服务注册管理器发生异常",e.getMessage());
             }
         }
+    }
+
+    /**
+     * @param server 方便后续配置至不同服务器
+     */
+    private void addEventListener(SocketIOServer server) {
+
+        /**
+         * todo：  后续需在配置文件配置： (ip1：events标识1)|(ip2：events标识2)……并完善代码！  作用：event绑定对应的server，后续打包只要动配置
+         */
+//        String configHostIp = env.getProperty(EnvKeyEnum.SERVER_IP.getKey());
+//        String currentHostIp = server.getConfiguration().getHostname();
+
+        /* 公共事件监听 */
+        baseGameEvent.listenerBaseGameEvent(server);
+
+
+
+        /* 十三水游戏事件监听 */
+        sssGameEvent.listenerSSSGameEvent(server);
     }
 }

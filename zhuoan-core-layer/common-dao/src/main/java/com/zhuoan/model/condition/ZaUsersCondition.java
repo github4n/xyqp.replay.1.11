@@ -4,11 +4,12 @@ import java.math.BigDecimal;
 import java.util.Date;
 
 /**
- * ZaUsersVO
+ * just a demo
  *
  * @author weixiang.wu
  * @date 2018-04-01 13:21
  **/
+@Deprecated
 public class ZaUsersCondition extends BaseCondition {
 
     private Long id;

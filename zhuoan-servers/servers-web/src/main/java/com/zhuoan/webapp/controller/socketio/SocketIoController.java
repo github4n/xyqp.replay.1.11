@@ -2,6 +2,7 @@ package com.zhuoan.webapp.controller.socketio;
 
 import com.corundumstudio.socketio.Configuration;
 import com.zhuoan.service.socketio.SocketIoManagerService;
+import com.zhuoan.util.thread.ThreadPoolHelper;
 import com.zhuoan.webapp.controller.BaseController;
 import com.zhuoan.webapp.listener.socketio.ServerStartListener;
 import org.slf4j.Logger;
@@ -38,26 +39,17 @@ public class SocketIoController extends BaseController {
     public String startServer(final HttpServletRequest request) {
         logger.info("当前IP = [" + getIp(request) + "] 手动启动 socket服务");
         if (service.getServer() == null) {
-            new Thread(new Runnable() {
+            ThreadPoolHelper.executorService.submit(new Runnable() {
                 @Override
                 public void run() {
                     service.startServer();
                 }
-            }).start();
+            });
         } else {
             Configuration configuration = service.getServer().getConfiguration();
             logger.info("socket 服务已绑定 ip：" + configuration.getHostname() + " port:" + configuration.getPort());
         }
         return "SocketIO server is started successfully!!!!!!";
-    }
-
-    @RequestMapping("addEventListener")
-    @ResponseBody
-    public String addEventListener(){
-
-
-
-        return null;
     }
 
     /**

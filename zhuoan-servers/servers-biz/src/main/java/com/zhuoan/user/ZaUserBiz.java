@@ -6,7 +6,7 @@ import com.zhuoan.model.condition.ZaUsersCondition;
 import com.zhuoan.model.vo.ZaUsersVO;
 
 /**
- * The interface Za user.
+ * Just a Demo。。。
  */
 @Deprecated
 public interface ZaUserBiz {

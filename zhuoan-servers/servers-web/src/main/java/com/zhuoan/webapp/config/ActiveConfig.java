@@ -12,8 +12,15 @@ import javax.jms.MessageListener;
 import javax.jms.Queue;
 
 /**
- * ActiveConfig
- *
+ * 1、兴起一条队列
+ * @see ActiveConfig#baseQueueDestination()
+ * <p>
+ * 2、配置监听，即消费者
+ * @see com.zhuoan.webapp.listener.event
+ * <p>
+ * 3、消费者监听当前队列
+ * @see ActiveConfig#queueListenerContainer(ConnectionFactory connectionFactory)
+ * <p>
  * @author weixiang.wu
  * @date 2018 -04-09 21:02
  */
@@ -31,7 +38,7 @@ public class ActiveConfig {
 
 
     /**
-     * Base queue destination queue.
+     * Base queue destination queue.1、兴起队列 ZA_GAMES_BASE
      *
      * @return the queue
      */
@@ -106,6 +113,12 @@ public class ActiveConfig {
         return queueListenerContainer;
     }
 
+    /**
+     * Queue listener container 3 default message listener container.
+     *
+     * @param connectionFactory the connection factory
+     * @return the default message listener container
+     */
     @Bean
     public DefaultMessageListenerContainer queueListenerContainer3(ConnectionFactory connectionFactory) {
         DefaultMessageListenerContainer queueListenerContainer = new DefaultMessageListenerContainer();
