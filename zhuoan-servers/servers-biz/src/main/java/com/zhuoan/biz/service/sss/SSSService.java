@@ -11,7 +11,6 @@ import java.util.UUID;
  * 十三水游戏业务接口
  */
 public interface SSSService {
-
     /**
      * 创建房间
      *
@@ -22,7 +21,7 @@ public interface SSSService {
      * @param room    the room
      * @return sss game room
      */
-    public SSSGameRoom createGameRoom(JSONObject roomObj, UUID uuid, JSONObject objInfo, Playerinfo player, SSSGameRoom room);
+    public SSSGameRoom createGameRoom(JSONObject roomObj, UUID uuid, JSONObject objInfo, Playerinfo player,SSSGameRoom room);
 
     /**
      * 加入房间
@@ -33,7 +32,7 @@ public interface SSSService {
      * @param roomType the room type
      * @return boolean
      */
-    public boolean joinGameRoom(String roomNo, UUID uuid, Playerinfo player, int roomType);
+    public boolean joinGameRoom(String roomNo, UUID uuid, Playerinfo player,int roomType);
 
     /**
      * 庄闲比对
@@ -98,7 +97,6 @@ public interface SSSService {
      * @param uid  the uid
      * @param e    the e
      */
-    public void gamelog(SSSGameRoom room, JSONArray us, JSONArray uid, boolean e);
-	
+    public void gamelog(SSSGameRoom room, JSONArray us, JSONArray uid,boolean e);
 
 }

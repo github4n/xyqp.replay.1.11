@@ -1,6 +1,6 @@
 package com.zhuoan.biz.model.nn;
 
-import com.zhuoan.biz.model.zjh.UserPacket;
+import com.zhuoan.biz.model.PackerCompare;
 import org.apache.commons.lang.ArrayUtils;
 
 import java.util.ArrayList;

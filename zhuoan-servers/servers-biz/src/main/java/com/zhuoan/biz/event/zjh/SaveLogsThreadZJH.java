@@ -1,10 +1,10 @@
 package com.zhuoan.biz.event.zjh;
 
-import com.zhuoan.dao.DBUtil;
 import com.zhuoan.biz.model.RoomManage;
 import com.zhuoan.biz.model.zjh.ZJHGame;
 import com.zhuoan.biz.service.majiang.MaJiangBiz;
 import com.zhuoan.biz.service.majiang.impl.MajiangBizImpl;
+import com.zhuoan.dao.DBUtil;
 import com.zhuoan.util.TimeUtil;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
@@ -17,7 +17,7 @@ public class SaveLogsThreadZJH extends Thread{
 	private JSONArray jiesuanArray;
 
 	public SaveLogsThreadZJH(String roomNo, JSONArray jiesuanData,
-                             JSONArray jiesuanArray) {
+			JSONArray jiesuanArray) {
 		this.roomNo = roomNo;
 		this.jiesuanData = jiesuanData;
 		this.jiesuanArray = jiesuanArray;

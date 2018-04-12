@@ -6,6 +6,7 @@ import com.corundumstudio.socketio.SocketIOServer;
 import com.za.game.remote.iservice.IService;
 import com.zhuoan.biz.event.BaseGameEvent;
 import com.zhuoan.biz.event.sss.SSSGameEvent;
+import com.zhuoan.biz.event.zjh.ZJHGameEvent;
 import com.zhuoan.biz.model.RoomManage;
 import com.zhuoan.biz.model.UserInfoCache;
 import com.zhuoan.constant.SocketListenerConstant;
@@ -59,6 +60,10 @@ public class GameMain implements SocketIoManagerService {
      * The constant singleTime.
      */
     public static SingleTimer singleTime = null;
+    /**
+     * The constant registry.
+     */
+    public static Registry registry = null;
 
 
     @Resource
@@ -69,6 +74,9 @@ public class GameMain implements SocketIoManagerService {
 
     @Resource
     private SSSGameEvent sssGameEvent;
+
+    @Resource
+    private ZJHGameEvent zjhGameEvent;
 
     @Override
     public void startServer() {
@@ -174,7 +182,7 @@ public class GameMain implements SocketIoManagerService {
             executor.scheduleWithFixedDelay(new GameTask(), 0, 1, TimeUnit.MINUTES);
 
         } catch (NotBoundException | RemoteException e) {
-            e.printStackTrace();
+            logger.error("获取远程服务注册管理器中发生了异常",e.getMessage());
         }
     }
 
@@ -214,6 +222,7 @@ public class GameMain implements SocketIoManagerService {
         LogUtil.print("获取房间设置：" + String.valueOf(RoomManage.result));
     }
 
+
     /**
      * The type Game task.
      */
@@ -222,7 +231,7 @@ public class GameMain implements SocketIoManagerService {
         public void run() {
             try {
                 // 获取服务注册管理器
-                Registry registry = LocateRegistry.getRegistry(env.getProperty(EnvKeyEnum.SERVER_IP.getKey()),
+                 registry = LocateRegistry.getRegistry(env.getProperty(EnvKeyEnum.SERVER_IP.getKey()),
                     Integer.valueOf(env.getProperty(EnvKeyEnum.SERVER_PORT.getKey())));
 
                 // 根据命名获取服务
@@ -253,7 +262,10 @@ public class GameMain implements SocketIoManagerService {
 
 
 
-        /* 十三水游戏事件监听 */
+        /* 十三水 */
         sssGameEvent.listenerSSSGameEvent(server);
+
+        /* 炸金花 */
+        zjhGameEvent.listenerZJHGameEvent(server);
     }
 }

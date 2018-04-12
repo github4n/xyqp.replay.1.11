@@ -36,6 +36,9 @@ public class ActiveConfig {
     @Resource
     private MessageListener sqlQueueMessageListener;
 
+    @Resource
+    private MessageListener zjhQueueMessageListener;
+
 
     /**
      * Base queue destination queue.1、兴起队列 ZA_GAMES_BASE
@@ -65,6 +68,11 @@ public class ActiveConfig {
     @Bean
     public Queue sqlQueueDestination() {
         return new ActiveMQQueue("ZA_GAMES_SQL");
+    }
+
+    @Bean
+    public Queue zjhQueueDestination() {
+        return new ActiveMQQueue("ZA_GAMES_ZJH");
     }
 
     /**
@@ -125,6 +133,15 @@ public class ActiveConfig {
         queueListenerContainer.setConnectionFactory(connectionFactory);
         queueListenerContainer.setMessageListener(sqlQueueMessageListener);
         queueListenerContainer.setDestination(sqlQueueDestination());
+        return queueListenerContainer;
+    }
+
+    @Bean
+    public DefaultMessageListenerContainer queueListenerContainer4(ConnectionFactory connectionFactory) {
+        DefaultMessageListenerContainer queueListenerContainer = new DefaultMessageListenerContainer();
+        queueListenerContainer.setConnectionFactory(connectionFactory);
+        queueListenerContainer.setMessageListener(zjhQueueMessageListener);
+        queueListenerContainer.setDestination(zjhQueueDestination());
         return queueListenerContainer;
     }
 

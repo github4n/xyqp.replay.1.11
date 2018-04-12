@@ -1,9 +1,6 @@
 package com.zhuoan.biz.core.sss;
 
-import com.zhuoan.constant.NewConstant;
-import com.zhuoan.biz.model.GameRoom;
-import com.zhuoan.biz.model.Player;
-import com.zhuoan.biz.model.Playerinfo;
+import com.zhuoan.biz.model.*;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 
@@ -39,9 +36,9 @@ public  class SSSGameRoom extends GameRoom {
 	private ConcurrentSkipListSet<UUID> uuidList;//用户的uuid
 	private ConcurrentSkipListSet<String> userAcc = new ConcurrentSkipListSet<String>();// 玩家account集合
 	private ConcurrentSkipListSet<Long> userSet = new ConcurrentSkipListSet<Long>();// 玩家ID集合
-//	private MutliThreadSSS1 thread;//游戏定时线程
-//	private AutoExitThread exitThread;//游戏自动解散 线程
-//	private SaveLogsThreadSSS saveLogsThreadSSS;//游戏战绩保存线程
+	private MutliThreadSSS1 thread;//游戏定时线程
+	private AutoExitThread exitThread;//游戏自动解散 线程
+	private SaveLogsThreadSSS saveLogsThreadSSS;//游戏战绩保存线程
 	private JSONObject setting;//游戏全局设置
 	private int level;//金币场等级
 
@@ -72,21 +69,21 @@ public  class SSSGameRoom extends GameRoom {
 		return roomNo;
 	}
 
-//	public AutoExitThread getExitThread() {
-//		return exitThread;
-//	}
-//
-//	public void setExitThread(AutoExitThread exitThread) {
-//		this.exitThread = exitThread;
-//	}
-//
-//	public MutliThreadSSS1 getThread() {
-//		return thread;
-//	}
-//
-//	public void setThread(MutliThreadSSS1 thread) {
-//		this.thread = thread;
-//	}
+	public AutoExitThread getExitThread() {
+		return exitThread;
+	}
+
+	public void setExitThread(AutoExitThread exitThread) {
+		this.exitThread = exitThread;
+	}
+
+	public MutliThreadSSS1 getThread() {
+		return thread;
+	}
+
+	public void setThread(MutliThreadSSS1 thread) {
+		this.thread = thread;
+	}
 
 	public void setRoomNo(String roomNo) {
 		this.roomNo = roomNo;
@@ -116,11 +113,11 @@ public  class SSSGameRoom extends GameRoom {
 		this.playerCount = playerCount;
 	}
 
-	public synchronized int getGameStatus() {
+	public int getGameStatus() {
 		return gameStatus;
 	}
 
-	public synchronized void setGameStatus(int gameStatus) {
+	public void setGameStatus(int gameStatus) {
 		this.gameStatus = gameStatus;
 	}
 
@@ -273,6 +270,7 @@ public  class SSSGameRoom extends GameRoom {
 				obj.put("ip", player.getIp());
 				obj.put("location", player.getLocation());
 				obj.put("id", player.getAccount());
+				obj.put("ghName", player.getGhName());
 				array.add(obj);
 			}
 		}
@@ -344,7 +342,8 @@ public  class SSSGameRoom extends GameRoom {
 		
 		List<Integer> indexList = new ArrayList<Integer>();
 		for (String uc :playerPaiJu.keySet()) {
-			if(playerPaiJu.get(uc).getIsReady()==NewConstant.USERSTATUS_SSS_READY){
+			int ready = playerPaiJu.get(uc).getIsReady();
+			if(ready>0){
 				indexList.add(getPlayerMap().get(uc).getMyIndex());
 			}
 		}
@@ -360,7 +359,7 @@ public  class SSSGameRoom extends GameRoom {
 		List<Integer> indexList = new ArrayList<Integer>();
 		for (String uc :playerPaiJu.keySet()) {
 			int status = playerPaiJu.get(uc).getStatus();
-			if(status==NewConstant.USERSTATUS_SSS_PEIPAI){
+			if(status==2){
 				indexList.add(getPlayerMap().get(uc).getMyIndex());
 			}
 		}
@@ -558,14 +557,13 @@ public  class SSSGameRoom extends GameRoom {
 		}
 		return player;
 	}
-
-    /**
-     * 小到大
-     *
-     * @param list the list
-     * @return string [ ]
-     */
-    public static String[] daxiao(String[] list) {
+	
+	/**
+	 * 小到大
+	 * @param card
+	 * @return
+	 */
+	public static String[] daxiao(String[] list) {
 		
 		for (int i = 0; i < list.length; i++) {
 			if (getValue(list[i])==1) {
@@ -715,11 +713,11 @@ public  class SSSGameRoom extends GameRoom {
 		【发牌阶段】随用户：哎喲喂，用户手牌：[1-2, 1-2, 4-3, 3-3, 3-4, 2-4, 4-5, 1-5, 2-11, 2-12, 1-13, 3-1, 1-1]
 		*/
 		JSONObject obj= JSONObject.fromObject("{\"platform\":\"SDTQP\",\"maxplayer\":6,\"fangkapeipai\":180,\"goldpeipai\":70,\"goldready\":30,\"jiesan\":180,\"sameThirteen\":104,\"eightXian\":80,\"sevenStars\":40,\"sixDaSun\":20,\"ThreeEmFiveSo\":52,\"thirteen\":52,\"twelfth\":26,\"threeFlushByFlower\":26,\"threeBomb\":52,\"allBig\":6,\"allSmall\":6,\"oneColor\":6,\"twoGourd\":0,\"fourThree\":52,\"fiveThree\":6,\"sixPairs\":6,\"threeFlush\":6,\"threeFlower\":6}");
-		/*String[] a1={"1-2", "1-2", "4-3", "3-3", "3-4", "2-4", "4-5","1-5", "2-11", "2-12", "1-13","3-1", "1-1"};
+		String[] a1={"1-2", "1-2", "4-3", "3-3", "3-4", "2-4", "4-5","1-5", "2-11", "2-12", "1-13","3-1", "1-1"};
 		String[] a2={"1-6", "3-6", "1-6", "1-6", "4-6", "3-1", "1-5", "4-3", "2-7", "2-7", "2-6", "2-11", "2-5"};
 		String[] a3={"1-8", "3-8", "1-11", "1-8", "4-8", "3-1", "1-5", "4-8", "2-8", "2-8", "2-11", "2-11", "2-5"};
 		String[] a4={"1-5", "3-5", "2-5", "1-8", "4-8", "4-5", "1-5", "4-3", "2-7", "2-7", "2-5", "3-5", "4-5"};
-		String[] a5={"1-5", "3-4", "2-1", "1-2", "4-3", "4-6", "1-8", "4-9", "2-10", "2-7", "2-11", "3-12", "4-13"};*/
+		String[] a5={"1-5", "3-4", "2-1", "1-2", "4-3", "4-6", "1-8", "4-9", "2-10", "2-7", "2-11", "3-12", "4-13"};
 		String[] a6={"2-13", "3-13", "1-12", "2-10", "3-10", "4-8", "2-6", "1-6", "2-5", "3-4", "1-3", "2-2", "4-2"};//提示特殊牌 不是特殊牌
 		/*String[] a3= daxiao(a1);*/
 		//System.out.println(Arrays.toString(a3));
@@ -808,13 +806,13 @@ public  class SSSGameRoom extends GameRoom {
 		this.level = level;
 	}
 
-//	public SaveLogsThreadSSS getSaveLogsThreadSSS() {
-//		return saveLogsThreadSSS;
-//	}
-//
-//	public void setSaveLogsThreadSSS(SaveLogsThreadSSS saveLogsThreadSSS) {
-//		this.saveLogsThreadSSS = saveLogsThreadSSS;
-//	}
+	public SaveLogsThreadSSS getSaveLogsThreadSSS() {
+		return saveLogsThreadSSS;
+	}
+
+	public void setSaveLogsThreadSSS(SaveLogsThreadSSS saveLogsThreadSSS) {
+		this.saveLogsThreadSSS = saveLogsThreadSSS;
+	}
 
 	public JSONObject getRoomobj() {
 		return roomobj;
@@ -835,80 +833,6 @@ public  class SSSGameRoom extends GameRoom {
 		return true;
 	}
 
-	// =====================================================
-	// 玩家准备
-	public void playerReady(String account){
-		playerPaiJu.get(account).setIsReady(NewConstant.USERSTATUS_SSS_READY);
-	}
-	
-	// 检查是否全部准备
-	public boolean checkIsAllReady(){
-		for (String uuid : playerPaiJu.keySet()) {
-			if (playerPaiJu.get(uuid).getIsReady()!=NewConstant.USERSTATUS_SSS_READY) {
-				return false;
-			}
-		}
-		return true;
-	}
-	
-	// 玩家配牌
-	public void playerPeipai(String account){
-		Player player = playerPaiJu.get(account);
-		player.setStatus(NewConstant.USERSTATUS_SSS_PEIPAI);
-		// 手动配牌不算特殊牌
-		if (player.getIsAuto()==NewConstant.PEIPAITYPE_SSS_COMMEN) {
-			player.setPaiType(0);
-		}else {
-			player.setPaiType(SSSSpecialCards.isSpecialCards(player.getPai(), getSetting()));
-		}
-		// 设置牌型对应的分数
-		player.setPaiScore(SSSSpecialCards.score(player.getPaiType(), getSetting()));
-	}
-	
-	// 检查是否全部完成配牌
-	public boolean checkIsAllPeipai(){
-		for (String uuid : playerPaiJu.keySet()) {
-			// 不检查中途加入的玩家
-			if (playerPaiJu.get(uuid).getStatus()!=NewConstant.USERSTATUS_SSS_HALFWAY) {
-				if (playerPaiJu.get(uuid).getStatus()!=NewConstant.USERSTATUS_SSS_PEIPAI) {
-					return false;
-				}
-			}
-		}
-		return true;
-	}
-	
-	// 结算
-	public void jieSuan(){
-		setGameStatus(NewConstant.GAMESTATUS_SSS_JIESUAN);
-	}
-	
-	// 玩家退出
-	public void playerExit(String account, long userId, UUID uuid){
-		// 座位号置0
-		for (int i = 0; i < getUserIdList().size(); i++) {
-			if (getUserIdList().get(i)==userId) {
-				getUserIdList().set(i, (long)0);
-				break;
-			}
-		}
-		// 清除房间用户数据
-		getPlayerMap().remove(account);
-		getPlayerPaiJu().remove(account);
-		//getUserAcc().remove(account);
-		//getUserSet().remove(userId);
-		//getUuidList().remove(uuid);
-	}
-	
-	// 获取实时准备人数
-	public int getNowReadyCount(){
-		int readyCount = 0;
-		for (String uuid : playerPaiJu.keySet()) {
-			if (playerPaiJu.get(uuid).getIsReady()==NewConstant.USERSTATUS_SSS_READY) {
-				readyCount ++;
-			}
-		}
-		return readyCount;
-	}
+
 
 }

@@ -4,7 +4,6 @@ import com.corundumstudio.socketio.SocketIOClient;
 import com.zhuoan.biz.event.sss.SSSGameEventDeal;
 import com.zhuoan.biz.model.GameLogsCache;
 import com.zhuoan.biz.model.RoomManage;
-import com.zhuoan.biz.service.sss.impl.SSSServiceImpl;
 import com.zhuoan.constant.event.GidConstant;
 import com.zhuoan.exception.EventException;
 import com.zhuoan.service.socketio.impl.GameMain;
@@ -128,11 +127,11 @@ public class GameEventsImpl {
                         break;
                     case 12:
                         // 超时准备
-                        new SSSServiceImpl().readyOvertime(data);
+//                        new SSSServiceImpl().readyOvertime(data);
                         break;
                     case 13:
                         // 超时配牌
-                        new SSSServiceImpl().peipaiOvertime(data);
+//                        new SSSServiceImpl().peipaiOvertime(data);
                         break;
                     default:
                         break;

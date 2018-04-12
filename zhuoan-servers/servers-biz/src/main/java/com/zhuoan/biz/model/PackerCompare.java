@@ -1,7 +1,8 @@
-package com.zhuoan.biz.model.nn;
+package com.zhuoan.biz.model;
 
 
-import com.zhuoan.biz.model.zjh.UserPacket;
+import com.zhuoan.biz.model.nn.Packer;
+import com.zhuoan.biz.model.nn.UserPacket;
 
 /**
  * 牌的比较
