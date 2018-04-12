@@ -1,5 +1,8 @@
 package com.zhuoan.biz.model.nn;
 
+import com.zhuoan.biz.core.nn.NiuNiu;
+import com.zhuoan.biz.core.nn.Packer;
+import com.zhuoan.biz.core.nn.UserPacket;
 import com.zhuoan.biz.model.GameRoom;
 import com.zhuoan.biz.model.Playerinfo;
 import com.zhuoan.util.Dto;
@@ -765,7 +768,7 @@ public class NNGameRoom extends GameRoom {
         List<Integer> indexList = new ArrayList<Integer>();
         for (String uuid :userPacketMap.keySet()) {
             int status = getUserPacketMap().get(uuid).getStatus();
-            if(status==NiuNiu.USERPACKER_STATUS_LIANGPAI){
+            if(status== NiuNiu.USERPACKER_STATUS_LIANGPAI){
                 indexList.add(getPlayerMap().get(uuid).getMyIndex());
             }
         }

@@ -1,10 +1,10 @@
 package com.zhuoan.biz.event.nn;
 
 import com.corundumstudio.socketio.SocketIOClient;
+import com.zhuoan.biz.core.nn.NiuNiu;
+import com.zhuoan.biz.core.nn.UserPacket;
 import com.zhuoan.biz.model.Playerinfo;
 import com.zhuoan.biz.model.nn.NNGameRoom;
-import com.zhuoan.biz.model.nn.NiuNiu;
-import com.zhuoan.biz.model.nn.UserPacket;
 import com.zhuoan.biz.service.majiang.MaJiangBiz;
 import com.zhuoan.biz.service.majiang.impl.MajiangBizImpl;
 import com.zhuoan.biz.service.nn.NiuNiuService;
@@ -215,7 +215,7 @@ public class BRNNGameEventDeal {
 				
 			}
 			
-			if(startGame&&room.getGameStatus()!=NiuNiu.GAMESTATUS_XIAZHU
+			if(startGame&&room.getGameStatus()!= NiuNiu.GAMESTATUS_XIAZHU
 					&&room.getGameStatus()!=NiuNiu.GAMESTATUS_JIESUAN){
 
 				// 游戏状态

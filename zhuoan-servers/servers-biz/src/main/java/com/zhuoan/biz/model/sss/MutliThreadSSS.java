@@ -1,8 +1,9 @@
-package com.zhuoan.biz.model;
+package com.zhuoan.biz.model.sss;
 
 import com.corundumstudio.socketio.SocketIOClient;
 import com.zhuoan.biz.core.sss.SSSGameRoom;
 import com.zhuoan.biz.event.sss.SSSGameEventDeal;
+import com.zhuoan.biz.model.Playerinfo;
 import com.zhuoan.biz.service.sss.SSSService;
 import com.zhuoan.biz.service.sss.impl.SSSServiceImpl;
 import com.zhuoan.service.socketio.impl.GameMain;

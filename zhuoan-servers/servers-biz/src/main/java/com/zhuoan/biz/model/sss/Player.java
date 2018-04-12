@@ -1,4 +1,4 @@
-package com.zhuoan.biz.model;
+package com.zhuoan.biz.model.sss;
 
 import net.sf.json.JSONArray;
 

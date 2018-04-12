@@ -4,6 +4,8 @@ import com.corundumstudio.socketio.SocketIOClient;
 import com.zhuoan.biz.core.sss.SSSGameRoom;
 import com.zhuoan.biz.core.sss.SSSSpecialCards;
 import com.zhuoan.biz.model.*;
+import com.zhuoan.biz.model.sss.AutoExitThread;
+import com.zhuoan.biz.model.sss.Player;
 import com.zhuoan.biz.service.GlobalService;
 import com.zhuoan.biz.service.majiang.MaJiangBiz;
 import com.zhuoan.biz.service.majiang.impl.MajiangBizImpl;

@@ -1,6 +1,10 @@
 package com.zhuoan.biz.core.sss;
 
 import com.zhuoan.biz.model.*;
+import com.zhuoan.biz.model.sss.AutoExitThread;
+import com.zhuoan.biz.model.sss.MutliThreadSSS1;
+import com.zhuoan.biz.model.sss.Player;
+import com.zhuoan.biz.model.sss.SaveLogsThreadSSS;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 

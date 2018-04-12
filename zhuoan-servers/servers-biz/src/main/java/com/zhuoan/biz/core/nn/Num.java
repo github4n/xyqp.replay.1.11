@@ -1,4 +1,4 @@
-package com.zhuoan.biz.model.nn;
+package com.zhuoan.biz.core.nn;
 
 /**
  * 牌的数字

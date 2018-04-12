@@ -1,9 +1,9 @@
 package com.zhuoan.biz.event.nn;
 
 import com.corundumstudio.socketio.SocketIOClient;
+import com.zhuoan.biz.core.nn.NiuNiu;
+import com.zhuoan.biz.core.nn.UserPacket;
 import com.zhuoan.biz.model.nn.NNGameRoom;
-import com.zhuoan.biz.model.nn.NiuNiu;
-import com.zhuoan.biz.model.nn.UserPacket;
 import com.zhuoan.biz.service.GlobalService;
 import com.zhuoan.biz.service.majiang.MaJiangBiz;
 import com.zhuoan.biz.service.majiang.impl.MajiangBizImpl;
@@ -89,7 +89,7 @@ public class MutliThreadNN extends Thread{
     			if(Constant.niuNiuGameMap.get(roomNo)!=null){
     				
     				NNGameRoom room = Constant.niuNiuGameMap.get(roomNo);
-    				if(room.getGameStatus()== NiuNiu.GAMESTATUS_READY || room.getGameStatus()==NiuNiu.GAMESTATUS_LIANGPAI){
+    				if(room.getGameStatus()== NiuNiu.GAMESTATUS_READY || room.getGameStatus()== NiuNiu.GAMESTATUS_LIANGPAI){
     					Constant.niuNiuGameMap.get(roomNo).setXiazhuTime(i);//保存倒计时时间
     					
     					// 5秒后自动切换到准备状态

@@ -1,8 +1,5 @@
-package com.zhuoan.biz.model;
+package com.zhuoan.biz.core.nn;
 
-
-import com.zhuoan.biz.core.nn.Packer;
-import com.zhuoan.biz.core.nn.UserPacket;
 
 /**
  * 牌的比较
@@ -10,7 +7,7 @@ import com.zhuoan.biz.core.nn.UserPacket;
 public class PackerCompare {
 	
 	//得到赢得人
-	public static UserPacket getWin(UserPacket up1, UserPacket up2){
+	public static UserPacket getWin(UserPacket up1,UserPacket up2){
 		if(!up1.isBanker()^up2.isBanker()){
 			try {
 				throw new Exception("两个用户,必须一个是庄家、一个是用户");

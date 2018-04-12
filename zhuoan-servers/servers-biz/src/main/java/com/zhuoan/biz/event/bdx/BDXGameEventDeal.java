@@ -334,7 +334,7 @@ public class BDXGameEventDeal {
 				result1.put("zhu", room.getPlayerMap().get(account).getLuck());
 				for (String uc : room.getUserAcc()) {
 					Playerinfo pi=room.getPlayerMap().get(uc);
-					SocketIOClient clientother= GameMain.server.getClient(pi.getUuid());
+					SocketIOClient clientother=GameMain.server.getClient(pi.getUuid());
 					if(clientother!=null){
 						clientother.sendEvent("playerReadyPush_BDX", result1);
 					}
@@ -503,6 +503,7 @@ public class BDXGameEventDeal {
 
 							if (uinfo.getScore()<=0) {
 								z=z+" WHEN "+uinfo.getId()+" THEN 0";
+								UserInfoCache.updateUserScore(uuuid, -UserInfoCache.userInfoMap.get(uuuid).getDouble("yuanbao"), 3);
 							}else{
 								if (rsl>0&&uinfo.getLuck()==0) {
 									LogUtil.print("比大小结算-有误："+rsl+","+uinfo.getLuck());
@@ -531,7 +532,16 @@ public class BDXGameEventDeal {
 						}
 						BDXGameRoom room2 = room;
 						//gamelog(room2,sum);
-						new SaveGameLogsBDX(room2,sum).start();
+						//战绩存缓存
+						Map<String, JSONObject> playerMap = new HashMap<String, JSONObject>();
+						for (String acc :room.getUserAcc()) {
+							Playerinfo uii = room.getPlayerMap().get(acc);
+							playerMap.put(acc, new JSONObject().element("score",uii.getLuck() ).element("name", uii.getName()));
+						}
+						for(String uuid :room.getUserAcc()){
+							GameLogsCache.addGameLogs(uuid, 10, new GameLogs(room.getRoomNo(), playerMap, new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date())));
+						}
+						GameMain.sqlQueue.addSqlTask(new SqlModel(SqlModel.SAVELOGS_BDX, room2, sum));
 						//扣除元宝记录 
 						//String sql1 = "insert into za_userdeduction(userid,gid,roomNo,type,sum,creataTime) values(?,?,?,?,?,?)";
 						//DBUtil.executeUpdateBySQL(sql.replace("$", z).replace("/", d.substring(0, d.length()-1)), new Object[]{});
@@ -807,19 +817,19 @@ public class BDXGameEventDeal {
 
 		JSONArray ugloga = new JSONArray();
 		JSONObject uoc=new JSONObject();
+		
+		//战绩存缓存
+		/*Map<String, JSONObject> playerMap = new HashMap<String, JSONObject>();
+		for (String acc :room.getUserAcc()) {
+			Playerinfo uii = room.getPlayerMap().get(acc);
+			playerMap.put(acc, new JSONObject().element("score",uii.getLuck() ).element("name", uii.getName()));
+		}*/
 		for(String uuid :room.getUserAcc()){
 			// for (UUID uid : room.getPlayerPaiJu().keySet()) {
 			JSONObject uglog = new JSONObject();
 			JSONObject objt = new JSONObject();
 			Playerinfo ui = room.getPlayerMap().get(uuid);
-
-			//战绩存缓存
-			Map<String, JSONObject> playerMap = new HashMap<String, JSONObject>();
-			for (String acc :room.getUserAcc()) {
-				Playerinfo uii = room.getPlayerMap().get(acc);
-				playerMap.put(acc, new JSONObject().element("score",uii.getLuck() ).element("name", uii.getName()));
-			}
-			GameLogsCache.addGameLogs(uuid, 10, new GameLogs(room.getRoomNo(), playerMap, new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date())));
+			//GameLogsCache.addGameLogs(uuid, 10, new GameLogs(room.getRoomNo(), playerMap, new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date())));
 
 
 			uoc.element(String.valueOf(ui.getId()), ui.getLuck());
@@ -952,19 +962,4 @@ public class BDXGameEventDeal {
 
 	}
 
-}
-
-class SaveGameLogsBDX extends Thread{
-	BDXGameEventDeal bdxGameEventDeal = new BDXGameEventDeal();
-	BDXGameRoom room;
-	JSONArray us;
-	
-	public SaveGameLogsBDX(BDXGameRoom room, JSONArray us) {
-		this.room = room;
-		this.us = us;
-	}
-	
-	public void run(){
-		bdxGameEventDeal.gamelog(room, us);
-	}
 }

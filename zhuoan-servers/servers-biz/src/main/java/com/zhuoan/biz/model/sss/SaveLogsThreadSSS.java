@@ -1,4 +1,4 @@
-package com.zhuoan.biz.model;
+package com.zhuoan.biz.model.sss;
 
 import com.zhuoan.biz.core.sss.SSSGameRoom;
 import com.zhuoan.biz.event.sss.SSSGameEventDeal;

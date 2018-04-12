@@ -3,7 +3,7 @@ package com.zhuoan.biz.event.sss;
 import com.zhuoan.constant.NewConstant;
 import com.zhuoan.biz.core.sss.SSSComputeCards;
 import com.zhuoan.biz.core.sss.SSSGameRoom;
-import com.zhuoan.biz.model.Player;
+import com.zhuoan.biz.model.sss.Player;
 import com.zhuoan.biz.model.RoomManage;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;

@@ -4,6 +4,7 @@ import com.corundumstudio.socketio.SocketIOClient;
 import com.za.game.remote.iservice.IService;
 import com.zhuoan.biz.core.sss.*;
 import com.zhuoan.biz.model.*;
+import com.zhuoan.biz.model.sss.Player;
 import com.zhuoan.biz.service.majiang.MaJiangBiz;
 import com.zhuoan.biz.service.majiang.impl.MajiangBizImpl;
 import com.zhuoan.biz.service.sss.SSSService;

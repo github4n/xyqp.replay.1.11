@@ -1,6 +1,5 @@
-package com.zhuoan.biz.model.nn;
+package com.zhuoan.biz.core.nn;
 
-import com.zhuoan.biz.model.PackerCompare;
 import org.apache.commons.lang.ArrayUtils;
 
 import java.util.ArrayList;

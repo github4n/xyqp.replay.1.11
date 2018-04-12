@@ -1,4 +1,4 @@
-package com.zhuoan.biz.model;
+package com.zhuoan.biz.model.sss;
 
 import com.corundumstudio.socketio.SocketIOClient;
 import com.zhuoan.biz.core.sss.SSSGameRoom;

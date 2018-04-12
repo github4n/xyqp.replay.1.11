@@ -1,10 +1,14 @@
 package com.zhuoan.biz.service.nn.impl;
 
 import com.corundumstudio.socketio.SocketIOClient;
+import com.zhuoan.biz.core.nn.NiuNiu;
+import com.zhuoan.biz.core.nn.NiuNiuServer;
+import com.zhuoan.biz.core.nn.Packer;
+import com.zhuoan.biz.core.nn.UserPacket;
 import com.zhuoan.biz.event.nn.AutoThreadNN;
 import com.zhuoan.biz.event.nn.NNGameEventDeal;
 import com.zhuoan.biz.model.*;
-import com.zhuoan.biz.model.nn.*;
+import com.zhuoan.biz.model.nn.NNGameRoom;
 import com.zhuoan.biz.service.majiang.MaJiangBiz;
 import com.zhuoan.biz.service.majiang.impl.MajiangBizImpl;
 import com.zhuoan.biz.service.nn.NiuNiuService;
