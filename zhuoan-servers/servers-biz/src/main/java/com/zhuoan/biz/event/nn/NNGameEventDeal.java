@@ -313,7 +313,7 @@ public class NNGameEventDeal {
 							a.start();
 						}
 						
-						client.set(Constant.ROOM_KEY_NN, roomNo);
+						client.set("ROOM_KEY_NN", roomNo);
 						
 						obj.put("users",nnGame.getAllPlayer());//告诉他原先加入的玩家
 						obj.put("myIndex",player.getMyIndex());

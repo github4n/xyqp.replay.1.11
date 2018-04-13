@@ -8,16 +8,18 @@ import com.zhuoan.biz.model.nn.NNGameRoom;
 import com.zhuoan.biz.model.zjh.ZJHGame;
 
 import java.io.IOException;
+import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.ConcurrentHashMap;
 
-public class Constant {
+public class Constant implements Serializable{
 
 
     // 客户端标识（用户唯一标识）
     public final static String CLIENTTAG = "clienttag";
+    private static final long serialVersionUID = 6536626351642832853L;
 
     /**
      * 获取用户标识
@@ -47,7 +49,7 @@ public class Constant {
     static{
 
         try {
-            cfgProperties.load(Constant.class.getClassLoader().getResourceAsStream("config.properties"));
+            cfgProperties.load(Constant.class.getClassLoader().getResourceAsStream("config/common.properties"));
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -104,7 +106,7 @@ public class Constant {
     /**
      *  牛牛游戏房间Key
      */
-    public static String ROOM_KEY_NN = "ROOM_KEY_NN";
+    public final static String ROOM_KEY_NN = "ROOM_KEY_NN";
 
     /**
      * 牛牛游戏房间列表

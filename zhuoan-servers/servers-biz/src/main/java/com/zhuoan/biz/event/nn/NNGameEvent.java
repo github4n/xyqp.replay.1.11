@@ -44,7 +44,7 @@ public class NNGameEvent {
 
             @Override
             public void onData(SocketIOClient client, Object data, AckRequest ackSender) {
-                producerService.sendMessage(nnQueueDestination, new Messages(client, data, 1, 1));
+                producerService.sendMessage(nnQueueDestination, new Messages(client, data, 1, 23));
 //				try {
 //					queue.addQueue(new Messages(client, data, 1, 23));
 //				} catch (Exception e) {
@@ -57,7 +57,7 @@ public class NNGameEvent {
 
             @Override
             public void onData(SocketIOClient client, Object data, AckRequest ackSender) {
-                producerService.sendMessage(nnQueueDestination, new Messages(client, data, 1, 1));
+                producerService.sendMessage(nnQueueDestination, new Messages(client, data, 1, 16));
 //				try {
 //					queue.addQueue(new Messages(client, data, 1, 16));
 //					//nnService.enterRoom(client, data);
@@ -71,7 +71,7 @@ public class NNGameEvent {
 
             @Override
             public void onData(SocketIOClient client, Object data, AckRequest ackSender) {
-                producerService.sendMessage(nnQueueDestination, new Messages(client, data, 1, 1));
+                producerService.sendMessage(nnQueueDestination, new Messages(client, data, 1, 15));
 //				try {
 //					queue.addQueue(new Messages(client, data, 1, 15));
 //					//nnService.enterRoom(client, data);
