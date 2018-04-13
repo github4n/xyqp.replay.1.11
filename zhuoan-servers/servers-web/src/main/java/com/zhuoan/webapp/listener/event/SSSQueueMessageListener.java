@@ -1,6 +1,6 @@
 package com.zhuoan.webapp.listener.event;
 
-import com.zhuoan.queue.GameEventsImpl;
+import com.zhuoan.queue.GameEventDeal;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
@@ -13,14 +13,14 @@ import javax.jms.MessageListener;
  * @author weixiang.wu
  * @date 2018 -04-03 10:01
  */
-@Component("sSSQueueMessageListener")
+@Component("sssQueueMessageListener")
 public class SSSQueueMessageListener implements MessageListener {
 
     @Resource
-    private GameEventsImpl gameEventsMQ;
+    private GameEventDeal gameEventDeal;
 
     @Override
     public void onMessage(Message message) {
-        gameEventsMQ.EventsMQDeal(message);
+        gameEventDeal.eventsMQ(message);
     }
 }

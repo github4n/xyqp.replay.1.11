@@ -15,10 +15,12 @@ import com.zhuoan.util.Dto;
 import com.zhuoan.util.LogUtil;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
+import org.springframework.stereotype.Component;
 
 import java.text.SimpleDateFormat;
 import java.util.*;
 
+@Component
 public class BDXGameEventDeal {
 
 	BDXService bdxService = new BDXServiceImpl();

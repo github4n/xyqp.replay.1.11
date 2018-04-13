@@ -8,13 +8,13 @@ import javax.jms.Message;
 import javax.jms.MessageListener;
 
 /**
- * ZJHQueueMessageListener
+ * DBXQueueMessageListener
  *
  * @author weixiang.wu
- * @date 2018-04-12 14:02
+ * @date 2018-04-13 09:08
  **/
-@Component("zjhQueueMessageListener")
-public class ZJHQueueMessageListener implements MessageListener {
+@Component("bdxQueueMessageListener")
+public class DBXQueueMessageListener implements MessageListener {
 
     @Resource
     private GameEventDeal gameEventDeal;

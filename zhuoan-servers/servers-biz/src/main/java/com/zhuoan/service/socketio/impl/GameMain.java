@@ -5,6 +5,8 @@ import com.corundumstudio.socketio.SocketIOClient;
 import com.corundumstudio.socketio.SocketIOServer;
 import com.za.game.remote.iservice.IService;
 import com.zhuoan.biz.event.BaseGameEvent;
+import com.zhuoan.biz.event.bdx.BDXGameEvent;
+import com.zhuoan.biz.event.nn.NNGameEvent;
 import com.zhuoan.biz.event.sss.SSSGameEvent;
 import com.zhuoan.biz.event.zjh.ZJHGameEvent;
 import com.zhuoan.biz.model.RoomManage;
@@ -77,6 +79,12 @@ public class GameMain implements SocketIoManagerService {
 
     @Resource
     private ZJHGameEvent zjhGameEvent;
+
+    @Resource
+    private NNGameEvent nnGameEvent;
+
+    @Resource
+    private BDXGameEvent bdxGameEvent;
 
     @Override
     public void startServer() {
@@ -262,10 +270,18 @@ public class GameMain implements SocketIoManagerService {
 
 
 
+        /* 比大小 */
+        bdxGameEvent.listenerBDXGameEvent(server);
+
+        /* 牛牛 */
+        nnGameEvent.listenerNNGameEvent(server);
+
         /* 十三水 */
         sssGameEvent.listenerSSSGameEvent(server);
 
         /* 炸金花 */
         zjhGameEvent.listenerZJHGameEvent(server);
+
+
     }
 }

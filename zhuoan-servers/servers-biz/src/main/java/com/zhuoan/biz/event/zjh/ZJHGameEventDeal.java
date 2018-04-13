@@ -25,7 +25,7 @@ import com.zhuoan.util.TimeUtil;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 import org.apache.commons.lang.math.RandomUtils;
-import org.springframework.stereotype.Service;
+import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -34,7 +34,7 @@ import java.util.List;
 import java.util.Set;
 
 
-@Service
+@Component
 public class ZJHGameEventDeal {
 
 

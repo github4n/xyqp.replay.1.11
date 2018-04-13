@@ -63,6 +63,71 @@ public class RoomManage {
 		return "";
 	}
 
+    /**
+     *
+     *
+     *
+     * @param @param client
+     * @param @param data
+     * @return void
+     * @throws
+     * @date 2018年4月11日
+     */
+    public void getRoomCardPayInfo(SocketIOClient client, Object data){
+        JSONObject postdata = JSONObject.fromObject(data);
+        // 房间基本信息
+        JSONObject base_info = JSONObject.fromObject(postdata.getString("base_info"));
+        int roomcard = 0;
+
+        JSONObject result = new JSONObject();
+
+        result.put("code", 1);
+        String paytype = "房主支付";
+
+        //代开房间
+        if(base_info.containsKey("gametime")){
+            roomcard = base_info.getJSONObject("gametime").getInt("AANum") * base_info.getInt("player");
+        }else{
+            if(base_info.containsKey("paytype")&&base_info.getInt("paytype")==1){
+                paytype = "AA支付";
+                roomcard = base_info.getJSONObject("turn").getInt("AANum");
+            }else{
+                // 固定房费
+                if(base_info.getJSONObject("turn").containsKey("noAANum")){
+                    roomcard = base_info.getJSONObject("turn").getInt("roomcard");
+                }else{
+                    roomcard = base_info.getJSONObject("turn").getInt("AANum") * base_info.getInt("player");
+                }
+            }
+        }
+
+        result.put("roomcard", roomcard);
+        result.put("paytype", paytype);
+        client.sendEvent("getRoomCardPayInfoPush", result);
+    }
+
+    public void getUserInfo(SocketIOClient client, Object data){
+        JSONObject postdata = JSONObject.fromObject(data);
+        if (!postdata.containsKey("account")) {
+            return;
+        }
+        JSONObject result = new JSONObject();
+        String account = postdata.getString("account");
+        if (UserInfoCache.userInfoMap.containsKey(account)&&UserInfoCache.userInfoMap.get(account)!=null) {
+            result.put("code", 1);
+            result.put("user", UserInfoCache.userInfoMap.get(account));
+        }else {
+            JSONObject userInfo = maJiangBiz.getUserInfoByAccount(account);
+            if (!Dto.isObjNull(userInfo)) {
+                result.put("code", 1);
+                result.put("user", userInfo);
+            }else {
+                result.put("code", 0);
+            }
+        }
+        client.sendEvent("getUserInfoPush", result);
+    }
+
 	/**
 	 * 随机生成不重复的6位房间号
 	 * @param @return   

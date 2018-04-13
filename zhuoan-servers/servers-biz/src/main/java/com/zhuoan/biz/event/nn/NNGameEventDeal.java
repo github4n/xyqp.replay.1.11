@@ -27,12 +27,14 @@ import com.zhuoan.util.LogUtil;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 import org.apache.commons.lang.math.RandomUtils;
+import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
 import java.net.SocketAddress;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
+@Component
 public class NNGameEventDeal {
 
 	// 申请解散房间倒计时

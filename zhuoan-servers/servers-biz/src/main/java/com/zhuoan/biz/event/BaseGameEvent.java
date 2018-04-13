@@ -35,7 +35,6 @@ public class BaseGameEvent {
     private Destination baseQueueDestination;
     @Resource
     private Destination sqlQueueDestination;
-
     @Resource
     private ProducerService producerService;
 
@@ -131,6 +130,15 @@ public class BaseGameEvent {
             }
         });
 
+        /**
+         *   刷新用户信息
+         */
+        server.addEventListener("getUserInfo", Object.class, new DataListener<Object>() {
+            @Override
+            public void onData(SocketIOClient client, Object object, AckRequest ackSender) {
+                producerService.sendMessage(baseQueueDestination, new Messages(client, object, 1, 23));
+            }
+        });
 
     }
 
