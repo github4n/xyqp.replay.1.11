@@ -8,12 +8,15 @@ import com.zhuoan.biz.model.sss.SaveLogsThreadSSS;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 
+import java.io.Serializable;
 import java.util.*;
 import java.util.concurrent.ConcurrentSkipListSet;
 
-public  class SSSGameRoom extends GameRoom {
+public  class SSSGameRoom extends GameRoom implements Serializable{
 
-	private String roomNo;//房间号
+    private static final long serialVersionUID = -6539781872729940352L;
+
+    private String roomNo;//房间号
 	private int roomType; //房间类型（0：房卡  1：金币 2：代开房间 3:元宝）
 	private JSONObject roomobj;//房间信息
 	private String fangzhu;//房主

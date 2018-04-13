@@ -501,7 +501,7 @@ public class MajiangBizImpl implements MaJiangBiz {
             }
 
         }else if(!Dto.isObjNull(roomInfo) && roomInfo.getInt("roomtype")==2){
-            System.out.println("进入代开房间扣房卡方法base_info："+roomInfo.getJSONObject("base_info"));
+            logger.info("进入代开房间扣房卡方法base_info："+roomInfo.getJSONObject("base_info"));
             if(roomInfo.getInt("game_index")==1){ // 第一局结束需要扣除房卡
             }
 
@@ -522,7 +522,7 @@ public class MajiangBizImpl implements MaJiangBiz {
     public void updateGamelogs(String roomNo, int gid, JSONArray jsonArray) {
         String sql = "select id from za_gamelogs where room_no=? and gid=? ORDER BY game_index DESC limit 1";
         JSONObject objectBySQL = DBUtil.getObjectBySQL(sql, new Object[]{roomNo,gid});
-        System.err.println(objectBySQL);
+        logger.info(String.valueOf(objectBySQL));
         if (!Dto.isObjNull(objectBySQL)) {
             sql = "update za_gamelogs set jiesuan=? where id=?";
             DBUtil.executeUpdateBySQL(sql, new Object[]{jsonArray.toString(),objectBySQL.getLong("id")});

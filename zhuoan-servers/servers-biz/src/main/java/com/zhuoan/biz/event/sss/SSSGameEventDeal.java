@@ -3,7 +3,9 @@ package com.zhuoan.biz.event.sss;
 import com.corundumstudio.socketio.SocketIOClient;
 import com.zhuoan.biz.core.sss.SSSGameRoom;
 import com.zhuoan.biz.core.sss.SSSSpecialCards;
-import com.zhuoan.biz.model.*;
+import com.zhuoan.biz.model.Playerinfo;
+import com.zhuoan.biz.model.RoomManage;
+import com.zhuoan.biz.model.UserInfoCache;
 import com.zhuoan.biz.model.sss.AutoExitThread;
 import com.zhuoan.biz.model.sss.Player;
 import com.zhuoan.biz.service.GlobalService;
@@ -21,6 +23,8 @@ import com.zhuoan.util.Dto;
 import com.zhuoan.util.LogUtil;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
@@ -35,6 +39,8 @@ import java.util.concurrent.ConcurrentSkipListSet;
  */
 @Component
 public class SSSGameEventDeal {
+
+    private final static Logger logger = LoggerFactory.getLogger(SSSGameEventDeal.class);
 
 	SSSService sssService = new SSSServiceImpl();
 	MaJiangBiz mjBiz=new MajiangBizImpl();
@@ -2357,7 +2363,7 @@ public class SSSGameEventDeal {
 				for(String uid : room.getPlayerMap().keySet()){
 					Playerinfo uinfo = room.getPlayerMap().get(uid);
 					Player u = room.getPlayerPaiJu().get(uid);
-					System.err.println("踢人方法！用户："+uid+",状态："+u.getIsReady()+",倒计时："+room.getReadyTime()+",配牌："+u.getIsAuto());
+					logger.info("踢人方法！用户："+uid+",状态："+u.getIsReady()+",倒计时："+room.getReadyTime()+",配牌："+u.getIsAuto());
 					if ((u.getTotalScore()<room.getMinscore()&&room.getLevel()!=-1)||(u.getIsAuto()==1&&(room.getRoomType()==1||room.getRoomType()==3))||(room.getReadyTime()==1&&u.getIsReady()!=1&&(room.getRoomType()==1||room.getRoomType()==3))) {
 						//不准备、离线、分数不够、自动比牌 踢出去
 						JSONObject tmpObj=new JSONObject();

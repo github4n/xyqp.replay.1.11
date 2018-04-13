@@ -27,6 +27,8 @@ import com.zhuoan.util.LogUtil;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 import org.apache.commons.lang.math.RandomUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
@@ -36,6 +38,8 @@ import java.util.*;
 
 @Component
 public class NNGameEventDeal {
+
+    private final static Logger logger = LoggerFactory.getLogger(NNGameEventDeal.class);
 
 	// 申请解散房间倒计时
 	private static JSONObject CLOSETIME = JSONObject.fromObject("{\"default\": 180, \"WJY\": 180}");
@@ -1671,7 +1675,7 @@ public class NNGameEventDeal {
 						if((room.getZhuangType()==2||room.getZhuangType()==3)&&room.getUserPacketMap().get(uuid).getStatus()==-1){
 							
 							isFee = false;
-							System.out.println("观战玩家不能扣服务费");
+							logger.info("观战玩家不能扣服务费");
 						}
 					}
 					

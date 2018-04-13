@@ -14,6 +14,8 @@ import com.zhuoan.service.socketio.impl.GameMain;
 import com.zhuoan.util.LogUtil;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -24,6 +26,8 @@ import java.util.Set;
  *
  */
 public class MutliThreadNN extends Thread{
+
+    private final static Logger logger = LoggerFactory.getLogger(MutliThreadNN.class);
 	
 	private NiuNiuService nnService;
 	private String roomNo;
@@ -227,7 +231,7 @@ public class MutliThreadNN extends Thread{
 						break;
 					}
     			}else{
-    				System.out.println("房间不存在："+roomNo);
+    				logger.info("房间不存在："+roomNo);
     				break;
     			}
     		}

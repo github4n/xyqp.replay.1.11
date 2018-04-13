@@ -57,6 +57,10 @@ public class GameMain implements SocketIoManagerService {
     /**
      * The constant sqlQueue.
      */
+
+    @Resource
+    private SqlQueue sqlQueue1;
+
     public static SqlQueue sqlQueue = null;
     /**
      * The constant singleTime.
@@ -196,7 +200,9 @@ public class GameMain implements SocketIoManagerService {
 
     private void scheduleDeal() {
 //        messageQueue = new MessageQueue(16);
-//        sqlQueue = new SqlQueue(1);
+
+
+        sqlQueue = sqlQueue1;
         ThreadPoolHelper.executorService.submit(new Runnable() {
             @Override
             public void run() {

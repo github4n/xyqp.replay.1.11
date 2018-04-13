@@ -15,6 +15,8 @@ import com.zhuoan.service.socketio.impl.GameMain;
 import com.zhuoan.util.Dto;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import java.text.SimpleDateFormat;
@@ -22,9 +24,18 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentSkipListSet;
 
+/**
+ * The type Sss service.
+ */
 // 业务逻辑处理
 @Service
 public class SSSServiceImpl implements SSSService{
+
+    private final static Logger logger = LoggerFactory.getLogger(SSSServiceImpl.class);
+
+    /**
+     * The Mj biz.
+     */
     MaJiangBiz mjBiz=new MajiangBizImpl();
 
     @Override
@@ -97,7 +108,7 @@ public class SSSServiceImpl implements SSSService{
             room.setMinscore(objInfo.getInt("mingoldcoins"));
             room.setLevel(objInfo.getInt("level"));
         }else if(room.getRoomType()==3){
-            System.out.println("元宝底分"+objInfo.getInt("yuanbao"));
+            logger.info("元宝底分"+objInfo.getInt("yuanbao"));
             pl.setTotalScore(player.getScore());
             room.setScore(objInfo.getInt("yuanbao")); //底分 元宝场
             room.setMinscore(objInfo.getInt("leaveYB"));//离场分数
@@ -194,7 +205,6 @@ public class SSSServiceImpl implements SSSService{
     /**
      * 准备就绪
      * @param roomNo
-     * @param sessionId
      */
     @Override
     public void isReady(String roomNo, String uc) {
@@ -209,7 +219,7 @@ public class SSSServiceImpl implements SSSService{
             int count = 0;
             for (String uid:room.getPlayerPaiJu().keySet()) {
                 int ready = room.getPlayerPaiJu().get(uid).getIsReady();
-                System.err.println("用户："+uid+",准备状态："+ready);
+                logger.info("用户："+uid+",准备状态："+ready);
                 if(ready!=0){
                     count++;
                 }
@@ -250,7 +260,8 @@ public class SSSServiceImpl implements SSSService{
 
     /**
      * 房主做庄
-     * @param roomNo
+     *
+     * @param roomNo the room no
      */
     public void fangzhuZhuang(String roomNo){
 
@@ -261,7 +272,8 @@ public class SSSServiceImpl implements SSSService{
 
     /**
      * 轮流做庄
-     * @param roomNo
+     *
+     * @param roomNo the room no
      */
     public void lunZhuang(String roomNo){
 
@@ -288,9 +300,13 @@ public class SSSServiceImpl implements SSSService{
             RoomManage.gameRoomMap.get(roomNo).setGameStatus(2);
         }
     }
+
     /**
      * 胜率控制器
-     * @param Paizu
+     *
+     * @param Paizu the paizu
+     * @param obj   the obj
+     * @return the int
      */
     public int govern(List<String[]> Paizu,JSONObject obj) {
         Map<Integer, Integer> fen= new ConcurrentHashMap<Integer, Integer>();

@@ -3,13 +3,15 @@ package com.zhuoan.biz.model;
 
 import com.zhuoan.constant.Constant;
 
+import java.io.Serializable;
 import java.math.BigDecimal;
 import java.util.UUID;
 
 
-public class Playerinfo {
+public class Playerinfo implements Serializable{
 
 
+    private static final long serialVersionUID = -3467565324346126435L;
     private UUID uuid;//uuid
     private long id;//用户的userId
     private String account; //帐号

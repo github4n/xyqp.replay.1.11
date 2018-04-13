@@ -2,15 +2,18 @@ package com.zhuoan.biz.model.sss;
 
 import net.sf.json.JSONArray;
 
+import java.io.Serializable;
+
 
 /**
  * 十三水玩家牌局信息
  * @author lhp
  *
  */
-public class Player {
+public class Player implements Serializable{
 
 
+    private static final long serialVersionUID = -4837751151303196476L;
     private String[] pai;
     private int status=-1;//状态
     private int ordinary;//普通牌型
