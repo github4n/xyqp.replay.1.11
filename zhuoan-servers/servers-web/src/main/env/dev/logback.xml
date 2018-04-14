@@ -26,6 +26,7 @@
             <FileNamePattern>${LOG_HOME}/application.%d{yyyy-MM-dd}-%i.log</FileNamePattern>
             <!--日志文件保留天数 -->
             <!--<MaxHistory>365</MaxHistory>-->
+            <!--实现对单文件大小的判断，当超过maxFileSize中指定大小时，文件名中的变量%i会加一-->
             <timeBasedFileNamingAndTriggeringPolicy
                 class="ch.qos.logback.core.rolling.SizeAndTimeBasedFNATP">
                 <maxFileSize>500MB</maxFileSize>
@@ -65,7 +66,7 @@
             <FileNamePattern>${LOG_HOME}/sql.%d{yyyy-MM-dd}-%i.log</FileNamePattern>
             <!--日志文件保留天数 -->
             <!--<MaxHistory>365</MaxHistory>-->
-            <!--日志文件最大的大小 -->
+            <!--实现对单文件大小的判断，当超过maxFileSize中指定大小时，文件名中的变量%i会加一-->
             <timeBasedFileNamingAndTriggeringPolicy
                 class="ch.qos.logback.core.rolling.SizeAndTimeBasedFNATP">
                 <maxFileSize>500MB</maxFileSize>
@@ -94,6 +95,7 @@
         <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
             <!--日志文件输出的文件名 -->
             <FileNamePattern>${LOG_HOME}/other.%d{yyyy-MM-dd}-%i.log</FileNamePattern>
+            <!--实现对单文件大小的判断，当超过maxFileSize中指定大小时，文件名中的变量%i会加一-->
             <timeBasedFileNamingAndTriggeringPolicy
                 class="ch.qos.logback.core.rolling.SizeAndTimeBasedFNATP">
                 <maxFileSize>500MB</maxFileSize>
