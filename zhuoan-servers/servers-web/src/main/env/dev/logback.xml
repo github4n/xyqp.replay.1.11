@@ -105,7 +105,7 @@
             <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} %-5level [%thread] %logger{50} - %msg%n</pattern>
         </encoder>
     </appender>
-    <logger name="com.zhuoan.webapp.controller.DemoController" level="INFO" additivity="true">
+    <logger name="com.zhuoan.dao" level="INFO" additivity="true">
         <appender-ref ref="INVEST-APPENDER"/>
     </logger>
     <!-- 其它业务的日志 end-->

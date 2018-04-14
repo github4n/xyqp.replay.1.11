@@ -31,9 +31,6 @@ public class ControllerExceptionHandler {
     private void webappControllerPointcut() {
     }//定义一个切入点
 
-    @Pointcut("execution(* com.zhuoan.webapp.listener.event..*.*(..)))")
-    private void gamesEventPointcut() {
-    }//定义一个切入点
 
     /**
      * Do around response body string.
