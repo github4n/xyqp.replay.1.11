@@ -108,6 +108,10 @@
     <logger name="com.zhuoan.webapp.controller.DemoController" level="INFO" additivity="true">
         <appender-ref ref="INVEST-APPENDER"/>
     </logger>
+
+
+
+    <!--浏览量-->
     <!-- 其它业务的日志 end-->
 
 
