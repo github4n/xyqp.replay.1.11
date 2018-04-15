@@ -242,6 +242,7 @@ public class GameMain implements SocketIoManagerService {
      */
     class GameTask extends TimerTask {
 
+        @Override
         public void run() {
             try {
                 // 获取服务注册管理器
