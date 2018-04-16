@@ -1,7 +1,7 @@
 package com.zhuoan.service.cache;
 
 /**
- * RedisService
+ * RedisService  todo  String Map Set List 封装可以参考实现类
  *
  * @author weixiang.wu
  * @date 2018-04-16 10:38
@@ -13,7 +13,7 @@ public interface RedisService {
      *
      * @param key   the key
      * @param value the value
-     * @param time  单位s
+     * @param time  单位s       若为空，则一直存在
      */
     void insertKey(String key, String value, Integer time);
 
@@ -39,6 +39,7 @@ public interface RedisService {
      * @param seconds the seconds
      */
     boolean expire(String key, long seconds);
+
 
 
 }
