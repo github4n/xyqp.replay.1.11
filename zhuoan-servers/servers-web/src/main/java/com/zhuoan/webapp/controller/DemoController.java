@@ -7,7 +7,7 @@ import com.zhuoan.enumtype.ResCodeEnum;
 import com.zhuoan.model.condition.ZaUsersCondition;
 import com.zhuoan.model.vo.ZaUsersVO;
 import com.zhuoan.user.ZaUserBiz;
-import com.zhuoan.webapp.ehcache.EhCacheUtil;
+import com.zhuoan.service.cache.impl.EhCacheHelper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.env.Environment;
@@ -132,14 +132,14 @@ public class DemoController extends BaseController {
     /**
      * Cache test.
      *
-     * @see com.zhuoan.webapp.ehcache.EhCacheUtil 详细用法见
+     * @see EhCacheHelper 详细用法见
      */
     @RequestMapping("cache")
     public void cacheTest() {
-        EhCacheUtil.put("helloworld", "1", "1");
+        EhCacheHelper.put("helloworld", "1", "1");
 
-        String a = (String) EhCacheUtil.get("helloworld", "1");
-        String a2 = (String) EhCacheUtil.get("helloworld2", "1");
+        String a = (String) EhCacheHelper.get("helloworld", "1");
+        String a2 = (String) EhCacheHelper.get("helloworld2", "1");
 
 
 //        Cache cache = cacheManager.getCache("helloworld");
