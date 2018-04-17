@@ -8,6 +8,7 @@ import org.springframework.jms.listener.DefaultMessageListenerContainer;
 
 import javax.annotation.Resource;
 import javax.jms.ConnectionFactory;
+import javax.jms.DeliveryMode;
 import javax.jms.MessageListener;
 import javax.jms.Queue;
 
@@ -195,6 +196,10 @@ public class ActiveConfig {
         JmsTemplate jmsTemplate = new JmsTemplate();
         jmsTemplate.setConnectionFactory(connectionFactory);
         jmsTemplate.setDefaultDestination(baseQueueDestination());
+        // deliveryMode, priority, timeToLive 的开关，要生效，必须配置explicitQosEnabled为true，默认false
+        jmsTemplate.setExplicitQosEnabled(true);
+        // 发送模式  DeliveryMode.NON_PERSISTENT=1:非持久 ; DeliveryMode.PERSISTENT=2:持久
+        jmsTemplate.setDeliveryMode(DeliveryMode.PERSISTENT);
         jmsTemplate.setReceiveTimeout(10000);
         jmsTemplate.setPubSubDomain(false);
         return jmsTemplate;
