@@ -203,10 +203,10 @@ public class NNGameEventDealNew {
             }
             // 设置房间状态(抢庄)
             room.setGameStatus(NNConstant.NN_GAME_STATUS_QZ);
-        } else if (room.getBankerType()==NNConstant.NN_BANKER_TYPE_QZ) {// 抢庄
+        } else if (room.getBankerType()==NNConstant.NN_BANKER_TYPE_QZ) {
             // 设置房间状态(抢庄)
             room.setGameStatus(NNConstant.NN_GAME_STATUS_QZ);
-        } else if (room.getBankerType()==NNConstant.NN_BANKER_TYPE_TB) {// 通比模式
+        } else if (room.getBankerType()==NNConstant.NN_BANKER_TYPE_TB) {
             // 设置房间状态(下注)
             room.setGameStatus(NNConstant.NN_GAME_STATUS_XZ);
             for (String account : room.getUserPacketMap().keySet()) {
@@ -296,11 +296,14 @@ public class NNGameEventDealNew {
         if (room.getGameStatus()!=NNConstant.NN_GAME_STATUS_QZ) {
             return;
         }
-        List<String> qzList = new ArrayList<String>();// 所有抢庄玩家
-        List<String> allList = new ArrayList<String>();// 所有参与玩家
-        int maxBs = 1;// 最大抢庄倍数
-        System.out.println("是否随机庄家++++++"+room.getSjBanker());
-        if (room.getSjBanker()==1) {// 随机庄家
+        // 所有抢庄玩家
+        List<String> qzList = new ArrayList<String>();
+        // 所有参与玩家
+        List<String> allList = new ArrayList<String>();
+        // 最大抢庄倍数
+        int maxBs = 1;
+        // 随机庄家
+        if (room.getSjBanker()==1) {
             for (String account : room.getUserPacketMap().keySet()) {
                 // 中途加入除外
                 if (room.getUserPacketMap().get(account).getStatus()>NNConstant.NN_USER_STATUS_INIT) {
@@ -324,24 +327,30 @@ public class NNGameEventDealNew {
                 }
             }
         }
-        int bankerIndex = 0;// 庄家下标
-        if (qzList.size()==1) {// 只有一个玩家抢庄
+        // 庄家下标
+        int bankerIndex = 0;
+        // 只有一个玩家抢庄
+        if (qzList.size()==1) {
             room.setBanker(qzList.get(bankerIndex));
             room.setGameStatus(NNConstant.NN_GAME_STATUS_DZ);
-        }else if (qzList.size()>1) {// 多个玩家抢庄
+        }else if (qzList.size()>1) {
+            // 多个玩家抢庄
             bankerIndex = RandomUtils.nextInt(qzList.size());
             room.setBanker(qzList.get(bankerIndex));
             room.setGameStatus(NNConstant.NN_GAME_STATUS_DZ);
         }else {// 无人抢庄
-            if (room.getQzNoBanker()==NNConstant.NN_QZ_NO_BANKER_SJ) {// 随机庄家
+            if (room.getQzNoBanker()==NNConstant.NN_QZ_NO_BANKER_SJ) {
+                // 随机庄家
                 bankerIndex = RandomUtils.nextInt(allList.size());
                 room.setBanker(allList.get(bankerIndex));
                 room.setGameStatus(NNConstant.NN_GAME_STATUS_DZ);
-            }else if (room.getQzNoBanker()==NNConstant.NN_QZ_NO_BANKER_JS) {// 解散房间
+            }else if (room.getQzNoBanker()==NNConstant.NN_QZ_NO_BANKER_JS) {
+                // 解散房间
                 // TODO: 2018/4/18 解散房间
                 // 解散房间不需要后续通知玩家庄家已经确定
                 return;
-            } else if (room.getQzNoBanker()==NNConstant.NN_QZ_NO_BANKER_CK) {// 重新开局
+            } else if (room.getQzNoBanker()==NNConstant.NN_QZ_NO_BANKER_CK) {
+                // 重新开局
                 // 重置游戏状态
                 room.setGameStatus(NNConstant.NN_GAME_STATUS_READY);
                 // 重置玩家状态
@@ -493,8 +502,10 @@ public class NNGameEventDealNew {
         if (room.getBankerType()==NNConstant.NN_BANKER_TYPE_TB) {
             // TODO: 2018/4/18 通比结算
         }else {
-            boolean tongSha = true;// 通杀
-            boolean tongPei = true;// 通赔
+            // 通杀
+            boolean tongSha = true;
+            // 通赔
+            boolean tongPei = true;
             for (String account : room.getUserPacketMap().keySet()) {
                 UserPacket bankerUp = room.getUserPacketMap().get(room.getBanker());
                 UserPacket up = room.getUserPacketMap().get(account);
@@ -541,11 +552,6 @@ public class NNGameEventDealNew {
                         }
                     }
                 }
-            }
-            for (String account : room.getUserPacketMap().keySet()) {
-                Playerinfo p = room.getPlayerMap().get(account);
-                UserPacket u = room.getUserPacketMap().get(account);
-                System.out.println(p.getName()+"===当局输赢==="+u.getScore()+"剩余分数==="+p.getScore());
             }
             // 通杀
             if (tongSha) {

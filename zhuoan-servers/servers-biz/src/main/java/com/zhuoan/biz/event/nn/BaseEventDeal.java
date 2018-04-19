@@ -53,13 +53,15 @@ public class BaseEventDeal {
         baseInfo.put("roomType",3);
         // 获取用户信息
         JSONObject userInfo = maJiangBiz.getUserInfoByAccount(account);
-        if (Dto.isObjNull(userInfo)){// 用户不存在
+        if (Dto.isObjNull(userInfo)){
+            // 用户不存在
             result.put(NNConstant.RESULT_KEY_CODE,NNConstant.GLOBAL_NO);
             result.put(NNConstant.RESULT_KEY_MSG,"用户不存在");
             NNConstant.sendMsgEventToSingle(client,result.toString(),"enterRoomPush_NN");
             return;
         } else if (baseInfo.getInt("roomType")==NNConstant.ROOM_TYPE_YB&&userInfo.containsKey("yuanbao")
-            &&userInfo.getDouble("yuanbao")<baseInfo.getDouble("enterYB")) {// 元宝不足
+            &&userInfo.getDouble("yuanbao")<baseInfo.getDouble("enterYB")) {
+            // 元宝不足
             result.element(NNConstant.RESULT_KEY_CODE,NNConstant.GLOBAL_NO);
             result.element(NNConstant.RESULT_KEY_MSG,"元宝不足");
             NNConstant.sendMsgEventToSingle(client,result.toString(),"enterRoomPush_NN");
@@ -88,13 +90,15 @@ public class BaseEventDeal {
         }
         // 获取用户信息
         JSONObject userInfo = maJiangBiz.getUserInfoByAccount(account);
-        if (Dto.isObjNull(userInfo)){// 用户不存在
+        if (Dto.isObjNull(userInfo)){
+            // 用户不存在
             result.element(NNConstant.RESULT_KEY_CODE,NNConstant.GLOBAL_NO);
             result.element(NNConstant.RESULT_KEY_MSG,"用户不存在");
             NNConstant.sendMsgEventToSingle(client,result.toString(),"enterRoomPush_NN");
             return;
         } else if (RoomManage.gameRoomMap.get(roomNo).getRoomType()==NNConstant.ROOM_TYPE_YB&&userInfo.containsKey("yuanbao")
-            &&userInfo.getDouble("yuanbao")<RoomManage.gameRoomMap.get(roomNo).getEnterScore()) {// 元宝不足
+            &&userInfo.getDouble("yuanbao")<RoomManage.gameRoomMap.get(roomNo).getEnterScore()) {
+            // 元宝不足
             result.element(NNConstant.RESULT_KEY_CODE,NNConstant.GLOBAL_NO);
             result.element(NNConstant.RESULT_KEY_MSG,"元宝不足");
             NNConstant.sendMsgEventToSingle(client,result.toString(),"enterRoomPush_NN");
@@ -158,6 +162,8 @@ public class BaseEventDeal {
                 ((NNGameRoomNew)gameRoom).getUserPacketMap().put(userInfo.getString("account"),new UserPacket());
                 nnGameEventDealNew.joinRoom(client,joinData);
                 break;
+            default:
+                break;
         }
     }
 
@@ -214,24 +220,30 @@ public class BaseEventDeal {
         }else{
             gameRoom.setScore(1);
         }
-        if(baseInfo.containsKey("yuanbao")&&baseInfo.getDouble("yuanbao")>0){ // 元宝模式
-            gameRoom.setScore(baseInfo.getDouble("yuanbao")); //底分
+        // 元宝模式
+        if(baseInfo.containsKey("yuanbao")&&baseInfo.getDouble("yuanbao")>0){
+            //底分
+            gameRoom.setScore(baseInfo.getDouble("yuanbao"));
         }
-        if(baseInfo.containsKey("enterYB")&&baseInfo.getDouble("enterYB")>0){ // 元宝模式
+        // 元宝模式
+        if(baseInfo.containsKey("enterYB")&&baseInfo.getDouble("enterYB")>0){
             gameRoom.setEnterScore(baseInfo.getDouble("enterYB"));
         }
-        if(baseInfo.containsKey("leaveYB")&&baseInfo.getDouble("leaveYB")>0){ // 元宝模式
+        // 元宝模式
+        if(baseInfo.containsKey("leaveYB")&&baseInfo.getDouble("leaveYB")>0){
             gameRoom.setLeaveScore(baseInfo.getDouble("leaveYB"));
         }
+        //设置金币场准入金币
         if(baseInfo.containsKey("goldcoins")){
-            gameRoom.setEnterScore(baseInfo.getInt("goldcoins"));//设置金币场准入金币
+            gameRoom.setEnterScore(baseInfo.getInt("goldcoins"));
         }
         if (baseInfo.getInt("open")==1) {
             gameRoom.setOpen(true);
         }else {
             gameRoom.setOpen(false);
         }
-        gameRoom.setPlayerCount(playerNum);//玩家人数
+        // 玩家人数
+        gameRoom.setPlayerCount(playerNum);
         // 获取用户信息
         JSONObject obtainPlayerInfoData = new JSONObject();
         obtainPlayerInfoData.put("userInfo",userInfo);
@@ -248,6 +260,8 @@ public class BaseEventDeal {
         switch (gameRoom.getGid()){
             case NNConstant.GID_NN:
                 nnGameEventDealNew.createRoom(client);
+                break;
+            default:
                 break;
         }
     }
@@ -268,11 +282,14 @@ public class BaseEventDeal {
         playerinfo.setName(userInfo.getString("name"));
         playerinfo.setUuid(uuid);
         playerinfo.setMyIndex(myIndex);
-        if(roomType == NNConstant.ROOM_TYPE_JB){ // 金币模式
+        if(roomType == NNConstant.ROOM_TYPE_JB){
+            // 金币模式
             playerinfo.setScore(userInfo.getDouble("coins"));
-        }else if(roomType == NNConstant.ROOM_TYPE_YB){ // 元宝模式
+        }else if(roomType == NNConstant.ROOM_TYPE_YB){
+            // 元宝模式
             playerinfo.setScore(userInfo.getDouble("yuanbao"));
-        }else{ // 房卡模式
+        }else{
+            // 房卡模式
             playerinfo.setScore(0);
         }
         playerinfo.setHeadimg(userInfo.getString("headimg"));
@@ -333,10 +350,14 @@ public class BaseEventDeal {
             case NNConstant.NN_BANKER_TYPE_TB:
                 wanFa = "通比牛牛";
                 break;
+            default:
+                break;
         }
         room.setWfType(wanFa);
-        room.setBanker(account);// 庄家
-        room.setOwner(account);// 房主
+        // 庄家
+        room.setBanker(account);
+        // 房主
+        room.setOwner(account);
         // 设置基本牌型倍数
         if(baseInfo.containsKey("niuniuNum")){
             JSONArray nnNums = baseInfo.getJSONArray("niuniuNum");
@@ -379,11 +400,14 @@ public class BaseEventDeal {
         }
         // 没人抢庄
         if (baseInfo.containsKey("qznozhuang")&&baseInfo.getInt("qznozhuang")==NNConstant.NN_QZ_NO_BANKER_CK) {
-            room.setQzNoBanker(NNConstant.NN_QZ_NO_BANKER_CK);// 无人抢庄，重新发牌
+            // 无人抢庄，重新发牌
+            room.setQzNoBanker(NNConstant.NN_QZ_NO_BANKER_CK);
         }else if(baseInfo.getInt("roomType")==3){
-            room.setQzNoBanker(NNConstant.NN_QZ_NO_BANKER_JS);// 无人抢庄，房间自动解散
+            // 无人抢庄，房间自动解散
+            room.setQzNoBanker(NNConstant.NN_QZ_NO_BANKER_JS);
         }else{
-            room.setQzNoBanker(NNConstant.NN_QZ_NO_BANKER_SJ);// 无人抢庄，随机庄
+            // 无人抢庄，随机庄
+            room.setQzNoBanker(NNConstant.NN_QZ_NO_BANKER_SJ);
         }
         // 是否允许玩家中途加入
         if(baseInfo.containsKey("halfwayin")&&baseInfo.getInt("halfwayin")==1){
@@ -404,7 +428,8 @@ public class BaseEventDeal {
             room.setReadyOvertime(NNConstant.NN_READY_OVERTIME_NOTHING);
         }
         if(baseInfo.containsKey("baseNum")){
-            room.setBaseNum(baseInfo.getJSONArray("baseNum").toString());//设置基础倍率
+            // 设置基础倍率
+            room.setBaseNum(baseInfo.getJSONArray("baseNum").toString());
         }
         room.getUserPacketMap().put(account,new UserPacket());
     }
