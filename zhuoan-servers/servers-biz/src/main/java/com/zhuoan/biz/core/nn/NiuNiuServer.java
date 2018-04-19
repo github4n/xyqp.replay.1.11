@@ -2,6 +2,7 @@ package com.zhuoan.biz.core.nn;
 
 import com.zhuoan.biz.model.RoomManage;
 import com.zhuoan.biz.model.nn.NNGameRoom;
+import com.zhuoan.biz.model.nn.NNGameRoomNew;
 import org.apache.commons.lang.math.RandomUtils;
 
 import java.util.ArrayList;
@@ -93,7 +94,7 @@ public class NiuNiuServer {
 	/**
 	 * 准备就绪
 	 * @param roomNo
-	 * @param sessionId
+	 * @param uuid
 	 */
 	public static void isReady(String roomNo, String uuid) {
 		
@@ -119,8 +120,8 @@ public class NiuNiuServer {
 	 * @param roomNo
 	 */
 	public static void xiPai(String roomNo) {
-		
-		NNGameRoom room=((NNGameRoom) RoomManage.gameRoomMap.get(roomNo));
+
+        NNGameRoomNew room=((NNGameRoomNew) RoomManage.gameRoomMap.get(roomNo));
 		Packer[] pai = NiuNiu.xiPai();
 		room.setPai(pai);
 	}
@@ -130,8 +131,8 @@ public class NiuNiuServer {
 	 * @param roomNo
 	 */
 	public static void faPai(String roomNo) {
-		
-		NNGameRoom room=((NNGameRoom) RoomManage.gameRoomMap.get(roomNo));
+
+        NNGameRoomNew room=((NNGameRoomNew) RoomManage.gameRoomMap.get(roomNo));
 		List<UserPacket> userPackets =NiuNiu.faPai(room.getPai(), room.getPlayerCount(), room.getSpecialType()); // 返回玩家手牌
 		List<String> uuidList = new ArrayList<String>(); 
 		for (String uuid:room.getUserPacketMap().keySet()) {
@@ -140,9 +141,9 @@ public class NiuNiuServer {
 			}
 		}
 		for (int i = 0; i < uuidList.size(); i++) { // 遍历玩家列表
-			((NNGameRoom) RoomManage.gameRoomMap.get(roomNo)).getUserPacketMap().get(uuidList.get(i)).setPs(userPackets.get(i).getPs());
+			((NNGameRoomNew) RoomManage.gameRoomMap.get(roomNo)).getUserPacketMap().get(uuidList.get(i)).setPs(userPackets.get(i).getPs());
 			// 设置玩家已发牌状态
-			((NNGameRoom) RoomManage.gameRoomMap.get(roomNo)).getUserPacketMap().get(uuidList.get(i)).setStatus(NiuNiu.USERPACKER_STATUS_FAPAI);
+			//((NNGameRoomNew) RoomManage.gameRoomMap.get(roomNo)).getUserPacketMap().get(uuidList.get(i)).setStatus(NiuNiu.USERPACKER_STATUS_FAPAI);
 		}
 	}
 	

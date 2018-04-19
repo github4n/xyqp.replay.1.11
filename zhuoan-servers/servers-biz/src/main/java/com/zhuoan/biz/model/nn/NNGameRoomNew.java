@@ -1,9 +1,11 @@
 package com.zhuoan.biz.model.nn;
 
+import com.zhuoan.biz.core.nn.Packer;
 import com.zhuoan.biz.core.nn.UserPacket;
 import com.zhuoan.biz.model.GameRoom;
 import com.zhuoan.biz.model.Playerinfo;
 import com.zhuoan.constant.NNConstant;
+import com.zhuoan.util.Dto;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 
@@ -31,6 +33,24 @@ public class NNGameRoomNew extends GameRoom{
     private int sjBanker;//随机庄家
     private ConcurrentMap<String,Playerinfo> playerMap = new ConcurrentHashMap<String, Playerinfo>();//玩家个人信息
     private ConcurrentMap<String,UserPacket> userPacketMap = new ConcurrentHashMap<String, UserPacket>();//玩家牌局信息
+    private Packer[] pai;
+    private int tongSha = 0;
+
+    public int getTongSha() {
+        return tongSha;
+    }
+
+    public void setTongSha(int tongSha) {
+        this.tongSha = tongSha;
+    }
+
+    public Packer[] getPai() {
+        return pai;
+    }
+
+    public void setPai(Packer[] pai) {
+        this.pai = pai;
+    }
 
     public int getSjBanker() {
         return sjBanker;
@@ -132,7 +152,10 @@ public class NNGameRoomNew extends GameRoom{
         this.userPacketMap = userPacketMap;
     }
 
-    // 初始化倍率信息
+    /**
+     * 初始化倍率信息
+     * @return
+     */
     private Map<Integer, Integer> initRatio() {
         Map<Integer, Integer> ratio = new HashMap<Integer, Integer>();
         ratio.put(0, 1);
@@ -149,8 +172,11 @@ public class NNGameRoomNew extends GameRoom{
         return ratio;
     }
 
-    // 初始化房间
+    /**
+     * 初始化房间
+     */
     public void initGame(){
+        tongSha = 0;
         // 重置玩家信息
         for (String uuid : getUserPacketMap().keySet()) {
             if(userPacketMap.containsKey(uuid)){
@@ -159,7 +185,10 @@ public class NNGameRoomNew extends GameRoom{
         }
     }
 
-    // 获取当前房间内的所有玩家
+    /**
+     * 获取当前房间内的所有玩家
+     * @return
+     */
     public JSONArray getAllPlayer(){
         JSONArray array = new JSONArray();
 
@@ -178,7 +207,6 @@ public class NNGameRoomNew extends GameRoom{
                 obj.put("location", player.getLocation());
                 obj.put("area", player.getArea());
                 obj.put("score", player.getScore());
-                System.out.println("============"+player.getMyIndex());
                 obj.put("index", player.getMyIndex());
                 obj.put("userOnlineStatus", player.getStatus());
                 obj.put("ghName", player.getGhName());
@@ -190,7 +218,10 @@ public class NNGameRoomNew extends GameRoom{
         return array;
     }
 
-    // 检查是否全部完成准备
+    /**
+     * 检查是否全部完成准备
+     * @return
+     */
     public boolean isAllReady(){
         for (String account : userPacketMap.keySet()){
             if (userPacketMap.get(account).getStatus()!= NNConstant.NN_USER_STATUS_READY) {
@@ -200,7 +231,10 @@ public class NNGameRoomNew extends GameRoom{
         return true;
     }
 
-    // 检查是否全部完成抢庄
+    /**
+     * 检查是否全部完成抢庄
+     * @return
+     */
     public boolean isAllQZ(){
         for (String account : userPacketMap.keySet()){
             if (userPacketMap.get(account).getStatus()!=NNConstant.NN_USER_STATUS_INIT&&
@@ -211,18 +245,26 @@ public class NNGameRoomNew extends GameRoom{
         return true;
     }
 
-    // 检查是否全部完成下注
+    /**
+     * 检查是否全部完成下注
+     * @return
+     */
     public boolean isAllXiaZhu(){
         for (String account : userPacketMap.keySet()){
-            if (userPacketMap.get(account).getStatus()!=NNConstant.NN_USER_STATUS_INIT&&
-                userPacketMap.get(account).getStatus()!= NNConstant.NN_USER_STATUS_XZ) {
-                return false;
+            if (!account.equals(getBanker())) {
+                if (userPacketMap.get(account).getStatus()!=NNConstant.NN_USER_STATUS_INIT&&
+                    userPacketMap.get(account).getStatus()!= NNConstant.NN_USER_STATUS_XZ) {
+                    return false;
+                }
             }
         }
         return true;
     }
 
-    // 检查是否全部完成亮牌
+    /**
+     * 检查是否全部完成亮牌
+     * @return
+     */
     public boolean isAllShowPai(){
         for (String account : userPacketMap.keySet()){
             if (userPacketMap.get(account).getStatus()!=NNConstant.NN_USER_STATUS_INIT&&
@@ -246,7 +288,11 @@ public class NNGameRoomNew extends GameRoom{
         return true;
     }
 
-    // 获取可选抢庄倍数
+    /**
+     * 获取可选抢庄倍数
+     * @param yuanbao
+     * @return
+     */
     public JSONArray getQzTimes(double yuanbao){
         // 基数
         int baseNum = 3;
@@ -279,7 +325,11 @@ public class NNGameRoomNew extends GameRoom{
         return qzts;
     }
 
-    // 获取可选玩家下注倍数
+    /**
+     * 获取可选玩家下注倍数
+     * @param yuanbao
+     * @return
+     */
     public JSONArray getBaseNumTimes(double yuanbao){
         // 基数
         int baseNum = 5;
@@ -287,10 +337,12 @@ public class NNGameRoomNew extends GameRoom{
         double di = getScore();
         // 庄家抢庄倍数
         int qzTimes = 1;
-        /*if((bankerType==NNConstant.NN_BANKER_TYPE_QZ || bankerType==NNConstant.NN_BANKER_TYPE_MP)
-            &&!Dto.isNull(userPacketMap)&&!Dto.isNull(userPacketMap.get(banker))){ // 抢庄
-            qzTimes = userPacketMap.get(banker).getQzTimes();
-        }*/
+        // 抢庄
+        if(bankerType==NNConstant.NN_BANKER_TYPE_QZ || bankerType==NNConstant.NN_BANKER_TYPE_MP) {
+            if (!Dto.isNull(userPacketMap)&&userPacketMap.get(getBanker())!=null) {
+                qzTimes = userPacketMap.get(getBanker()).getQzTimes();
+            }
+        }
         // 最大下注倍数
         int beiShu = (int) (yuanbao/(baseNum*di*qzTimes));
         JSONArray baseNums = new JSONArray();
@@ -311,7 +363,10 @@ public class NNGameRoomNew extends GameRoom{
         return JSONArray.fromObject(baseNums);
     }
 
-    // 获取抢庄结果
+    /**
+     * 获取抢庄结果
+     * @return
+     */
     public JSONArray getQZResult(){
         JSONArray array = new JSONArray();
         for (String uuid :userPacketMap.keySet()) {
@@ -326,7 +381,10 @@ public class NNGameRoomNew extends GameRoom{
         return array;
     }
 
-    // 获取下注结果
+    /**
+     * 获取下注结果
+     * @return
+     */
     public JSONArray getXiaZhuResult(){
         JSONArray array = new JSONArray();
         for (String uuid :userPacketMap.keySet()) {
@@ -341,14 +399,18 @@ public class NNGameRoomNew extends GameRoom{
         return array;
     }
 
-    // 获取gameData
+    /**
+     * 获取gameData
+     * @param account
+     * @return
+     */
     public JSONObject getGameData(String account){
         // 抢庄下注阶段
         if (getGameStatus()==NNConstant.NN_GAME_STATUS_QZ||getGameStatus()==NNConstant.NN_GAME_STATUS_DZ||getGameStatus()==NNConstant.NN_GAME_STATUS_XZ) {
             return getGameDataQzOrXz(account);
-        } else if (getGameStatus()==NNConstant.NN_GAME_STATUS_LP) {// 亮牌阶段
+        } else if (getGameStatus()==NNConstant.NN_GAME_STATUS_LP) {
             return getGameDataLP(account);
-        } else if (getGameStatus()==NNConstant.NN_GAME_STATUS_JS) {// 结算阶段
+        } else if (getGameStatus()==NNConstant.NN_GAME_STATUS_JS) {
             return getGameDataJS(account);
         }
         return null;
@@ -364,33 +426,22 @@ public class NNGameRoomNew extends GameRoom{
         JSONObject data = new JSONObject();
         for (String uuid : userPacketMap.keySet()) {
             JSONObject obj = new JSONObject();
-            //obj.put("index",playerMap.get(uuid).getMyIndex());
             int[] pai;
             // 明牌抢庄提前发牌
             if (bankerType==NNConstant.NN_BANKER_TYPE_MP){
                 // 有参与的玩家
                 if (userPacketMap.get(uuid).getStatus()>NNConstant.NN_USER_STATUS_INIT) {
-                    if (uuid.equals(account)) {// 自己的牌可以看到
+                    // 自己的牌可以看到
+                    if (uuid.equals(account)) {
                         int[] myPai = userPacketMap.get(uuid).getMingPai();
                         // 抢庄或定庄阶段四张牌
-                        if (getGameStatus()==NNConstant.NN_GAME_STATUS_QZ||getGameStatus()==NNConstant.NN_GAME_STATUS_DZ) {
-                            pai = new int[myPai.length-1];
-                            for (int i = 0; i < pai.length-1; i++) {
-                                pai[i] = myPai[i];
-                            }
-                        }else {// 下注阶段五张牌
-                            pai = new int[myPai.length];
-                            for (int i = 0; i < pai.length-1; i++) {
-                                pai[i] = myPai[i];
-                            }
+                        pai = new int[myPai.length-1];
+                        for (int i = 0; i < pai.length; i++) {
+                            pai[i] = myPai[i];
                         }
                         obj.put("paiType",userPacketMap.get(uuid).getType());
                     }else {// 其他人的牌传[0,0,0,0]
-                        if (getGameStatus()==NNConstant.NN_GAME_STATUS_QZ) {
-                            pai = new int[]{0,0,0,0};
-                        }else {
-                            pai = new int[]{0,0,0,0,0};
-                        }
+                        pai = new int[]{0,0,0,0};
                     }
                 } else {// 中途加入玩家传[]
                     pai = new int[0];
@@ -400,7 +451,6 @@ public class NNGameRoomNew extends GameRoom{
             }
             obj.put("pai",pai);
             data.put(playerMap.get(uuid).getMyIndex(),obj);
-            //array.add(obj);
         }
         return data;
     }
@@ -411,11 +461,9 @@ public class NNGameRoomNew extends GameRoom{
      * @return
      */
     public JSONObject getGameDataLP(String account){
-        //JSONArray array = new JSONArray();
         JSONObject data = new JSONObject();
         for (String uuid : userPacketMap.keySet()) {
             JSONObject obj = new JSONObject();
-            //obj.put("index",playerMap.get(uuid).getMyIndex());
             int[] pai;
             // 有参与的玩家
             if (userPacketMap.get(uuid).getStatus()>NNConstant.NN_USER_STATUS_INIT) {
@@ -434,7 +482,6 @@ public class NNGameRoomNew extends GameRoom{
             }
             obj.put("pai",pai);
             data.put(playerMap.get(uuid).getMyIndex(),obj);
-            //array.add(obj);
         }
         return data;
     }
@@ -445,12 +492,10 @@ public class NNGameRoomNew extends GameRoom{
      * @return
      */
     public JSONObject getGameDataJS(String account){
-        //JSONArray array = new JSONArray();
         JSONObject data = new JSONObject();
         for (String uuid : userPacketMap.keySet()) {
             JSONObject obj = new JSONObject();
-            //obj.put("index",playerMap.get(uuid).getMyIndex());
-            obj.put("tongsha",userPacketMap.get(getBanker()).getTongSha());
+            obj.put("tongsha",tongSha);
             int[] pai;
             if (userPacketMap.get(uuid).getStatus()>NNConstant.NN_USER_STATUS_INIT) {
                 pai = userPacketMap.get(uuid).getMingPai();
@@ -461,13 +506,15 @@ public class NNGameRoomNew extends GameRoom{
                 pai = new int[0];
             }
             obj.put("pai",pai);
-            //array.add(obj);
             data.put(playerMap.get(uuid).getMyIndex(),obj);
         }
         return data;
     }
 
-    // 获取解散数据
+    /**
+     * 获取解散数据
+     * @return
+     */
     public JSONArray getJieSanData(){
         JSONArray array = new JSONArray();
         for (String account : userPacketMap.keySet()) {
@@ -482,7 +529,10 @@ public class NNGameRoomNew extends GameRoom{
         return array;
     }
 
-    // 获取当前房间内的所有人
+    /**
+     * 获取当前房间内的所有人
+     * @return
+     */
     public List<UUID> getAllUUIDList(){
         List<UUID> uuidList = new ArrayList<UUID>();
         for (String account : playerMap.keySet()) {
@@ -491,7 +541,11 @@ public class NNGameRoomNew extends GameRoom{
         return uuidList;
     }
 
-    // 获取当前房间内的所有人(不包括自己)
+    /**
+     * 获取当前房间内的所有人(不包括自己)
+     * @param uuid
+     * @return
+     */
     public List<UUID> getAllUUIDList(String uuid){
         List<UUID> uuidList = new ArrayList<UUID>();
         for (String account : playerMap.keySet()) {

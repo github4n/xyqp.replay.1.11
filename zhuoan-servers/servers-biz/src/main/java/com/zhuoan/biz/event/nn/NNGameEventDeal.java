@@ -173,7 +173,7 @@ public class NNGameEventDeal {
 								+ objInfo.get("player")+"人/" 
 								+ objInfo.getJSONObject("turn").getInt("turn") + "局";
 						// AA支付
-						if(gameRoom.getPaytype()==1){
+						if(gameRoom.getPayType()==1){
 							roominfo = roominfo + "/房费AAx" + objInfo.getJSONObject("turn").getInt("AANum");
 						}
 						obj.put("roominfo", roominfo);
@@ -208,7 +208,7 @@ public class NNGameEventDeal {
 						}else if(type==5){
 							wanfa = "通比牛牛";
 						}
-						RoomManage.gameRoomMap.get(roomNo).setFytype(wanfa);
+						RoomManage.gameRoomMap.get(roomNo).setWfType(wanfa);
 						obj.put("roominfo2", wanfa);
 					}
 					// 判断玩家元宝是否足够

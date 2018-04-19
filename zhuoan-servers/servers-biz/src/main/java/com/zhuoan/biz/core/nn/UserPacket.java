@@ -4,6 +4,7 @@ import com.zhuoan.biz.model.UserPacketCommen;
 import com.zhuoan.biz.model.nn.NNGameRoom;
 import org.apache.commons.lang.math.RandomUtils;
 
+import java.io.Serializable;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -12,7 +13,7 @@ import java.util.Map;
 /**
  * 
  */
-public class UserPacket extends UserPacketCommen {
+public class UserPacket extends UserPacketCommen implements Serializable{
 	
 	private Packer[] ps = new Packer[5];//手里的5张牌
 	public int type;//牌的类型  0:无牛，1~9:牛一~牛9，10:牛牛
@@ -26,15 +27,6 @@ public class UserPacket extends UserPacketCommen {
 	public int qzTimes = 0;//抢庄倍数
 	public int luck;// 幸运值
     private int xzTimes;// 下注倍数
-    private int tongSha = 0;// 通杀
-
-    public int getTongSha() {
-        return tongSha;
-    }
-
-    public void setTongSha(int tongSha) {
-        this.tongSha = tongSha;
-    }
 
     public int getType() {
         return type;
@@ -169,7 +161,6 @@ public class UserPacket extends UserPacketCommen {
 		isReady=0;
 		isCloseRoom=0;
         score = 0;
-        tongSha = 0;
         xzTimes = 0;
         qzTimes = 0;
     }

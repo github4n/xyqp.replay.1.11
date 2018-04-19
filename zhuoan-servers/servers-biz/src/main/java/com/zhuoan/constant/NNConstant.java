@@ -1,10 +1,7 @@
 package com.zhuoan.constant;
 
 import com.corundumstudio.socketio.SocketIOClient;
-import com.zhuoan.biz.model.GameRoom;
-import com.zhuoan.biz.model.RoomManage;
 import com.zhuoan.service.socketio.impl.GameMain;
-import com.zhuoan.util.Dto;
 
 import java.util.List;
 import java.util.UUID;
@@ -31,8 +28,6 @@ public class NNConstant {
     public static final int CLOSE_ROOM_AGREE = 1;// 同意解散
     public static final int CLOSE_ROOM_UNSURE = 0;// 未确认
     public static final int CLOSE_ROOM_DISAGREE = -1;// 拒绝解散
-
-    public static final String BACK_ENTER_ROOM = "enterRoomPush_NN";
 
     // 客户端标识
     public static final String CLIENT_TAG_ACCOUNT = "account";
@@ -85,9 +80,7 @@ public class NNConstant {
 
     public static boolean checkEvent(SocketIOClient client,int gameStatus){
         // 客户端不包含房间号或用户账号
-        System.out.println(client.has(CLIENT_TAG_ACCOUNT));
-        System.out.println(client.has(CLIENT_TAG_ROOM_NO));
-        if (!client.has(CLIENT_TAG_ACCOUNT)||!client.has(CLIENT_TAG_ROOM_NO)) {
+        /*if (!client.has(CLIENT_TAG_ACCOUNT)||!client.has(CLIENT_TAG_ROOM_NO)) {
             return false;
         }
         if (Dto.isNull(client.get(CLIENT_TAG_ROOM_NO))||Dto.isNull(client.get(CLIENT_TAG_ACCOUNT))) {
@@ -109,7 +102,7 @@ public class NNConstant {
         // 当前非该游戏阶段
         if (gameStatus!=CHECK_GAME_STATUS_NO&&gameRoom.getGameStatus()!=gameStatus) {
             return false;
-        }
+        }*/
         return true;
     }
 

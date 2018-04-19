@@ -66,13 +66,13 @@ public class GameEventDeal {
             case GidConstant.COMMON:
                 switch (sorts) {
                     case 1:
-                        roomManage.getGameSetting(client, data);
+                        baseEventDeal.getGameSetting(client, data);
                         break;
                     case 2:
                         roomManage.getAllRoomList(client, data);
                         break;
                     case 3:
-                        roomManage.checkUser(client, data);
+                        baseEventDeal.checkUser(client, data);
                         break;
                     case 4:
                         gameLogsCache.getGameLogsList(client, data);
@@ -91,30 +91,24 @@ public class GameEventDeal {
                         nnGameEventDeal.enterRoom(client, data);
                         break;
                     case 2:
-                        //nnGameEventDeal.gameReady(client, data);
                         nnGameEventDealNew.gameReady(client, data);
                         break;
                     case 3:
-                        //nnGameEventDeal.gameXiaZhu(client, data);
                         nnGameEventDealNew.gameXiaZhu(client, data);
                         break;
                     case 4:
-                        //nnGameEventDeal.gameEvent(client, data);
                         nnGameEventDealNew.showPai(client, data);
                         break;
                     case 5:
-                        //nnGameEventDeal.qiangZhuang(client, data);
                         nnGameEventDealNew.gameQiangZhuang(client, data);
                         break;
                     case 6:
                         nnGameEventDeal.closeRoom(client, data);
                         break;
                     case 7:
-                        //nnGameEventDeal.exitRoom(client, data);
                         nnGameEventDealNew.exitRoom(client, data);
                         break;
                     case 8:
-                        //nnGameEventDeal.reconnectGame(client, data);
                         nnGameEventDealNew.reconnectGame(client, data);
                         break;
                     case 9:
@@ -136,11 +130,9 @@ public class GameEventDeal {
                         nnGameEventDeal.changeTable(client, data);
                         break;
                     case 15:
-                        //roomManage.createRoomNN(client, data);
                         baseEventDeal.createRoomBase(client, data);
                         break;
                     case 16:
-                        //roomManage.joinRoomNN(client, data);
                         baseEventDeal.joinRoomBase(client, data);
                         break;
                     case 17:

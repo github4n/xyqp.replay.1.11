@@ -2,6 +2,7 @@ package com.zhuoan.biz.event.nn;
 
 import com.corundumstudio.socketio.SocketIOClient;
 import com.zhuoan.biz.core.nn.NiuNiuServer;
+import com.zhuoan.biz.core.nn.Packer;
 import com.zhuoan.biz.core.nn.UserPacket;
 import com.zhuoan.biz.model.PackerCompare;
 import com.zhuoan.biz.model.Playerinfo;
@@ -55,24 +56,14 @@ public class NNGameEventDealNew {
      * @param data
      */
     public void joinRoom(SocketIOClient client, Object data){
-        /*if (!NNConstant.checkEvent(client,NNConstant.CHECK_GAME_STATUS_NO)) {
-            return;
-        }
-        // 数据不为空
-        if (!Dto.isObjNull(obtainRoomData(client))) {
-            JSONObject result = new JSONObject();
-            result.put("code",1);
-            result.put("data",obtainRoomData(client));
-            // 通知自己
-            NNConstant.sendMsgEventToSingle(client,result.toString(),"enterRoomPush_NN");
-        }*/
         // 进入房间通知自己
         createRoom(client);
         JSONObject joinData = JSONObject.fromObject(data);
         // 非重连通知其他玩家
         if (joinData.containsKey("isReconnect")&&joinData.getInt("isReconnect")==0) {
-            NNGameRoomNew room = (NNGameRoomNew) RoomManage.gameRoomMap.get(client.get(NNConstant.CLIENT_TAG_ROOM_NO).toString());
-            Playerinfo player = room.getPlayerMap().get(client.get(NNConstant.CLIENT_TAG_ACCOUNT).toString());
+            String account = joinData.getString("account");
+            NNGameRoomNew room = (NNGameRoomNew) RoomManage.gameRoomMap.get(joinData.getString("room_no"));
+            Playerinfo player = room.getPlayerMap().get(account);
             JSONObject obj = new JSONObject();
             obj.put("account", player.getAccount());
             obj.put("name", player.getName());
@@ -87,9 +78,9 @@ public class NNGameEventDealNew {
             obj.put("userOnlineStatus", player.getStatus());
             obj.put("ghName", player.getGhName());
             obj.put("introduction", player.getSignature());
-            obj.put("userStatus", room.getUserPacketMap().get(client.get(NNConstant.CLIENT_TAG_ACCOUNT).toString()).getStatus());
+            obj.put("userStatus", room.getUserPacketMap().get(account).getStatus());
             // 通知玩家
-            NNConstant.sendMsgEventToAll(room.getAllUUIDList(client.get(NNConstant.CLIENT_TAG_ACCOUNT).toString()),obj.toString(),"playerEnterPush_NN");
+            NNConstant.sendMsgEventToAll(room.getAllUUIDList(account),obj.toString(),"playerEnterPush_NN");
         }
     }
 
@@ -131,12 +122,14 @@ public class NNGameEventDealNew {
             obj.put("zhuang",-1);
             obj.put("qzScore",0);
         }
+        if (room.getBankerType()==NNConstant.NN_BANKER_TYPE_MP) {
+            obj.put("qzType",1);
+        }
         obj.put("game_index",room.getGameIndex());
         // TODO: 2018/4/17 定时器
         obj.put("showTimer",0);
         obj.put("timer",room.getTimeLeft());
         obj.put("myIndex",room.getPlayerMap().get(account).getMyIndex());
-
         obj.put("qzTimes",room.getQzTimes(room.getPlayerMap().get(account).getScore()));
         obj.put("baseNum",room.getBaseNumTimes(room.getPlayerMap().get(account).getScore()));
         obj.put("users",room.getAllPlayer());
@@ -162,13 +155,19 @@ public class NNGameEventDealNew {
             !NNConstant.checkEvent(client,NNConstant.NN_GAME_STATUS_JS)) {
             return;
         }
-        NNGameRoomNew room = (NNGameRoomNew) RoomManage.gameRoomMap.get(client.get(NNConstant.CLIENT_TAG_ROOM_NO).toString());
-        String account = client.get(NNConstant.CLIENT_TAG_ACCOUNT).toString();
+        JSONObject postData = JSONObject.fromObject(data);
+        String roomNo = postData.getString("room_no");
+        NNGameRoomNew room = (NNGameRoomNew) RoomManage.gameRoomMap.get(roomNo);
+        String account = postData.getString("account");
         if (room.getUserPacketMap().containsKey(account)&&room.getUserPacketMap().get(account)!=null) {
             // 设置玩家准备状态
             room.getUserPacketMap().get(account).setStatus(NNConstant.NN_USER_STATUS_READY);
+            // 设置为准备状态
+            if (room.getGameStatus()!=NNConstant.NN_GAME_STATUS_READY) {
+                room.setGameStatus(NNConstant.NN_GAME_STATUS_READY);
+            }
             // 房间内所有玩家都已经完成准备且人数大于两人通知开始游戏,否则通知玩家准备
-            if (room.isAllReady()&&room.getPlayerMap().size()>2) {
+            if (room.isAllReady()&&room.getPlayerMap().size()>=2) {
                 startGame(room);
             }else {
                 JSONObject result = new JSONObject();
@@ -198,12 +197,16 @@ public class NNGameEventDealNew {
             NiuNiuServer.xiPai(room.getRoomNo());
             // 发牌
             NiuNiuServer.faPai(room.getRoomNo());
+            // 设置玩家手牌
+            for (String uuid : room.getUserPacketMap().keySet()) {
+                room.getUserPacketMap().get(uuid).saveMingPai();
+            }
             // 设置房间状态(抢庄)
             room.setGameStatus(NNConstant.NN_GAME_STATUS_QZ);
-        } else if (room.getBankerType()==NNConstant.NN_BANKER_TYPE_QZ) {// 抢庄
+        } else if (room.getBankerType()==NNConstant.NN_BANKER_TYPE_QZ) {
             // 设置房间状态(抢庄)
             room.setGameStatus(NNConstant.NN_GAME_STATUS_QZ);
-        } else if (room.getBankerType()==NNConstant.NN_BANKER_TYPE_TB) {// 通比模式
+        } else if (room.getBankerType()==NNConstant.NN_BANKER_TYPE_TB) {
             // 设置房间状态(下注)
             room.setGameStatus(NNConstant.NN_GAME_STATUS_XZ);
             for (String account : room.getUserPacketMap().keySet()) {
@@ -247,9 +250,10 @@ public class NNGameEventDealNew {
         if (!NNConstant.checkEvent(client,NNConstant.NN_GAME_STATUS_QZ)) {
             return;
         }
-        NNGameRoomNew room = (NNGameRoomNew) RoomManage.gameRoomMap.get(client.get(NNConstant.CLIENT_TAG_ROOM_NO).toString());
-        String account = client.get(NNConstant.CLIENT_TAG_ACCOUNT).toString();
         JSONObject postData = JSONObject.fromObject(data);
+        String roomNo = postData.getString("room_no");
+        NNGameRoomNew room = (NNGameRoomNew) RoomManage.gameRoomMap.get(roomNo);
+        String account = postData.getString("account");
         if (postData.containsKey("value")) {
             // 设置玩家抢庄状态及抢庄倍数
             if (room.getUserPacketMap().containsKey(account)&&room.getUserPacketMap().get(account)!=null) {
@@ -292,10 +296,14 @@ public class NNGameEventDealNew {
         if (room.getGameStatus()!=NNConstant.NN_GAME_STATUS_QZ) {
             return;
         }
-        List<String> qzList = new ArrayList<String>();// 所有抢庄玩家
-        List<String> allList = new ArrayList<String>();// 所有参与玩家
-        int maxBs = 1;// 最大抢庄倍数
-        if (room.getSjBanker()==1) {// 随机庄家
+        // 所有抢庄玩家
+        List<String> qzList = new ArrayList<String>();
+        // 所有参与玩家
+        List<String> allList = new ArrayList<String>();
+        // 最大抢庄倍数
+        int maxBs = 1;
+        // 随机庄家
+        if (room.getSjBanker()==1) {
             for (String account : room.getUserPacketMap().keySet()) {
                 // 中途加入除外
                 if (room.getUserPacketMap().get(account).getStatus()>NNConstant.NN_USER_STATUS_INIT) {
@@ -319,24 +327,30 @@ public class NNGameEventDealNew {
                 }
             }
         }
-        int bankerIndex = 0;// 庄家下标
-        if (qzList.size()==1) {// 只有一个玩家抢庄
+        // 庄家下标
+        int bankerIndex = 0;
+        // 只有一个玩家抢庄
+        if (qzList.size()==1) {
             room.setBanker(qzList.get(bankerIndex));
             room.setGameStatus(NNConstant.NN_GAME_STATUS_DZ);
-        }else if (qzList.size()>1) {// 多个玩家抢庄
+        }else if (qzList.size()>1) {
+            // 多个玩家抢庄
             bankerIndex = RandomUtils.nextInt(qzList.size());
             room.setBanker(qzList.get(bankerIndex));
             room.setGameStatus(NNConstant.NN_GAME_STATUS_DZ);
         }else {// 无人抢庄
-            if (room.getQzNoBanker()==NNConstant.NN_QZ_NO_BANKER_SJ) {// 随机庄家
+            if (room.getQzNoBanker()==NNConstant.NN_QZ_NO_BANKER_SJ) {
+                // 随机庄家
                 bankerIndex = RandomUtils.nextInt(allList.size());
                 room.setBanker(allList.get(bankerIndex));
                 room.setGameStatus(NNConstant.NN_GAME_STATUS_DZ);
-            }else if (room.getQzNoBanker()==NNConstant.NN_QZ_NO_BANKER_JS) {// 解散房间
+            }else if (room.getQzNoBanker()==NNConstant.NN_QZ_NO_BANKER_JS) {
+                // 解散房间
                 // TODO: 2018/4/18 解散房间
                 // 解散房间不需要后续通知玩家庄家已经确定
                 return;
-            } else if (room.getQzNoBanker()==NNConstant.NN_QZ_NO_BANKER_CK) {// 重新开局
+            } else if (room.getQzNoBanker()==NNConstant.NN_QZ_NO_BANKER_CK) {
+                // 重新开局
                 // 重置游戏状态
                 room.setGameStatus(NNConstant.NN_GAME_STATUS_READY);
                 // 重置玩家状态
@@ -386,9 +400,10 @@ public class NNGameEventDealNew {
         if (!NNConstant.checkEvent(client,NNConstant.NN_GAME_STATUS_XZ)) {
             return;
         }
-        NNGameRoomNew room = (NNGameRoomNew) RoomManage.gameRoomMap.get(client.get(NNConstant.CLIENT_TAG_ROOM_NO).toString());
-        String account = client.get(NNConstant.CLIENT_TAG_ACCOUNT).toString();
         JSONObject postData = JSONObject.fromObject(data);
+        String roomNo = postData.getString("room_no");
+        String account = postData.getString("account");
+        NNGameRoomNew room = (NNGameRoomNew) RoomManage.gameRoomMap.get(roomNo);
         if (postData.containsKey("money")) {
             // 设置玩家下注状态及下注倍数
             if (room.getUserPacketMap().containsKey(account)&&room.getUserPacketMap().get(account)!=null) {
@@ -440,14 +455,19 @@ public class NNGameEventDealNew {
         if (!NNConstant.checkEvent(client,NNConstant.NN_GAME_STATUS_LP)) {
             return;
         }
-        NNGameRoomNew room = (NNGameRoomNew) RoomManage.gameRoomMap.get(client.get(NNConstant.CLIENT_TAG_ROOM_NO).toString());
-        String account = client.get(NNConstant.CLIENT_TAG_ACCOUNT).toString();
+        JSONObject postData = JSONObject.fromObject(data);
+        String roomNo = postData.getString("room_no");
+        NNGameRoomNew room = (NNGameRoomNew) RoomManage.gameRoomMap.get(roomNo);
+        String account = postData.getString("account");
         // 设置玩家亮牌状态
         if (room.getUserPacketMap().containsKey(account)&&room.getUserPacketMap().get(account)!=null) {
             // 已经亮牌
             if (room.getUserPacketMap().get(account).getStatus()==NNConstant.NN_USER_STATUS_LP) {
                 return;
             }
+            // 配牛
+            peiNiu(roomNo,account);
+            // 设置玩家状态
             room.getUserPacketMap().get(account).setStatus(NNConstant.NN_USER_STATUS_LP);
             // 所有人都完成亮牌
             if (!room.isAllShowPai()) {
@@ -482,9 +502,12 @@ public class NNGameEventDealNew {
         if (room.getBankerType()==NNConstant.NN_BANKER_TYPE_TB) {
             // TODO: 2018/4/18 通比结算
         }else {
-            boolean tongSha = true;// 通杀
-            boolean tongPei = true;// 通赔
+            // 通杀
+            boolean tongSha = true;
+            // 通赔
+            boolean tongPei = true;
             for (String account : room.getUserPacketMap().keySet()) {
+                UserPacket bankerUp = room.getUserPacketMap().get(room.getBanker());
                 UserPacket up = room.getUserPacketMap().get(account);
                 // 有参与的玩家
                 if (up.getStatus()>NNConstant.NN_USER_STATUS_INIT) {
@@ -495,16 +518,18 @@ public class NNGameEventDealNew {
                         UserPacket userpacket = new UserPacket(room.getUserPacketMap().get(account).getPs(), room.getSpecialType());
                         UserPacket winner = PackerCompare.getWin(userpacket, banker);
                         // 庄家抢庄倍数
-                        int qzTimes = banker.getQzTimes();
+                        int qzTimes = room.getUserPacketMap().get(room.getBanker()).getQzTimes();
                         if(qzTimes<=0){
                             qzTimes = 1;
                         }
                         // 输赢分数 下注倍数*倍率*底注*抢庄倍数
-                        double totalScore = userpacket.getXzTimes()*room.getRatio().get(winner.getType())*room.getScore()*qzTimes;
+                        double totalScore = room.getUserPacketMap().get(account).getXzTimes()*room.getRatio().get(winner.getType())*room.getScore()*qzTimes;
                         // 闲家赢
                         if(userpacket.isWin()){
-                            userpacket.setScore(Dto.add(userpacket.getScore(),totalScore));
-                            banker.setScore(Dto.sub(banker.getScore(),totalScore));
+                            // 设置闲家当局输赢
+                            room.getUserPacketMap().get(account).setScore(Dto.add(up.getScore(),totalScore));
+                            // 设置庄家当局输赢
+                            room.getUserPacketMap().get(room.getBanker()).setScore(Dto.sub(bankerUp.getScore(),totalScore));
                             // 闲家当前分数
                             double oldScoreXJ = room.getPlayerMap().get(account).getScore();
                             room.getPlayerMap().get(account).setScore(Dto.add(oldScoreXJ,totalScore));
@@ -513,8 +538,10 @@ public class NNGameEventDealNew {
                             room.getPlayerMap().get(room.getBanker()).setScore(Dto.sub(oldScoreZJ,totalScore));
                             tongSha = false;
                         }else{ // 庄家赢
-                            userpacket.setScore(Dto.sub(userpacket.getScore(),totalScore));
-                            banker.setScore(Dto.add(banker.getScore(),totalScore));
+                            // 设置闲家当局输赢
+                            room.getUserPacketMap().get(account).setScore(Dto.sub(up.getScore(),totalScore));
+                            // 设置庄家当局输赢
+                            room.getUserPacketMap().get(room.getBanker()).setScore(Dto.add(bankerUp.getScore(),totalScore));
                             // 闲家当前分数
                             double oldScoreXJ = room.getPlayerMap().get(account).getScore();
                             room.getPlayerMap().get(account).setScore(Dto.sub(oldScoreXJ,totalScore));
@@ -528,11 +555,11 @@ public class NNGameEventDealNew {
             }
             // 通杀
             if (tongSha) {
-                room.getUserPacketMap().get(room.getBanker()).setTongSha(1);
+                room.setTongSha(1);
             }
             // 通赔
             if (tongPei) {
-                room.getUserPacketMap().get(room.getBanker()).setTongSha(-1);
+                room.setTongSha(-1);
             }
             // TODO: 2018/4/18 元宝、金币结算更新数据库 
             // TODO: 2018/4/18 存战绩
@@ -543,8 +570,10 @@ public class NNGameEventDealNew {
         if (!NNConstant.checkEvent(client,NNConstant.CHECK_GAME_STATUS_NO)) {
             return;
         }
-        NNGameRoomNew room = (NNGameRoomNew) RoomManage.gameRoomMap.get(client.get(NNConstant.CLIENT_TAG_ROOM_NO).toString());
-        String account = client.get(NNConstant.CLIENT_TAG_ACCOUNT).toString();
+        JSONObject postData = JSONObject.fromObject(data);
+        String roomNo = postData.getString("room_no");
+        NNGameRoomNew room = (NNGameRoomNew) RoomManage.gameRoomMap.get(roomNo);
+        String account = postData.getString("account");
         if (room.getUserPacketMap().containsKey(account)&&room.getUserPacketMap().get(account)!=null) {
             boolean canExit = false;
             // 金币场、元宝场
@@ -553,7 +582,8 @@ public class NNGameEventDealNew {
                 if (room.getUserPacketMap().get(account).getStatus()==NNConstant.NN_USER_STATUS_INIT) {
                     canExit = true;
                 }else if (room.getGameStatus()==NNConstant.NN_GAME_STATUS_INIT||
-                    room.getGameStatus()==NNConstant.NN_GAME_STATUS_READY) {// 初始及准备阶段可以退出
+                    room.getGameStatus()==NNConstant.NN_GAME_STATUS_READY||
+                    room.getGameStatus()==NNConstant.NN_GAME_STATUS_JS) {// 初始及准备阶段可以退出
                     canExit = true;
                 }
             }
@@ -569,11 +599,17 @@ public class NNGameEventDealNew {
                 // 通知玩家
                 NNConstant.sendMsgEventToAll(allUUIDList,result.toString(),"exitRoomPush_NN");
                 // 移除数据
+                for (int i = 0; i < room.getUserIdList().size(); i++) {
+                    if (room.getUserIdList().get(i)==room.getPlayerMap().get(account).getId()) {
+                        room.getUserIdList().set(i, (long)0);
+                        break;
+                    }
+                }
                 room.getPlayerMap().remove(account);
                 room.getUserPacketMap().remove(account);
                 // TODO: 2018/4/18 更新数据库
                 // 房间内所有玩家都已经完成准备且人数大于两人通知开始游戏
-                if (room.isAllReady()&&room.getPlayerMap().size()>2) {
+                if (room.isAllReady()&&room.getPlayerMap().size()>=2) {
                     startGame(room);
                 }
                 // 所有人都退出清除房间数据
@@ -619,9 +655,10 @@ public class NNGameEventDealNew {
         if (!NNConstant.checkEvent(client,NNConstant.CHECK_GAME_STATUS_NO)) {
             return;
         }
-        NNGameRoomNew room = (NNGameRoomNew) RoomManage.gameRoomMap.get(client.get(NNConstant.CLIENT_TAG_ROOM_NO).toString());
-        String account = client.get(NNConstant.CLIENT_TAG_ACCOUNT).toString();
         JSONObject postData = JSONObject.fromObject(data);
+        String roomNo = postData.getString("room_no");
+        NNGameRoomNew room = (NNGameRoomNew) RoomManage.gameRoomMap.get(roomNo);
+        String account = postData.getString("account");
         if (postData.containsKey("type")) {
             JSONObject result = new JSONObject();
             int type = postData.getInt("type");
@@ -695,38 +732,36 @@ public class NNGameEventDealNew {
         if (!Dto.isObjNull(userInfo)) {
             client.set(NNConstant.CLIENT_TAG_USER_INFO,userInfo);
         }
-        /*JSONObject obj = new JSONObject();
-        obj.put("gameStatus",room.getGameStatus());
-        // 通比模式没有庄家，其他模式除了准备、抢庄阶段庄家已经确定
-        if (room.getGameStatus()>NNConstant.NN_GAME_STATUS_QZ&&room.getBankerType()!=NNConstant.NN_BANKER_TYPE_TB) {
-            if (room.getUserPacketMap().containsKey(room.getBanker())&&room.getUserPacketMap().get(room.getBanker())!=null) {
-                obj.put("zhuang",room.getPlayerMap().get(room.getBanker()).getMyIndex());
-                obj.put("qzScore",room.getUserPacketMap().get(room.getBanker()).getQzTimes());
-            }else {
-                obj.put("zhuang",-1);
-                obj.put("qzScore",0);
-            }
-        }else {
-            obj.put("zhuang",-1);
-            obj.put("qzScore",0);
-        }
-        obj.put("game_index",room.getGameIndex());
-        obj.put("showTimer",0);
-        obj.put("timer",0);
-        obj.put("myIndex",room.getPlayerMap().get(account).getMyIndex());
-        obj.put("qzTimes",room.getQzTimes(room.getPlayerMap().get(account).getScore()));
-        obj.put("baseNum",room.getBaseNumTimes(room.getPlayerMap().get(account).getScore()));
-        obj.put("users",room.getAllPlayer());
-        obj.put("qiangzhuang",room.getQZResult());
-        obj.put("xiazhu",room.getXiaZhuResult());
-        obj.put("gameData",room.getGameData(account));
-        obj.put("jiesuanData","");
-        obj.put("jiesan",0);
-        obj.put("jiesanData","");*/
         // 组织数据，通知玩家
         result.put("type",1);
         result.put("data",obtainRoomData(client));
         // 通知玩家
         NNConstant.sendMsgEventToSingle(client,result.toString(),"reconnectGamePush_NN");
+    }
+
+    /**
+     * 配牛
+     * @param roomNo
+     * @param uuid
+     */
+    public void peiNiu(String roomNo, String uuid) {
+
+        NNGameRoomNew room=((NNGameRoomNew) RoomManage.gameRoomMap.get(roomNo));
+        UserPacket packet = room.getUserPacketMap().get(uuid);
+        if(uuid.equals(room.getBanker())){
+            UserPacket zhuang = new UserPacket(room.getUserPacketMap().get(uuid).getPs(), true, room.getSpecialType());
+            packet.type = zhuang.type;
+            packet.setWin(zhuang.isWin());
+        }else{
+            Packer[] ups = room.getUserPacketMap().get(uuid).getPs();
+            // 有发牌的玩家
+            if(ups!=null&&ups.length>0&&ups[0]!=null){
+                UserPacket zhuang = new UserPacket(room.getUserPacketMap().get(room.getBanker()).getPs(), true, room.getSpecialType());
+                UserPacket userpacket = new UserPacket(ups, room.getSpecialType());
+                PackerCompare.getWin(userpacket, zhuang);
+                packet.type = userpacket.type;
+                packet.setWin(userpacket.isWin());
+            }
+        }
     }
 }
