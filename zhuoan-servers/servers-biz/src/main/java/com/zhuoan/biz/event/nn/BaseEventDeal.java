@@ -9,6 +9,7 @@ import com.zhuoan.biz.model.nn.NNGameRoomNew;
 import com.zhuoan.biz.service.majiang.MaJiangBiz;
 import com.zhuoan.constant.Constant;
 import com.zhuoan.constant.NNConstant;
+import com.zhuoan.dao.DBUtil;
 import com.zhuoan.util.Dto;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
@@ -124,6 +125,10 @@ public class BaseEventDeal {
                 break;
             }
         }
+        // 重连不需要重新获取座位号
+        if (postData.containsKey("myIndex")) {
+            myIndex = postData.getInt("myIndex");
+        }
         if (myIndex<0) {
             result.put("code", 0);
             result.put("msg", "房间已满");
@@ -132,9 +137,6 @@ public class BaseEventDeal {
         }
         // 设置房间属性
         gameRoom.getUserIdList().set(myIndex, userInfo.getLong("id"));
-        gameRoom.getUserIconList().set(myIndex, userInfo.getString("headimg"));
-        gameRoom.getUserNameList().set(myIndex, userInfo.getString("name"));
-        gameRoom.getUserScoreList().set(myIndex, userInfo.getInt("score"));
         RoomManage.gameRoomMap.put(roomNo, gameRoom);
         // 获取用户信息
         JSONObject obtainPlayerInfoData = new JSONObject();
@@ -159,7 +161,10 @@ public class BaseEventDeal {
         // 通知玩家
         switch (gameRoom.getGid()){
             case NNConstant.GID_NN:
-                ((NNGameRoomNew)gameRoom).getUserPacketMap().put(userInfo.getString("account"),new UserPacket());
+                // 重连不需要重新设置用户牌局信息
+                if (!((NNGameRoomNew)gameRoom).getUserPacketMap().containsKey(userInfo.getString("account"))) {
+                    ((NNGameRoomNew)gameRoom).getUserPacketMap().put(userInfo.getString("account"),new UserPacket());
+                }
                 nnGameEventDealNew.joinRoom(client,joinData);
                 break;
             default:
@@ -326,6 +331,12 @@ public class BaseEventDeal {
         return  playerinfo;
     }
 
+    /**
+     * 设置牛牛房间特殊参数
+     * @param room
+     * @param baseInfo
+     * @param account
+     */
     public void createRoomNN(NNGameRoomNew room,JSONObject baseInfo,String account){
         room.setRoomType(baseInfo.getInt("roomType"));
         room.setBankerType(baseInfo.getInt("type"));
@@ -432,5 +443,55 @@ public class BaseEventDeal {
             room.setBaseNum(baseInfo.getJSONArray("baseNum").toString());
         }
         room.getUserPacketMap().put(account,new UserPacket());
+    }
+
+    /**
+     * 获取房间设置
+     * @param client
+     * @param data
+     */
+    public void getGameSetting(SocketIOClient client, Object data){
+        JSONObject fromObject = JSONObject.fromObject(data);
+        int gid = fromObject.getInt("gid");
+        String platform = fromObject.getString("platform");
+        // TODO: 2018/4/19  查询房间设置,需要缓存
+        String sql = "select id,game_id,opt_key,opt_name,opt_val,is_mul,is_use,createTime,memo,sort,is_open" +
+            " from za_gamesetting where is_use=1 and is_open=0 and game_id=? and memo=?";
+        JSONArray gameSetting = DBUtil.getObjectListBySQL(sql, new Object[]{gid, platform});
+        if (!Dto.isNull(gameSetting)) {
+            JSONArray array = new JSONArray();
+            for (int i = 0; i < gameSetting.size(); i++) {
+                array.add(gameSetting.getJSONObject(i));
+            }
+            JSONObject result = new JSONObject();
+            result.put("data", array);
+            result.put("code", 1);
+            NNConstant.sendMsgEventToSingle(client,result.toString(),"getGameSettingPush");
+        }
+    }
+
+    /**
+     * 检查用户是否在房间内
+     * @param client
+     * @param data
+     */
+    public void checkUser(SocketIOClient client, Object data){
+        JSONObject postData = JSONObject.fromObject(data);
+        if (postData.containsKey("account")) {
+            String account = postData.getString("account");
+            // 遍历房间列表
+            for (String roomNo : RoomManage.gameRoomMap.keySet()) {
+                GameRoom gameRoom = RoomManage.gameRoomMap.get(roomNo);
+                if (gameRoom.getPlayerMap().containsKey(account)&&gameRoom.getPlayerMap().get(account)!=null) {
+                    postData.put("roomNo",gameRoom.getRoomNo());
+                    postData.put("myIndex",gameRoom.getPlayerMap().get(account).getMyIndex());
+                    joinRoomBase(client,postData);
+                    return;
+                }
+            }
+            JSONObject result = new JSONObject();
+            result.put(NNConstant.RESULT_KEY_CODE,1);
+            NNConstant.sendMsgEventToSingle(client,result.toString(),"checkUserPush");
+        }
     }
 }

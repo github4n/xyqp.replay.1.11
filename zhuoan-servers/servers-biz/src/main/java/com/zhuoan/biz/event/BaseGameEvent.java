@@ -95,9 +95,9 @@ public class BaseGameEvent {
 
 
         /**
-         * 大厅中选中一款游戏，点击‘创建房间’  01              or 加入房间
+         * 获取房间设置
          */
-        server.addEventListener("getGameSetting", Object.class, new DataListener<Object>() {
+        server.addEventListener(AddingEventConstant.GET_GAME_SETTING, Object.class, new DataListener<Object>() {
 
             @Override
             public void onData(SocketIOClient client, Object object, AckRequest ackSender) {
