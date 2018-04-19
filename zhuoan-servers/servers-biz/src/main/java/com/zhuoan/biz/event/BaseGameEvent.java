@@ -11,7 +11,6 @@ import com.zhuoan.constant.event.GidConstant;
 import com.zhuoan.constant.event.SendingEventConstant;
 import com.zhuoan.constant.event.SortsConstant;
 import com.zhuoan.queue.Messages;
-import com.zhuoan.queue.SqlModel;
 import com.zhuoan.service.jms.ProducerService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -34,8 +33,6 @@ public class BaseGameEvent {
     @Resource
     private Destination baseQueueDestination;
     @Resource
-    private Destination sqlQueueDestination;
-    @Resource
     private ProducerService producerService;
 
     /**
@@ -51,8 +48,6 @@ public class BaseGameEvent {
         server.addConnectListener(new ConnectListener() {
             @Override
             public void onConnect(SocketIOClient client) {
-
-                producerService.sendMessage(sqlQueueDestination,  new SqlModel("123", new Object[]{1,"12312","asdjasldkj"}, 4));
                 logger.info("用户 IP = [{}] with sessionId = [{}] 上线了！！！", obtainClientIp(client), client.getSessionId());
             }
         });
@@ -115,18 +110,6 @@ public class BaseGameEvent {
             @Override
             public void onData(SocketIOClient client, Object object, AckRequest ackSender) {
                 producerService.sendMessage(baseQueueDestination, new Messages(client, object, GidConstant.COMMON, 4));
-            }
-        });
-
-
-        /**
-         *    点 " 确认开房 "
-         */
-        server.addEventListener("createRoomNN", Object.class, new DataListener<Object>() {
-            @Override
-            public void onData(SocketIOClient client, Object object, AckRequest ackSender) {
-                //todo   公共的统一   eventName   gid  sorts 常量类统一
-                producerService.sendMessage(baseQueueDestination, new Messages(client, object, 1, 15));
             }
         });
 
