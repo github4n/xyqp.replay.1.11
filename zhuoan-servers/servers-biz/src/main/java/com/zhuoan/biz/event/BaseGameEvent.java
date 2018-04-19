@@ -122,7 +122,7 @@ public class BaseGameEvent {
         /**
          *    点 " 确认开房 "
          */
-        server.addEventListener("createRoomNN", Object.class, new DataListener<Object>() {
+        server.addEventListener("createRoom", Object.class, new DataListener<Object>() {
             @Override
             public void onData(SocketIOClient client, Object object, AckRequest ackSender) {
                 //todo   公共的统一   eventName   gid  sorts 常量类统一

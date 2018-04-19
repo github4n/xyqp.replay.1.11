@@ -67,20 +67,20 @@ public class NNGameEvent {
 //				}
             }
         });
-        server.addEventListener("createRoom", Object.class, new DataListener<Object>() {
-
-            @Override
-            public void onData(SocketIOClient client, Object data, AckRequest ackSender) {
-                producerService.sendMessage(nnQueueDestination, new Messages(client, data, 1, 15));
-//				try {
-//					queue.addQueue(new Messages(client, data, 1, 15));
-//					//nnService.enterRoom(client, data);
-//				} catch (Exception e) {
-//					Logger.getLogger(NNGameEvent.class).error(e.getMessage(), e);
-//					e.printStackTrace();
-//				}
-            }
-        });
+//        server.addEventListener("createRoom", Object.class, new DataListener<Object>() {
+//
+//            @Override
+//            public void onData(SocketIOClient client, Object data, AckRequest ackSender) {
+//                producerService.sendMessage(nnQueueDestination, new Messages(client, data, 1, 15));
+////				try {
+////					queue.addQueue(new Messages(client, data, 1, 15));
+////					//nnService.enterRoom(client, data);
+////				} catch (Exception e) {
+////					Logger.getLogger(NNGameEvent.class).error(e.getMessage(), e);
+////					e.printStackTrace();
+////				}
+//            }
+//        });
 
 
         /**
@@ -143,7 +143,7 @@ public class NNGameEvent {
         /**
          * 抢庄事件
          */
-        server.addEventListener("qiangzhuang_NN", Object.class, new DataListener<Object>() {
+        server.addEventListener("qiangZhuang_NN", Object.class, new DataListener<Object>() {
             @Override
             public void onData(SocketIOClient client, Object data, AckRequest ackSender) {
                 producerService.sendMessage(nnQueueDestination, new Messages(client, data, 1, 5));

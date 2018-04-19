@@ -149,6 +149,8 @@ public class BaseEventDeal {
         }else {
             joinData.put("isReconnect",0);
         }
+        joinData.put("account",userInfo.getString("account"));
+        joinData.put("room_no",roomNo);
         gameRoom.getPlayerMap().put(playerinfo.getAccount(), playerinfo);
         // 通知玩家
         switch (gameRoom.getGid()){
