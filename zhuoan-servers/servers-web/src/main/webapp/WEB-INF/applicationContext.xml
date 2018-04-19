@@ -21,6 +21,8 @@
 
     <import resource="classpath*:applicationContext-jms.xml"/>
 
+    <import resource="classpath*:applicationContext-redis.xml"/>
+
 
 
 

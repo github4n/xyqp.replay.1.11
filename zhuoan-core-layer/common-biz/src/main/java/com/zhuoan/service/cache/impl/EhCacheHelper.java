@@ -1,6 +1,9 @@
-package com.zhuoan.webapp.ehcache;
+package com.zhuoan.service.cache.impl;
 
-import net.sf.ehcache.*;
+import net.sf.ehcache.Cache;
+import net.sf.ehcache.CacheException;
+import net.sf.ehcache.CacheManager;
+import net.sf.ehcache.Element;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -29,15 +32,15 @@ import java.util.Collection;
  * 可见：https://blog.csdn.net/whatlookingfor/article/details/51833378
  * @date 2018 -04-02 20:09
  */
-public class EhCacheUtil {
+public class EhCacheHelper {
 
-    private final static Logger logger = LoggerFactory.getLogger(EhCacheUtil.class);
+    private final static Logger logger = LoggerFactory.getLogger(EhCacheHelper.class);
 
     private static CacheManager manager = null;
 
     static {
         try {
-            manager = CacheManager.create(EhCacheUtil.class.getClassLoader().getResourceAsStream("ehcache.xml"));
+            manager = CacheManager.create(EhCacheHelper.class.getClassLoader().getResourceAsStream("ehcache.xml"));
         } catch (CacheException e) {
             logger.error("获取ehcache.xml失败", e.getMessage());
         }

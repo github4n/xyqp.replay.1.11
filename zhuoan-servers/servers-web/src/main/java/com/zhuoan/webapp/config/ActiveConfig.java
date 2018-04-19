@@ -8,6 +8,7 @@ import org.springframework.jms.listener.DefaultMessageListenerContainer;
 
 import javax.annotation.Resource;
 import javax.jms.ConnectionFactory;
+import javax.jms.DeliveryMode;
 import javax.jms.MessageListener;
 import javax.jms.Queue;
 
@@ -18,7 +19,7 @@ import javax.jms.Queue;
  * @date 2018 -04-09 21:02
  * @see ActiveConfig#baseQueueDestination() ActiveConfig#baseQueueDestination()ActiveConfig#baseQueueDestination()ActiveConfig#baseQueueDestination() <p> 2、配置监听，即消费者
  * @see < com.zhuoan.webapp.listener.eventp> 3、消费者监听当前队列
- * @see ActiveConfig#queueListenerContainer(ConnectionFactory connectionFactory) ActiveConfig#queueListenerContainer(ConnectionFactory connectionFactory)ActiveConfig#queueListenerContainer(ConnectionFactory connectionFactory)ActiveConfig#queueListenerContainer(ConnectionFactory connectionFactory) <p>
+ * @see ActiveConfig#baseQueueListenerContainer(ConnectionFactory connectionFactory) ActiveConfig#queueListenerContainer(ConnectionFactory connectionFactory)ActiveConfig#queueListenerContainer(ConnectionFactory connectionFactory)ActiveConfig#queueListenerContainer(ConnectionFactory connectionFactory) <p>
  */
 @Configuration
 public class ActiveConfig {
@@ -117,7 +118,7 @@ public class ActiveConfig {
      * @return the default message listener container
      */
     @Bean
-    public DefaultMessageListenerContainer queueListenerContainer(ConnectionFactory connectionFactory) {
+    public DefaultMessageListenerContainer baseQueueListenerContainer(ConnectionFactory connectionFactory) {
         return configListenerMQ(connectionFactory, baseQueueMessageListener, baseQueueDestination());
     }
 
@@ -128,7 +129,7 @@ public class ActiveConfig {
      * @return the default message listener container
      */
     @Bean
-    public DefaultMessageListenerContainer queueListenerContainer2(ConnectionFactory connectionFactory) {
+    public DefaultMessageListenerContainer sssQueueListenerContainer(ConnectionFactory connectionFactory) {
         return configListenerMQ(connectionFactory, sssQueueMessageListener, sssQueueDestination());
     }
 
@@ -139,7 +140,7 @@ public class ActiveConfig {
      * @return the default message listener container
      */
     @Bean
-    public DefaultMessageListenerContainer queueListenerContainer3(ConnectionFactory connectionFactory) {
+    public DefaultMessageListenerContainer sqlQueueListenerContainer(ConnectionFactory connectionFactory) {
         return configListenerMQ(connectionFactory, sqlQueueMessageListener, sqlQueueDestination());
     }
 
@@ -150,7 +151,7 @@ public class ActiveConfig {
      * @return the default message listener container
      */
     @Bean
-    public DefaultMessageListenerContainer queueListenerContainer4(ConnectionFactory connectionFactory) {
+    public DefaultMessageListenerContainer zjhQueueListenerContainer(ConnectionFactory connectionFactory) {
         return configListenerMQ(connectionFactory, zjhQueueMessageListener, zjhQueueDestination());
     }
 
@@ -161,7 +162,7 @@ public class ActiveConfig {
      * @return the default message listener container
      */
     @Bean
-    public DefaultMessageListenerContainer queueListenerContainer5(ConnectionFactory connectionFactory) {
+    public DefaultMessageListenerContainer nnQueueListenerContainer(ConnectionFactory connectionFactory) {
         return configListenerMQ(connectionFactory, nnQueueMessageListener, nnQueueDestination());
     }
 
@@ -172,7 +173,7 @@ public class ActiveConfig {
      * @return the default message listener container
      */
     @Bean
-    public DefaultMessageListenerContainer queueListenerContainer6(ConnectionFactory connectionFactory) {
+    public DefaultMessageListenerContainer bdxQueueListenerContainer(ConnectionFactory connectionFactory) {
         return configListenerMQ(connectionFactory, bdxQueueMessageListener, bdxQueueDestination());
     }
 
@@ -195,6 +196,10 @@ public class ActiveConfig {
         JmsTemplate jmsTemplate = new JmsTemplate();
         jmsTemplate.setConnectionFactory(connectionFactory);
         jmsTemplate.setDefaultDestination(baseQueueDestination());
+        // deliveryMode, priority, timeToLive 的开关，要生效，必须配置explicitQosEnabled为true，默认false
+        jmsTemplate.setExplicitQosEnabled(true);
+        // 发送模式  DeliveryMode.NON_PERSISTENT=1:非持久 ; DeliveryMode.PERSISTENT=2:持久
+        jmsTemplate.setDeliveryMode(DeliveryMode.PERSISTENT);
         jmsTemplate.setReceiveTimeout(10000);
         jmsTemplate.setPubSubDomain(false);
         return jmsTemplate;
