@@ -14,13 +14,16 @@ public class DBJsonUtil {
 	 * @param tablename
 	 * @return
 	 */
-	public static int sava(JSONObject jsonObject, String tablename){
+	public static int saveOrUpdate(JSONObject jsonObject, String tablename){
 		
 		if(jsonObject.has("id")){
-			if(jsonObject.getLong("id")<0) return add(jsonObject, tablename);
+			if(jsonObject.getLong("id")<0){
+			    return add(jsonObject, tablename);
+            }
 			return update(jsonObject, tablename);
-		}
-		else return add(jsonObject, tablename);
+		}else{
+		    return add(jsonObject, tablename);
+        }
 	}
 	
 	/**
@@ -42,7 +45,9 @@ public class DBJsonUtil {
 		while(iterator.hasNext()){
 			String key = (String) iterator.next();
 			Object value = jsonObject.get(key);
-			if(key=="id") continue;
+			if(key=="id"){
+			    continue;
+            }
 			sqlHead+=key+",";
 			sqlTail+="?,";
 			paramList.add(value);
@@ -53,7 +58,7 @@ public class DBJsonUtil {
 		// 整合两段sql
 		String sql=sqlHead+sqlTail+")";
 		// 将变量list转换成数组
-		Object params[]=new Object[paramList.size()];
+		Object[] params=new Object[paramList.size()];
 		for(int i=0;i<paramList.size();i++){
 			params[i]=paramList.get(i);
 		}
@@ -71,14 +76,16 @@ public class DBJsonUtil {
 		
 		String sql="update "+tablename+" set ";
 		List<Object> paramList=new ArrayList<Object>();
-		Object paramTail=null;  // 对应的参数
+        // 对应的参数
+		Object paramTail=null;
 		
 		Iterator iterator = jsonObject.keys();
 		// 遍历获取json的键值对
 		while(iterator.hasNext()){
 			String key = (String) iterator.next();
 			Object value = jsonObject.get(key);
-			if(key=="id") {  //where条件
+            //where条件
+			if(key=="id") {
 				paramTail=value;
 			} else {  //需更新的字段
 				sql+=key+"=?,";
@@ -89,15 +96,17 @@ public class DBJsonUtil {
 		sql=sql.substring(0, sql.length()-1);
 		//将where条件填入
 		sql+=" where id=?";
-		if(paramTail==null) return 0;
+		if(paramTail==null){
+		    return 0;
+        }
 		paramList.add(paramTail);
 		// 将变量list转换成数组
-		Object params[]=new Object[paramList.size()];
+		Object[] params=new Object[paramList.size()];
 		for(int i=0;i<paramList.size();i++){
 			params[i]=paramList.get(i);
 		}
 		return DBUtil.executeUpdateBySQL(sql, params);
-	};
+	}
 	
 	/**
 	 * 根据表名和条件(键名keyname)更新相应表,返回受影响行数
@@ -112,14 +121,16 @@ public class DBJsonUtil {
 		
 		String sql="update "+tablename+" set ";
 		List<Object> paramList=new ArrayList<Object>();
-		Object paramTail=null;  // 对应的参数
+        // 对应的参数
+		Object paramTail=null;
 		
 		Iterator iterator = jsonObject.keys();
 		// 遍历获取json的键值对
 		while(iterator.hasNext()){
 			String key = (String) iterator.next();
 			Object value = jsonObject.get(key);
-			if(key==keyname) {  //where条件
+            //where条件
+			if(key==keyname) {
 				paramTail=value;
 			} else {  //需更新的字段
 				sql+=key+"=?,";
@@ -130,10 +141,12 @@ public class DBJsonUtil {
 		sql=sql.substring(0, sql.length()-1);
 		//将where条件填入
 		sql+=" where "+keyname+"=?";
-		if(paramTail==null) return 0;
+		if(paramTail==null){
+		    return 0;
+        }
 		paramList.add(paramTail);
 		// 将变量list转换成数组
-		Object params[]=new Object[paramList.size()];
+		Object[] params=new Object[paramList.size()];
 		for(int i=0;i<paramList.size();i++){
 			params[i]=paramList.get(i);
 		}
