@@ -11,7 +11,6 @@ import com.zhuoan.constant.event.GidConstant;
 import com.zhuoan.constant.event.SendingEventConstant;
 import com.zhuoan.constant.event.SortsConstant;
 import com.zhuoan.queue.Messages;
-import com.zhuoan.queue.SqlModel;
 import com.zhuoan.service.jms.ProducerService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -34,8 +33,6 @@ public class BaseGameEvent {
     @Resource
     private Destination baseQueueDestination;
     @Resource
-    private Destination sqlQueueDestination;
-    @Resource
     private ProducerService producerService;
 
     /**
@@ -51,8 +48,6 @@ public class BaseGameEvent {
         server.addConnectListener(new ConnectListener() {
             @Override
             public void onConnect(SocketIOClient client) {
-
-                producerService.sendMessage(sqlQueueDestination,  new SqlModel("123", new Object[]{1,"12312","asdjasldkj"}, 4));
                 logger.info("用户 IP = [{}] with sessionId = [{}] 上线了！！！", obtainClientIp(client), client.getSessionId());
             }
         });
