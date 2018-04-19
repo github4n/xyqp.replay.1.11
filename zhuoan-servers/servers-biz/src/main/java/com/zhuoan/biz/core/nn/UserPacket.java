@@ -16,17 +16,51 @@ public class UserPacket extends UserPacketCommen {
 	
 	private Packer[] ps = new Packer[5];//手里的5张牌
 	public int type;//牌的类型  0:无牛，1~9:牛一~牛9，10:牛牛
-	private boolean win=false;//是否赢了
-	private boolean isBanker=false;//是否是庄家
+	private boolean win = false;//是否赢了
+	private boolean isBanker = false;//是否是庄家
 	private int isReady;// 玩家准备状态
-	private int status=-1;// 玩家游戏状态
-	private double score;//分数
-	public int isCloseRoom=0;//解散房间申请  0:未确认 1:同意  -1:拒绝
+	private int status = 0;// 玩家游戏状态
+	private double score = 0;//分数
+	public int isCloseRoom = 0;//解散房间申请  0:未确认 1:同意  -1:拒绝
 	public int[] mingPai;//明牌抢庄
-	public int qzTimes;//抢庄倍数
+	public int qzTimes = 0;//抢庄倍数
 	public int luck;// 幸运值
-	
-	// ===============================闲家推注开始===============================
+    private int xzTimes;// 下注倍数
+    private int tongSha = 0;// 通杀
+
+    public int getTongSha() {
+        return tongSha;
+    }
+
+    public void setTongSha(int tongSha) {
+        this.tongSha = tongSha;
+    }
+
+    public int getType() {
+        return type;
+    }
+
+    public void setType(int type) {
+        this.type = type;
+    }
+
+    public int getQzTimes() {
+        return qzTimes;
+    }
+
+    public void setQzTimes(int qzTimes) {
+        this.qzTimes = qzTimes;
+    }
+
+    public int getXzTimes() {
+        return xzTimes;
+    }
+
+    public void setXzTimes(int xzTimes) {
+        this.xzTimes = xzTimes;
+    }
+
+    // ===============================闲家推注开始===============================
 	public int isBankerLast=-1;// 上局是否是庄家  -1:刚加入房间,0:不是,1:是
 	public int typeLast = -1;// 上局牌型 -1:刚加入房间,0:无牛,1~9:牛一~牛九,10:牛牛,100:特殊牌型
 	public int winLast = -1;// 上局输赢 -1:刚加入房间,0:输,1:赢
@@ -133,9 +167,12 @@ public class UserPacket extends UserPacketCommen {
 		
 		win=false;
 		isReady=0;
-		score=0;
 		isCloseRoom=0;
-	}
+        score = 0;
+        tongSha = 0;
+        xzTimes = 0;
+        qzTimes = 0;
+    }
 	
 	public UserPacket() {
 	}

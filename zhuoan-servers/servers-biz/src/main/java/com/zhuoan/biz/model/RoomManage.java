@@ -158,7 +158,7 @@ public class RoomManage {
 		JSONObject result1 = new JSONObject();
 		JSONArray allRoom = new JSONArray();
 		for (String roomNo : gameRoomMap.keySet()) {
-			if (gameRoomMap.get(roomNo).getGid()==gameId&&gameRoomMap.get(roomNo).isIsopen()) {
+			if (gameRoomMap.get(roomNo).getGid()==gameId&&gameRoomMap.get(roomNo).isOpen()) {
 				GameRoom gameRoom = gameRoomMap.get(roomNo);
 				JSONObject obj = new JSONObject();
 				obj.put("room_no", gameRoom.getRoomNo());
@@ -167,7 +167,7 @@ public class RoomManage {
 					obj.put("user_id"+i, gameRoom.getUserIdList().get(i));
 				}
 				obj.put("base_info", gameRoom.getRoomInfo());
-				obj.put("fytype", gameRoom.getFytype());
+				obj.put("fytype", gameRoom.getWfType());
 				obj.put("iszs", 0);
 				obj.put("player", gameRoom.getPlayerCount());
 				int renshu = 0;
@@ -313,7 +313,7 @@ public class RoomManage {
 			gameRoom.setRoomNo(roomNo);
 			
 			if (objInfo.getInt("roomtype")==3&&objInfo.getInt("gid")==4) {
-				gameRoom.setMaxplayer(8);
+				gameRoom.setMaxPlayer(8);
 				base_info.element("maxplayer", 8);
 			}
 
@@ -361,9 +361,9 @@ public class RoomManage {
 			gameRoom.setUserScoreList(scoreList);
 			gameRoom.setGameCount(9999);
 			if (base_info.getInt("open")==1) {
-				gameRoom.setIsopen(true);
+				gameRoom.setOpen(true);
 			}else {
-				gameRoom.setIsopen(false);
+				gameRoom.setOpen(false);
 			}
 			gameRoom.setPlayerCount(player);//玩家人数
 			//gameRoom.setZhuangType(base_info.getInt("type"));//定庄类型（房主霸庄、轮庄）
@@ -463,7 +463,7 @@ public class RoomManage {
 			userIDSet.add(player1.getId());
 			//gameRoom.setUserIDSet(userIDSet);
 			String wanfa = "";
-			gameRoom.setFytype(wanfa);
+			gameRoom.setWfType(wanfa);
 			gameRoomMap.put(roomNo, gameRoom);
 
 
@@ -472,14 +472,14 @@ public class RoomManage {
 			obj.put("data", new JSONObject().element("game_id", gameRoom.getGid()).element("room_no", gameRoom.getRoomNo()));
 			client.sendEvent("createRoomNNPush", obj);
 			int isopen = 0;
-			if (gameRoom.isIsopen()) {
+			if (gameRoom.isOpen()) {
 				isopen = 1;
 			}
 			String sql = "insert into za_gamerooms(roomtype,server_id,game_id,room_no,base_info,createtime,user_id0,user_icon0,user_name0,"
 					+ "user_score0,ip,port,status,game_count,paytype,open) values(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
 			Object[] params = new Object[] { gameRoom.getRoomType(),0, gameRoom.getGid(), roomNo,base_info.toString(), new Date(), userInfo.getLong("id"), userInfo.getString("headimg"),
 					userInfo.getString("name"), userInfo.getInt("score"), gameRoom.getIp(), gameRoom.getPort(), 0, gameRoom.getGameCount(),
-					gameRoom.getPaytype(),isopen};
+					gameRoom.getPayType(),isopen};
 			GameMain.sqlQueue.addSqlTask(new SqlModel(sql, params, SqlModel.EXECUTEUPDATEBYSQL));
 			DBUtil.executeUpdateBySQL(sql, params);
 			

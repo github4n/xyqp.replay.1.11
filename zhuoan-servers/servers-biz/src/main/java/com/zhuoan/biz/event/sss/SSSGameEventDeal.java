@@ -268,7 +268,7 @@ public class SSSGameEventDeal {
 							roomName="霸王庄";
 						}
 					}
-					gameRoom.setFytype(roomName);
+					gameRoom.setWfType(roomName);
 					String rs="";
 					if (objInfo.containsKey("player")) {
 						rs=objInfo.getInt("player")+"人/";
