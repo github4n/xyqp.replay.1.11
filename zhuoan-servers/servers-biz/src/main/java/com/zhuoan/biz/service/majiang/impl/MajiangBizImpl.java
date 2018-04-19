@@ -133,7 +133,7 @@ public class MajiangBizImpl implements MaJiangBiz {
     @Override
     public int addOrUpdateGameLog(JSONObject gamelog) {
 
-        int back = DBJsonUtil.sava(gamelog, "za_gamelogs");
+        int back = DBJsonUtil.saveOrUpdate(gamelog, "za_gamelogs");
         int gamelog_id = 0;
         if(back>0){
             JSONObject result = DBUtil.getObjectBySQL("select id from za_gamelogs where gid=? and room_id=? and room_no=? and game_index=?",
@@ -150,7 +150,9 @@ public class MajiangBizImpl implements MaJiangBiz {
     public long getGameLogId(long room_id, int game_index) {
         String sql="select id from za_gamelogs where room_id=? and game_index=?";
         JSONObject result=DBUtil.getObjectBySQL(sql, new Object[]{room_id,game_index});
-        if(result==null || !result.has("id")) return -1;
+        if(result==null || !result.has("id")) {
+            return -1;
+        }
         return result.getLong("id");
     }
 
@@ -386,6 +388,7 @@ public class MajiangBizImpl implements MaJiangBiz {
         return false;
     }
 
+    @Override
     public void settlementRoomNo(String roomNo){
         //扣除数据库房间游戏房卡
         String sql2 = "update za_gamerooms set game_index=game_index+1 where room_no=? order by id desc";
