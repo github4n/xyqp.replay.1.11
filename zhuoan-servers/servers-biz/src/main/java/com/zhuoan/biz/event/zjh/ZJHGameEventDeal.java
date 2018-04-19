@@ -241,7 +241,7 @@ public class ZJHGameEventDeal {
                             }else if(type==2){
                                 wanfa = "激情模式";
                             }
-                            RoomManage.gameRoomMap.get(roomNo).setFytype(wanfa);
+                            RoomManage.gameRoomMap.get(roomNo).setWfType(wanfa);
                             obj.put("roominfo2", wanfa);
                         }
                         // 判断玩家元宝是否足够

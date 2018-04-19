@@ -2,7 +2,9 @@ package com.zhuoan.queue;
 
 import com.corundumstudio.socketio.SocketIOClient;
 import com.zhuoan.biz.event.bdx.BDXGameEventDeal;
+import com.zhuoan.biz.event.nn.BaseEventDeal;
 import com.zhuoan.biz.event.nn.NNGameEventDeal;
+import com.zhuoan.biz.event.nn.NNGameEventDealNew;
 import com.zhuoan.biz.event.sss.SSSGameEventDeal;
 import com.zhuoan.biz.event.zjh.ZJHGameEventDeal;
 import com.zhuoan.biz.model.GameLogsCache;
@@ -45,6 +47,10 @@ public class GameEventDeal {
     private ZJHGameEventDeal zjhGameEventDeal;
     @Resource
     private BDXGameEventDeal bdxGameEventDeal;
+    @Resource
+    private BaseEventDeal baseEventDeal;
+    @Resource
+    private NNGameEventDealNew nnGameEventDealNew;
 
     public void eventsMQ(Message message) {
         JSONObject jsonObject = JSONObject.fromObject(obtainMessageStr(message));
@@ -85,25 +91,31 @@ public class GameEventDeal {
                         nnGameEventDeal.enterRoom(client, data);
                         break;
                     case 2:
-                        nnGameEventDeal.gameReady(client, data);
+                        //nnGameEventDeal.gameReady(client, data);
+                        nnGameEventDealNew.gameReady(client, data);
                         break;
                     case 3:
-                        nnGameEventDeal.gameXiaZhu(client, data);
+                        //nnGameEventDeal.gameXiaZhu(client, data);
+                        nnGameEventDealNew.gameXiaZhu(client, data);
                         break;
                     case 4:
-                        nnGameEventDeal.gameEvent(client, data);
+                        //nnGameEventDeal.gameEvent(client, data);
+                        nnGameEventDealNew.showPai(client, data);
                         break;
                     case 5:
-                        nnGameEventDeal.qiangZhuang(client, data);
+                        //nnGameEventDeal.qiangZhuang(client, data);
+                        nnGameEventDealNew.gameQiangZhuang(client, data);
                         break;
                     case 6:
                         nnGameEventDeal.closeRoom(client, data);
                         break;
                     case 7:
-                        nnGameEventDeal.exitRoom(client, data);
+                        //nnGameEventDeal.exitRoom(client, data);
+                        nnGameEventDealNew.exitRoom(client, data);
                         break;
                     case 8:
-                        nnGameEventDeal.reconnectGame(client, data);
+                        //nnGameEventDeal.reconnectGame(client, data);
+                        nnGameEventDealNew.reconnectGame(client, data);
                         break;
                     case 9:
                         nnGameEventDeal.gameConnReset(client, data);
@@ -124,10 +136,12 @@ public class GameEventDeal {
                         nnGameEventDeal.changeTable(client, data);
                         break;
                     case 15:
-                        roomManage.createRoomNN(client, data);
+                        //roomManage.createRoomNN(client, data);
+                        baseEventDeal.createRoomBase(client, data);
                         break;
                     case 16:
-                        roomManage.joinRoomNN(client, data);
+                        //roomManage.joinRoomNN(client, data);
+                        baseEventDeal.joinRoomBase(client, data);
                         break;
                     case 17:
                         // 准备定时器
