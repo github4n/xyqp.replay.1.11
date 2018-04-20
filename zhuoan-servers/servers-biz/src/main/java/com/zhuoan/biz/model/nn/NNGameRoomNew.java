@@ -176,6 +176,7 @@ public class NNGameRoomNew extends GameRoom{
      * 初始化房间
      */
     public void initGame(){
+        getGameProcess().clear();
         tongSha = 0;
         // 重置玩家信息
         for (String uuid : getUserPacketMap().keySet()) {
@@ -183,6 +184,7 @@ public class NNGameRoomNew extends GameRoom{
                 userPacketMap.get(uuid).initUserPacket();
             }
         }
+        getGameProcess().put("bankerType",bankerType);
     }
 
     /**
@@ -472,6 +474,7 @@ public class NNGameRoomNew extends GameRoom{
                     pai = userPacketMap.get(uuid).getMingPai();
                     // 已亮牌展示牌型
                     if (userPacketMap.get(uuid).getStatus()==NNConstant.NN_USER_STATUS_LP){
+                        pai = userPacketMap.get(uuid).getSortPai();
                         obj.put("paiType",userPacketMap.get(uuid).getType());
                     }
                 }else {
@@ -498,7 +501,7 @@ public class NNGameRoomNew extends GameRoom{
             obj.put("tongsha",tongSha);
             int[] pai;
             if (userPacketMap.get(uuid).getStatus()>NNConstant.NN_USER_STATUS_INIT) {
-                pai = userPacketMap.get(uuid).getMingPai();
+                pai = userPacketMap.get(uuid).getSortPai();
                 obj.put("paiType",userPacketMap.get(uuid).getType());
                 obj.put("sum",userPacketMap.get(uuid).getScore());
                 obj.put("scoreLeft",playerMap.get(uuid).getScore());
@@ -554,5 +557,24 @@ public class NNGameRoomNew extends GameRoom{
             }
         }
         return uuidList;
+    }
+
+    /**
+     * 获取更新数据类型
+     * @return
+     */
+    public String getUpdateType(){
+        switch (getRoomType()) {
+            case NNConstant.ROOM_TYPE_FK:
+                return "roomcard";
+            case NNConstant.ROOM_TYPE_JB:
+                return "coins";
+            case NNConstant.ROOM_TYPE_DK:
+                return "roomcard";
+            case NNConstant.ROOM_TYPE_YB:
+                return "yuanbao";
+            default:
+                return "";
+        }
     }
 }

@@ -12,6 +12,7 @@ import java.util.List;
  */
 public interface GameDao {
 
+    public void insertGameRoom(JSONObject obj);
 
     /**
      * 根据用户ID获取用户信息
@@ -220,5 +221,13 @@ public interface GameDao {
      * @return
      */
     public boolean reDaikaiGameRoom(String roomNo);
+
+    /**
+     * 获取房间设置
+     * @param gid
+     * @param platform
+     * @return
+     */
+    public JSONArray getRoomSetting(int gid, String platform);
 
 }

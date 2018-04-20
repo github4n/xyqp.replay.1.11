@@ -13,6 +13,12 @@ import java.util.List;
 public interface RoomBiz {
 
     /**
+     * 插入房间
+     * @param obj
+     */
+    public void insertGameRoom(JSONObject obj);
+
+    /**
      * 根据游戏ID获取游戏信息
      * @param id 游戏ID
      * @return
@@ -28,10 +34,10 @@ public interface RoomBiz {
 
     /**
      * 根据房间号解散房间
-     * @param roomNo
+     * @param room
      * @return
      */
-    public boolean jieSanGameRoom(String roomNo);
+    public boolean updateGameRoom(JSONObject room);
 
     /**
      * 根据房间号关闭房间

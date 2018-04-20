@@ -31,6 +31,7 @@ public class GameRoom {
 	private JSONObject setting;//游戏全局设置
 	private String wfType;// 游戏信息
 	private String createTime;// 创建时间
+    private JSONObject gameProcess = new JSONObject();// 游戏流程
 	private String ip;
 	private int port;
 	private int timeLeft;
@@ -42,6 +43,23 @@ public class GameRoom {
     private String owner;// 房主
     private String banker;// 庄家
     private int jieSanTime = 0;// 解散时间
+    private long id = 0;
+
+    public long getId() {
+        return id;
+    }
+
+    public void setId(long id) {
+        this.id = id;
+    }
+
+    public JSONObject getGameProcess() {
+        return gameProcess;
+    }
+
+    public void setGameProcess(JSONObject gameProcess) {
+        this.gameProcess = gameProcess;
+    }
 
     public int getJieSanTime() {
         return jieSanTime;

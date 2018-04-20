@@ -1,7 +1,10 @@
 package com.zhuoan.constant;
 
 import com.corundumstudio.socketio.SocketIOClient;
+import com.zhuoan.biz.model.GameRoom;
+import com.zhuoan.biz.model.RoomManage;
 import com.zhuoan.service.socketio.impl.GameMain;
+import net.sf.json.JSONObject;
 
 import java.util.List;
 import java.util.UUID;
@@ -57,39 +60,38 @@ public class NNConstant {
     public static final int NN_READY_OVERTIME_OUT = 2;
 
     // 游戏状态
-    public static final int NN_GAME_STATUS_INIT=0;// 初始
-    public static final int NN_GAME_STATUS_READY=1;// 准备
-    public static final int NN_GAME_STATUS_QZ=2;// 抢庄
-    public static final int NN_GAME_STATUS_DZ=3;// 定庄
-    public static final int NN_GAME_STATUS_XZ=4;// 下注
-    public static final int NN_GAME_STATUS_LP=5;// 亮牌
-    public static final int NN_GAME_STATUS_JS=6;// 结算
-    public static final int NN_GAME_STATUS_ZJS=7;// 总结算
+    public static final int NN_GAME_STATUS_INIT=0;
+    public static final int NN_GAME_STATUS_READY=1;
+    public static final int NN_GAME_STATUS_QZ=2;
+    public static final int NN_GAME_STATUS_DZ=3;
+    public static final int NN_GAME_STATUS_XZ=4;
+    public static final int NN_GAME_STATUS_LP=5;
+    public static final int NN_GAME_STATUS_JS=6;
+    public static final int NN_GAME_STATUS_ZJS=7;
 
     // 玩家状态
-    public static final int NN_USER_STATUS_INIT=0;// 初始
-    public static final int NN_USER_STATUS_READY=1;// 准备
-    public static final int NN_USER_STATUS_QZ=2;// 抢庄
-    public static final int NN_USER_STATUS_DZ=3;// 定庄
-    public static final int NN_USER_STATUS_XZ=4;// 下注
-    public static final int NN_USER_STATUS_LP=5;// 亮牌
-    public static final int NN_USER_STATUS_JS=6;// 结算
-    public static final int NN_USER_STATUS_ZJS=7;// 总结算
+    public static final int NN_USER_STATUS_INIT=0;
+    public static final int NN_USER_STATUS_READY=1;
+    public static final int NN_USER_STATUS_QZ=2;
+    public static final int NN_USER_STATUS_DZ=3;
+    public static final int NN_USER_STATUS_XZ=4;
+    public static final int NN_USER_STATUS_LP=5;
+    public static final int NN_USER_STATUS_JS=6;
+    public static final int NN_USER_STATUS_ZJS=7;
     
-    public static final int CHECK_GAME_STATUS_NO = -1;// 不需要判断当前游戏状态
+    public static final int CHECK_GAME_STATUS_NO = -1;
 
-    public static boolean checkEvent(SocketIOClient client,int gameStatus){
-        // 客户端不包含房间号或用户账号
-        /*if (!client.has(CLIENT_TAG_ACCOUNT)||!client.has(CLIENT_TAG_ROOM_NO)) {
-            return false;
-        }
-        if (Dto.isNull(client.get(CLIENT_TAG_ROOM_NO))||Dto.isNull(client.get(CLIENT_TAG_ACCOUNT))) {
+    public static final String DATA_KEY_ROOM_NO = "room_no";
+    public static final String DATA_KEY_ACCOUNT = "account";
+
+    public static boolean checkEvent(JSONObject postData, int gameStatus){
+        if (!postData.containsKey(DATA_KEY_ROOM_NO)||!postData.containsKey(DATA_KEY_ACCOUNT)) {
             return false;
         }
         // 房间号
-        String roomNo = client.get(CLIENT_TAG_ROOM_NO).toString();
+        String roomNo = postData.getString(DATA_KEY_ROOM_NO);
         // 账号
-        String account = client.get(CLIENT_TAG_ACCOUNT).toString();
+        String account = postData.getString(DATA_KEY_ACCOUNT);
         // 房间不存在或房间为空
         if (!RoomManage.gameRoomMap.containsKey(roomNo)||RoomManage.gameRoomMap.get(roomNo)==null) {
             return false;
@@ -102,7 +104,7 @@ public class NNConstant {
         // 当前非该游戏阶段
         if (gameStatus!=CHECK_GAME_STATUS_NO&&gameRoom.getGameStatus()!=gameStatus) {
             return false;
-        }*/
+        }
         return true;
     }
 

@@ -2,20 +2,23 @@ package com.zhuoan.biz.event.nn;
 
 import com.corundumstudio.socketio.SocketIOClient;
 import com.zhuoan.biz.core.nn.UserPacket;
+import com.zhuoan.biz.game.biz.PublicBiz;
+import com.zhuoan.biz.game.biz.RoomBiz;
+import com.zhuoan.biz.game.biz.UserBiz;
 import com.zhuoan.biz.model.GameRoom;
 import com.zhuoan.biz.model.Playerinfo;
 import com.zhuoan.biz.model.RoomManage;
 import com.zhuoan.biz.model.nn.NNGameRoomNew;
-import com.zhuoan.biz.service.majiang.MaJiangBiz;
 import com.zhuoan.constant.Constant;
 import com.zhuoan.constant.NNConstant;
-import com.zhuoan.dao.DBUtil;
 import com.zhuoan.util.Dto;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
+import java.math.BigDecimal;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -33,7 +36,13 @@ import static net.sf.json.JSONObject.fromObject;
 public class BaseEventDeal {
 
     @Resource
-    private MaJiangBiz maJiangBiz;
+    private UserBiz userBiz;
+
+    @Resource
+    private RoomBiz roomBiz;
+
+    @Resource
+    private PublicBiz publicBiz;
 
     @Resource
     private NNGameEventDealNew nnGameEventDealNew;
@@ -53,7 +62,7 @@ public class BaseEventDeal {
         JSONObject baseInfo = postData.getJSONObject("base_info");
         baseInfo.put("roomType",3);
         // 获取用户信息
-        JSONObject userInfo = maJiangBiz.getUserInfoByAccount(account);
+        JSONObject userInfo = userBiz.getUserByAccount(account);
         if (Dto.isObjNull(userInfo)){
             // 用户不存在
             result.put(NNConstant.RESULT_KEY_CODE,NNConstant.GLOBAL_NO);
@@ -90,7 +99,7 @@ public class BaseEventDeal {
             return;
         }
         // 获取用户信息
-        JSONObject userInfo = maJiangBiz.getUserInfoByAccount(account);
+        JSONObject userInfo = userBiz.getUserByAccount(account);
         if (Dto.isObjNull(userInfo)){
             // 用户不存在
             result.element(NNConstant.RESULT_KEY_CODE,NNConstant.GLOBAL_NO);
@@ -153,6 +162,14 @@ public class BaseEventDeal {
         if (gameRoom.getPlayerMap().containsKey(playerinfo.getAccount())) {
             joinData.put("isReconnect",1);
         }else {
+            // 更新数据库
+            JSONObject roomInfo = new JSONObject();
+            roomInfo.put("room_no",gameRoom.getRoomNo());
+            // TODO: 2018/4/20 字符串拼接
+            roomInfo.put("user_id"+myIndex,playerinfo.getId());
+            roomInfo.put("user_icon"+myIndex,playerinfo.getHeadimg());
+            roomInfo.put("user_name"+myIndex,playerinfo.getName());
+            roomBiz.updateGameRoom(roomInfo);
             joinData.put("isReconnect",0);
         }
         joinData.put("account",userInfo.getString("account"));
@@ -249,6 +266,30 @@ public class BaseEventDeal {
         }
         // 玩家人数
         gameRoom.setPlayerCount(playerNum);
+        // 金币、元宝扣服务费
+        if((baseInfo.containsKey("fee")&&baseInfo.getInt("fee")==1)||baseInfo.getInt("roomType")==3){
+            // TODO: 2018/4/20 需要缓存
+            JSONObject gameSetting = roomBiz.getGameSetting();
+            JSONObject roomFee = gameSetting.getJSONObject("pumpData");
+            double fee;
+            // 服务费：费率x底注
+            if(baseInfo.containsKey("custFee")){
+                // 自定义费率
+                fee = baseInfo.getDouble("custFee")*gameRoom.getScore();
+            }else{
+                // 统一费率
+                fee = roomFee.getDouble("proportion")*gameRoom.getScore();
+            }
+            double maxFee = roomFee.getDouble("max");
+            double minFee = roomFee.getDouble("min");
+            if(fee>maxFee){
+                fee = maxFee;
+            }else if(fee<minFee){
+                fee = minFee;
+            }
+            fee = new BigDecimal(fee).setScale(2, BigDecimal.ROUND_HALF_UP).doubleValue();
+            gameRoom.setFee(fee);
+        }
         // 获取用户信息
         JSONObject obtainPlayerInfoData = new JSONObject();
         obtainPlayerInfoData.put("userInfo",userInfo);
@@ -269,6 +310,25 @@ public class BaseEventDeal {
             default:
                 break;
         }
+        JSONObject obj = new JSONObject();
+        obj.put("game_id",gameRoom.getGid());
+        obj.put("room_no",gameRoom.getRoomNo());
+        obj.put("roomtype",gameRoom.getRoomType());
+        obj.put("base_info",gameRoom.getRoomInfo());
+        obj.put("createtime",new SimpleDateFormat("yyyy:MM:dd hh:mm:ss").format(new Date()));
+        obj.put("game_count",gameRoom.getGameCount());
+        obj.put("user_id0",playerinfo.getId());
+        obj.put("user_icon0",playerinfo.getHeadimg());
+        obj.put("user_name0",playerinfo.getName());
+        obj.put("ip",gameRoom.getIp());
+        obj.put("port",gameRoom.getPort());
+        obj.put("status",0);
+        if (gameRoom.isOpen()) {
+            obj.put("open",0);
+        }else {
+            obj.put("open",0);
+        }
+        roomBiz.insertGameRoom(obj);
     }
 
     /**
@@ -455,9 +515,7 @@ public class BaseEventDeal {
         int gid = fromObject.getInt("gid");
         String platform = fromObject.getString("platform");
         // TODO: 2018/4/19  查询房间设置,需要缓存
-        String sql = "select id,game_id,opt_key,opt_name,opt_val,is_mul,is_use,createTime,memo,sort,is_open" +
-            " from za_gamesetting where is_use=1 and is_open=0 and game_id=? and memo=?";
-        JSONArray gameSetting = DBUtil.getObjectListBySQL(sql, new Object[]{gid, platform});
+        JSONArray gameSetting = publicBiz.getRoomSetting(gid,platform);
         if (!Dto.isNull(gameSetting)) {
             JSONArray array = new JSONArray();
             for (int i = 0; i < gameSetting.size(); i++) {

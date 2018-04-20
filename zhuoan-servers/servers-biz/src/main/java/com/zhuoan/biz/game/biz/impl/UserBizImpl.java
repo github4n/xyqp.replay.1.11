@@ -100,7 +100,7 @@ public class UserBizImpl implements UserBiz {
     @Override
     public void insertUserdeduction(JSONObject obj) {
 
-        insertUserdeduction(obj);
+        gameDao.insertUserdeduction(obj);
     }
 
     /**

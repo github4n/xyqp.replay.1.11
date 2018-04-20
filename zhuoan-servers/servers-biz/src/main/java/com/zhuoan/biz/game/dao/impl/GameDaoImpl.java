@@ -1,6 +1,7 @@
 package com.zhuoan.biz.game.dao.impl;
 
 import com.zhuoan.biz.game.dao.GameDao;
+import com.zhuoan.biz.model.RoomManage;
 import com.zhuoan.dao.DBJsonUtil;
 import com.zhuoan.dao.DBUtil;
 import com.zhuoan.queue.SqlModel;
@@ -25,6 +26,11 @@ import java.util.Random;
  */
 @Component
 public class GameDaoImpl implements GameDao {
+
+    @Override
+    public void insertGameRoom(JSONObject obj) {
+        DBJsonUtil.saveOrUpdate(obj,"za_gamerooms");
+    }
 
     /**
      * 根据用户ID获取用户信息
@@ -102,7 +108,7 @@ public class GameDaoImpl implements GameDao {
         JSONArray jsoaArray =obj.getJSONArray("user");
         for (int i = 0; i < jsoaArray.size(); i++) {
             JSONObject uuu = jsoaArray.getJSONObject(i);
-            ve=ve+"("+uuu.getLong("id")+","+obj.getInt("gid")+",'"+obj.getString("roomNo")+"',"+obj.getInt("type")+","+uuu.getDouble("fen")+",'"+te+"'),";
+            ve=ve+"("+uuu.getLong("id")+","+uuu.getInt("gid")+",'"+uuu.getString("roomNo")+"',"+uuu.getInt("type")+","+uuu.getDouble("fen")+",'"+te+"'),";
         }
         GameMain.sqlQueue.addSqlTask(new SqlModel(sqlx.toString().replace("$", ve.substring(0, ve.length()-1)), new Object[]{}, SqlModel.EXECUTEUPDATEBYSQL));
     }
@@ -349,7 +355,19 @@ public class GameDaoImpl implements GameDao {
     public boolean pump(JSONArray userIds, String roomNo, int gid, double fee, String type) {
 
         String sql = "select id from za_gamerooms where room_no=?";
-        JSONObject roominfo = DBUtil.getObjectBySQL(sql, new Object[]{roomNo});
+        long roomId;
+        if (RoomManage.gameRoomMap.containsKey(roomNo)&&RoomManage.gameRoomMap.get(roomNo)!=null) {
+            if (RoomManage.gameRoomMap.get(roomNo).getId()==0) {
+                JSONObject roominfo = DBUtil.getObjectBySQL(sql, new Object[]{roomNo});
+                roomId = roominfo.getLong("id");
+                RoomManage.gameRoomMap.get(roomNo).setId(roomId);
+            }else {
+                roomId = RoomManage.gameRoomMap.get(roomNo).getId();
+            }
+        }else {
+            JSONObject roominfo = DBUtil.getObjectBySQL(sql, new Object[]{roomNo});
+            roomId = roominfo.getLong("id");
+        }
         JSONArray users = JSONArray.fromObject(userIds);
         int userCount = users.size();
         Object[] params = new Object[userCount];
@@ -405,7 +423,7 @@ public class GameDaoImpl implements GameDao {
                 }
             }
             sql += " WHEN "+uid+" THEN "+fee;
-            addSql += "("+uid+","+roominfo.getLong("id")+",'"+roomNo+"',"+gid+","+type1+","+(-fee)+","+
+            addSql += "("+uid+","+roomId+",'"+roomNo+"',"+gid+","+type1+","+(-fee)+","+
                 2+",'"+nowTime+"','','"+platform+"')";
             if (i==objectListBySQL.size()-1) {
                 sqlString2 += uid+")";
@@ -578,6 +596,14 @@ public class GameDaoImpl implements GameDao {
             return false;
         }
         return true;
+    }
+
+    @Override
+    public JSONArray getRoomSetting(int gid, String platform) {
+        String sql = "select id,game_id,opt_key,opt_name,opt_val,is_mul,is_use,createTime,memo,sort,is_open" +
+            " from za_gamesetting where is_use=1 and is_open=0 and game_id=? and memo=?";
+        JSONArray gameSetting = DBUtil.getObjectListBySQL(sql, new Object[]{gid, platform});
+        return gameSetting;
     }
 }
 

@@ -29,6 +29,11 @@ public class RoomBizImpl implements RoomBiz{
     private GameDao gameDao;
 
 
+    @Override
+    public void insertGameRoom(JSONObject obj) {
+        gameDao.insertGameRoom(obj);
+    }
+
     /**
      * 根据游戏ID获取游戏信息
      *
@@ -54,18 +59,16 @@ public class RoomBizImpl implements RoomBiz{
     }
 
     /**
-     * 根据房间号解散房间
+     * 更新房间
      *
-     * @param roomNo
+     * @param room
      * @return
      */
     @Override
-    public boolean jieSanGameRoom(String roomNo) {
+    public boolean updateGameRoom(JSONObject room) {
 
-        JSONObject roomInfo = gameDao.getRoomInfoByRno(roomNo);
-        JSONObject room = new JSONObject();
+        JSONObject roomInfo = gameDao.getRoomInfoByRno(room.getString("room_no"));
         room.put("id", roomInfo.getLong("id"));
-        room.put("status", -1);
         int i = gameDao.updateRoomInfoByRid(room);
         if(i>0){
             return true;
