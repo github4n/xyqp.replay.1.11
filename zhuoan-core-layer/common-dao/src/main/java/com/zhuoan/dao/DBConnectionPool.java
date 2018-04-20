@@ -38,8 +38,8 @@ public class DBConnectionPool {
             poolProperties.setMaxActive(Integer.valueOf(dbProperties.getProperty("jdbc.maxActive")));
             poolProperties.setMaxIdle(Integer.valueOf(dbProperties.getProperty("jdbc.maxIdle")));
             poolProperties.setMaxWait(Integer.valueOf(dbProperties.getProperty("jdbc.maxWait")));
-            poolProperties.setRemoveAbandoned(Boolean.valueOf(dbProperties.getProperty("jdbc.removeAbandoned")));
-            poolProperties.setRemoveAbandonedTimeout(Integer.valueOf(dbProperties.getProperty("jdbc.removeAbandonedTimeout")));
+            //poolProperties.setRemoveAbandoned(Boolean.valueOf(dbProperties.getProperty("jdbc.removeAbandoned")));
+            //poolProperties.setRemoveAbandonedTimeout(Integer.valueOf(dbProperties.getProperty("jdbc.removeAbandonedTimeout")));
             
             dataSource.setPoolProperties(poolProperties);
         } catch (Exception e) {

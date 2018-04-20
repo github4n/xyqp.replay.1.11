@@ -51,6 +51,7 @@ public class NewConstant {
 		if (client==null) {
 			return false;
 		}
+
 		// 客户端不包含房间号或用户账号
 		if (!client.has(CLIENTTAG)||!client.has(ROOMNO)) {
 			return false;

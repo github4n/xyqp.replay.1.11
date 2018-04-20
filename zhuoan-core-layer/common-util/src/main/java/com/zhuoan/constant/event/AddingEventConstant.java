@@ -19,4 +19,8 @@ public class AddingEventConstant {
      * The constant GET_ALL_ROOM_LIST.
      */
     public static final String GET_ALL_ROOM_LIST = "getAllRoomList";
+    /**
+     * The constant GET_GAME_SETTING.
+     */
+    public static final String GET_GAME_SETTING = "getGameSetting";
 }
