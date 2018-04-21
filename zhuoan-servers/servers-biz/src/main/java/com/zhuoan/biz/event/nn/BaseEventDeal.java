@@ -9,9 +9,11 @@ import com.zhuoan.biz.model.GameRoom;
 import com.zhuoan.biz.model.Playerinfo;
 import com.zhuoan.biz.model.RoomManage;
 import com.zhuoan.biz.model.nn.NNGameRoomNew;
+import com.zhuoan.biz.model.sss.SSSGameRoomNew;
 import com.zhuoan.constant.CommonConstant;
 import com.zhuoan.constant.Constant;
 import com.zhuoan.constant.NNConstant;
+import com.zhuoan.constant.SSSConstant;
 import com.zhuoan.util.Dto;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
@@ -82,119 +84,15 @@ public class BaseEventDeal {
         client.set(CommonConstant.CLIENT_TAG_ACCOUNT,account);
         client.set(CommonConstant.CLIENT_TAG_USER_INFO,userInfo);
         // 创建房间
-        createRoomBase(client,JSONObject.fromObject(data),JSONObject.fromObject(client.get(CommonConstant.CLIENT_TAG_USER_INFO)));
+        createRoomBase(client,JSONObject.fromObject(data),userInfo);
     }
 
     /**
-     * 加入房间判断是否满足条件
+     * 创建房间创建实体对象
      * @param client
-     * @param data
+     * @param postData
+     * @param userInfo
      */
-    public void joinRoomBase(SocketIOClient client, Object data){
-        JSONObject postData = fromObject(data);
-        JSONObject result = new JSONObject();
-        // 玩家账号
-        String account = postData.getString("account");
-        // 房间号
-        String roomNo = postData.getString("roomNo");
-
-        if (!RoomManage.gameRoomMap.containsKey(roomNo)||RoomManage.gameRoomMap.get(roomNo)==null){
-            result.element(CommonConstant.RESULT_KEY_CODE,CommonConstant.GLOBAL_NO);
-            result.element(CommonConstant.RESULT_KEY_MSG,"房间不存在");
-            CommonConstant.sendMsgEventToSingle(client,result.toString(),"enterRoomPush_NN");
-            return;
-        }
-        // 获取用户信息
-        JSONObject userInfo = userBiz.getUserByAccount(account);
-        if (Dto.isObjNull(userInfo)){
-            // 用户不存在
-            result.element(CommonConstant.RESULT_KEY_CODE,CommonConstant.GLOBAL_NO);
-            result.element(CommonConstant.RESULT_KEY_MSG,"用户不存在");
-            CommonConstant.sendMsgEventToSingle(client,result.toString(),"enterRoomPush_NN");
-            return;
-        } else if (RoomManage.gameRoomMap.get(roomNo).getRoomType()==CommonConstant.ROOM_TYPE_YB&&userInfo.containsKey("yuanbao")
-            &&userInfo.getDouble("yuanbao")<RoomManage.gameRoomMap.get(roomNo).getEnterScore()) {
-            // 元宝不足
-            result.element(CommonConstant.RESULT_KEY_CODE,CommonConstant.GLOBAL_NO);
-            result.element(CommonConstant.RESULT_KEY_MSG,"元宝不足");
-            CommonConstant.sendMsgEventToSingle(client,result.toString(),"enterRoomPush_NN");
-            return;
-        }
-        // 设置客户端标识
-        client.set(CommonConstant.CLIENT_TAG_ACCOUNT,account);
-        client.set(CommonConstant.CLIENT_TAG_USER_INFO,userInfo);
-        client.set(CommonConstant.CLIENT_TAG_ROOM_NO,roomNo);
-
-        joinRoomBase(client,postData,userInfo);
-    }
-
-    public void joinRoomBase(SocketIOClient client,JSONObject postData, JSONObject userInfo){
-        String roomNo = postData.getString("roomNo");
-        GameRoom gameRoom = RoomManage.gameRoomMap.get(roomNo);
-        JSONObject result=new JSONObject();
-        int myIndex = -1;
-        // 获取当前房间的第一个空位
-        for (int i = 0; i < gameRoom.getUserIdList().size(); i++) {
-            if (gameRoom.getUserIdList().get(i)==0) {
-                myIndex = i;
-                break;
-            }
-        }
-        // 重连不需要重新获取座位号
-        if (postData.containsKey("myIndex")) {
-            myIndex = postData.getInt("myIndex");
-        }
-        if (myIndex<0) {
-            result.put(CommonConstant.RESULT_KEY_CODE, CommonConstant.GLOBAL_NO);
-            result.put(CommonConstant.RESULT_KEY_MSG, "房间已满");
-            CommonConstant.sendMsgEventToSingle(client,result.toString(),"enterRoomPush_NN");
-            return;
-        }
-        // 设置房间属性
-        gameRoom.getUserIdList().set(myIndex, userInfo.getLong("id"));
-        RoomManage.gameRoomMap.put(roomNo, gameRoom);
-        // 获取用户信息
-        JSONObject obtainPlayerInfoData = new JSONObject();
-        obtainPlayerInfoData.put("userInfo",userInfo);
-        obtainPlayerInfoData.put("myIndex",myIndex);
-        obtainPlayerInfoData.put("uuid", client.getSessionId().toString());
-        obtainPlayerInfoData.put("room_type",gameRoom.getRoomType());
-        if (postData.containsKey("location")) {
-            obtainPlayerInfoData.put("location",postData.getString("location"));
-        }
-        Playerinfo playerinfo = obtainPlayerInfo(obtainPlayerInfoData);
-        JSONObject joinData = new JSONObject();
-        // 是否重连
-        if (gameRoom.getPlayerMap().containsKey(playerinfo.getAccount())) {
-            joinData.put("isReconnect",1);
-        }else {
-            // 更新数据库
-            JSONObject roomInfo = new JSONObject();
-            roomInfo.put("room_no",gameRoom.getRoomNo());
-            // TODO: 2018/4/20 字符串拼接
-            roomInfo.put("user_id"+myIndex,playerinfo.getId());
-            roomInfo.put("user_icon"+myIndex,playerinfo.getHeadimg());
-            roomInfo.put("user_name"+myIndex,playerinfo.getName());
-            roomBiz.updateGameRoom(roomInfo);
-            joinData.put("isReconnect",0);
-        }
-        joinData.put("account",userInfo.getString("account"));
-        joinData.put("room_no",roomNo);
-        gameRoom.getPlayerMap().put(playerinfo.getAccount(), playerinfo);
-        // 通知玩家
-        switch (gameRoom.getGid()){
-            case CommonConstant.GAME_ID_NN:
-                // 重连不需要重新设置用户牌局信息
-                if (!((NNGameRoomNew)gameRoom).getUserPacketMap().containsKey(userInfo.getString("account"))) {
-                    ((NNGameRoomNew)gameRoom).getUserPacketMap().put(userInfo.getString("account"),new UserPacket());
-                }
-                nnGameEventDealNew.joinRoom(client,joinData);
-                break;
-            default:
-                break;
-        }
-    }
-
     public void createRoomBase(SocketIOClient client,JSONObject postData, JSONObject userInfo){
         JSONObject baseInfo = postData.getJSONObject("base_info");
         // 添加房间信息
@@ -205,6 +103,10 @@ public class BaseEventDeal {
             case CommonConstant.GAME_ID_NN:
                 gameRoom = new NNGameRoomNew();
                 createRoomNN((NNGameRoomNew)gameRoom,baseInfo,userInfo.getString("account"));
+                break;
+            case CommonConstant.GAME_ID_SSS:
+                gameRoom = new SSSGameRoomNew();
+                createRoomSSS((SSSGameRoomNew)gameRoom,baseInfo,userInfo.getString("account"));
                 break;
             default:
                 gameRoom = new GameRoom();
@@ -331,6 +233,9 @@ public class BaseEventDeal {
             case CommonConstant.GAME_ID_NN:
                 nnGameEventDealNew.createRoom(client);
                 break;
+            case CommonConstant.GAME_ID_SSS:
+                nnGameEventDealNew.createRoom(client);
+                break;
             default:
                 break;
         }
@@ -354,6 +259,122 @@ public class BaseEventDeal {
             obj.put("open",0);
         }
         roomBiz.insertGameRoom(obj);
+    }
+
+    /**
+     * 加入房间判断是否满足条件
+     * @param client
+     * @param data
+     */
+    public void joinRoomBase(SocketIOClient client, Object data){
+        JSONObject postData = fromObject(data);
+        JSONObject result = new JSONObject();
+        // 玩家账号
+        String account = postData.getString("account");
+        // 房间号
+        String roomNo = postData.getString("roomNo");
+
+        if (!RoomManage.gameRoomMap.containsKey(roomNo)||RoomManage.gameRoomMap.get(roomNo)==null){
+            result.element(CommonConstant.RESULT_KEY_CODE,CommonConstant.GLOBAL_NO);
+            result.element(CommonConstant.RESULT_KEY_MSG,"房间不存在");
+            CommonConstant.sendMsgEventToSingle(client,result.toString(),"enterRoomPush_NN");
+            return;
+        }
+        // 获取用户信息
+        JSONObject userInfo = userBiz.getUserByAccount(account);
+        if (Dto.isObjNull(userInfo)){
+            // 用户不存在
+            result.element(CommonConstant.RESULT_KEY_CODE,CommonConstant.GLOBAL_NO);
+            result.element(CommonConstant.RESULT_KEY_MSG,"用户不存在");
+            CommonConstant.sendMsgEventToSingle(client,result.toString(),"enterRoomPush_NN");
+            return;
+        } else if (RoomManage.gameRoomMap.get(roomNo).getRoomType()==CommonConstant.ROOM_TYPE_YB&&userInfo.containsKey("yuanbao")
+            &&userInfo.getDouble("yuanbao")<RoomManage.gameRoomMap.get(roomNo).getEnterScore()) {
+            // 元宝不足
+            result.element(CommonConstant.RESULT_KEY_CODE,CommonConstant.GLOBAL_NO);
+            result.element(CommonConstant.RESULT_KEY_MSG,"元宝不足");
+            CommonConstant.sendMsgEventToSingle(client,result.toString(),"enterRoomPush_NN");
+            return;
+        }
+        // 设置客户端标识
+        client.set(CommonConstant.CLIENT_TAG_ACCOUNT,account);
+        client.set(CommonConstant.CLIENT_TAG_USER_INFO,userInfo);
+        client.set(CommonConstant.CLIENT_TAG_ROOM_NO,roomNo);
+
+        joinRoomBase(client,postData,userInfo);
+    }
+
+    /**
+     * 加入房间创建实体对象
+     * @param client
+     * @param postData
+     * @param userInfo
+     */
+    public void joinRoomBase(SocketIOClient client,JSONObject postData, JSONObject userInfo){
+        String roomNo = postData.getString("roomNo");
+        GameRoom gameRoom = RoomManage.gameRoomMap.get(roomNo);
+        JSONObject result=new JSONObject();
+        int myIndex = -1;
+        // 获取当前房间的第一个空位
+        for (int i = 0; i < gameRoom.getUserIdList().size(); i++) {
+            if (gameRoom.getUserIdList().get(i)==0) {
+                myIndex = i;
+                break;
+            }
+        }
+        // 重连不需要重新获取座位号
+        if (postData.containsKey("myIndex")) {
+            myIndex = postData.getInt("myIndex");
+        }
+        if (myIndex<0) {
+            result.put(CommonConstant.RESULT_KEY_CODE, CommonConstant.GLOBAL_NO);
+            result.put(CommonConstant.RESULT_KEY_MSG, "房间已满");
+            CommonConstant.sendMsgEventToSingle(client,result.toString(),"enterRoomPush_NN");
+            return;
+        }
+        // 设置房间属性
+        gameRoom.getUserIdList().set(myIndex, userInfo.getLong("id"));
+        RoomManage.gameRoomMap.put(roomNo, gameRoom);
+        // 获取用户信息
+        JSONObject obtainPlayerInfoData = new JSONObject();
+        obtainPlayerInfoData.put("userInfo",userInfo);
+        obtainPlayerInfoData.put("myIndex",myIndex);
+        obtainPlayerInfoData.put("uuid", client.getSessionId().toString());
+        obtainPlayerInfoData.put("room_type",gameRoom.getRoomType());
+        if (postData.containsKey("location")) {
+            obtainPlayerInfoData.put("location",postData.getString("location"));
+        }
+        Playerinfo playerinfo = obtainPlayerInfo(obtainPlayerInfoData);
+        JSONObject joinData = new JSONObject();
+        // 是否重连
+        if (gameRoom.getPlayerMap().containsKey(playerinfo.getAccount())) {
+            joinData.put("isReconnect",1);
+        }else {
+            // 更新数据库
+            JSONObject roomInfo = new JSONObject();
+            roomInfo.put("room_no",gameRoom.getRoomNo());
+            // TODO: 2018/4/20 字符串拼接
+            roomInfo.put("user_id"+myIndex,playerinfo.getId());
+            roomInfo.put("user_icon"+myIndex,playerinfo.getHeadimg());
+            roomInfo.put("user_name"+myIndex,playerinfo.getName());
+            roomBiz.updateGameRoom(roomInfo);
+            joinData.put("isReconnect",0);
+        }
+        joinData.put("account",userInfo.getString("account"));
+        joinData.put("room_no",roomNo);
+        gameRoom.getPlayerMap().put(playerinfo.getAccount(), playerinfo);
+        // 通知玩家
+        switch (gameRoom.getGid()){
+            case CommonConstant.GAME_ID_NN:
+                // 重连不需要重新设置用户牌局信息
+                if (!((NNGameRoomNew)gameRoom).getUserPacketMap().containsKey(userInfo.getString("account"))) {
+                    ((NNGameRoomNew)gameRoom).getUserPacketMap().put(userInfo.getString("account"),new UserPacket());
+                }
+                nnGameEventDealNew.joinRoom(client,joinData);
+                break;
+            default:
+                break;
+        }
     }
 
     /**
@@ -422,8 +443,7 @@ public class BaseEventDeal {
      * @param baseInfo
      * @param account
      */
-    public void createRoomNN(NNGameRoomNew room,JSONObject baseInfo,String account){
-        room.setRoomType(baseInfo.getInt("roomType"));
+    public void createRoomNN(NNGameRoomNew room, JSONObject baseInfo, String account){
         room.setBankerType(baseInfo.getInt("type"));
         // 玩法
         String wanFa = "";
@@ -510,6 +530,39 @@ public class BaseEventDeal {
             room.setBaseNum(baseInfo.getJSONArray("baseNum").toString());
         }
         room.getUserPacketMap().put(account,new UserPacket());
+    }
+
+    /**
+     * 设置十三水房间特殊参数
+     * @param room
+     * @param baseInfo
+     * @param account
+     */
+    public void createRoomSSS(SSSGameRoomNew room, JSONObject baseInfo, String account){
+        room.setBankerType(baseInfo.getInt("type"));
+        // 玩法
+        String wanFa = "";
+        switch (baseInfo.getInt("type")){
+            case SSSConstant.SSS_BANKER_TYPE_BWZ:
+                wanFa = "霸王庄";
+                break;
+            case SSSConstant.SSS_BANKER_TYPE_HB:
+                wanFa = "互比";
+                break;
+            default:
+                break;
+        }
+        room.setWfType(wanFa);
+        // 庄家
+        room.setBanker(account);
+        // 房主
+        room.setOwner(account);
+        // 最大人数
+        if (baseInfo.containsKey("maxPlayer")) {
+            // 最低开始人数
+            room.setMinPlayer(baseInfo.getInt("player"));
+            room.setPlayerCount(baseInfo.getInt("maxPlayer"));
+        }
     }
 
     /**
