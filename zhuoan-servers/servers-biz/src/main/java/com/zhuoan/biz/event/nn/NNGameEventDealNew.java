@@ -879,6 +879,7 @@ public class NNGameEventDealNew {
                 result.put(CommonConstant.RESULT_KEY_MSG,"游戏中无法退出");
                 result.put("showTimer",CommonConstant.GLOBAL_YES);
                 result.put("timer",room.getTimeLeft());
+                result.put("type",1);
                 CommonConstant.sendMsgEventToSingle(client,result.toString(),"exitRoomPush_NN");
             }
         }
