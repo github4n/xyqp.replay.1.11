@@ -103,6 +103,34 @@
             </activation>
         </profile>
 
+        <profile>
+            <id>wuweixiang</id>
+            <properties>
+                <profiles.active>wwx</profiles.active>
+            </properties>
+        </profile>
+
+        <profile>
+            <id>wuqiming</id>
+            <properties>
+                <profiles.active>wqm</profiles.active>
+            </properties>
+        </profile>
+
+        <profile>
+            <id>lee</id>
+            <properties>
+                <profiles.active>lee</profiles.active>
+            </properties>
+        </profile>
+
+        <profile>
+            <id>test41</id>
+            <properties>
+                <profiles.active>test41</profiles.active>
+            </properties>
+        </profile>
+
         <!-- production使用 mvn xxx -Pproduction  (xxx:install  package)-->
         <profile>
             <!-- 生产环境 -->
