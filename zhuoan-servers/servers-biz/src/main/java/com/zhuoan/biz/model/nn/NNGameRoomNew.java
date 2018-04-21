@@ -4,6 +4,7 @@ import com.zhuoan.biz.core.nn.Packer;
 import com.zhuoan.biz.core.nn.UserPacket;
 import com.zhuoan.biz.model.GameRoom;
 import com.zhuoan.biz.model.Playerinfo;
+import com.zhuoan.constant.CommonConstant;
 import com.zhuoan.constant.NNConstant;
 import com.zhuoan.util.Dto;
 import net.sf.json.JSONArray;
@@ -328,7 +329,7 @@ public class NNGameRoomNew extends GameRoom{
      */
     public boolean isAgreeClose(){
         for (String account : userPacketMap.keySet()){
-            if (userPacketMap.get(account).isCloseRoom!=NNConstant.CLOSE_ROOM_AGREE) {
+            if (userPacketMap.get(account).isCloseRoom!= CommonConstant.CLOSE_ROOM_AGREE) {
                 return false;
             }
         }
@@ -620,13 +621,13 @@ public class NNGameRoomNew extends GameRoom{
      */
     public String getUpdateType(){
         switch (getRoomType()) {
-            case NNConstant.ROOM_TYPE_FK:
+            case CommonConstant.ROOM_TYPE_FK:
                 return "roomcard";
-            case NNConstant.ROOM_TYPE_JB:
+            case CommonConstant.ROOM_TYPE_JB:
                 return "coins";
-            case NNConstant.ROOM_TYPE_DK:
+            case CommonConstant.ROOM_TYPE_DK:
                 return "roomcard";
-            case NNConstant.ROOM_TYPE_YB:
+            case CommonConstant.ROOM_TYPE_YB:
                 return "yuanbao";
             default:
                 return "";

@@ -9,6 +9,7 @@ import com.zhuoan.biz.model.GameRoom;
 import com.zhuoan.biz.model.Playerinfo;
 import com.zhuoan.biz.model.RoomManage;
 import com.zhuoan.biz.model.nn.NNGameRoomNew;
+import com.zhuoan.constant.CommonConstant;
 import com.zhuoan.constant.Constant;
 import com.zhuoan.constant.NNConstant;
 import com.zhuoan.util.Dto;
@@ -65,23 +66,23 @@ public class BaseEventDeal {
         JSONObject userInfo = userBiz.getUserByAccount(account);
         if (Dto.isObjNull(userInfo)){
             // 用户不存在
-            result.put(NNConstant.RESULT_KEY_CODE,NNConstant.GLOBAL_NO);
-            result.put(NNConstant.RESULT_KEY_MSG,"用户不存在");
-            NNConstant.sendMsgEventToSingle(client,result.toString(),"enterRoomPush_NN");
+            result.put(CommonConstant.RESULT_KEY_CODE,CommonConstant.GLOBAL_NO);
+            result.put(CommonConstant.RESULT_KEY_MSG,"用户不存在");
+            CommonConstant.sendMsgEventToSingle(client,result.toString(),"enterRoomPush_NN");
             return;
-        } else if (baseInfo.getInt("roomType")==NNConstant.ROOM_TYPE_YB&&userInfo.containsKey("yuanbao")
+        } else if (baseInfo.getInt("roomType")==CommonConstant.ROOM_TYPE_YB&&userInfo.containsKey("yuanbao")
             &&userInfo.getDouble("yuanbao")<baseInfo.getDouble("enterYB")) {
             // 元宝不足
-            result.element(NNConstant.RESULT_KEY_CODE,NNConstant.GLOBAL_NO);
-            result.element(NNConstant.RESULT_KEY_MSG,"元宝不足");
-            NNConstant.sendMsgEventToSingle(client,result.toString(),"enterRoomPush_NN");
+            result.element(CommonConstant.RESULT_KEY_CODE,CommonConstant.GLOBAL_NO);
+            result.element(CommonConstant.RESULT_KEY_MSG,"元宝不足");
+            CommonConstant.sendMsgEventToSingle(client,result.toString(),"enterRoomPush_NN");
             return;
         }
         // 设置客户端标识
-        client.set(NNConstant.CLIENT_TAG_ACCOUNT,account);
-        client.set(NNConstant.CLIENT_TAG_USER_INFO,userInfo);
+        client.set(CommonConstant.CLIENT_TAG_ACCOUNT,account);
+        client.set(CommonConstant.CLIENT_TAG_USER_INFO,userInfo);
         // 创建房间
-        createRoomBase(client,JSONObject.fromObject(data),JSONObject.fromObject(client.get(NNConstant.CLIENT_TAG_USER_INFO)));
+        createRoomBase(client,JSONObject.fromObject(data),JSONObject.fromObject(client.get(CommonConstant.CLIENT_TAG_USER_INFO)));
     }
 
     public void joinRoomBase(SocketIOClient client, Object data){
@@ -93,31 +94,31 @@ public class BaseEventDeal {
         String roomNo = postData.getString("roomNo");
 
         if (!RoomManage.gameRoomMap.containsKey(roomNo)||RoomManage.gameRoomMap.get(roomNo)==null){
-            result.element(NNConstant.RESULT_KEY_CODE,NNConstant.GLOBAL_NO);
-            result.element(NNConstant.RESULT_KEY_MSG,"房间不存在");
-            NNConstant.sendMsgEventToSingle(client,result.toString(),"enterRoomPush_NN");
+            result.element(CommonConstant.RESULT_KEY_CODE,CommonConstant.GLOBAL_NO);
+            result.element(CommonConstant.RESULT_KEY_MSG,"房间不存在");
+            CommonConstant.sendMsgEventToSingle(client,result.toString(),"enterRoomPush_NN");
             return;
         }
         // 获取用户信息
         JSONObject userInfo = userBiz.getUserByAccount(account);
         if (Dto.isObjNull(userInfo)){
             // 用户不存在
-            result.element(NNConstant.RESULT_KEY_CODE,NNConstant.GLOBAL_NO);
-            result.element(NNConstant.RESULT_KEY_MSG,"用户不存在");
-            NNConstant.sendMsgEventToSingle(client,result.toString(),"enterRoomPush_NN");
+            result.element(CommonConstant.RESULT_KEY_CODE,CommonConstant.GLOBAL_NO);
+            result.element(CommonConstant.RESULT_KEY_MSG,"用户不存在");
+            CommonConstant.sendMsgEventToSingle(client,result.toString(),"enterRoomPush_NN");
             return;
-        } else if (RoomManage.gameRoomMap.get(roomNo).getRoomType()==NNConstant.ROOM_TYPE_YB&&userInfo.containsKey("yuanbao")
+        } else if (RoomManage.gameRoomMap.get(roomNo).getRoomType()==CommonConstant.ROOM_TYPE_YB&&userInfo.containsKey("yuanbao")
             &&userInfo.getDouble("yuanbao")<RoomManage.gameRoomMap.get(roomNo).getEnterScore()) {
             // 元宝不足
-            result.element(NNConstant.RESULT_KEY_CODE,NNConstant.GLOBAL_NO);
-            result.element(NNConstant.RESULT_KEY_MSG,"元宝不足");
-            NNConstant.sendMsgEventToSingle(client,result.toString(),"enterRoomPush_NN");
+            result.element(CommonConstant.RESULT_KEY_CODE,CommonConstant.GLOBAL_NO);
+            result.element(CommonConstant.RESULT_KEY_MSG,"元宝不足");
+            CommonConstant.sendMsgEventToSingle(client,result.toString(),"enterRoomPush_NN");
             return;
         }
         // 设置客户端标识
-        client.set(NNConstant.CLIENT_TAG_ACCOUNT,account);
-        client.set(NNConstant.CLIENT_TAG_USER_INFO,userInfo);
-        client.set(NNConstant.CLIENT_TAG_ROOM_NO,roomNo);
+        client.set(CommonConstant.CLIENT_TAG_ACCOUNT,account);
+        client.set(CommonConstant.CLIENT_TAG_USER_INFO,userInfo);
+        client.set(CommonConstant.CLIENT_TAG_ROOM_NO,roomNo);
 
         joinRoomBase(client,postData,userInfo);
     }
@@ -139,9 +140,9 @@ public class BaseEventDeal {
             myIndex = postData.getInt("myIndex");
         }
         if (myIndex<0) {
-            result.put("code", 0);
-            result.put("msg", "房间已满");
-            NNConstant.sendMsgEventToSingle(client,result.toString(),"enterRoomPush_NN");
+            result.put(CommonConstant.RESULT_KEY_CODE, CommonConstant.GLOBAL_NO);
+            result.put(CommonConstant.RESULT_KEY_MSG, "房间已满");
+            CommonConstant.sendMsgEventToSingle(client,result.toString(),"enterRoomPush_NN");
             return;
         }
         // 设置房间属性
@@ -177,7 +178,7 @@ public class BaseEventDeal {
         gameRoom.getPlayerMap().put(playerinfo.getAccount(), playerinfo);
         // 通知玩家
         switch (gameRoom.getGid()){
-            case NNConstant.GAME_ID_NN:
+            case CommonConstant.GAME_ID_NN:
                 // 重连不需要重新设置用户牌局信息
                 if (!((NNGameRoomNew)gameRoom).getUserPacketMap().containsKey(userInfo.getString("account"))) {
                     ((NNGameRoomNew)gameRoom).getUserPacketMap().put(userInfo.getString("account"),new UserPacket());
@@ -193,10 +194,10 @@ public class BaseEventDeal {
         JSONObject baseInfo = postData.getJSONObject("base_info");
         // 添加房间信息
         String roomNo = RoomManage.randomRoomNo();
-        client.set(NNConstant.CLIENT_TAG_ROOM_NO,roomNo);
+        client.set(CommonConstant.CLIENT_TAG_ROOM_NO,roomNo);
         GameRoom gameRoom;
         switch (postData.getInt("gid")) {
-            case NNConstant.GAME_ID_NN:
+            case CommonConstant.GAME_ID_NN:
                 gameRoom = new NNGameRoomNew();
                 createRoomNN((NNGameRoomNew)gameRoom,baseInfo,userInfo.getString("account"));
                 break;
@@ -234,7 +235,7 @@ public class BaseEventDeal {
         gameRoom.setUserIconList(iconList);
         gameRoom.setUserNameList(nameList);
         gameRoom.setUserScoreList(scoreList);
-        if (gameRoom.getRoomType()==NNConstant.ROOM_TYPE_JB||gameRoom.getRoomType()==NNConstant.ROOM_TYPE_JB) {
+        if (gameRoom.getRoomType()==CommonConstant.ROOM_TYPE_JB||gameRoom.getRoomType()==CommonConstant.ROOM_TYPE_JB) {
             gameRoom.setGameCount(9999);
         }
         if(baseInfo.containsKey("di")){
@@ -304,7 +305,7 @@ public class BaseEventDeal {
         RoomManage.gameRoomMap.put(roomNo,gameRoom);
         // 通知玩家
         switch (gameRoom.getGid()){
-            case NNConstant.GAME_ID_NN:
+            case CommonConstant.GAME_ID_NN:
                 nnGameEventDealNew.createRoom(client);
                 break;
             default:
@@ -347,10 +348,10 @@ public class BaseEventDeal {
         playerinfo.setName(userInfo.getString("name"));
         playerinfo.setUuid(uuid);
         playerinfo.setMyIndex(myIndex);
-        if(roomType == NNConstant.ROOM_TYPE_JB){
+        if(roomType == CommonConstant.ROOM_TYPE_JB){
             // 金币模式
             playerinfo.setScore(userInfo.getDouble("coins"));
-        }else if(roomType == NNConstant.ROOM_TYPE_YB){
+        }else if(roomType == CommonConstant.ROOM_TYPE_YB){
             // 元宝模式
             playerinfo.setScore(userInfo.getDouble("yuanbao"));
         }else{
@@ -486,17 +487,17 @@ public class BaseEventDeal {
         }
         //准备超时（0：不处理 1：自动准备 2：踢出房间）
         if(baseInfo.containsKey("readyovertime")){
-            if(baseInfo.getInt("readyovertime")==NNConstant.NN_READY_OVERTIME_NOTHING){
-                room.setReadyOvertime(NNConstant.NN_READY_OVERTIME_NOTHING);
-            }else if(baseInfo.getInt("readyovertime")==NNConstant.NN_READY_OVERTIME_AUTO){
-                room.setReadyOvertime(NNConstant.NN_READY_OVERTIME_AUTO);
-            }else if(baseInfo.getInt("readyovertime")==NNConstant.NN_READY_OVERTIME_OUT){
-                room.setReadyOvertime(NNConstant.NN_READY_OVERTIME_OUT);
+            if(baseInfo.getInt("readyovertime")==CommonConstant.READY_OVERTIME_NOTHING){
+                room.setReadyOvertime(CommonConstant.READY_OVERTIME_NOTHING);
+            }else if(baseInfo.getInt("readyovertime")==CommonConstant.READY_OVERTIME_AUTO){
+                room.setReadyOvertime(CommonConstant.READY_OVERTIME_AUTO);
+            }else if(baseInfo.getInt("readyovertime")==CommonConstant.READY_OVERTIME_OUT){
+                room.setReadyOvertime(CommonConstant.READY_OVERTIME_OUT);
             }
-        }else if(baseInfo.getInt("roomType")==NNConstant.ROOM_TYPE_YB){
-            room.setReadyOvertime(NNConstant.NN_READY_OVERTIME_OUT);
+        }else if(baseInfo.getInt("roomType")==CommonConstant.ROOM_TYPE_YB){
+            room.setReadyOvertime(CommonConstant.READY_OVERTIME_OUT);
         }else{
-            room.setReadyOvertime(NNConstant.NN_READY_OVERTIME_NOTHING);
+            room.setReadyOvertime(CommonConstant.READY_OVERTIME_NOTHING);
         }
         if(baseInfo.containsKey("baseNum")){
             // 设置基础倍率
@@ -523,8 +524,8 @@ public class BaseEventDeal {
             }
             JSONObject result = new JSONObject();
             result.put("data", array);
-            result.put("code", 1);
-            NNConstant.sendMsgEventToSingle(client,result.toString(),"getGameSettingPush");
+            result.put(CommonConstant.RESULT_KEY_CODE, CommonConstant.GLOBAL_YES);
+            CommonConstant.sendMsgEventToSingle(client,result.toString(),"getGameSettingPush");
         }
     }
 
@@ -548,8 +549,8 @@ public class BaseEventDeal {
                 }
             }
             JSONObject result = new JSONObject();
-            result.put(NNConstant.RESULT_KEY_CODE,1);
-            NNConstant.sendMsgEventToSingle(client,result.toString(),"checkUserPush");
+            result.put(CommonConstant.RESULT_KEY_CODE,CommonConstant.GLOBAL_YES);
+            CommonConstant.sendMsgEventToSingle(client,result.toString(),"checkUserPush");
         }
     }
 }

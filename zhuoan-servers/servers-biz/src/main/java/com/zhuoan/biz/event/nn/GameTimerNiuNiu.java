@@ -3,6 +3,7 @@ package com.zhuoan.biz.event.nn;
 import com.corundumstudio.socketio.SocketIOClient;
 import com.zhuoan.biz.model.RoomManage;
 import com.zhuoan.biz.model.nn.NNGameRoomNew;
+import com.zhuoan.constant.CommonConstant;
 import com.zhuoan.constant.NNConstant;
 import com.zhuoan.queue.Messages;
 import com.zhuoan.service.jms.ProducerService;
@@ -93,16 +94,16 @@ public class GameTimerNiuNiu{
                         // 组织数据
                         JSONObject data = new JSONObject();
                         // 房间号
-                        data.put(NNConstant.DATA_KEY_ROOM_NO,room.getRoomNo());
+                        data.put(CommonConstant.DATA_KEY_ROOM_NO,room.getRoomNo());
                         // 账号
-                        data.put(NNConstant.DATA_KEY_ACCOUNT,account);
+                        data.put(CommonConstant.DATA_KEY_ACCOUNT,account);
                         if (gameStatus==NNConstant.NN_GAME_STATUS_READY) {
                             // 准备阶段超时踢出
-                            if (room.getReadyOvertime()==NNConstant.NN_READY_OVERTIME_OUT) {
+                            if (room.getReadyOvertime()==CommonConstant.READY_OVERTIME_OUT) {
                                 messageSort = 7;
                             }
                             // 准备阶段超时自动准备
-                            if (room.getReadyOvertime()==NNConstant.NN_READY_OVERTIME_AUTO) {
+                            if (room.getReadyOvertime()==CommonConstant.READY_OVERTIME_AUTO) {
                                 messageSort = 2;
                             }
                         }
