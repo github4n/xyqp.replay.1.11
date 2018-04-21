@@ -42,33 +42,13 @@ public class NNGameRoomNew extends GameRoom{
      */
     private List<Integer> specialType = new ArrayList<Integer>();
     /**
-     * 是否允许中途加入（true：允许、false：不允许）
-     */
-    private boolean isHalfwayIn = false;
-    /**
-     * 准备超时（0：不处理 1：自动准备 2：踢出房间）
-     */
-    private int readyOvertime;
-    /**
      * 无人抢庄(0:解散房间 1:随机庄家 2:重新开局)
      */
     private int qzNoBanker;
     /**
-     * 是否加入机器人
-     */
-    private boolean robot;
-    /**
-     * 是否观战模式
-     */
-    private boolean visit;
-    /**
      * 随机庄家
      */
     private int sjBanker;
-    /**
-     * 玩家个人信息
-     */
-    private ConcurrentMap<String,Playerinfo> playerMap = new ConcurrentHashMap<String, Playerinfo>();
     /**
      * 玩家牌局信息
      */
@@ -142,52 +122,12 @@ public class NNGameRoomNew extends GameRoom{
         this.specialType = specialType;
     }
 
-    public boolean isHalfwayIn() {
-        return isHalfwayIn;
-    }
-
-    public void setHalfwayIn(boolean halfwayIn) {
-        isHalfwayIn = halfwayIn;
-    }
-
-    public int getReadyOvertime() {
-        return readyOvertime;
-    }
-
-    public void setReadyOvertime(int readyOvertime) {
-        this.readyOvertime = readyOvertime;
-    }
-
     public int getQzNoBanker() {
         return qzNoBanker;
     }
 
     public void setQzNoBanker(int qzNoBanker) {
         this.qzNoBanker = qzNoBanker;
-    }
-
-    public boolean isRobot() {
-        return robot;
-    }
-
-    public void setRobot(boolean robot) {
-        this.robot = robot;
-    }
-
-    public boolean isVisit() {
-        return visit;
-    }
-
-    public void setVisit(boolean visit) {
-        this.visit = visit;
-    }
-
-    public ConcurrentMap<String, Playerinfo> getPlayerMap() {
-        return playerMap;
-    }
-
-    public void setPlayerMap(ConcurrentMap<String, Playerinfo> playerMap) {
-        this.playerMap = playerMap;
     }
 
     public ConcurrentMap<String, UserPacket> getUserPacketMap() {
@@ -240,9 +180,9 @@ public class NNGameRoomNew extends GameRoom{
     public JSONArray getAllPlayer(){
         JSONArray array = new JSONArray();
 
-        for(String uuid : playerMap.keySet()){
+        for(String uuid : getPlayerMap().keySet()){
 
-            Playerinfo player = playerMap.get(uuid);
+            Playerinfo player = getPlayerMap().get(uuid);
             if(player!=null){
                 UserPacket up = userPacketMap.get(uuid);
                 JSONObject obj = new JSONObject();
@@ -345,7 +285,7 @@ public class NNGameRoomNew extends GameRoom{
         // 基数
         int baseNum = 3;
         // 玩家人数
-        int playerCount = playerMap.size();
+        int playerCount = getUserPacketMap().size();
         // 最大下注倍数
         int maxVal = 0;
         JSONArray array = JSONArray.fromObject(getBaseNum());
@@ -421,7 +361,7 @@ public class NNGameRoomNew extends GameRoom{
             UserPacket up = userPacketMap.get(uuid);
             if(up.getStatus()==NNConstant.NN_USER_STATUS_QZ){
                 JSONObject obj = new JSONObject();
-                obj.put("index", playerMap.get(uuid).getMyIndex());
+                obj.put("index", getPlayerMap().get(uuid).getMyIndex());
                 obj.put("value", up.getQzTimes());
                 array.add(obj);
             }
@@ -439,7 +379,7 @@ public class NNGameRoomNew extends GameRoom{
             UserPacket up = userPacketMap.get(uuid);
             if(up.getStatus()==NNConstant.NN_USER_STATUS_XZ){
                 JSONObject obj = new JSONObject();
-                obj.put("index", playerMap.get(uuid).getMyIndex());
+                obj.put("index", getPlayerMap().get(uuid).getMyIndex());
                 obj.put("value", up.getXzTimes());
                 array.add(obj);
             }
@@ -498,7 +438,7 @@ public class NNGameRoomNew extends GameRoom{
                 pai = new int[0];
             }
             obj.put("pai",pai);
-            data.put(playerMap.get(uuid).getMyIndex(),obj);
+            data.put(getPlayerMap().get(uuid).getMyIndex(),obj);
         }
         return data;
     }
@@ -530,7 +470,7 @@ public class NNGameRoomNew extends GameRoom{
                 pai = new int[0];
             }
             obj.put("pai",pai);
-            data.put(playerMap.get(uuid).getMyIndex(),obj);
+            data.put(getPlayerMap().get(uuid).getMyIndex(),obj);
         }
         return data;
     }
@@ -550,12 +490,12 @@ public class NNGameRoomNew extends GameRoom{
                 pai = userPacketMap.get(uuid).getSortPai();
                 obj.put("paiType",userPacketMap.get(uuid).getType());
                 obj.put("sum",userPacketMap.get(uuid).getScore());
-                obj.put("scoreLeft",playerMap.get(uuid).getScore());
+                obj.put("scoreLeft",getPlayerMap().get(uuid).getScore());
             }else {
                 pai = new int[0];
             }
             obj.put("pai",pai);
-            data.put(playerMap.get(uuid).getMyIndex(),obj);
+            data.put(getPlayerMap().get(uuid).getMyIndex(),obj);
         }
         return data;
     }
@@ -568,8 +508,8 @@ public class NNGameRoomNew extends GameRoom{
         JSONArray array = new JSONArray();
         for (String account : userPacketMap.keySet()) {
             JSONObject obj = new JSONObject();
-            obj.put("index",playerMap.get(account).getMyIndex());
-            obj.put("name",playerMap.get(account).getName());
+            obj.put("index",getPlayerMap().get(account).getMyIndex());
+            obj.put("name",getPlayerMap().get(account).getName());
             obj.put("result",userPacketMap.get(account).isCloseRoom);
             obj.put("showTimer",1);
             obj.put("timer",getJieSanTime());
@@ -588,49 +528,4 @@ public class NNGameRoomNew extends GameRoom{
         return readyCount;
     }
 
-    /**
-     * 获取当前房间内的所有人
-     * @return
-     */
-    public List<UUID> getAllUUIDList(){
-        List<UUID> uuidList = new ArrayList<UUID>();
-        for (String account : playerMap.keySet()) {
-            uuidList.add(playerMap.get(account).getUuid());
-        }
-        return uuidList;
-    }
-
-    /**
-     * 获取当前房间内的所有人(不包括自己)
-     * @param uuid
-     * @return
-     */
-    public List<UUID> getAllUUIDList(String uuid){
-        List<UUID> uuidList = new ArrayList<UUID>();
-        for (String account : playerMap.keySet()) {
-            if (!uuid.equals(account)) {
-                uuidList.add(playerMap.get(account).getUuid());
-            }
-        }
-        return uuidList;
-    }
-
-    /**
-     * 获取更新数据类型
-     * @return
-     */
-    public String getUpdateType(){
-        switch (getRoomType()) {
-            case CommonConstant.ROOM_TYPE_FK:
-                return "roomcard";
-            case CommonConstant.ROOM_TYPE_JB:
-                return "coins";
-            case CommonConstant.ROOM_TYPE_DK:
-                return "roomcard";
-            case CommonConstant.ROOM_TYPE_YB:
-                return "yuanbao";
-            default:
-                return "";
-        }
-    }
 }

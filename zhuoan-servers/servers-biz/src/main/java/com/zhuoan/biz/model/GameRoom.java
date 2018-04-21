@@ -1,73 +1,154 @@
 package com.zhuoan.biz.model;
 
+import com.zhuoan.constant.CommonConstant;
 import net.sf.json.JSONObject;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.locks.ReentrantLock;
 
+/**
+ * @author wqm
+ * @DESCRIPTION 房间实体类父类
+ * @Date Created in 14:24 2018/4/21
+ * @Modified By:
+ **/
 public class GameRoom {
-    private String roomNo;// 房间号
-    private int roomType; // 房间类型(0：房卡  1：金币 3:元宝)
-    private double fee;// 金币、元宝扣除的服务费
-    private double enterScore;// 准入分数
-    private double leaveScore;// 离场分数
-	private JSONObject roomInfo;// 房间信息
-	private int gid;// 游戏类型
-	private int gameStatus;// 游戏状态
-	private int gameIndex;// 当前局数
-	private int gameCount;// 游戏总局数
-	private int maxPlayer;//游戏最大人数
+    /**
+     * 房间号
+     */
+    private String roomNo;
+    /**
+     * 房间类型(0：房卡  1：金币 3:元宝)
+     */
+    private int roomType;
+    /**
+     * 金币、元宝扣除的服务费
+     */
+    private double fee;
+    /**
+     * 准入分数
+     */
+    private double enterScore;
+    /**
+     * 离场分数
+     */
+    private double leaveScore;
+    /**
+     * 房间信息
+     */
+	private JSONObject roomInfo;
+    /**
+     * 游戏类型
+     */
+	private int gid;
+    /**
+     * 游戏状态
+     */
+	private int gameStatus;
+    /**
+     * 当前局数
+     */
+	private int gameIndex;
+    /**
+     * 游戏总局数
+     */
+	private int gameCount;
+    /**
+     * 游戏最大人数
+     */
+	private int maxPlayer;
+    /**
+     * 是否允许中途加入（true：允许、false：不允许）
+     */
+    private boolean isHalfwayIn = false;
+    /**
+     * 准备超时（0：不处理 1：自动准备 2：踢出房间）
+     */
+    private int readyOvertime;
+    /**
+     * 是否加入机器人
+     */
+    private boolean robot;
+    /**
+     * 是否观战模式
+     */
+    private boolean visit;
 	private String fangzhu;// 房主
 	private String zhuang;// 庄家
-	private int playerCount;// 玩家人数
+    /**
+     * 玩家人数
+     */
+	private int playerCount;
 	private int readyCount;// 准备人数
-	private double score;//一局的底分
-	private boolean isOpen;//是否开放
+    /**
+     * 一局的底分
+     */
+	private double score;
+    /**
+     * 是否开放
+     */
+	private boolean isOpen;
 	private int level;//房间等级
-	private int payType;//房间支付类型
-	private Map<String,Playerinfo> playerMap = new HashMap<String, Playerinfo>();// 玩家个人信息
+    /**
+     * 房间支付类型
+     */
+	private int payType;
+    /**
+     * 玩家个人信息
+     */
+	private Map<String,Playerinfo> playerMap = new HashMap<String, Playerinfo>();
 	private JSONObject setting;//游戏全局设置
-	private String wfType;// 游戏信息
-	private String createTime;// 创建时间
-    private JSONObject gameProcess = new JSONObject();// 游戏流程
+    /**
+     * 游戏信息
+     */
+	private String wfType;
+    /**
+     * 创建时间
+     */
+	private String createTime;
+    /**
+     * 游戏流程
+     */
+    private JSONObject gameProcess = new JSONObject();
+    /**
+     * ip
+     */
 	private String ip;
+    /**
+     * 端口
+     */
 	private int port;
+    /**
+     * 房间倒计时
+     */
 	private int timeLeft;
+    /**
+     * 房间倒计时
+     */
 	private int firstTime=0;
-	private List<Long> userIdList;// 玩家座位号
+    /**
+     * 玩家座位号
+     */
+	private List<Long> userIdList;
     private List<String> userIconList;// 玩家图标
     private List<String> userNameList;// 玩家昵称
     private List<Integer> userScoreList;// 玩家积分
-    private String owner;// 房主
-    private String banker;// 庄家
-    private int jieSanTime = 0;// 解散时间
+    /**
+     * 房主
+     */
+    private String owner;
+    /**
+     * 庄家
+     */
+    private String banker;
+    /**
+     * 解散时间
+     */
+    private int jieSanTime = 0;
+    /**
+     * 房间id
+     */
     private long id = 0;
-
-    public long getId() {
-        return id;
-    }
-
-    public void setId(long id) {
-        this.id = id;
-    }
-
-    public JSONObject getGameProcess() {
-        return gameProcess;
-    }
-
-    public void setGameProcess(JSONObject gameProcess) {
-        this.gameProcess = gameProcess;
-    }
-
-    public int getJieSanTime() {
-        return jieSanTime;
-    }
-
-    public void setJieSanTime(int jieSanTime) {
-        this.jieSanTime = jieSanTime;
-    }
 
     public String getRoomNo() {
         return roomNo;
@@ -155,6 +236,38 @@ public class GameRoom {
 
     public void setMaxPlayer(int maxPlayer) {
         this.maxPlayer = maxPlayer;
+    }
+
+    public boolean isHalfwayIn() {
+        return isHalfwayIn;
+    }
+
+    public void setHalfwayIn(boolean halfwayIn) {
+        isHalfwayIn = halfwayIn;
+    }
+
+    public int getReadyOvertime() {
+        return readyOvertime;
+    }
+
+    public void setReadyOvertime(int readyOvertime) {
+        this.readyOvertime = readyOvertime;
+    }
+
+    public boolean isRobot() {
+        return robot;
+    }
+
+    public void setRobot(boolean robot) {
+        this.robot = robot;
+    }
+
+    public boolean isVisit() {
+        return visit;
+    }
+
+    public void setVisit(boolean visit) {
+        this.visit = visit;
     }
 
     public String getFangzhu() {
@@ -253,6 +366,14 @@ public class GameRoom {
         this.createTime = createTime;
     }
 
+    public JSONObject getGameProcess() {
+        return gameProcess;
+    }
+
+    public void setGameProcess(JSONObject gameProcess) {
+        this.gameProcess = gameProcess;
+    }
+
     public String getIp() {
         return ip;
     }
@@ -331,6 +452,68 @@ public class GameRoom {
 
     public void setBanker(String banker) {
         this.banker = banker;
+    }
+
+    public int getJieSanTime() {
+        return jieSanTime;
+    }
+
+    public void setJieSanTime(int jieSanTime) {
+        this.jieSanTime = jieSanTime;
+    }
+
+    public long getId() {
+        return id;
+    }
+
+    public void setId(long id) {
+        this.id = id;
+    }
+
+    /**
+     * 获取当前房间内的所有人
+     * @return
+     */
+    public List<UUID> getAllUUIDList(){
+        List<UUID> uuidList = new ArrayList<UUID>();
+        for (String account : getPlayerMap().keySet()) {
+            uuidList.add(getPlayerMap().get(account).getUuid());
+        }
+        return uuidList;
+    }
+
+    /**
+     * 获取当前房间内的所有人(不包括自己)
+     * @param uuid
+     * @return
+     */
+    public List<UUID> getAllUUIDList(String uuid){
+        List<UUID> uuidList = new ArrayList<UUID>();
+        for (String account : getPlayerMap().keySet()) {
+            if (!uuid.equals(account)) {
+                uuidList.add(getPlayerMap().get(account).getUuid());
+            }
+        }
+        return uuidList;
+    }
+
+    /**
+     * 获取更新数据类型
+     * @return
+     */
+    public String getUpdateType(){
+        switch (getRoomType()) {
+            case CommonConstant.ROOM_TYPE_FK:
+                return "roomcard";
+            case CommonConstant.ROOM_TYPE_JB:
+                return "coins";
+            case CommonConstant.ROOM_TYPE_DK:
+                return "roomcard";
+            case CommonConstant.ROOM_TYPE_YB:
+                return "yuanbao";
+            default:
+                return "";
+        }
     }
 
     public ReentrantLock getM_locker() {

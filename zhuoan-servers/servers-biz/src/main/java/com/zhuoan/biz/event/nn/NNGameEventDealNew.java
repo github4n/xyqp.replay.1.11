@@ -833,8 +833,8 @@ public class NNGameEventDealNew {
                     canExit = true;
                 }
             }
+            Playerinfo player = room.getPlayerMap().get(account);
             if (canExit) {
-                Playerinfo player = room.getPlayerMap().get(account);
                 List<UUID> allUUIDList = room.getAllUUIDList();
                 // 更新数据库
                 JSONObject roomInfo = new JSONObject();
@@ -851,7 +851,7 @@ public class NNGameEventDealNew {
                 room.getUserPacketMap().remove(account);
                 // 组织数据，通知玩家
                 JSONObject result = new JSONObject();
-                result.put("code",CommonConstant.GLOBAL_YES);
+                result.put(CommonConstant.RESULT_KEY_CODE,CommonConstant.GLOBAL_YES);
                 result.put("type",1);
                 result.put("index",player.getMyIndex());
                 result.put("showTimer",CommonConstant.GLOBAL_YES);
@@ -872,6 +872,14 @@ public class NNGameEventDealNew {
                     RoomManage.gameRoomMap.remove(room.getRoomNo());
                 }
                 roomBiz.updateGameRoom(roomInfo);
+            }else {
+                // 组织数据，通知玩家
+                JSONObject result = new JSONObject();
+                result.put(CommonConstant.RESULT_KEY_CODE,CommonConstant.GLOBAL_NO);
+                result.put(CommonConstant.RESULT_KEY_MSG,"游戏中无法退出");
+                result.put("showTimer",CommonConstant.GLOBAL_YES);
+                result.put("timer",room.getTimeLeft());
+                CommonConstant.sendMsgEventToSingle(client,result.toString(),"exitRoomPush_NN");
             }
         }
     }

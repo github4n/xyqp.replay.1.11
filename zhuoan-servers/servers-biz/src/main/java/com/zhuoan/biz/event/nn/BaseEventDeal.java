@@ -49,7 +49,7 @@ public class BaseEventDeal {
     private NNGameEventDealNew nnGameEventDealNew;
 
     /**
-     * 创建房间
+     * 创建房间判断是否满足条件
      * @param client
      * @param data
      */
@@ -85,6 +85,11 @@ public class BaseEventDeal {
         createRoomBase(client,JSONObject.fromObject(data),JSONObject.fromObject(client.get(CommonConstant.CLIENT_TAG_USER_INFO)));
     }
 
+    /**
+     * 加入房间判断是否满足条件
+     * @param client
+     * @param data
+     */
     public void joinRoomBase(SocketIOClient client, Object data){
         JSONObject postData = fromObject(data);
         JSONObject result = new JSONObject();
@@ -265,6 +270,24 @@ public class BaseEventDeal {
         }else {
             gameRoom.setOpen(false);
         }
+        // 是否允许玩家中途加入
+        if(baseInfo.containsKey("halfwayin")&&baseInfo.getInt("halfwayin")==1){
+            gameRoom.setHalfwayIn(true);
+        }
+        //准备超时（0：不处理 1：自动准备 2：踢出房间）
+        if(baseInfo.containsKey("readyovertime")){
+            if(baseInfo.getInt("readyovertime")==CommonConstant.READY_OVERTIME_NOTHING){
+                gameRoom.setReadyOvertime(CommonConstant.READY_OVERTIME_NOTHING);
+            }else if(baseInfo.getInt("readyovertime")==CommonConstant.READY_OVERTIME_AUTO){
+                gameRoom.setReadyOvertime(CommonConstant.READY_OVERTIME_AUTO);
+            }else if(baseInfo.getInt("readyovertime")==CommonConstant.READY_OVERTIME_OUT){
+                gameRoom.setReadyOvertime(CommonConstant.READY_OVERTIME_OUT);
+            }
+        }else if(baseInfo.getInt("roomType")==CommonConstant.ROOM_TYPE_YB){
+            gameRoom.setReadyOvertime(CommonConstant.READY_OVERTIME_OUT);
+        }else{
+            gameRoom.setReadyOvertime(CommonConstant.READY_OVERTIME_NOTHING);
+        }
         // 玩家人数
         gameRoom.setPlayerCount(playerNum);
         // 金币、元宝扣服务费
@@ -311,6 +334,7 @@ public class BaseEventDeal {
             default:
                 break;
         }
+        // 组织数据，插入数据库
         JSONObject obj = new JSONObject();
         obj.put("game_id",gameRoom.getGid());
         obj.put("room_no",gameRoom.getRoomNo());
@@ -474,30 +498,12 @@ public class BaseEventDeal {
         if (baseInfo.containsKey("qznozhuang")&&baseInfo.getInt("qznozhuang")==NNConstant.NN_QZ_NO_BANKER_CK) {
             // 无人抢庄，重新发牌
             room.setQzNoBanker(NNConstant.NN_QZ_NO_BANKER_CK);
-        }else if(baseInfo.getInt("roomType")==3){
+        }else if(baseInfo.getInt("roomType")==CommonConstant.ROOM_TYPE_YB){
             // 无人抢庄，房间自动解散
             room.setQzNoBanker(NNConstant.NN_QZ_NO_BANKER_JS);
         }else{
             // 无人抢庄，随机庄
             room.setQzNoBanker(NNConstant.NN_QZ_NO_BANKER_SJ);
-        }
-        // 是否允许玩家中途加入
-        if(baseInfo.containsKey("halfwayin")&&baseInfo.getInt("halfwayin")==1){
-            room.setHalfwayIn(true);
-        }
-        //准备超时（0：不处理 1：自动准备 2：踢出房间）
-        if(baseInfo.containsKey("readyovertime")){
-            if(baseInfo.getInt("readyovertime")==CommonConstant.READY_OVERTIME_NOTHING){
-                room.setReadyOvertime(CommonConstant.READY_OVERTIME_NOTHING);
-            }else if(baseInfo.getInt("readyovertime")==CommonConstant.READY_OVERTIME_AUTO){
-                room.setReadyOvertime(CommonConstant.READY_OVERTIME_AUTO);
-            }else if(baseInfo.getInt("readyovertime")==CommonConstant.READY_OVERTIME_OUT){
-                room.setReadyOvertime(CommonConstant.READY_OVERTIME_OUT);
-            }
-        }else if(baseInfo.getInt("roomType")==CommonConstant.ROOM_TYPE_YB){
-            room.setReadyOvertime(CommonConstant.READY_OVERTIME_OUT);
-        }else{
-            room.setReadyOvertime(CommonConstant.READY_OVERTIME_NOTHING);
         }
         if(baseInfo.containsKey("baseNum")){
             // 设置基础倍率
