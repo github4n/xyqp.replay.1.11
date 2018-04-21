@@ -14,6 +14,7 @@ import com.zhuoan.biz.model.RoomManage;
 import com.zhuoan.biz.model.nn.NNGameRoomNew;
 import com.zhuoan.constant.NNConstant;
 import com.zhuoan.util.Dto;
+import com.zhuoan.util.thread.ThreadPoolHelper;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 import org.apache.commons.lang.math.RandomUtils;
@@ -36,6 +37,9 @@ import java.util.UUID;
 public class NNGameEventDealNew {
 
     @Resource
+    private GameTimerNiuNiu gameTimerNiuNiu;
+
+    @Resource
     private UserBiz userBiz;
 
     @Resource
@@ -49,11 +53,12 @@ public class NNGameEventDealNew {
      * @param client
      */
     public void createRoom(SocketIOClient client){
+        JSONObject roomData = obtainRoomData(client);
         // 数据不为空
-        if (!Dto.isObjNull(obtainRoomData(client))) {
+        if (!Dto.isObjNull(roomData)) {
             JSONObject result = new JSONObject();
             result.put("code",1);
-            result.put("data",obtainRoomData(client));
+            result.put("data",roomData);
             // 通知自己
             NNConstant.sendMsgEventToSingle(client,result.toString(),"enterRoomPush_NN");
         }
@@ -135,8 +140,10 @@ public class NNGameEventDealNew {
             obj.put("qzType",1);
         }
         obj.put("game_index",room.getGameIndex());
-        // TODO: 2018/4/17 定时器
-        obj.put("showTimer",0);
+        obj.put("showTimer",NNConstant.GLOBAL_NO);
+        if (room.getTimeLeft()>NNConstant.NN_TIMER_INIT) {
+            obj.put("showTimer",NNConstant.GLOBAL_YES);
+        }
         obj.put("timer",room.getTimeLeft());
         obj.put("myIndex",room.getPlayerMap().get(account).getMyIndex());
         obj.put("qzTimes",room.getQzTimes(room.getPlayerMap().get(account).getScore()));
@@ -157,7 +164,7 @@ public class NNGameEventDealNew {
      * @param client
      * @param data
      */
-    public void gameReady(SocketIOClient client,Object data){
+    public void gameReady(SocketIOClient client, Object data){
         JSONObject postData = JSONObject.fromObject(data);
         // 不满足准备条件直接忽略
         if (!NNConstant.checkEvent(postData,NNConstant.NN_GAME_STATUS_INIT)&&
@@ -165,27 +172,39 @@ public class NNGameEventDealNew {
             !NNConstant.checkEvent(postData,NNConstant.NN_GAME_STATUS_JS)) {
             return;
         }
-        String roomNo = postData.getString(NNConstant.DATA_KEY_ROOM_NO);
+        // 房间号
+        final String roomNo = postData.getString(NNConstant.DATA_KEY_ROOM_NO);
         NNGameRoomNew room = (NNGameRoomNew) RoomManage.gameRoomMap.get(roomNo);
+        // 玩家账号
         String account = postData.getString(NNConstant.DATA_KEY_ACCOUNT);
-        if (room.getUserPacketMap().containsKey(account)&&room.getUserPacketMap().get(account)!=null) {
-            // 设置玩家准备状态
-            room.getUserPacketMap().get(account).setStatus(NNConstant.NN_USER_STATUS_READY);
-            // 设置为准备状态
-            if (room.getGameStatus()!=NNConstant.NN_GAME_STATUS_READY) {
-                room.setGameStatus(NNConstant.NN_GAME_STATUS_READY);
+        // 设置玩家准备状态
+        room.getUserPacketMap().get(account).setStatus(NNConstant.NN_USER_STATUS_READY);
+        // 设置房间准备状态
+        if (room.getGameStatus()!=NNConstant.NN_GAME_STATUS_READY) {
+            room.setGameStatus(NNConstant.NN_GAME_STATUS_READY);
+        }
+        // 当前准备人数大于最低开始人数开始游戏
+        if (room.getNowReadyCount()==NNConstant.NN_MIN_START_COUNT) {
+            room.setTimeLeft(NNConstant.NN_TIMER_READY);
+            ThreadPoolHelper.executorService.submit(new Runnable() {
+                @Override
+                public void run() {
+                    gameTimerNiuNiu.gameOverTime(roomNo,NNConstant.NN_GAME_STATUS_READY);
+                }
+            });
+        }
+        // 房间内所有玩家都已经完成准备且人数大于最低开始人数通知开始游戏,否则通知玩家准备
+        if (room.isAllReady()&&room.getPlayerMap().size()>=NNConstant.NN_MIN_START_COUNT) {
+            startGame(room);
+        }else {
+            JSONObject result = new JSONObject();
+            result.put("index",room.getPlayerMap().get(account).getMyIndex());
+            result.put("showTimer",NNConstant.GLOBAL_NO);
+            if (room.getNowReadyCount()>=NNConstant.NN_MIN_START_COUNT) {
+                result.put("showTimer",NNConstant.GLOBAL_YES);
             }
-            // 房间内所有玩家都已经完成准备且人数大于两人通知开始游戏,否则通知玩家准备
-            if (room.isAllReady()&&room.getPlayerMap().size()>=2) {
-                startGame(room);
-            }else {
-                JSONObject result = new JSONObject();
-                result.put("index",room.getPlayerMap().get(account).getMyIndex());
-                // TODO: 2018/4/18 定时器
-                result.put("showTimer",0);
-                result.put("timer",room.getTimeLeft());
-                NNConstant.sendMsgEventToAll(room.getAllUUIDList(),result.toString(),"playerReadyPush_NN");
-            }
+            result.put("timer",room.getTimeLeft());
+            NNConstant.sendMsgEventToAll(room.getAllUUIDList(),result.toString(),"playerReadyPush_NN");
         }
     }
 
@@ -193,7 +212,7 @@ public class NNGameEventDealNew {
      * 开始游戏
      * @param room
      */
-    public void startGame(NNGameRoomNew room){
+    public void startGame(final NNGameRoomNew room){
         // 非准备或初始阶段无法开始开始游戏
         if (room.getGameStatus()!=NNConstant.NN_GAME_STATUS_READY&&room.getGameStatus()!=NNConstant.NN_GAME_STATUS_INIT) {
             return;
@@ -220,6 +239,13 @@ public class NNGameEventDealNew {
             room.getGameProcess().put("faPai",gameProcessFP);
             // 设置房间状态(抢庄)
             room.setGameStatus(NNConstant.NN_GAME_STATUS_QZ);
+            room.setTimeLeft(NNConstant.NN_TIMER_QZ);
+            ThreadPoolHelper.executorService.submit(new Runnable() {
+                @Override
+                public void run() {
+                    gameTimerNiuNiu.gameOverTime(room.getRoomNo(),NNConstant.NN_GAME_STATUS_QZ);
+                }
+            });
         } else if (room.getBankerType()==NNConstant.NN_BANKER_TYPE_QZ) {
             // 设置房间状态(抢庄)
             room.setGameStatus(NNConstant.NN_GAME_STATUS_QZ);
@@ -288,7 +314,7 @@ public class NNGameEventDealNew {
         String roomNo = postData.getString(NNConstant.DATA_KEY_ROOM_NO);
         NNGameRoomNew room = (NNGameRoomNew) RoomManage.gameRoomMap.get(roomNo);
         String account = postData.getString(NNConstant.DATA_KEY_ACCOUNT);
-        if (postData.containsKey("value")) {
+        if (postData.containsKey(NNConstant.DATA_KEY_VALUE)) {
             // 设置玩家抢庄状态及抢庄倍数
             if (room.getUserPacketMap().containsKey(account)&&room.getUserPacketMap().get(account)!=null) {
                 // 非抢庄、明牌抢庄抢庄消息不做处理
@@ -305,7 +331,7 @@ public class NNGameEventDealNew {
                 }
                 // 设置为玩家抢庄状态，抢庄倍数
                 room.getUserPacketMap().get(account).setStatus(NNConstant.NN_USER_STATUS_QZ);
-                room.getUserPacketMap().get(account).setQzTimes(postData.getInt("value"));
+                room.getUserPacketMap().get(account).setQzTimes(postData.getInt(NNConstant.DATA_KEY_VALUE));
                 // 所有人都完成抢庄
                 if (room.isAllQZ()) {
                     gameDingZhuang(room,account);
@@ -337,7 +363,7 @@ public class NNGameEventDealNew {
      * @param room
      * @param lastAccount(最后一个抢庄玩家账号)
      */
-    public void gameDingZhuang(NNGameRoomNew room,String lastAccount){
+    public void gameDingZhuang(final NNGameRoomNew room,String lastAccount){
         // 非抢庄阶段不作处理
         if (room.getGameStatus()!=NNConstant.NN_GAME_STATUS_QZ) {
             return;
@@ -399,6 +425,8 @@ public class NNGameEventDealNew {
                 // 重新开局
                 // 重置游戏状态
                 room.setGameStatus(NNConstant.NN_GAME_STATUS_READY);
+                // 初始化倒计时
+                room.setTimeLeft(NNConstant.NN_TIMER_INIT);
                 // 重置玩家状态
                 for (String account : room.getUserPacketMap().keySet()) {
                     room.getUserPacketMap().get(account).setStatus(NNConstant.NN_USER_STATUS_INIT);
@@ -418,7 +446,6 @@ public class NNGameEventDealNew {
         result.put("qzScore",room.getUserPacketMap().get(room.getBanker()).getQzTimes());
         result.put("gameStatus",room.getGameStatus());
         NNConstant.sendMsgEventToAll(room.getAllUUIDList(),result.toString(),"qiangZhuangPush_NN");
-        // TODO: 2018/4/18 需要在其他线程里进行操作
         int sjCount = qzList.size();
         if (sjCount==0) {
             sjCount = allList.size();
@@ -432,6 +459,13 @@ public class NNGameEventDealNew {
         }
         // 设置游戏状态
         room.setGameStatus(NNConstant.NN_GAME_STATUS_XZ);
+        room.setTimeLeft(NNConstant.NN_TIMER_XZ);
+        ThreadPoolHelper.executorService.submit(new Runnable() {
+            @Override
+            public void run() {
+                gameTimerNiuNiu.gameOverTime(room.getRoomNo(),NNConstant.NN_GAME_STATUS_XZ);
+            }
+        });
         // 通知玩家
         changeGameStatus(room);
     }
@@ -449,8 +483,8 @@ public class NNGameEventDealNew {
         }
         String roomNo = postData.getString(NNConstant.DATA_KEY_ROOM_NO);
         String account = postData.getString(NNConstant.DATA_KEY_ACCOUNT);
-        NNGameRoomNew room = (NNGameRoomNew) RoomManage.gameRoomMap.get(roomNo);
-        if (postData.containsKey("money")) {
+        final NNGameRoomNew room = (NNGameRoomNew) RoomManage.gameRoomMap.get(roomNo);
+        if (postData.containsKey(NNConstant.DATA_KEY_MONEY)) {
             // 设置玩家下注状态及下注倍数
             if (room.getUserPacketMap().containsKey(account)&&room.getUserPacketMap().get(account)!=null) {
                 // 庄家下注消息不作处理
@@ -466,7 +500,7 @@ public class NNGameEventDealNew {
                     return;
                 }
                 room.getUserPacketMap().get(account).setStatus(NNConstant.NN_USER_STATUS_XZ);
-                room.getUserPacketMap().get(account).setXzTimes(postData.getInt("money"));
+                room.getUserPacketMap().get(account).setXzTimes(postData.getInt(NNConstant.DATA_KEY_MONEY));
                 // 通知玩家
                 JSONObject result = new JSONObject();
                 result.put("index",room.getPlayerMap().get(account).getMyIndex());
@@ -484,6 +518,13 @@ public class NNGameEventDealNew {
                     }
                     // 设置游戏状态
                     room.setGameStatus(NNConstant.NN_GAME_STATUS_LP);
+                    room.setTimeLeft(NNConstant.NN_TIMER_SHOW);
+                    ThreadPoolHelper.executorService.submit(new Runnable() {
+                        @Override
+                        public void run() {
+                            gameTimerNiuNiu.gameOverTime(room.getRoomNo(),NNConstant.NN_GAME_STATUS_LP);
+                        }
+                    });
                     // 存放游戏记录
                     JSONArray gameProcessXZ = new JSONArray();
                     for (String uuid : room.getUserPacketMap().keySet()) {
@@ -540,6 +581,8 @@ public class NNGameEventDealNew {
                 gameJieSuan(room);
                 // 设置房间状态
                 room.setGameStatus(NNConstant.NN_GAME_STATUS_JS);
+                // 初始化倒计时
+                room.setTimeLeft(NNConstant.NN_TIMER_INIT);
                 // 设置玩家状态
                 for (String uuid : room.getUserPacketMap().keySet()) {
                     if (room.getUserPacketMap().get(uuid).getStatus()>NNConstant.NN_USER_STATUS_INIT) {
@@ -557,7 +600,7 @@ public class NNGameEventDealNew {
                         gameProcessLP.add(userLP);
                     }
                 }
-                room.getGameProcess().put("liangPai",gameProcessLP);
+                room.getGameProcess().put("showPai",gameProcessLP);
                 // 通知玩家
                 changeGameStatus(room);
             }
@@ -708,26 +751,30 @@ public class NNGameEventDealNew {
     /**
      * 获取玩家战绩数据
      * @param room
-     * @param gamelog_id
+     * @param gameLogId
      * @param users
      * @param gameResult
      * @return
      */
-    public JSONArray obtainUserGameLog(GameRoom room, long gamelog_id, JSONArray users, String gameResult){
+    public JSONArray obtainUserGameLog(GameRoom room, long gameLogId, JSONArray users, String gameResult){
         JSONArray userGameLogs = new JSONArray();
-        JSONObject roomInfo = roomBiz.getRoomInfoByRno(room.getRoomNo());
         for (int i = 0; i < users.size(); i++) {
             long userId = users.getJSONObject(i).getLong("id");
             JSONObject userGameLog = new JSONObject();
             userGameLog.put("gid",room.getGid());
-            if (!Dto.isObjNull(roomInfo)) {
-                userGameLog.put("room_id",roomInfo.getLong("id"));
+            if (room.getId()>0) {
+                userGameLog.put("room_id",room.getId());
             }else {
-                userGameLog.put("room_id",0);
+                JSONObject roomInfo = roomBiz.getRoomInfoByRno(room.getRoomNo());
+                if (!Dto.isObjNull(roomInfo)) {
+                    userGameLog.put("room_id",roomInfo.getLong("id"));
+                }else {
+                    userGameLog.put("room_id",0);
+                }
             }
             userGameLog.put("room_no",room.getRoomNo());
             userGameLog.put("user_id",userId);
-            userGameLog.put("gamelog_id",gamelog_id);
+            userGameLog.put("gamelog_id",gameLogId);
             userGameLog.put("result",gameResult);
             userGameLog.put("createtime",new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date()));
             userGameLog.put("account",users.getJSONObject(i).getDouble("fen"));
@@ -786,18 +833,10 @@ public class NNGameEventDealNew {
                 }
             }
             if (canExit) {
-                JSONObject roomInfo = new JSONObject();
+                Playerinfo player = room.getPlayerMap().get(account);
                 List<UUID> allUUIDList = room.getAllUUIDList();
-                JSONObject result = new JSONObject();
-                result.put("code",1);
-                result.put("type",1);
-                result.put("index",room.getPlayerMap().get(account).getMyIndex());
-                // TODO: 2018/4/18 定时器
-                result.put("showTimer",0);
-                result.put("timer",0);
-                // 通知玩家
-                NNConstant.sendMsgEventToAll(allUUIDList,result.toString(),"exitRoomPush_NN");
                 // 更新数据库
+                JSONObject roomInfo = new JSONObject();
                 roomInfo.put("room_no",room.getRoomNo());
                 roomInfo.put("user_id"+room.getPlayerMap().get(account).getMyIndex(),0);
                 // 移除数据
@@ -809,8 +848,21 @@ public class NNGameEventDealNew {
                 }
                 room.getPlayerMap().remove(account);
                 room.getUserPacketMap().remove(account);
+                // 组织数据，通知玩家
+                JSONObject result = new JSONObject();
+                result.put("code",NNConstant.GLOBAL_YES);
+                result.put("type",1);
+                result.put("index",player.getMyIndex());
+                result.put("showTimer",NNConstant.GLOBAL_YES);
+                if (room.getNowReadyCount()<NNConstant.NN_MIN_START_COUNT) {
+                    // 重置房间倒计时
+                    room.setTimeLeft(NNConstant.NN_TIMER_INIT);
+                    result.put("showTimer",NNConstant.GLOBAL_NO);
+                }
+                result.put("timer",room.getTimeLeft());
+                NNConstant.sendMsgEventToAll(allUUIDList,result.toString(),"exitRoomPush_NN");
                 // 房间内所有玩家都已经完成准备且人数大于两人通知开始游戏
-                if (room.isAllReady()&&room.getPlayerMap().size()>=2) {
+                if (room.isAllReady()&&room.getPlayerMap().size()>=NNConstant.NN_MIN_START_COUNT) {
                     startGame(room);
                 }
                 // 所有人都退出清除房间数据
@@ -839,8 +891,11 @@ public class NNGameEventDealNew {
                 obj.put("qzScore",0);
             }
             obj.put("game_index",room.getGameIndex());
-            obj.put("showTimer",0);
-            obj.put("timer",0);
+            obj.put("showTimer",NNConstant.GLOBAL_YES);
+            if (room.getTimeLeft()==NNConstant.NN_TIMER_INIT) {
+                obj.put("showTimer",NNConstant.GLOBAL_NO);
+            }
+            obj.put("timer",room.getTimeLeft());
             obj.put("qzTimes",room.getQzTimes(room.getPlayerMap().get(account).getScore()));
             obj.put("baseNum",room.getBaseNumTimes(room.getPlayerMap().get(account).getScore()));
             obj.put("users",room.getAllPlayer());

@@ -20,20 +20,65 @@ import java.util.concurrent.ConcurrentMap;
  * @Modified By:
  **/
 public class NNGameRoomNew extends GameRoom{
-    private int bankerType;// 定庄方式(霸王庄，轮庄，抢庄，明牌抢庄)
+    /**
+     * 定庄方式(霸王庄，轮庄，抢庄，明牌抢庄)
+     */
+    private int bankerType;
+    /**
+     * 倍率
+     */
     public Map<Integer, Integer> ratio = initRatio();
-    private String baseNum;// 游戏基数["10","20","30","40","50","60"]
-    public JSONArray qzTimes;// 抢庄倍数
-    private List<Integer> specialType = new ArrayList<Integer>();// 配置特殊牌型（五花牛、葫芦牛、炸弹）
-    private boolean isHalfwayIn = false;// 是否允许中途加入（true：允许、false：不允许）
-    private int readyOvertime;// 准备超时（0：不处理 1：自动准备 2：踢出房间）
-    private int qzNoBanker;// 无人抢庄(0:解散房间 1:随机庄家 2:重新开局)
-    private boolean robot;//是否加入机器人
-    private boolean visit;//是否观战模式
-    private int sjBanker;//随机庄家
-    private ConcurrentMap<String,Playerinfo> playerMap = new ConcurrentHashMap<String, Playerinfo>();//玩家个人信息
-    private ConcurrentMap<String,UserPacket> userPacketMap = new ConcurrentHashMap<String, UserPacket>();//玩家牌局信息
+    /**
+     * 游戏筹码
+     */
+    private String baseNum;
+    /**
+     * 抢庄倍数
+     */
+    public JSONArray qzTimes;
+    /**
+     * 配置特殊牌型（五花牛、葫芦牛、炸弹）
+     */
+    private List<Integer> specialType = new ArrayList<Integer>();
+    /**
+     * 是否允许中途加入（true：允许、false：不允许）
+     */
+    private boolean isHalfwayIn = false;
+    /**
+     * 准备超时（0：不处理 1：自动准备 2：踢出房间）
+     */
+    private int readyOvertime;
+    /**
+     * 无人抢庄(0:解散房间 1:随机庄家 2:重新开局)
+     */
+    private int qzNoBanker;
+    /**
+     * 是否加入机器人
+     */
+    private boolean robot;
+    /**
+     * 是否观战模式
+     */
+    private boolean visit;
+    /**
+     * 随机庄家
+     */
+    private int sjBanker;
+    /**
+     * 玩家个人信息
+     */
+    private ConcurrentMap<String,Playerinfo> playerMap = new ConcurrentHashMap<String, Playerinfo>();
+    /**
+     * 玩家牌局信息
+     */
+    private ConcurrentMap<String,UserPacket> userPacketMap = new ConcurrentHashMap<String, UserPacket>();
+    /**
+     * 牌
+     */
     private Packer[] pai;
+    /**
+     * 庄家通杀
+     */
     private int tongSha = 0;
 
     public int getTongSha() {
@@ -530,6 +575,16 @@ public class NNGameRoomNew extends GameRoom{
             array.add(obj);
         }
         return array;
+    }
+
+    public int getNowReadyCount(){
+        int readyCount = 0;
+        for (String uuid : getUserPacketMap().keySet()) {
+            if (getUserPacketMap().get(uuid).getStatus()==NNConstant.NN_USER_STATUS_READY) {
+                readyCount ++;
+            }
+        }
+        return readyCount;
     }
 
     /**

@@ -177,7 +177,7 @@ public class BaseEventDeal {
         gameRoom.getPlayerMap().put(playerinfo.getAccount(), playerinfo);
         // 通知玩家
         switch (gameRoom.getGid()){
-            case NNConstant.GID_NN:
+            case NNConstant.GAME_ID_NN:
                 // 重连不需要重新设置用户牌局信息
                 if (!((NNGameRoomNew)gameRoom).getUserPacketMap().containsKey(userInfo.getString("account"))) {
                     ((NNGameRoomNew)gameRoom).getUserPacketMap().put(userInfo.getString("account"),new UserPacket());
@@ -196,7 +196,7 @@ public class BaseEventDeal {
         client.set(NNConstant.CLIENT_TAG_ROOM_NO,roomNo);
         GameRoom gameRoom;
         switch (postData.getInt("gid")) {
-            case NNConstant.GID_NN:
+            case NNConstant.GAME_ID_NN:
                 gameRoom = new NNGameRoomNew();
                 createRoomNN((NNGameRoomNew)gameRoom,baseInfo,userInfo.getString("account"));
                 break;
@@ -304,7 +304,7 @@ public class BaseEventDeal {
         RoomManage.gameRoomMap.put(roomNo,gameRoom);
         // 通知玩家
         switch (gameRoom.getGid()){
-            case NNConstant.GID_NN:
+            case NNConstant.GAME_ID_NN:
                 nnGameEventDealNew.createRoom(client);
                 break;
             default:
