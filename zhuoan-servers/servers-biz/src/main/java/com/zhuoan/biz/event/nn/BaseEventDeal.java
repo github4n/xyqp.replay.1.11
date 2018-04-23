@@ -2,6 +2,7 @@ package com.zhuoan.biz.event.nn;
 
 import com.corundumstudio.socketio.SocketIOClient;
 import com.zhuoan.biz.core.nn.UserPacket;
+import com.zhuoan.biz.event.sss.SSSGameEventDealNew;
 import com.zhuoan.biz.game.biz.PublicBiz;
 import com.zhuoan.biz.game.biz.RoomBiz;
 import com.zhuoan.biz.game.biz.UserBiz;
@@ -9,6 +10,7 @@ import com.zhuoan.biz.model.GameRoom;
 import com.zhuoan.biz.model.Playerinfo;
 import com.zhuoan.biz.model.RoomManage;
 import com.zhuoan.biz.model.nn.NNGameRoomNew;
+import com.zhuoan.biz.model.sss.Player;
 import com.zhuoan.biz.model.sss.SSSGameRoomNew;
 import com.zhuoan.constant.CommonConstant;
 import com.zhuoan.constant.Constant;
@@ -49,6 +51,9 @@ public class BaseEventDeal {
 
     @Resource
     private NNGameEventDealNew nnGameEventDealNew;
+
+    @Resource
+    private SSSGameEventDealNew sssGameEventDealNew;
 
     /**
      * 创建房间判断是否满足条件
@@ -121,6 +126,9 @@ public class BaseEventDeal {
         gameRoom.setRoomInfo(baseInfo);
         gameRoom.setCreateTime(new Date().toString());
         int playerNum = baseInfo.getInt("player");
+        if (postData.getInt("gid")==CommonConstant.GAME_ID_SSS) {
+            playerNum = baseInfo.getInt("maxPlayer");
+        }
         List<Long> idList = new ArrayList<Long>();
         List<String> iconList = new ArrayList<String>();
         List<String> nameList = new ArrayList<String>();
@@ -229,12 +237,15 @@ public class BaseEventDeal {
         gameRoom.getPlayerMap().put(playerinfo.getAccount(), playerinfo);
         RoomManage.gameRoomMap.put(roomNo,gameRoom);
         // 通知玩家
+        JSONObject object = new JSONObject();
+        object.put(CommonConstant.DATA_KEY_ACCOUNT,playerinfo.getAccount());
+        object.put(CommonConstant.DATA_KEY_ROOM_NO,roomNo);
         switch (gameRoom.getGid()){
             case CommonConstant.GAME_ID_NN:
-                nnGameEventDealNew.createRoom(client);
+                nnGameEventDealNew.createRoom(client,object);
                 break;
             case CommonConstant.GAME_ID_SSS:
-                nnGameEventDealNew.createRoom(client);
+                sssGameEventDealNew.createRoom(client,object);
                 break;
             default:
                 break;
@@ -360,8 +371,8 @@ public class BaseEventDeal {
             roomBiz.updateGameRoom(roomInfo);
             joinData.put("isReconnect",0);
         }
-        joinData.put("account",userInfo.getString("account"));
-        joinData.put("room_no",roomNo);
+        joinData.put(CommonConstant.DATA_KEY_ACCOUNT,userInfo.getString("account"));
+        joinData.put(CommonConstant.DATA_KEY_ROOM_NO,roomNo);
         gameRoom.getPlayerMap().put(playerinfo.getAccount(), playerinfo);
         // 通知玩家
         switch (gameRoom.getGid()){
@@ -371,6 +382,13 @@ public class BaseEventDeal {
                     ((NNGameRoomNew)gameRoom).getUserPacketMap().put(userInfo.getString("account"),new UserPacket());
                 }
                 nnGameEventDealNew.joinRoom(client,joinData);
+                break;
+            case CommonConstant.GAME_ID_SSS:
+                // 重连不需要重新设置用户牌局信息
+                if (!((SSSGameRoomNew)gameRoom).getUserPacketMap().containsKey(userInfo.getString("account"))) {
+                    ((SSSGameRoomNew)gameRoom).getUserPacketMap().put(userInfo.getString("account"),new Player());
+                }
+                sssGameEventDealNew.joinRoom(client,joinData);
                 break;
             default:
                 break;
@@ -563,6 +581,9 @@ public class BaseEventDeal {
             room.setMinPlayer(baseInfo.getInt("player"));
             room.setPlayerCount(baseInfo.getInt("maxPlayer"));
         }
+        // TODO: 2018/4/23  获取房间配置，需要缓存
+        room.setSetting(roomBiz.getGameInfoByID(CommonConstant.GAME_ID_SSS).getJSONObject("setting"));
+        room.getUserPacketMap().put(account,new Player());
     }
 
     /**

@@ -140,7 +140,7 @@ public class CommonConstant {
         for (UUID uuid : uuidList) {
             SocketIOClient client = GameMain.server.getClient(uuid);
             if (client!=null) {
-                client.sendEvent(eventName,data);
+                client.sendEvent(eventName,JSONObject.fromObject(data));
             }
         }
     }
@@ -154,7 +154,7 @@ public class CommonConstant {
     public static void sendMsgEventToSingle(UUID uuid,String data,String eventName){
         SocketIOClient client = GameMain.server.getClient(uuid);
         if (client!=null) {
-            client.sendEvent(eventName,data);
+            client.sendEvent(eventName,JSONObject.fromObject(data));
         }
     }
 
@@ -166,7 +166,7 @@ public class CommonConstant {
      */
     public static void sendMsgEventToSingle(SocketIOClient client,String data,String eventName){
         if (client!=null) {
-            client.sendEvent(eventName,data);
+            client.sendEvent(eventName,JSONObject.fromObject(data));
         }
     }
 }

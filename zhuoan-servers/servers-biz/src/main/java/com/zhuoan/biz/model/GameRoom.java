@@ -97,7 +97,10 @@ public class GameRoom {
      * 玩家个人信息
      */
 	private Map<String,Playerinfo> playerMap = new HashMap<String, Playerinfo>();
-	private JSONObject setting;//游戏全局设置
+    /**
+     * 游戏全局设置
+     */
+	private JSONObject setting;
     /**
      * 游戏信息
      */

@@ -10,11 +10,11 @@ public class SSSConstant {
     /**
      * 十三水庄家类型-霸王庄
      */
-    public static final int SSS_BANKER_TYPE_BWZ = 0;
+    public static final int SSS_BANKER_TYPE_BWZ = 1;
     /**
      * 十三水庄家类型-互比
      */
-    public static final int SSS_BANKER_TYPE_HB = 1;
+    public static final int SSS_BANKER_TYPE_HB = 0;
 
     /**
      * 十三水游戏状态-初始
@@ -65,4 +65,22 @@ public class SSSConstant {
      * 十三水玩家状态-总结算
      */
     public static final int SSS_USER_STATUS_FINAL_SUMMARY = 5;
+    /**
+     * 最低打枪人数
+     */
+    public static final int SSS_MIN_SWAT_COUNT = 3;
+
+    public static final int SSS_TIMER_INIT = 0;
+    public static final int SSS_TIMER_READY = 15;
+
+    public static final int SSS_TIMER_GAME_EVENT = 30;
+
+    public static final int SSS_GAME_ACTION_TYPE_AUTO = 1;
+
+    public static final int SSS_GAME_ACTION_TYPE_COMMON = 2;
+
+    public static final int SSS_GAME_ACTION_TYPE_SPECIAL = 3;
+
+    public static final String SSS_DATA_KET_TYPE = "type";
+    public static final String SSS_DATA_KET_MY_PAI = "myPai";
 }

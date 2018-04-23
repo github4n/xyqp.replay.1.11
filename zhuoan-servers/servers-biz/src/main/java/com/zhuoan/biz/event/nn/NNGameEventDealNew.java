@@ -53,12 +53,15 @@ public class NNGameEventDealNew {
      * 创建房间通知自己
      * @param client
      */
-    public void createRoom(SocketIOClient client){
-        JSONObject roomData = obtainRoomData(client);
+    public void createRoom(SocketIOClient client, Object data){
+        JSONObject postData = JSONObject.fromObject(data);
+        String account = postData.getString(CommonConstant.DATA_KEY_ACCOUNT);
+        String roomNo = postData.getString(CommonConstant.DATA_KEY_ROOM_NO);
+        JSONObject roomData = obtainRoomData(account,roomNo);
         // 数据不为空
         if (!Dto.isObjNull(roomData)) {
             JSONObject result = new JSONObject();
-            result.put("code",1);
+            result.put(CommonConstant.RESULT_KEY_CODE,CommonConstant.GLOBAL_YES);
             result.put("data",roomData);
             // 通知自己
             CommonConstant.sendMsgEventToSingle(client,result.toString(),"enterRoomPush_NN");
@@ -72,7 +75,7 @@ public class NNGameEventDealNew {
      */
     public void joinRoom(SocketIOClient client, Object data){
         // 进入房间通知自己
-        createRoom(client);
+        createRoom(client, data);
         JSONObject joinData = JSONObject.fromObject(data);
         // 非重连通知其他玩家
         if (joinData.containsKey("isReconnect")&&joinData.getInt("isReconnect")==0) {
@@ -101,12 +104,12 @@ public class NNGameEventDealNew {
 
     /**
      * 获取当前房间状态数据
-     * @param client
+     * @param account
+     * @param roomNo
      * @return
      */
-    public JSONObject obtainRoomData(SocketIOClient client){
-        String account = client.get(CommonConstant.CLIENT_TAG_ACCOUNT);
-        NNGameRoomNew room = (NNGameRoomNew) RoomManage.gameRoomMap.get(client.get(CommonConstant.CLIENT_TAG_ROOM_NO).toString());
+    public JSONObject obtainRoomData(String account, String roomNo){
+        NNGameRoomNew room = (NNGameRoomNew) RoomManage.gameRoomMap.get(roomNo);
         JSONObject obj=new JSONObject();
         obj.put("gameStatus", room.getGameStatus());
         obj.put("room_no", room.getRoomNo());
@@ -178,6 +181,11 @@ public class NNGameEventDealNew {
         NNGameRoomNew room = (NNGameRoomNew) RoomManage.gameRoomMap.get(roomNo);
         // 玩家账号
         String account = postData.getString(CommonConstant.DATA_KEY_ACCOUNT);
+        // 元宝不足无法准备
+        if (room.getPlayerMap().get(account).getScore()<room.getLeaveScore()) {
+
+            return;
+        }
         // 设置玩家准备状态
         room.getUserPacketMap().get(account).setStatus(NNConstant.NN_USER_STATUS_READY);
         // 设置房间准备状态
@@ -856,10 +864,13 @@ public class NNGameEventDealNew {
                 result.put(CommonConstant.RESULT_KEY_CODE,CommonConstant.GLOBAL_YES);
                 result.put("type",1);
                 result.put("index",player.getMyIndex());
-                result.put("showTimer",CommonConstant.GLOBAL_YES);
-                if (room.getNowReadyCount()<NNConstant.NN_MIN_START_COUNT) {
+                if (room.getGameStatus()==NNConstant.NN_GAME_STATUS_READY&&room.getNowReadyCount()<NNConstant.NN_MIN_START_COUNT) {
                     // 重置房间倒计时
                     room.setTimeLeft(NNConstant.NN_TIMER_INIT);
+                }
+                if (room.getTimeLeft()>0) {
+                    result.put("showTimer",CommonConstant.GLOBAL_YES);
+                } else {
                     result.put("showTimer",CommonConstant.GLOBAL_NO);
                 }
                 result.put("timer",room.getTimeLeft());
@@ -979,9 +990,6 @@ public class NNGameEventDealNew {
      */
     public void reconnectGame(SocketIOClient client,Object data){
         JSONObject postData = JSONObject.fromObject(data);
-        if (!CommonConstant.checkEvent(postData,CommonConstant.CHECK_GAME_STATUS_NO)) {
-            return;
-        }
         String roomNo = postData.getString(CommonConstant.DATA_KEY_ROOM_NO);
         String account = postData.getString(CommonConstant.DATA_KEY_ACCOUNT);
         JSONObject result = new JSONObject();
@@ -1012,7 +1020,7 @@ public class NNGameEventDealNew {
         }
         // 组织数据，通知玩家
         result.put("type",1);
-        result.put("data",obtainRoomData(client));
+        result.put("data",obtainRoomData(account,roomNo));
         // 通知玩家
         CommonConstant.sendMsgEventToSingle(client,result.toString(),"reconnectGamePush_NN");
     }
