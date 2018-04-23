@@ -294,7 +294,7 @@ public class NNGameEventDealNew {
                     array.add(playerinfo.getId());
                 }
             }
-            // 抽水
+            // 抽水  QUEUETAG1
             roomBiz.pump(array,room.getRoomNo(),room.getGid(),room.getFee(),room.getUpdateType());
         }
         // 通知前端状态改变
@@ -736,16 +736,17 @@ public class NNGameEventDealNew {
                 }
             }
             room.getGameProcess().put("JieSuan",gameProcessJS);
-            // 更新元宝
+            // 更新元宝 QUEUETAG2
             userBiz.updateUserBalance(array,room.getUpdateType());
-            // 存放输赢记录
+            // 存放输赢记录 QUEUETAG3
             userBiz.insertUserdeduction(new JSONObject().element("user",userDeductionData));
-            // 存za_gamelogs表
+            // 存za_gamelogs表 QUEUETAG4
             long gameLogId = gameLogBiz.addOrUpdateGameLog(obtainGameLog(room,gameLogResults.toString(),room.getGameProcess().toString()));
             JSONArray userGameLogs = obtainUserGameLog(room, gameLogId, array, gameResult.toString());
             for (int i = 0; i < userGameLogs.size(); i++) {
                 gameLogBiz.addUserGameLog(userGameLogs.getJSONObject(i));
             }
+            // QUEUETAG4 END
         }
     }
 
@@ -766,6 +767,7 @@ public class NNGameEventDealNew {
             if (room.getId()>0) {
                 userGameLog.put("room_id",room.getId());
             }else {
+                // 缓存
                 JSONObject roomInfo = roomBiz.getRoomInfoByRno(room.getRoomNo());
                 if (!Dto.isObjNull(roomInfo)) {
                     userGameLog.put("room_id",roomInfo.getLong("id"));
@@ -871,6 +873,7 @@ public class NNGameEventDealNew {
                     roomInfo.put("status",-1);
                     RoomManage.gameRoomMap.remove(room.getRoomNo());
                 }
+                // 更新房间信息  QUEUETAG5
                 roomBiz.updateGameRoom(roomInfo);
             }else {
                 // 组织数据，通知玩家
@@ -1002,7 +1005,7 @@ public class NNGameEventDealNew {
         room.getPlayerMap().get(account).setUuid(client.getSessionId());
         client.set(CommonConstant.CLIENT_TAG_ACCOUNT,account);
         client.set(CommonConstant.CLIENT_TAG_ROOM_NO,roomNo);
-        // 获取用户信息
+        // 获取用户信息  缓存
         JSONObject userInfo = userBiz.getUserByAccount(account);
         if (!Dto.isObjNull(userInfo)) {
             client.set(CommonConstant.CLIENT_TAG_USER_INFO,userInfo);
