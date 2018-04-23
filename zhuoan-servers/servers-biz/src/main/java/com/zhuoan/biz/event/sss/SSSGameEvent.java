@@ -103,7 +103,7 @@ public class SSSGameEvent {
         /**
          * 游戏事件
          */
-        server.addEventListener("gameEvent_SSS", Object.class, new DataListener<Object>() {
+        server.addEventListener("gameAction_SSS", Object.class, new DataListener<Object>() {
 
             @Override
             public void onData(SocketIOClient client, Object data, AckRequest ackSender) {
