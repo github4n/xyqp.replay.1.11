@@ -6,12 +6,14 @@ import com.zhuoan.biz.event.nn.BaseEventDeal;
 import com.zhuoan.biz.event.nn.NNGameEventDeal;
 import com.zhuoan.biz.event.nn.NNGameEventDealNew;
 import com.zhuoan.biz.event.sss.SSSGameEventDeal;
+import com.zhuoan.biz.event.sss.SSSGameEventDealNew;
 import com.zhuoan.biz.event.zjh.ZJHGameEventDeal;
 import com.zhuoan.biz.model.GameLogsCache;
 import com.zhuoan.biz.model.RoomManage;
 import com.zhuoan.constant.event.GidConstant;
 import com.zhuoan.exception.EventException;
 import com.zhuoan.service.socketio.impl.GameMain;
+import com.zhuoan.util.Dto;
 import net.sf.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -51,6 +53,8 @@ public class GameEventDeal {
     private BaseEventDeal baseEventDeal;
     @Resource
     private NNGameEventDealNew nnGameEventDealNew;
+    @Resource
+    private SSSGameEventDealNew sssGameEventDealNew;
 
     public void eventsMQ(Message message) {
         JSONObject jsonObject = JSONObject.fromObject(obtainMessageStr(message));
@@ -177,11 +181,11 @@ public class GameEventDeal {
                         break;
                     case 2:
                         // 玩家准备
-                        sssGameEventDeal.gameReady(client, data);
+                        sssGameEventDealNew.gameReady(client, data);
                         break;
                     case 3:
                         // 游戏中
-                        sssGameEventDeal.gameEvent(client, data);
+                        sssGameEventDealNew.gameEvent(client, data);
                         break;
                     case 4:
                         // 解散房间
@@ -189,11 +193,11 @@ public class GameEventDeal {
                         break;
                     case 5:
                         // 离开房间
-                        sssGameEventDeal.exitRoom(client, data);
+                        sssGameEventDealNew.exitRoom(client, data);
                         break;
                     case 6:
                         // 断线重连
-                        sssGameEventDeal.reconnectGame(client, data);
+                        sssGameEventDealNew.reconnectGame(client, data);
                         break;
                     case 7:
                         // 判断玩家是否需要断线重连
@@ -305,6 +309,9 @@ public class GameEventDeal {
 
     private SocketIOClient obtainSocketIOClient(JSONObject jsonObject) {
         JSONObject clientObject = (JSONObject) jsonObject.get("client");
+        if (Dto.isObjNull(clientObject)) {
+            return null;
+        }
         String sessionId = String.valueOf(clientObject.get("sessionId"));
         return GameMain.server.getClient(UUID.fromString(sessionId));
     }

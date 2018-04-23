@@ -567,7 +567,7 @@ public  class SSSGameRoom extends GameRoom implements Serializable{
 	
 	/**
 	 * 小到大
-	 * @param card
+	 * @param list
 	 * @return
 	 */
 	public static String[] daxiao(String[] list) {
@@ -604,7 +604,6 @@ public  class SSSGameRoom extends GameRoom implements Serializable{
 			dd[p]=list[i];
 			p++;
 		}
-		//System.out.println(list);
 		return dd;
 	}
 	
