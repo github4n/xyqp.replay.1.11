@@ -377,20 +377,63 @@
 
         <!-- 项目内部依赖 end -->
 
-
+        <!--socketio-->
         <dependency>
+            <!--自定义-->
             <groupId>com.corundumstudio.socketio</groupId>
+            <!--自定义-->
             <artifactId>netty-socketio</artifactId>
+            <!--自定义-->
+            <version>1.0</version>
+            <scope>system</scope>
+            <!--system，类似provided，需要显式提供依赖的jar以后，Maven就不会在Repository中查找它-->
+            <systemPath>${basedir}/src/main/webapp/WEB-INF/lib/netty-socketio-1.7.7.jar</systemPath> <!--项目根目录下的lib文件夹下-->
+        </dependency>
+        <dependency>
+            <groupId>io.netty</groupId>
+            <artifactId>netty-buffer</artifactId>
+            <version>${io.netty.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>io.netty</groupId>
+            <artifactId>netty-common</artifactId>
+            <version>${io.netty.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>io.netty</groupId>
+            <artifactId>netty-transport</artifactId>
+            <version>${io.netty.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>io.netty</groupId>
+            <artifactId>netty-handler</artifactId>
+            <version>${io.netty.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>io.netty</groupId>
+            <artifactId>netty-codec-http</artifactId>
+            <version>${io.netty.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>io.netty</groupId>
+            <artifactId>netty-codec</artifactId>
+            <version>${io.netty.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>io.netty</groupId>
+            <artifactId>netty-transport-native-epoll</artifactId>
+            <version>${io.netty.version}</version>
         </dependency>
         <dependency>
             <groupId>io.netty</groupId>
             <artifactId>netty-resolver</artifactId>
+            <version>${io.netty.version}</version>
         </dependency>
         <dependency>
             <groupId>io.socket</groupId>
             <artifactId>socket.io-client</artifactId>
+            <version>0.8.3</version>
         </dependency>
-
 
         <dependency>
             <groupId>org.mybatis.caches</groupId>
