@@ -42,6 +42,9 @@ public class ActiveConfig {
     @Resource
     private MessageListener zjhQueueMessageListener;
 
+    @Resource
+    private MessageListener daoQueueMessageListener;
+
 
     /**
      * Base queue destination queue.1、兴起队列 ZA_GAMES_BASE
@@ -103,7 +106,15 @@ public class ActiveConfig {
         return new ActiveMQQueue("ZA_GAMES_ZJH");
     }
 
-
+    /**
+     * Dao queue destination queue.
+     *
+     * @return the queue
+     */
+    @Bean
+    public Queue daoQueueDestination() {
+        return new ActiveMQQueue("ZA_GAMES_DAO");
+    }
 
 
 
@@ -175,6 +186,17 @@ public class ActiveConfig {
     @Bean
     public DefaultMessageListenerContainer bdxQueueListenerContainer(ConnectionFactory connectionFactory) {
         return configListenerMQ(connectionFactory, bdxQueueMessageListener, bdxQueueDestination());
+    }
+
+    /**
+     * Dao queue listener container default message listener container.
+     *
+     * @param connectionFactory the connection factory
+     * @return the default message listener container
+     */
+    @Bean
+    public DefaultMessageListenerContainer daoQueueListenerContainer(ConnectionFactory connectionFactory) {
+        return configListenerMQ(connectionFactory, daoQueueMessageListener, daoQueueDestination());
     }
 
 

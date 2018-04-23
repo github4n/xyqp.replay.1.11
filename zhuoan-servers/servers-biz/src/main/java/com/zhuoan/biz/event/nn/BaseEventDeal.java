@@ -9,19 +9,19 @@ import com.zhuoan.biz.game.biz.UserBiz;
 import com.zhuoan.biz.model.GameRoom;
 import com.zhuoan.biz.model.Playerinfo;
 import com.zhuoan.biz.model.RoomManage;
+import com.zhuoan.biz.model.dao.PumpDao;
 import com.zhuoan.biz.model.nn.NNGameRoomNew;
 import com.zhuoan.biz.model.sss.Player;
 import com.zhuoan.biz.model.sss.SSSGameRoomNew;
-import com.zhuoan.constant.CommonConstant;
-import com.zhuoan.constant.Constant;
-import com.zhuoan.constant.NNConstant;
-import com.zhuoan.constant.SSSConstant;
+import com.zhuoan.constant.*;
+import com.zhuoan.service.jms.ProducerService;
 import com.zhuoan.util.Dto;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
+import javax.jms.Destination;
 import java.math.BigDecimal;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -54,6 +54,12 @@ public class BaseEventDeal {
 
     @Resource
     private SSSGameEventDealNew sssGameEventDealNew;
+
+    @Resource
+    private Destination daoQueueDestination;
+
+    @Resource
+    private ProducerService producerService;
 
     /**
      * 创建房间判断是否满足条件
@@ -269,7 +275,8 @@ public class BaseEventDeal {
         }else {
             obj.put("open",0);
         }
-        roomBiz.insertGameRoom(obj);
+
+        producerService.sendMessage(daoQueueDestination, new PumpDao(DaoTypeConstant.INSERT_GAME_ROOM, obj));
     }
 
     /**
@@ -368,7 +375,8 @@ public class BaseEventDeal {
             roomInfo.put("user_id"+myIndex,playerinfo.getId());
             roomInfo.put("user_icon"+myIndex,playerinfo.getHeadimg());
             roomInfo.put("user_name"+myIndex,playerinfo.getName());
-            roomBiz.updateGameRoom(roomInfo);
+            // 更新房间信息
+            producerService.sendMessage(daoQueueDestination, new PumpDao(DaoTypeConstant.UPDATE_ROOM_INFO, roomInfo));
             joinData.put("isReconnect",0);
         }
         joinData.put(CommonConstant.DATA_KEY_ACCOUNT,userInfo.getString("account"));
