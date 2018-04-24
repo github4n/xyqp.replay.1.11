@@ -55,12 +55,19 @@
         <!-- 打开PSCache，并且指定每个连接上PSCache的大小 -->
         <property name="poolPreparedStatements" value="true"/>
         <property name="maxPoolPreparedStatementPerConnectionSize" value="50"/>
+        <!--
+            如果配置了proxyFilters，此配置可以不配置
+            druid.stat.mergeSql=true 合并执行的相同sql，避免因为参数不同而统计多条sql语句
+            druid.stat.slowSqlMillis=10000 用来配置SQL慢的标准，执行时间超过slowSqlMillis的就是慢 -->
+        <property name="connectionProperties" value="druid.stat.mergeSql=true;druid.stat.slowSqlMillis=100" />
         <!--属性类型是字符串，通过别名的方式配置扩展插件，常用的插件有：
-                        监控统计用的filter:stat
-                        日志用的filter:log4j
-                       防御SQL注入的filter:wall -->
+        监控统计用的filter:stat
+        日志用的filter:log4j
+        防御SQL注入的filter:wall -->
         <property name="filters" value="stat"/>
     </bean>
+    <!--Spring监控页 未配置,相关介绍见：https://github.com/alibaba/druid/wiki-->
+
 
     <!-- mybatis 自动扫描Mapper -->
     <bean class="org.mybatis.spring.mapper.MapperScannerConfigurer">
