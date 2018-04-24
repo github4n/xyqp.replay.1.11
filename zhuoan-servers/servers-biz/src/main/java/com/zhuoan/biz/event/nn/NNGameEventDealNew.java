@@ -27,9 +27,7 @@ import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
 import javax.jms.Destination;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 import java.util.UUID;
 
@@ -324,22 +322,14 @@ public class NNGameEventDealNew {
                 }
             }
             // 抽水  QUEUETAG1
-            producerService.sendMessage(daoQueueDestination, new PumpDao(DaoTypeConstant.PUMP, getJsonObject(room, array)));
+            producerService.sendMessage(daoQueueDestination, new PumpDao(DaoTypeConstant.PUMP, room.getJsonObject(array)));
 
         }
         // 通知前端状态改变
         changeGameStatus(room);
     }
 
-    private JSONObject getJsonObject(NNGameRoomNew room, JSONArray array) {
-        JSONObject objectDao = new JSONObject();
-        objectDao.put("array",array);
-        objectDao.put("roomNo",room.getRoomNo());
-        objectDao.put("gId",room.getGid());
-        objectDao.put("fee",room.getFee());
-        objectDao.put("updateType",room.getUpdateType());
-        return objectDao;
-    }
+
 
     /**
      * 抢庄
@@ -781,69 +771,25 @@ public class NNGameEventDealNew {
                 }
             }
             room.getGameProcess().put("JieSuan", gameProcessJS);
-            // 更新元宝 QUEUETAG2
-            producerService.sendMessage(daoQueueDestination, new PumpDao(DaoTypeConstant.UPDATE_SCORE, getPumpObject(room, array)));
-
-            // 存放输赢记录 QUEUETAG3
+            if (room.getId()==0) {
+                JSONObject roomInfo = roomBiz.getRoomInfoByRno(room.getRoomNo());
+                if (!Dto.isObjNull(roomInfo)) {
+                    room.setId(roomInfo.getLong("id"));
+                }
+            }
+            // 更新玩家分数
+            producerService.sendMessage(daoQueueDestination, new PumpDao(DaoTypeConstant.UPDATE_SCORE, room.getPumpObject(array)));
+            // 玩家输赢记录
             producerService.sendMessage(daoQueueDestination, new PumpDao(DaoTypeConstant.USER_DEDUCTION, new JSONObject().element("user", userDeductionData)));
-
-            // 存za_gamelogs表 QUEUETAG4
-            JSONObject gameLogObj = obtainGameLog(room, gameLogResults.toString(), room.getGameProcess().toString());
+            // 战绩信息
+            JSONObject gameLogObj = room.obtainGameLog(gameLogResults.toString(), room.getGameProcess().toString());
             producerService.sendMessage(daoQueueDestination, new PumpDao(DaoTypeConstant.INSERT_GAME_LOG, gameLogObj));
-            JSONArray userGameLogs = obtainUserGameLog(room, gameLogObj.getLong("id"), array, gameResult.toString());
+            JSONArray userGameLogs = room.obtainUserGameLog(gameLogObj.getLong("id"), array, gameResult.toString());
             for (int i = 0; i < userGameLogs.size(); i++) {
                 // TODO: 2018/4/24 每个用户缓存20条数据 
                 producerService.sendMessage(daoQueueDestination, new PumpDao(DaoTypeConstant.INSERT_USER_GAME_LOG, userGameLogs.getJSONObject(i)));
             }
-            // QUEUETAG4 END
         }
-    }
-
-    private JSONObject getPumpObject(NNGameRoomNew room, JSONArray array) {
-        JSONObject jsonObject = new JSONObject();
-        jsonObject.put("array",array);
-        jsonObject.put("updateType",room.getUpdateType());
-        return jsonObject;
-    }
-
-
-    /**
-     * 获取玩家战绩数据
-     *
-     * @param room
-     * @param gameLogId
-     * @param users
-     * @param gameResult
-     * @return
-     */
-    public JSONArray obtainUserGameLog(GameRoom room, long gameLogId, JSONArray users, String gameResult) {
-        JSONArray userGameLogs = new JSONArray();
-        for (int i = 0; i < users.size(); i++) {
-            long userId = users.getJSONObject(i).getLong("id");
-            JSONObject userGameLog = new JSONObject();
-            userGameLog.put("gid", room.getGid());
-            if (room.getId() > 0) {
-                userGameLog.put("room_id", room.getId());
-            } else {
-                /* 房间信息，插入缓存 */
-                JSONObject roomInfo = getRoomInfo(room);
-
-                if (!Dto.isObjNull(roomInfo)) {
-                    userGameLog.put("room_id", roomInfo.getLong("id"));
-                } else {
-                    userGameLog.put("room_id", 0);
-                }
-            }
-            userGameLog.put("room_no", room.getRoomNo());
-            userGameLog.put("user_id", userId);
-            userGameLog.put("gamelog_id", gameLogId);
-            userGameLog.put("result", gameResult);
-            userGameLog.put("createtime", new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date()));
-            userGameLog.put("account", users.getJSONObject(i).getDouble("fen"));
-            userGameLog.put("fee", room.getFee());
-            userGameLogs.add(userGameLog);
-        }
-        return userGameLogs;
     }
 
     private JSONObject getRoomInfo(GameRoom room) {
@@ -855,32 +801,6 @@ public class NNGameEventDealNew {
         return roomInfo;
     }
 
-    /**
-     * 获取战绩数据
-     *
-     * @param room
-     * @param result
-     * @return
-     */
-    public JSONObject obtainGameLog(GameRoom room, String result, String gameProcess) {
-        JSONObject gamelog = new JSONObject();
-        StringBuffer id = new StringBuffer();
-        id.append(System.currentTimeMillis());
-        id.append(room.getRoomNo());
-        gamelog.put("id",Long.valueOf(id.toString()));
-        gamelog.put("gid", room.getGid());
-        gamelog.put("room_no", room.getRoomNo());
-        gamelog.put("game_index", room.getGameIndex());
-        gamelog.put("base_info", room.getRoomInfo());
-        gamelog.put("result", result);
-        gamelog.put("action_records", gameProcess);
-        String nowTime = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date());
-        gamelog.put("finishtime", nowTime);
-        gamelog.put("createtime", nowTime);
-        gamelog.put("status", 1);
-        gamelog.put("roomtype", room.getRoomType());
-        return gamelog;
-    }
 
     /**
      * 退出房间

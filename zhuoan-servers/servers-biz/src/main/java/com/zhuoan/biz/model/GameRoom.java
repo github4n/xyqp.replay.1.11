@@ -1,8 +1,10 @@
 package com.zhuoan.biz.model;
 
 import com.zhuoan.constant.CommonConstant;
+import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 
+import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -517,6 +519,75 @@ public class GameRoom {
             default:
                 return "";
         }
+    }
+
+
+    public JSONObject getJsonObject(JSONArray array) {
+        JSONObject objectDao = new JSONObject();
+        objectDao.put("array",array);
+        objectDao.put("roomNo",getRoomNo());
+        objectDao.put("gId",getGid());
+        objectDao.put("fee",getFee());
+        objectDao.put("updateType",getUpdateType());
+        return objectDao;
+    }
+
+    public JSONObject getPumpObject(JSONArray array) {
+        JSONObject jsonObject = new JSONObject();
+        jsonObject.put("array",array);
+        jsonObject.put("updateType",getUpdateType());
+        return jsonObject;
+    }
+
+    /**
+     * 获取玩家战绩数据
+     * @param gameLogId
+     * @param users
+     * @param gameResult
+     * @return
+     */
+    public JSONArray obtainUserGameLog( long gameLogId, JSONArray users, String gameResult) {
+        JSONArray userGameLogs = new JSONArray();
+        for (int i = 0; i < users.size(); i++) {
+            long userId = users.getJSONObject(i).getLong("id");
+            JSONObject userGameLog = new JSONObject();
+            userGameLog.put("gid", getGid());
+            userGameLog.put("room_id", getId());
+            userGameLog.put("room_no", getRoomNo());
+            userGameLog.put("user_id", userId);
+            userGameLog.put("gamelog_id", gameLogId);
+            userGameLog.put("result", gameResult);
+            userGameLog.put("createtime", new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date()));
+            userGameLog.put("account", users.getJSONObject(i).getDouble("fen"));
+            userGameLog.put("fee", getFee());
+            userGameLogs.add(userGameLog);
+        }
+        return userGameLogs;
+    }
+
+    /**
+     * 获取战绩数据
+     * @param result
+     * @return
+     */
+    public JSONObject obtainGameLog(String result, String gameProcess) {
+        JSONObject gamelog = new JSONObject();
+        StringBuffer id = new StringBuffer();
+        id.append(System.currentTimeMillis());
+        id.append(getRoomNo());
+        gamelog.put("id",Long.valueOf(id.toString()));
+        gamelog.put("gid", getGid());
+        gamelog.put("room_no", getRoomNo());
+        gamelog.put("game_index", getGameIndex());
+        gamelog.put("base_info", getRoomInfo());
+        gamelog.put("result", result);
+        gamelog.put("action_records", gameProcess);
+        String nowTime = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date());
+        gamelog.put("finishtime", nowTime);
+        gamelog.put("createtime", nowTime);
+        gamelog.put("status", 1);
+        gamelog.put("roomtype", getRoomType());
+        return gamelog;
     }
 
     public ReentrantLock getM_locker() {

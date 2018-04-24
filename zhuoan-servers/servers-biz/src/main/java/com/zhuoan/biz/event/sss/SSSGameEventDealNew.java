@@ -9,10 +9,14 @@ import com.zhuoan.biz.game.biz.RoomBiz;
 import com.zhuoan.biz.game.biz.UserBiz;
 import com.zhuoan.biz.model.Playerinfo;
 import com.zhuoan.biz.model.RoomManage;
+import com.zhuoan.biz.model.dao.PumpDao;
 import com.zhuoan.biz.model.sss.Player;
 import com.zhuoan.biz.model.sss.SSSGameRoomNew;
 import com.zhuoan.constant.CommonConstant;
+import com.zhuoan.constant.DaoTypeConstant;
+import com.zhuoan.constant.NNConstant;
 import com.zhuoan.constant.SSSConstant;
+import com.zhuoan.service.jms.ProducerService;
 import com.zhuoan.util.Dto;
 import com.zhuoan.util.thread.ThreadPoolHelper;
 import net.sf.json.JSONArray;
@@ -20,6 +24,7 @@ import net.sf.json.JSONObject;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
+import javax.jms.Destination;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -41,6 +46,13 @@ public class SSSGameEventDealNew {
 
     @Resource
     private GameTimerSSS gameTimerSSS;
+
+    @Resource
+    private Destination daoQueueDestination;
+
+    @Resource
+    private ProducerService producerService;
+
 
     /**
      * 创建房间通知自己
@@ -175,7 +187,7 @@ public class SSSGameEventDealNew {
                 }
             }
             // 抽水
-            roomBiz.pump(array,room.getRoomNo(),room.getGid(),room.getFee(),room.getUpdateType());
+            producerService.sendMessage(daoQueueDestination, new PumpDao(DaoTypeConstant.PUMP, room.getJsonObject(array)));
         }
         // 设置倒计时时间
         room.setTimeLeft(SSSConstant.SSS_TIMER_GAME_EVENT);
@@ -309,6 +321,82 @@ public class SSSGameEventDealNew {
                         }
                     }
                 });
+                JSONArray array = new JSONArray();
+                JSONArray userDeductionData = new JSONArray();
+                JSONArray gameLogResults = new JSONArray();
+                JSONArray gameResult = new JSONArray();
+                // 存放游戏记录
+                JSONArray gameProcessJS = new JSONArray();
+                for (String uuid : room.getUserPacketMap().keySet()) {
+                    // 有参与的玩家
+                    if (room.getUserPacketMap().get(uuid).getStatus() > NNConstant.NN_USER_STATUS_INIT) {
+                        JSONObject userJS = new JSONObject();
+                        userJS.put("account", uuid);
+                        userJS.put("name", room.getPlayerMap().get(uuid).getName());
+                        userJS.put("sum", room.getUserPacketMap().get(uuid).getScore());
+                        userJS.put("pai", room.getUserPacketMap().get(uuid).getMyPai());
+                        userJS.put("paiType", room.getUserPacketMap().get(uuid).getPaiType());
+                        gameProcessJS.add(userJS);
+                        // 元宝输赢情况
+                        JSONObject obj = new JSONObject();
+                        obj.put("total", room.getPlayerMap().get(uuid).getScore());
+                        obj.put("fen", room.getUserPacketMap().get(uuid).getScore());
+                        obj.put("id", room.getPlayerMap().get(uuid).getId());
+                        array.add(obj);
+                        // 用户游戏记录
+                        JSONObject object = new JSONObject();
+                        object.put("id", room.getPlayerMap().get(uuid).getId());
+                        object.put("gid", room.getGid());
+                        object.put("roomNo", room.getRoomNo());
+                        object.put("type", 4);
+                        object.put("fen", room.getUserPacketMap().get(uuid).getScore());
+                        userDeductionData.add(object);
+                        // 战绩记录
+                        JSONObject gameLogResult = new JSONObject();
+                        gameLogResult.put("account", uuid);
+                        gameLogResult.put("name", room.getPlayerMap().get(uuid).getName());
+                        gameLogResult.put("headimg", room.getPlayerMap().get(uuid).getHeadimg());
+                        gameLogResult.put("zhuang", room.getPlayerMap().get(room.getBanker()).getMyIndex());
+                        gameLogResult.put("myIndex", room.getPlayerMap().get(uuid).getMyIndex());
+                        gameLogResult.put("myPai", room.getUserPacketMap().get(uuid).getMyPai());
+                        gameLogResult.put("score", room.getUserPacketMap().get(uuid).getScore());
+                        gameLogResult.put("totalScore", room.getPlayerMap().get(uuid).getScore());
+                        gameLogResult.put("win", 1);
+                        if (room.getUserPacketMap().get(uuid).getStatus() < 0) {
+                            gameLogResult.put("win", 0);
+                        }
+                        gameLogResults.add(gameLogResult);
+                        // 用户战绩
+                        JSONObject userResult = new JSONObject();
+                        userResult.put("zhuang", room.getBanker());
+                        userResult.put("isWinner", CommonConstant.GLOBAL_NO);
+                        if (room.getUserPacketMap().get(uuid).getScore() > 0) {
+                            userResult.put("isWinner", CommonConstant.GLOBAL_YES);
+                        }
+                        userResult.put("score", room.getUserPacketMap().get(uuid).getScore());
+                        userResult.put("totalScore", room.getPlayerMap().get(uuid).getScore());
+                        userResult.put("player", room.getPlayerMap().get(uuid).getName());
+                        gameResult.add(userResult);
+                    }
+                }
+                if (room.getId()==0) {
+                    JSONObject roomInfo = roomBiz.getRoomInfoByRno(room.getRoomNo());
+                    if (!Dto.isObjNull(roomInfo)) {
+                        room.setId(roomInfo.getLong("id"));
+                    }
+                }
+                // 更新玩家分数
+                producerService.sendMessage(daoQueueDestination, new PumpDao(DaoTypeConstant.UPDATE_SCORE, room.getPumpObject(array)));
+                // 玩家输赢记录
+                producerService.sendMessage(daoQueueDestination, new PumpDao(DaoTypeConstant.USER_DEDUCTION, new JSONObject().element("user", userDeductionData)));
+                // 战绩信息
+                JSONObject gameLogObj = room.obtainGameLog(gameLogResults.toString(), room.getGameProcess().toString());
+                producerService.sendMessage(daoQueueDestination, new PumpDao(DaoTypeConstant.INSERT_GAME_LOG, gameLogObj));
+                JSONArray userGameLogs = room.obtainUserGameLog(gameLogObj.getLong("id"), array, gameResult.toString());
+                for (int i = 0; i < userGameLogs.size(); i++) {
+                    // TODO: 2018/4/24 每个用户缓存20条数据
+                    producerService.sendMessage(daoQueueDestination, new PumpDao(DaoTypeConstant.INSERT_USER_GAME_LOG, userGameLogs.getJSONObject(i)));
+                }
             }else {
                 JSONObject result = new JSONObject();
                 result.put("index",room.getPlayerMap().get(account).getMyIndex());
