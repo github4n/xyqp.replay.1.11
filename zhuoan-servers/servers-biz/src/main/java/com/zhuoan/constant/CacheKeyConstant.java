@@ -20,4 +20,8 @@ public class CacheKeyConstant {
      * The constant GAME_SETTING.
      */
     public static final String GAME_SETTING = "game_setting";
+    /**
+     * The constant ROOM_INFO_BY_RNO.
+     */
+    public static final String ROOM_INFO_BY_RNO = "room_info_by_rno";
 }
