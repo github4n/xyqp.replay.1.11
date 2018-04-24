@@ -61,6 +61,9 @@ public class NNGameEventDealNew {
     @Resource
     private ProducerService producerService;
 
+    @Resource
+    private RedisService redisService;
+
     /**
      * 创建房间通知自己
      *
@@ -801,8 +804,6 @@ public class NNGameEventDealNew {
     }
 
 
-    @Resource
-    private RedisService redisService;
     /**
      * 获取玩家战绩数据
      *
