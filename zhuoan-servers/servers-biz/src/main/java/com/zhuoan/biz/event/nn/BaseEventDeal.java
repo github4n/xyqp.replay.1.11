@@ -288,10 +288,16 @@ public class BaseEventDeal {
     }
 
     private JSONObject getGameSetting(GameRoom gameRoom) {
-        JSONObject gameSetting = JSONObject.fromObject(redisService.queryValueByKey(CacheKeyConstant.GAME_SETTING));
-        if (gameSetting == null) {
+        JSONObject gameSetting;
+        try {
+            gameSetting = JSONObject.fromObject(redisService.queryValueByKey(CacheKeyConstant.GAME_SETTING));
+            if (gameSetting == null) {
+                gameSetting = roomBiz.getGameSetting();
+                redisService.insertKey(CacheKeyConstant.GAME_SETTING, String.valueOf(gameSetting), null);
+            }
+        } catch (Exception e) {
             gameSetting = roomBiz.getGameSetting();
-            redisService.insertKey(CacheKeyConstant.GAME_SETTING, String.valueOf(gameRoom),null);
+            redisService.insertKey(CacheKeyConstant.GAME_SETTING, String.valueOf(gameSetting), null);
         }
         return gameSetting;
     }
@@ -617,8 +623,14 @@ public class BaseEventDeal {
     }
 
     private JSONObject getGameInfoById() {
-        JSONObject gameInfoById = JSONObject.fromObject(redisService.queryValueByKey(CacheKeyConstant.GAME_INFO_BY_ID));
-        if (gameInfoById == null) {
+        JSONObject gameInfoById;
+        try {
+            gameInfoById = JSONObject.fromObject(redisService.queryValueByKey(CacheKeyConstant.GAME_INFO_BY_ID));
+            if (gameInfoById == null) {
+                gameInfoById = roomBiz.getGameInfoByID(CommonConstant.GAME_ID_SSS).getJSONObject("setting");
+                redisService.insertKey(CacheKeyConstant.GAME_INFO_BY_ID, String.valueOf(gameInfoById), null);
+            }
+        } catch (Exception e) {
             gameInfoById = roomBiz.getGameInfoByID(CommonConstant.GAME_ID_SSS).getJSONObject("setting");
             redisService.insertKey(CacheKeyConstant.GAME_INFO_BY_ID, String.valueOf(gameInfoById), null);
         }
@@ -652,8 +664,14 @@ public class BaseEventDeal {
     }
 
     private JSONArray getGameSetting(int gid, String platform) {
-        JSONArray gameSetting = JSONArray.fromObject(redisService.queryValueByKey(CacheKeyConstant.GAME_SETTING_BY_GID_AND_PLATFORM));
-        if (null == gameSetting) {
+        JSONArray gameSetting;
+        try {
+            gameSetting = JSONArray.fromObject(redisService.queryValueByKey(CacheKeyConstant.GAME_SETTING_BY_GID_AND_PLATFORM));
+            if (null == gameSetting) {
+                gameSetting = publicBiz.getRoomSetting(gid, platform);
+                redisService.insertKey(CacheKeyConstant.GAME_SETTING_BY_GID_AND_PLATFORM, String.valueOf(gameSetting), null);
+            }
+        } catch (Exception e) {
             gameSetting = publicBiz.getRoomSetting(gid, platform);
             redisService.insertKey(CacheKeyConstant.GAME_SETTING_BY_GID_AND_PLATFORM, String.valueOf(gameSetting), null);
         }
