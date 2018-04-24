@@ -46,7 +46,7 @@ public class DBJsonUtil {
 			String key = (String) iterator.next();
 			Object value = jsonObject.get(key);
 			if(key=="id"){
-			    continue;
+			    //continue;
             }
 			sqlHead+=key+",";
 			sqlTail+="?,";
@@ -64,7 +64,7 @@ public class DBJsonUtil {
 		}
 		return DBUtil.executeUpdateBySQL(sql, params);
 	}
-	
+
 	/**
 	 * 根据表名和id更新相应表,返回受影响行数
 	 * (json中必须有id,键与数据库中的字段名相同)

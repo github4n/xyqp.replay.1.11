@@ -94,6 +94,9 @@ public class CommonConstant {
      */
     public static final int CHECK_GAME_STATUS_NO = -1;
 
+    public static final int SHOW_MSG_TYPE_SMALL = 1;
+    public static final int SHOW_MSG_TYPE_BIG = 2;
+
     public static final String DATA_KEY_ROOM_NO = "room_no";
     public static final String DATA_KEY_ACCOUNT = "account";
 

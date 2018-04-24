@@ -4,7 +4,6 @@ import com.corundumstudio.socketio.SocketIOClient;
 import com.zhuoan.biz.core.nn.NiuNiuServer;
 import com.zhuoan.biz.core.nn.Packer;
 import com.zhuoan.biz.core.nn.UserPacket;
-import com.zhuoan.biz.game.biz.GameLogBiz;
 import com.zhuoan.biz.game.biz.RoomBiz;
 import com.zhuoan.biz.game.biz.UserBiz;
 import com.zhuoan.biz.model.GameRoom;
@@ -49,9 +48,6 @@ public class NNGameEventDealNew {
 
     @Resource
     private RoomBiz roomBiz;
-
-    @Resource
-    private GameLogBiz gameLogBiz;
 
     @Resource
     private Destination daoQueueDestination;
@@ -197,7 +193,12 @@ public class NNGameEventDealNew {
         String account = postData.getString(CommonConstant.DATA_KEY_ACCOUNT);
         // 元宝不足无法准备
         if (room.getPlayerMap().get(account).getScore() < room.getLeaveScore()) {
-
+            JSONObject result = new JSONObject();
+            result.put("type",CommonConstant.SHOW_MSG_TYPE_BIG);
+            result.put("msg","元宝不足");
+            CommonConstant.sendMsgEventToSingle(client,result.toString(),"tipMsgPush");
+            // 清出房间
+            exitRoom(client,data);
             return;
         }
         // 设置玩家准备状态
@@ -781,11 +782,13 @@ public class NNGameEventDealNew {
             // 存放输赢记录 QUEUETAG3
             producerService.sendMessage(daoQueueDestination, new PumpDao(DaoTypeConstant.USER_DEDUCTION, new JSONObject().element("user", userDeductionData)));
 
-            // 存za_gamelogs表 QUEUETAG4 TODO
-            long gameLogId = gameLogBiz.addOrUpdateGameLog(obtainGameLog(room, gameLogResults.toString(), room.getGameProcess().toString()));
-            JSONArray userGameLogs = obtainUserGameLog(room, gameLogId, array, gameResult.toString());
+            // 存za_gamelogs表 QUEUETAG4
+            JSONObject gameLogObj = obtainGameLog(room, gameLogResults.toString(), room.getGameProcess().toString());
+            producerService.sendMessage(daoQueueDestination, new PumpDao(DaoTypeConstant.INSERT_GAME_LOG, gameLogObj));
+            JSONArray userGameLogs = obtainUserGameLog(room, gameLogObj.getLong("id"), array, gameResult.toString());
             for (int i = 0; i < userGameLogs.size(); i++) {
-                gameLogBiz.addUserGameLog(userGameLogs.getJSONObject(i));
+                // TODO: 2018/4/24 每个用户缓存20条数据 
+                producerService.sendMessage(daoQueueDestination, new PumpDao(DaoTypeConstant.INSERT_USER_GAME_LOG, userGameLogs.getJSONObject(i)));
             }
             // QUEUETAG4 END
         }
@@ -845,6 +848,10 @@ public class NNGameEventDealNew {
      */
     public JSONObject obtainGameLog(GameRoom room, String result, String gameProcess) {
         JSONObject gamelog = new JSONObject();
+        StringBuffer id = new StringBuffer();
+        id.append(System.currentTimeMillis());
+        id.append(room.getRoomNo());
+        gamelog.put("id",Long.valueOf(id.toString()));
         gamelog.put("gid", room.getGid());
         gamelog.put("room_no", room.getRoomNo());
         gamelog.put("game_index", room.getGameIndex());

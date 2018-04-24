@@ -27,6 +27,14 @@ public class DaoTypeConstant {
      * The constant INSERT_GAME_ROOM.插入房间信息
      */
     public static final String INSERT_GAME_ROOM = "insert_game_room";
+    /**
+     * The constant INSERT_GAME_LOG.插入战绩信息
+     */
+    public static final String INSERT_GAME_LOG = "insert_game_log";
+    /**
+     * The constant INSERT_USER_GAME_LOG.插入玩家战绩战绩信息
+     */
+    public static final String INSERT_USER_GAME_LOG = "insert_user_game_log";
 
 
 }
