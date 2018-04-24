@@ -12,7 +12,6 @@ import com.zhuoan.biz.model.RoomManage;
 import com.zhuoan.biz.model.sss.Player;
 import com.zhuoan.biz.model.sss.SSSGameRoomNew;
 import com.zhuoan.constant.CommonConstant;
-import com.zhuoan.constant.NNConstant;
 import com.zhuoan.constant.SSSConstant;
 import com.zhuoan.util.Dto;
 import com.zhuoan.util.thread.ThreadPoolHelper;
@@ -39,6 +38,9 @@ public class SSSGameEventDealNew {
 
     @Resource
     private UserBiz userBiz;
+
+    @Resource
+    private GameTimerSSS gameTimerSSS;
 
     /**
      * 创建房间通知自己
@@ -124,7 +126,7 @@ public class SSSGameEventDealNew {
             ThreadPoolHelper.executorService.submit(new Runnable() {
                 @Override
                 public void run() {
-                    // TODO: 2018/4/22 定时器
+                    gameTimerSSS.gameOverTime(roomNo,SSSConstant.SSS_GAME_STATUS_READY);
                 }
             });
         }
@@ -136,15 +138,14 @@ public class SSSGameEventDealNew {
             result.put("index",room.getPlayerMap().get(account).getMyIndex());
             result.put("showTimer",CommonConstant.GLOBAL_NO);
             if (room.getNowReadyCount()>=room.getMinPlayer()) {
-                // TODO: 2018/4/23 定时器
-
+                result.put("showTimer",CommonConstant.GLOBAL_YES);
             }
             result.put("timer",room.getTimeLeft());
             CommonConstant.sendMsgEventToAll(room.getAllUUIDList(),result.toString(),"playerReadyPush_SSS");
         }
     }
 
-    public void startGame(SSSGameRoomNew room) {
+    public void startGame(final SSSGameRoomNew room) {
         // 非准备或初始阶段无法开始开始游戏
         if (room.getGameStatus()!= SSSConstant.SSS_GAME_STATUS_READY) {
             return;
@@ -175,8 +176,16 @@ public class SSSGameEventDealNew {
             // 抽水
             roomBiz.pump(array,room.getRoomNo(),room.getGid(),room.getFee(),room.getUpdateType());
         }
+        // 设置倒计时时间
+        room.setTimeLeft(SSSConstant.SSS_TIMER_GAME_EVENT);
         // 改变状态，通知玩家
         changeGameStatus(room);
+        ThreadPoolHelper.executorService.submit(new Runnable() {
+            @Override
+            public void run() {
+                gameTimerSSS.gameOverTime(room.getRoomNo(),SSSConstant.SSS_GAME_STATUS_GAME_EVENT);
+            }
+        });
     }
 
     public void gameEvent(SocketIOClient client, Object data){
@@ -288,6 +297,8 @@ public class SSSGameEventDealNew {
                                     }
                                     // TODO: 2018/4/23 操作数据库
                                     room.setGameStatus(SSSConstant.SSS_GAME_STATUS_SUMMARY);
+                                    // 初始化倒计时
+                                    room.setTimeLeft(SSSConstant.SSS_TIMER_INIT);
                                     // 改变状态，通知玩家
                                     changeGameStatus(room);
                                 }
@@ -300,6 +311,11 @@ public class SSSGameEventDealNew {
             }else {
                 JSONObject result = new JSONObject();
                 result.put("index",room.getPlayerMap().get(account).getMyIndex());
+                result.put("showTimer",CommonConstant.GLOBAL_NO);
+                if (room.getTimeLeft()>SSSConstant.SSS_TIMER_INIT) {
+                    result.put("showTimer",CommonConstant.GLOBAL_YES);
+                }
+                result.put("timer",room.getTimeLeft());
                 CommonConstant.sendMsgEventToAll(room.getAllUUIDList(),result.toString(),"gameActionPush_SSS");
             }
         }
@@ -363,8 +379,8 @@ public class SSSGameEventDealNew {
                 }
                 result.put("timer",room.getTimeLeft());
                 CommonConstant.sendMsgEventToAll(allUUIDList,result.toString(),"exitRoomPush_SSS");
-                // 房间内所有玩家都已经完成准备且人数大于两人通知开始游戏
-                if (room.isAllReady()&&room.getPlayerMap().size()>=room.getReadyCount()) {
+                // 房间内所有玩家都已经完成准备且人数大于最低开始人数通知开始游戏
+                if (room.isAllReady()&&room.getPlayerMap().size()>=room.getMinPlayer()) {
                     startGame(room);
                 }
                 // 所有人都退出清除房间数据
@@ -434,10 +450,11 @@ public class SSSGameEventDealNew {
                 obj.put("zhuang",-1);
             }
             obj.put("game_index",room.getGameIndex());
-            obj.put("showTimer",CommonConstant.GLOBAL_YES);
-            if (room.getTimeLeft()==NNConstant.NN_TIMER_INIT) {
-                obj.put("showTimer",CommonConstant.GLOBAL_NO);
+            obj.put("showTimer",CommonConstant.GLOBAL_NO);
+            if (room.getTimeLeft()>SSSConstant.SSS_TIMER_INIT) {
+                obj.put("showTimer",CommonConstant.GLOBAL_YES);
             }
+            obj.put("timer",room.getTimeLeft());
             // TODO: 2018/4/22 马牌
             obj.put("mapai",0);
             obj.put("isma",0);
@@ -500,6 +517,9 @@ public class SSSGameEventDealNew {
             }
             roomData.put("game_index",room.getGameIndex());
             roomData.put("showTimer",CommonConstant.GLOBAL_NO);
+            if (room.getTimeLeft()>SSSConstant.SSS_TIMER_INIT) {
+                roomData.put("showTimer",CommonConstant.GLOBAL_YES);
+            }
             roomData.put("timer",room.getTimeLeft());
             roomData.put("myIndex",room.getPlayerMap().get(account).getMyIndex());
             roomData.put("users",room.getAllPlayer());
@@ -593,8 +613,6 @@ public class SSSGameEventDealNew {
                 if (gameList.size()>=SSSConstant.SSS_MIN_SWAT_COUNT&&allWinList.size()==gameList.size()-1) {
                     room.setSwat(1);
                     room.getUserPacketMap().get(account).setSwat(CommonConstant.GLOBAL_YES);
-                } else {
-                    room.setSwat(0);
                 }
                 // 设置当局输赢分数(不计算全垒打)
                 room.getUserPacketMap().get(account).setScore(sumScoreAll*room.getScore());
