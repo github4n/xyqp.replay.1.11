@@ -1082,7 +1082,7 @@ public class NNGameEventDealNew {
         room.getPlayerMap().get(account).setUuid(client.getSessionId());
         client.set(CommonConstant.CLIENT_TAG_ACCOUNT, account);
         client.set(CommonConstant.CLIENT_TAG_ROOM_NO, roomNo);
-        // 获取用户信息  缓存
+        // 获取用户信息
         JSONObject userInfo = userBiz.getUserByAccount(account);
         if (!Dto.isObjNull(userInfo)) {
             client.set(CommonConstant.CLIENT_TAG_USER_INFO, userInfo);

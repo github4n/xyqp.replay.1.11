@@ -117,6 +117,7 @@ public class SSSGameEventDealNew {
         // 元宝不足无法准备
         if (room.getRoomType()==CommonConstant.ROOM_TYPE_YB||room.getRoomType()==CommonConstant.ROOM_TYPE_JB){
             if (room.getPlayerMap().get(account).getScore()<room.getLeaveScore()) {
+                exitRoom(client,data);
                 return;
             }
         }
