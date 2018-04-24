@@ -12,9 +12,11 @@ import com.zhuoan.biz.model.Playerinfo;
 import com.zhuoan.biz.model.RoomManage;
 import com.zhuoan.biz.model.dao.PumpDao;
 import com.zhuoan.biz.model.nn.NNGameRoomNew;
+import com.zhuoan.constant.CacheKeyConstant;
 import com.zhuoan.constant.CommonConstant;
 import com.zhuoan.constant.DaoTypeConstant;
 import com.zhuoan.constant.NNConstant;
+import com.zhuoan.service.cache.RedisService;
 import com.zhuoan.service.jms.ProducerService;
 import com.zhuoan.util.Dto;
 import com.zhuoan.util.thread.ThreadPoolHelper;
@@ -54,6 +56,9 @@ public class NNGameEventDealNew {
 
     @Resource
     private ProducerService producerService;
+
+    @Resource
+    private RedisService redisService;
 
     /**
      * 创建房间通知自己
@@ -801,6 +806,7 @@ public class NNGameEventDealNew {
         return jsonObject;
     }
 
+
     /**
      * 获取玩家战绩数据
      *
@@ -819,8 +825,9 @@ public class NNGameEventDealNew {
             if (room.getId() > 0) {
                 userGameLog.put("room_id", room.getId());
             } else {
-                // 缓存
-                JSONObject roomInfo = roomBiz.getRoomInfoByRno(room.getRoomNo());
+                /* 房间信息，插入缓存 */
+                JSONObject roomInfo = getRoomInfo(room);
+
                 if (!Dto.isObjNull(roomInfo)) {
                     userGameLog.put("room_id", roomInfo.getLong("id"));
                 } else {
@@ -837,6 +844,15 @@ public class NNGameEventDealNew {
             userGameLogs.add(userGameLog);
         }
         return userGameLogs;
+    }
+
+    private JSONObject getRoomInfo(GameRoom room) {
+        JSONObject roomInfo =JSONObject.fromObject(redisService.queryValueByKey(CacheKeyConstant.ROOM_INFO_BY_RNO));
+        if (roomInfo == null) {
+            roomInfo = roomBiz.getRoomInfoByRno(room.getRoomNo());
+            redisService.insertKey(CacheKeyConstant.ROOM_INFO_BY_RNO, String.valueOf(roomInfo),null);
+        }
+        return roomInfo;
     }
 
     /**
