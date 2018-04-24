@@ -472,16 +472,7 @@ public class GameDaoImpl implements GameDao {
     @Override
     public int addOrUpdateGameLog(JSONObject gamelog) {
 
-        //int back = DBJsonUtil.saveOrUpdate(gamelog, "za_gamelogs");
         int gameLogId = 0;
-        /*if(back>0){
-            JSONObject result = DBUtil.getObjectBySQL("select id from za_gamelogs where gid=? and room_id=? and room_no=? and game_index=?",
-                new Object[]{gamelog.get("gid"), gamelog.get("room_id"), gamelog.get("room_no"), gamelog.get("game_index")});
-
-            if(result!=null){
-                gameLogId = result.getInt("id");
-            }
-        }*/
         DBJsonUtil.add(gamelog,"za_gamelogs");
         return gameLogId;
     }
@@ -514,6 +505,13 @@ public class GameDaoImpl implements GameDao {
     public int addUserGameLog(JSONObject usergamelog) {
 
         return DBJsonUtil.add(usergamelog, "za_usergamelogs");
+    }
+
+    @Override
+    public JSONObject getSysUser(String adminCode, String adminPass, String memo) {
+        String sql = "select id from sys_admin where adminCode=? and adminPass=? and memo=?";
+        JSONObject sysUserInfo = DBUtil.getObjectBySQL(sql, new Object[]{adminCode,adminPass,memo});
+        return sysUserInfo;
     }
 
     /**

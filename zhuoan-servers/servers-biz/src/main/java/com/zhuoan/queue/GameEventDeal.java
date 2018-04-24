@@ -73,7 +73,7 @@ public class GameEventDeal {
                         baseEventDeal.getGameSetting(client, data);
                         break;
                     case 2:
-                        roomManage.getAllRoomList(client, data);
+                        baseEventDeal.getAllRoomList(client, data);
                         break;
                     case 3:
                         baseEventDeal.checkUser(client, data);
@@ -83,6 +83,9 @@ public class GameEventDeal {
                         break;
                     case 5:
                         roomManage.getRoomCardPayInfo(client, data);
+                        break;
+                    case 6:
+                        baseEventDeal.dissolveRoom(client, data);
                         break;
                     default:
                         break;

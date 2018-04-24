@@ -230,4 +230,13 @@ public interface GameDao {
      */
     public JSONArray getRoomSetting(int gid, String platform);
 
+    /**
+     * 获取管理员用户信息
+     * @param adminCode
+     * @param adminPass
+     * @param memo
+     * @return
+     */
+    public JSONObject getSysUser(String adminCode, String adminPass, String memo);
+
 }

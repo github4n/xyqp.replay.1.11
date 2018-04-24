@@ -109,7 +109,7 @@ public class CommonConstant {
      * @param gameStatus
      * @return
      */
-    public static boolean checkEvent(JSONObject postData, int gameStatus){
+    public static boolean checkEvent(JSONObject postData, int gameStatus, SocketIOClient client){
         if (!postData.containsKey(DATA_KEY_ROOM_NO)||!postData.containsKey(DATA_KEY_ACCOUNT)) {
             return false;
         }
@@ -125,6 +125,12 @@ public class CommonConstant {
         // 玩家不在房间内
         if (!gameRoom.getPlayerMap().containsKey(account)||gameRoom.getPlayerMap().get(account)==null) {
             return false;
+        }
+        // client对象不为空验证是否为该玩家发的消息
+        if (client!=null) {
+            if (!client.getSessionId().equals(gameRoom.getPlayerMap().get(account).getUuid())) {
+                return false;
+            }
         }
         // 当前非该游戏阶段
         if (gameStatus!=CHECK_GAME_STATUS_NO&&gameRoom.getGameStatus()!=gameStatus) {

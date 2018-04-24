@@ -133,4 +133,9 @@ public class UserBizImpl implements UserBiz {
 
         return gameDao.getGongHui(id);
     }
+
+    @Override
+    public JSONObject getSysUser(String adminCode, String adminPass, String memo) {
+        return gameDao.getSysUser(adminCode, adminPass, memo);
+    }
 }

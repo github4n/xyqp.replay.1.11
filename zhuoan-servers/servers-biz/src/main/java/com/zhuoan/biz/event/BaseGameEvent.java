@@ -135,6 +135,16 @@ public class BaseGameEvent {
             }
         });
 
+        /**
+         *   解散房间
+         */
+        server.addEventListener("dissolveRoom", Object.class, new DataListener<Object>() {
+            @Override
+            public void onData(SocketIOClient client, Object object, AckRequest ackSender) {
+                producerService.sendMessage(baseQueueDestination, new Messages(client, object, 0, 6));
+            }
+        });
+
     }
 
 

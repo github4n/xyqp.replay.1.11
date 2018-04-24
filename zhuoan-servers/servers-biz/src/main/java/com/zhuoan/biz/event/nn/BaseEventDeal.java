@@ -288,11 +288,11 @@ public class BaseEventDeal {
     }
 
     private JSONObject getGameSetting(GameRoom gameRoom) {
-        JSONObject gameSetting = JSONObject.fromObject(redisService.queryValueByKey(CacheKeyConstant.GAME_SETTING));
-        if (gameSetting == null) {
-            gameSetting = roomBiz.getGameSetting();
+//        JSONObject gameSetting = JSONObject.fromObject(redisService.queryValueByKey(CacheKeyConstant.GAME_SETTING));
+//        if (gameSetting == null) {
+            JSONObject gameSetting = roomBiz.getGameSetting();
             redisService.insertKey(CacheKeyConstant.GAME_SETTING, String.valueOf(gameRoom),null);
-        }
+//        }
         return gameSetting;
     }
 
@@ -618,10 +618,10 @@ public class BaseEventDeal {
 
     private JSONObject getGameInfoById() {
         JSONObject gameInfoById = JSONObject.fromObject(redisService.queryValueByKey(CacheKeyConstant.GAME_INFO_BY_ID));
-        if (gameInfoById == null) {
+//        if (gameInfoById == null) {
             gameInfoById = roomBiz.getGameInfoByID(CommonConstant.GAME_ID_SSS).getJSONObject("setting");
             redisService.insertKey(CacheKeyConstant.GAME_INFO_BY_ID, String.valueOf(gameInfoById), null);
-        }
+//        }
         return gameInfoById;
     }
 
@@ -652,11 +652,11 @@ public class BaseEventDeal {
     }
 
     private JSONArray getGameSetting(int gid, String platform) {
-        JSONArray gameSetting = JSONArray.fromObject(redisService.queryValueByKey(CacheKeyConstant.GAME_SETTING_BY_GID_AND_PLATFORM));
-        if (null == gameSetting) {
-            gameSetting = publicBiz.getRoomSetting(gid, platform);
+//        JSONArray gameSetting = JSONArray.fromObject(redisService.queryValueByKey(CacheKeyConstant.GAME_SETTING_BY_GID_AND_PLATFORM));
+//        if (null == gameSetting) {
+            JSONArray gameSetting = publicBiz.getRoomSetting(gid, platform);
             redisService.insertKey(CacheKeyConstant.GAME_SETTING_BY_GID_AND_PLATFORM, String.valueOf(gameSetting), null);
-        }
+//        }
         return gameSetting;
     }
 
@@ -683,6 +683,81 @@ public class BaseEventDeal {
             JSONObject result = new JSONObject();
             result.put(CommonConstant.RESULT_KEY_CODE, CommonConstant.GLOBAL_YES);
             CommonConstant.sendMsgEventToSingle(client, result.toString(), "checkUserPush");
+        }
+    }
+
+    /**
+     * 获取当前房间列表
+     * @param client
+     * @param data
+     */
+    public void getAllRoomList(SocketIOClient client, Object data){
+        JSONObject postData = JSONObject.fromObject(data);
+        int gameId = postData.getInt("gid");
+        JSONObject result = new JSONObject();
+        JSONArray allRoom = new JSONArray();
+        for (String roomNo : RoomManage.gameRoomMap.keySet()) {
+            if (RoomManage.gameRoomMap.get(roomNo).getGid()==gameId&&RoomManage.gameRoomMap.get(roomNo).isOpen()) {
+                GameRoom gameRoom = RoomManage.gameRoomMap.get(roomNo);
+                JSONObject obj = new JSONObject();
+                obj.put("room_no", gameRoom.getRoomNo());
+                obj.put("gid", gameId);
+                obj.put("base_info", gameRoom.getRoomInfo());
+                obj.put("fytype", gameRoom.getWfType());
+                obj.put("iszs", 0);
+                int playerCount = 0;
+                for (long id : gameRoom.getUserIdList()) {
+                    if (id>0) {
+                        playerCount++;
+                    }
+                }
+                obj.put("renshu", playerCount);
+                allRoom.add(obj);
+            }
+        }
+        result.element("gid", gameId);
+        result.element("code", 1);
+        result.element("array", allRoom);
+        result.element("sType", postData.get("sType"));
+        client.sendEvent("getAllRoomListPush", result);
+    }
+
+    /**
+     * 解散房间
+     * @param client
+     * @param data
+     */
+    public void dissolveRoom(SocketIOClient client, Object data){
+        JSONObject postData = JSONObject.fromObject(data);
+        if (postData.containsKey("adminCode")&&postData.containsKey("adminPass")&&
+            postData.containsKey("memo")&&postData.containsKey("room_no")) {
+            // 房间号
+            String roomNo = postData.getString("room_no");
+            // 房间不存在
+            if (!RoomManage.gameRoomMap.containsKey(roomNo)||RoomManage.gameRoomMap.get(roomNo)==null) {
+                return ;
+            }
+            // 账号
+            String adminCode = postData.getString("adminCode");
+            // 密码
+            String adminPass = postData.getString("adminCode");
+            // 验证标识
+            String memo = postData.getString("adminCode");
+            if (!Dto.isObjNull(userBiz.getSysUser(adminCode, adminPass, memo))) {
+                GameRoom room = RoomManage.gameRoomMap.get(roomNo);
+                String eventName = "";
+                switch (room.getGid()) {
+                    case CommonConstant.GAME_ID_NN:
+                        eventName = "exitRoomPush_NN";
+                        break;
+                    case CommonConstant.GAME_ID_SSS:
+                        eventName = "exitRoomPush_SSS";
+                        break;
+                    default:
+                        break;
+                }
+                RoomManage.gameRoomMap.remove(roomNo);
+            }
         }
     }
 }

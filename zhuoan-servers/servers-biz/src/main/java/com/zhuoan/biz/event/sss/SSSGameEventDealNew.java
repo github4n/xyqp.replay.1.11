@@ -110,9 +110,9 @@ public class SSSGameEventDealNew {
     public void gameReady(SocketIOClient client, Object data){
         JSONObject postData = JSONObject.fromObject(data);
         // 不满足准备条件直接忽略
-        if (!CommonConstant.checkEvent(postData,SSSConstant.SSS_GAME_STATUS_INIT)&&
-            !CommonConstant.checkEvent(postData, SSSConstant.SSS_GAME_STATUS_READY)&&
-            !CommonConstant.checkEvent(postData,SSSConstant.SSS_GAME_STATUS_SUMMARY)) {
+        if (!CommonConstant.checkEvent(postData,SSSConstant.SSS_GAME_STATUS_INIT, client)&&
+            !CommonConstant.checkEvent(postData, SSSConstant.SSS_GAME_STATUS_READY, client)&&
+            !CommonConstant.checkEvent(postData,SSSConstant.SSS_GAME_STATUS_SUMMARY, client)) {
             return;
         }
         // 房间号
@@ -203,7 +203,7 @@ public class SSSGameEventDealNew {
 
     public void gameEvent(SocketIOClient client, Object data){
         JSONObject postData = JSONObject.fromObject(data);
-        if (!CommonConstant.checkEvent(postData,SSSConstant.SSS_GAME_STATUS_GAME_EVENT)) {
+        if (!CommonConstant.checkEvent(postData,SSSConstant.SSS_GAME_STATUS_GAME_EVENT, client)) {
             return;
         }
         String roomNo = postData.getString(CommonConstant.DATA_KEY_ROOM_NO);
@@ -417,7 +417,7 @@ public class SSSGameEventDealNew {
      */
     public void exitRoom(SocketIOClient client, Object data){
         JSONObject postData = JSONObject.fromObject(data);
-        if (!CommonConstant.checkEvent(postData,CommonConstant.CHECK_GAME_STATUS_NO)) {
+        if (!CommonConstant.checkEvent(postData,CommonConstant.CHECK_GAME_STATUS_NO, client)) {
             return;
         }
         String roomNo = postData.getString(CommonConstant.DATA_KEY_ROOM_NO);
@@ -543,13 +543,14 @@ public class SSSGameEventDealNew {
             if (room.getTimeLeft()>SSSConstant.SSS_TIMER_INIT) {
                 obj.put("showTimer",CommonConstant.GLOBAL_YES);
             }
+            if (room.getGameStatus()==SSSConstant.SSS_GAME_STATUS_COMPARE) {
+                obj.put("bipaiTimer",0);
+                obj.put("showTimer",CommonConstant.GLOBAL_NO);
+            }
             obj.put("timer",room.getTimeLeft());
             // TODO: 2018/4/22 马牌
             obj.put("mapai",0);
             obj.put("isma",0);
-            if (room.getGameStatus()==SSSConstant.SSS_GAME_STATUS_COMPARE) {
-                obj.put("bipaiTimer",0);
-            }
             obj.put("myPai",room.getUserPacketMap().get(account).getMyPai());
             obj.put("myPaiType",room.getUserPacketMap().get(account).getSpecial());
             obj.put("gameData",room.obtainGameData());

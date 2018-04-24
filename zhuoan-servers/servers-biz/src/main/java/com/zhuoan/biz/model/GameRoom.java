@@ -522,6 +522,8 @@ public class GameRoom {
     }
 
 
+    //==================================组织数据开始======================================
+
     public JSONObject getJsonObject(JSONArray array) {
         JSONObject objectDao = new JSONObject();
         objectDao.put("array",array);
@@ -589,6 +591,7 @@ public class GameRoom {
         gamelog.put("roomtype", getRoomType());
         return gamelog;
     }
+    //==================================组织数据结束======================================
 
     public ReentrantLock getM_locker() {
         return m_locker;

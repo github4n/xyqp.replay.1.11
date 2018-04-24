@@ -69,4 +69,13 @@ public interface UserBiz {
      */
     public JSONObject getGongHui(long id);
 
+    /**
+     * 获取系统管理员信息
+     * @param adminCode
+     * @param adminPass
+     * @param memo
+     * @return
+     */
+    public JSONObject getSysUser(String adminCode, String adminPass, String memo);
+
 }

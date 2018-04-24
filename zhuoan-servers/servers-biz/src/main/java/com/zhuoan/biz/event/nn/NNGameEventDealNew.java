@@ -184,9 +184,9 @@ public class NNGameEventDealNew {
     public void gameReady(SocketIOClient client, Object data) {
         JSONObject postData = JSONObject.fromObject(data);
         // 不满足准备条件直接忽略
-        if (!CommonConstant.checkEvent(postData, NNConstant.NN_GAME_STATUS_INIT) &&
-            !CommonConstant.checkEvent(postData, NNConstant.NN_GAME_STATUS_READY) &&
-            !CommonConstant.checkEvent(postData, NNConstant.NN_GAME_STATUS_JS)) {
+        if (!CommonConstant.checkEvent(postData, NNConstant.NN_GAME_STATUS_INIT, client) &&
+            !CommonConstant.checkEvent(postData, NNConstant.NN_GAME_STATUS_READY, client) &&
+            !CommonConstant.checkEvent(postData, NNConstant.NN_GAME_STATUS_JS, client)) {
             return;
         }
         // 房间号
@@ -340,7 +340,7 @@ public class NNGameEventDealNew {
     public void gameQiangZhuang(SocketIOClient client, Object data) {
         JSONObject postData = JSONObject.fromObject(data);
         // 非抢庄阶段收到抢庄消息不作处理
-        if (!CommonConstant.checkEvent(postData, NNConstant.NN_GAME_STATUS_QZ)) {
+        if (!CommonConstant.checkEvent(postData, NNConstant.NN_GAME_STATUS_QZ, client)) {
             return;
         }
         String roomNo = postData.getString(CommonConstant.DATA_KEY_ROOM_NO);
@@ -483,11 +483,14 @@ public class NNGameEventDealNew {
         if (sjCount == 0) {
             sjCount = allList.size();
         }
-        for (int i = 0; i < sjCount; i++) {
-            try {
-                Thread.sleep(800);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
+        // 多人抢庄才进行休眠
+        if (sjCount>1) {
+            for (int i = 0; i < sjCount; i++) {
+                try {
+                    Thread.sleep(800);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
             }
         }
         // 设置游戏状态
@@ -512,7 +515,7 @@ public class NNGameEventDealNew {
     public void gameXiaZhu(SocketIOClient client, Object data) {
         // 非下注阶段收到下注消息不作处理
         JSONObject postData = JSONObject.fromObject(data);
-        if (!CommonConstant.checkEvent(postData, NNConstant.NN_GAME_STATUS_XZ)) {
+        if (!CommonConstant.checkEvent(postData, NNConstant.NN_GAME_STATUS_XZ, client)) {
             return;
         }
         String roomNo = postData.getString(CommonConstant.DATA_KEY_ROOM_NO);
@@ -587,7 +590,7 @@ public class NNGameEventDealNew {
     public void showPai(SocketIOClient client, Object data) {
         JSONObject postData = JSONObject.fromObject(data);
         // 非亮牌阶段收到亮牌消息不作处理
-        if (!CommonConstant.checkEvent(postData, NNConstant.NN_GAME_STATUS_LP)) {
+        if (!CommonConstant.checkEvent(postData, NNConstant.NN_GAME_STATUS_LP, client)) {
             return;
         }
         String roomNo = postData.getString(CommonConstant.DATA_KEY_ROOM_NO);
@@ -810,7 +813,7 @@ public class NNGameEventDealNew {
      */
     public void exitRoom(SocketIOClient client, Object data) {
         JSONObject postData = JSONObject.fromObject(data);
-        if (!CommonConstant.checkEvent(postData, CommonConstant.CHECK_GAME_STATUS_NO)) {
+        if (!CommonConstant.checkEvent(postData, CommonConstant.CHECK_GAME_STATUS_NO, client)) {
             return;
         }
         String roomNo = postData.getString(CommonConstant.DATA_KEY_ROOM_NO);
@@ -928,7 +931,7 @@ public class NNGameEventDealNew {
      */
     public void closeRoom(SocketIOClient client, Object data) {
         JSONObject postData = JSONObject.fromObject(data);
-        if (!CommonConstant.checkEvent(postData, CommonConstant.CHECK_GAME_STATUS_NO)) {
+        if (!CommonConstant.checkEvent(postData, CommonConstant.CHECK_GAME_STATUS_NO, client)) {
             return;
         }
         String roomNo = postData.getString(CommonConstant.DATA_KEY_ROOM_NO);
