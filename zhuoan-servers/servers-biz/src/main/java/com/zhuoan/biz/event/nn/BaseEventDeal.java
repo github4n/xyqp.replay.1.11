@@ -98,7 +98,6 @@ public class BaseEventDeal {
         }
         // 设置客户端标识
         client.set(CommonConstant.CLIENT_TAG_ACCOUNT, account);
-        client.set(CommonConstant.CLIENT_TAG_USER_INFO, userInfo);
         // 创建房间
         createRoomBase(client, JSONObject.fromObject(data), userInfo);
     }
@@ -290,8 +289,10 @@ public class BaseEventDeal {
     private JSONObject getGameSetting(GameRoom gameRoom) {
         JSONObject gameSetting;
         try {
-            gameSetting = JSONObject.fromObject(redisService.queryValueByKey(CacheKeyConstant.GAME_SETTING));
-            if (gameSetting == null) {
+            Object object = redisService.queryValueByKey(CacheKeyConstant.GAME_SETTING);
+            if (object != null) {
+                gameSetting = JSONObject.fromObject(redisService.queryValueByKey(CacheKeyConstant.GAME_SETTING));
+            }else {
                 gameSetting = roomBiz.getGameSetting();
                 redisService.insertKey(CacheKeyConstant.GAME_SETTING, String.valueOf(gameSetting), null);
             }
@@ -340,7 +341,6 @@ public class BaseEventDeal {
         }
         // 设置客户端标识
         client.set(CommonConstant.CLIENT_TAG_ACCOUNT, account);
-        client.set(CommonConstant.CLIENT_TAG_USER_INFO, userInfo);
         client.set(CommonConstant.CLIENT_TAG_ROOM_NO, roomNo);
 
         joinRoomBase(client, postData, userInfo);
@@ -625,8 +625,11 @@ public class BaseEventDeal {
     private JSONObject getGameInfoById() {
         JSONObject gameInfoById;
         try {
-            gameInfoById = JSONObject.fromObject(redisService.queryValueByKey(CacheKeyConstant.GAME_INFO_BY_ID));
-            if (gameInfoById == null) {
+            Object object = redisService.queryValueByKey(CacheKeyConstant.GAME_INFO_BY_ID);
+            if (object!=null) {
+                gameInfoById = JSONObject.fromObject(redisService.queryValueByKey(CacheKeyConstant.GAME_INFO_BY_ID));
+
+            }else {
                 gameInfoById = roomBiz.getGameInfoByID(CommonConstant.GAME_ID_SSS).getJSONObject("setting");
                 redisService.insertKey(CacheKeyConstant.GAME_INFO_BY_ID, String.valueOf(gameInfoById), null);
             }
@@ -664,16 +667,31 @@ public class BaseEventDeal {
     }
 
     private JSONArray getGameSetting(int gid, String platform) {
-        JSONArray gameSetting;
-        try {
-            gameSetting = JSONArray.fromObject(redisService.queryValueByKey(CacheKeyConstant.GAME_SETTING_BY_GID_AND_PLATFORM));
-            if (null == gameSetting) {
+        String key = "";
+        switch (gid) {
+            case CommonConstant.GAME_ID_NN:
+                key = CacheKeyConstant.GAME_SETTING_NN;
+                break;
+            case CommonConstant.GAME_ID_SSS:
+                key = CacheKeyConstant.GAME_SETTING_SSS;
+                break;
+            default:
+                break;
+        }
+        JSONArray gameSetting = new JSONArray();
+        if (!key.equals("")) {
+            try {
+                Object object = redisService.queryValueByKey(key);
+                if (object!=null) {
+                    gameSetting = JSONArray.fromObject(object);
+                }else {
+                    gameSetting = publicBiz.getRoomSetting(gid, platform);
+                    redisService.insertKey(key, String.valueOf(gameSetting), null);
+                }
+            } catch (Exception e) {
                 gameSetting = publicBiz.getRoomSetting(gid, platform);
-                redisService.insertKey(CacheKeyConstant.GAME_SETTING_BY_GID_AND_PLATFORM, String.valueOf(gameSetting), null);
+                redisService.insertKey(key, String.valueOf(gameSetting), null);
             }
-        } catch (Exception e) {
-            gameSetting = publicBiz.getRoomSetting(gid, platform);
-            redisService.insertKey(CacheKeyConstant.GAME_SETTING_BY_GID_AND_PLATFORM, String.valueOf(gameSetting), null);
         }
         return gameSetting;
     }

@@ -33,10 +33,6 @@ public class CommonConstant {
      * 客户端标识-房间号
      */
     public static final String CLIENT_TAG_ROOM_NO = "roomNo";
-    /**
-     * 客户端标识-用户信息
-     */
-    public static final String CLIENT_TAG_USER_INFO = "userInfo";
 
     /**
      * 房间类型-房卡

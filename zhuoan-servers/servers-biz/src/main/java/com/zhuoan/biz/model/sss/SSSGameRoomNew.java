@@ -52,13 +52,19 @@ public class SSSGameRoomNew extends GameRoom{
      */
     private List<String> pai;
     /**
-     * 打枪
-     */
-    private Map<String,String> dqMap = new HashMap<String, String>();
-    /**
      * 比牌时间
      */
     private int compareTimer = 0;
+
+    private JSONArray dqArray = new JSONArray();
+
+    public JSONArray getDqArray() {
+        return dqArray;
+    }
+
+    public void setDqArray(JSONArray dqArray) {
+        this.dqArray = dqArray;
+    }
 
     public int getCompareTimer() {
         return compareTimer;
@@ -66,14 +72,6 @@ public class SSSGameRoomNew extends GameRoom{
 
     public void setCompareTimer(int compareTimer) {
         this.compareTimer = compareTimer;
-    }
-
-    public Map<String, String> getDqMap() {
-        return dqMap;
-    }
-
-    public void setDqMap(Map<String, String> dqMap) {
-        this.dqMap = dqMap;
     }
 
     public int getSwat() {
@@ -179,38 +177,9 @@ public class SSSGameRoomNew extends GameRoom{
     public JSONObject obtainGameData(){
         JSONObject gameData = new JSONObject();
         gameData.put("showIndex",obtainShowIndex());
-        gameData.put("dq",obtainDqResult());
+        gameData.put("dq",dqArray);
         gameData.put("data",obtainData());
         return gameData;
-    }
-
-    /**
-     * 获取打枪结果(按输赢分数排序)
-     * @return
-     */
-    public JSONArray obtainDqResult(){
-        JSONArray dqResult = new JSONArray();
-        if (getGameStatus()>SSSConstant.SSS_GAME_STATUS_GAME_EVENT) {
-            Set<Map.Entry<String, String>> entry = getDqMap().entrySet();
-            LinkedList<Map.Entry<String, String>> list = new LinkedList<Map.Entry<String, String>>(entry);
-            Collections.sort(list, new Comparator<Entry<String,String>>() {
-                @Override
-                public int compare(Entry<String, String> o1,
-                                   Entry<String, String> o2) {
-                    if (getUserPacketMap().get(o1.getKey()).getScore()-getUserPacketMap().get(o1.getKey()).getScore()>0) {
-                        return 1;
-                    }
-                    return 0;
-                }
-            });
-            for (Entry<String, String> e : list) {
-                JSONArray array = new JSONArray();
-                array.add(getPlayerMap().get(e.getKey()).getMyIndex());
-                array.add(getPlayerMap().get(e.getValue()).getMyIndex());
-                dqResult.add(array);
-            }
-        }
-        return dqResult;
     }
 
     /**
@@ -305,7 +274,7 @@ public class SSSGameRoomNew extends GameRoom{
         // 清空比牌时间
         compareTimer = 0;
         // 清空打枪记录
-        getDqMap().clear();
+        getDqArray().clear();
         // 全垒打清零
         swat = 0;
         // 初始化用户信息

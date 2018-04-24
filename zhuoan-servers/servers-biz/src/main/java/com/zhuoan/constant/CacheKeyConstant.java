@@ -11,7 +11,11 @@ public class CacheKeyConstant {
     /**
      * The constant GAME_SETTING_BY_GID_AND_PLATFORM.房间设置
      */
-    public static final String GAME_SETTING_BY_GID_AND_PLATFORM = "game_setting_by_gId_and_platform";
+    public static final String GAME_SETTING_NN = "game_setting_nn";
+    /**
+     * The constant GAME_SETTING_BY_GID_AND_PLATFORM.房间设置
+     */
+    public static final String GAME_SETTING_SSS = "game_setting_sss";
     /**
      * The constant GAME_INFO_BY_ID.
      */

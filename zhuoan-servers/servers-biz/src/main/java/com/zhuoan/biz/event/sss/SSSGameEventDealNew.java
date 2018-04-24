@@ -171,6 +171,17 @@ public class SSSGameEventDealNew {
         room.faPai();
         // 设置房间状态(配牌)
         room.setGameStatus(SSSConstant.SSS_GAME_STATUS_GAME_EVENT);
+        // 设置玩家手牌
+        JSONArray gameProcessFP = new JSONArray();
+        for (String uuid : room.getUserPacketMap().keySet()) {
+            // 存放游戏记录
+            JSONObject userPai = new JSONObject();
+            userPai.put("account", uuid);
+            userPai.put("name", room.getPlayerMap().get(uuid).getName());
+            userPai.put("pai", room.getUserPacketMap().get(uuid).getMyPai());
+            gameProcessFP.add(userPai);
+        }
+        room.getGameProcess().put("faPai", gameProcessFP);
         if (room.getFee()>0) {
             JSONArray array = new JSONArray();
             for (String account : room.getPlayerMap().keySet()) {
@@ -292,7 +303,7 @@ public class SSSGameEventDealNew {
                     public void run() {
                         int  compareTime = 26;
                         compareTime += room.obtainNotSpecialCount()*3*7;
-                        compareTime += room.getDqMap().size()*11;
+                        compareTime += room.getDqArray().size()*11;
                         compareTime += room.getSwat()*38;
                         room.setCompareTimer(compareTime);
                         for (int i = 1; i <= compareTime; i++) {
@@ -379,6 +390,7 @@ public class SSSGameEventDealNew {
                         gameResult.add(userResult);
                     }
                 }
+                room.getGameProcess().put("JieSuan", gameProcessJS);
                 if (room.getId()==0) {
                     JSONObject roomInfo = roomBiz.getRoomInfoByRno(room.getRoomNo());
                     if (!Dto.isObjNull(roomInfo)) {
@@ -461,7 +473,7 @@ public class SSSGameEventDealNew {
                     // 重置房间倒计时
                     room.setTimeLeft(SSSConstant.SSS_TIMER_INIT);
                 }
-                if (room.getTimeLeft()>0) {
+                if (room.getTimeLeft()>0&&room.getGameStatus()!=SSSConstant.SSS_GAME_STATUS_COMPARE) {
                     result.put("showTimer",CommonConstant.GLOBAL_YES);
                 }else {
                     result.put("showTimer",CommonConstant.GLOBAL_NO);
@@ -516,11 +528,6 @@ public class SSSGameEventDealNew {
         room.getPlayerMap().get(account).setUuid(client.getSessionId());
         client.set(CommonConstant.CLIENT_TAG_ACCOUNT,account);
         client.set(CommonConstant.CLIENT_TAG_ROOM_NO,roomNo);
-        // 获取用户信息
-        JSONObject userInfo = userBiz.getUserByAccount(account);
-        if (!Dto.isObjNull(userInfo)) {
-            client.set(CommonConstant.CLIENT_TAG_USER_INFO,userInfo);
-        }
         // 组织数据，通知玩家
         result.put("type",1);
         result.put("data",obtainRoomData(roomNo,account));
@@ -602,13 +609,14 @@ public class SSSGameEventDealNew {
             if (room.getRoomType()!=CommonConstant.ROOM_TYPE_YB&&room.getPlayerMap().get(room.getBanker())!=null) {
                 roomData.put("zhuang",room.getPlayerMap().get(room.getBanker()).getMyIndex());
             }
-            if (room.getGameStatus()==SSSConstant.SSS_GAME_STATUS_COMPARE) {
-                roomData.put("bipaiTimer",room.getCompareTimer()*100);
-            }
             roomData.put("game_index",room.getGameIndex());
             roomData.put("showTimer",CommonConstant.GLOBAL_NO);
             if (room.getTimeLeft()>SSSConstant.SSS_TIMER_INIT) {
                 roomData.put("showTimer",CommonConstant.GLOBAL_YES);
+            }
+            if (room.getGameStatus()==SSSConstant.SSS_GAME_STATUS_COMPARE) {
+                roomData.put("showTimer",CommonConstant.GLOBAL_NO);
+                roomData.put("bipaiTimer",room.getCompareTimer()*100);
             }
             roomData.put("timer",room.getTimeLeft());
             roomData.put("myIndex",room.getPlayerMap().get(account).getMyIndex());
@@ -688,12 +696,22 @@ public class SSSGameEventDealNew {
                             if (winTime==3) {
                                 sumScoreSingle *= 2;
                                 allWinList.add(room.getPlayerMap().get(other).getMyIndex());
-                                room.getDqMap().put(account,other);
+                                JSONArray dq = new JSONArray();
+                                dq.add(room.getPlayerMap().get(account).getMyIndex());
+                                dq.add(room.getPlayerMap().get(other).getMyIndex());
+                                if (!room.getDqArray().contains(dq)) {
+                                    room.getDqArray().add(dq);
+                                }
                             }
                             // 三道全输被打枪
                             if (winTime==-3) {
                                 sumScoreSingle *= 2;
-                                room.getDqMap().put(other,account);
+                                JSONArray dq = new JSONArray();
+                                dq.add(room.getPlayerMap().get(other).getMyIndex());
+                                dq.add(room.getPlayerMap().get(account).getMyIndex());
+                                if (!room.getDqArray().contains(dq)) {
+                                    room.getDqArray().add(dq);
+                                }
                             }
                             sumScoreAll += sumScoreSingle;
                         }
