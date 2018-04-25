@@ -119,7 +119,7 @@ public class GameMain implements SocketIoManagerService {
     public void stopServer() {
         if (server != null) {
             server.stop();
-            logger.info("关闭 SocketIO server 端口： " + server.getConfiguration().getPort() +
+            logger.info("关闭 SocketIO server 端口 =  [" + server.getConfiguration().getPort() +
                 "] IP = [" + server.getConfiguration().getHostname() + "]");
             server = null;
             logger.info("SocketIO server is closed successfully!!!!!!");
@@ -276,7 +276,6 @@ public class GameMain implements SocketIoManagerService {
 
         /* 公共事件监听 */
         baseGameEvent.listenerBaseGameEvent(server);
-
 
 
         /* 比大小 */
