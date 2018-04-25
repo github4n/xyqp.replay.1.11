@@ -8,6 +8,7 @@ import com.zhuoan.biz.event.nn.NNGameEventDealNew;
 import com.zhuoan.biz.event.sss.SSSGameEventDeal;
 import com.zhuoan.biz.event.sss.SSSGameEventDealNew;
 import com.zhuoan.biz.event.zjh.ZJHGameEventDeal;
+import com.zhuoan.biz.event.zjh.ZJHGameEventDealNew;
 import com.zhuoan.biz.model.GameLogsCache;
 import com.zhuoan.biz.model.RoomManage;
 import com.zhuoan.constant.event.GidConstant;
@@ -55,6 +56,8 @@ public class GameEventDeal {
     private NNGameEventDealNew nnGameEventDealNew;
     @Resource
     private SSSGameEventDealNew sssGameEventDealNew;
+    @Resource
+    private ZJHGameEventDealNew zjhGameEventDealNew;
 
     public void eventsMQ(Message message) {
         JSONObject jsonObject = JSONObject.fromObject(obtainMessageStr(message));
@@ -233,19 +236,19 @@ public class GameEventDeal {
                         zjhGameEventDeal.enterRoom(client, data);
                         break;
                     case 2:
-                        zjhGameEventDeal.gameReady(client, data);
+                        zjhGameEventDealNew.gameReady(client, data);
                         break;
                     case 3:
-                        zjhGameEventDeal.gameEvent(client, data);
+                        zjhGameEventDealNew.gameEvent(client, data);
                         break;
                     case 4:
                         zjhGameEventDeal.closeRoom(client, data);
                         break;
                     case 5:
-                        zjhGameEventDeal.exitRoom(client, data);
+                        zjhGameEventDealNew.exitRoom(client, data);
                         break;
                     case 6:
-                        zjhGameEventDeal.reconnectGame(client, data);
+                        zjhGameEventDealNew.reconnectGame(client, data);
                         break;
                     case 7:
                         zjhGameEventDeal.gameConnReset(client, data);

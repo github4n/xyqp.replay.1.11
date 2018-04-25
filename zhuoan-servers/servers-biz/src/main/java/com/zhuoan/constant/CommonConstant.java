@@ -24,6 +24,10 @@ public class CommonConstant {
      * 游戏id-十三水
      */
     public static final int GAME_ID_SSS = 4;
+    /**
+     * 游戏id-十三水
+     */
+    public static final int GAME_ID_ZJH = 6;
 
     /**
      * 客户端标识-账号

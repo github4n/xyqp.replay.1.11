@@ -91,4 +91,9 @@ public class GameLogBizImpl implements GameLogBiz {
 
         return gameDao.getUserGameLogList(account, gid, num, createTime);
     }
+
+    @Override
+    public JSONArray getUserGameLogsByUserId(long userId, int gameId) {
+        return gameDao.getUserGameLogsByUserId(userId, gameId);
+    }
 }

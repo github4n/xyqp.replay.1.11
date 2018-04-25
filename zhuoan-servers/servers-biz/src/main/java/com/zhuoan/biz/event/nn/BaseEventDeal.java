@@ -3,6 +3,8 @@ package com.zhuoan.biz.event.nn;
 import com.corundumstudio.socketio.SocketIOClient;
 import com.zhuoan.biz.core.nn.UserPacket;
 import com.zhuoan.biz.event.sss.SSSGameEventDealNew;
+import com.zhuoan.biz.event.zjh.ZJHGameEventDealNew;
+import com.zhuoan.biz.game.biz.GameLogBiz;
 import com.zhuoan.biz.game.biz.PublicBiz;
 import com.zhuoan.biz.game.biz.RoomBiz;
 import com.zhuoan.biz.game.biz.UserBiz;
@@ -13,12 +15,15 @@ import com.zhuoan.biz.model.dao.PumpDao;
 import com.zhuoan.biz.model.nn.NNGameRoomNew;
 import com.zhuoan.biz.model.sss.Player;
 import com.zhuoan.biz.model.sss.SSSGameRoomNew;
+import com.zhuoan.biz.model.zjh.ZJHGameRoomNew;
 import com.zhuoan.constant.*;
 import com.zhuoan.service.cache.RedisService;
 import com.zhuoan.service.jms.ProducerService;
 import com.zhuoan.util.Dto;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
@@ -41,6 +46,8 @@ import static net.sf.json.JSONObject.fromObject;
 @Component
 public class BaseEventDeal {
 
+    private final static Logger logger = LoggerFactory.getLogger(BaseEventDeal.class);
+
     @Resource
     private UserBiz userBiz;
 
@@ -51,10 +58,16 @@ public class BaseEventDeal {
     private PublicBiz publicBiz;
 
     @Resource
+    private GameLogBiz gameLogBiz;
+
+    @Resource
     private NNGameEventDealNew nnGameEventDealNew;
 
     @Resource
     private SSSGameEventDealNew sssGameEventDealNew;
+
+    @Resource
+    private ZJHGameEventDealNew zjhGameEventDealNew;
 
     @Resource
     private Destination daoQueueDestination;
@@ -123,6 +136,10 @@ public class BaseEventDeal {
             case CommonConstant.GAME_ID_SSS:
                 gameRoom = new SSSGameRoomNew();
                 createRoomSSS((SSSGameRoomNew) gameRoom, baseInfo, userInfo.getString("account"));
+                break;
+            case CommonConstant.GAME_ID_ZJH:
+                gameRoom = new ZJHGameRoomNew();
+                createRoomZJH((ZJHGameRoomNew) gameRoom, baseInfo, userInfo.getString("account"));
                 break;
             default:
                 gameRoom = new GameRoom();
@@ -260,6 +277,9 @@ public class BaseEventDeal {
             case CommonConstant.GAME_ID_SSS:
                 sssGameEventDealNew.createRoom(client, object);
                 break;
+            case CommonConstant.GAME_ID_ZJH:
+                zjhGameEventDealNew.createRoom(client, object);
+                break;
             default:
                 break;
         }
@@ -278,7 +298,7 @@ public class BaseEventDeal {
         obj.put("port", gameRoom.getPort());
         obj.put("status", 0);
         if (gameRoom.isOpen()) {
-            obj.put("open", 0);
+            obj.put("open", 1);
         } else {
             obj.put("open", 0);
         }
@@ -422,6 +442,13 @@ public class BaseEventDeal {
                     ((SSSGameRoomNew) gameRoom).getUserPacketMap().put(userInfo.getString("account"), new Player());
                 }
                 sssGameEventDealNew.joinRoom(client, joinData);
+                break;
+            case CommonConstant.GAME_ID_ZJH:
+                // 重连不需要重新设置用户牌局信息
+                if (!((ZJHGameRoomNew) gameRoom).getUserPacketMap().containsKey(userInfo.getString("account"))) {
+                    ((ZJHGameRoomNew) gameRoom).getUserPacketMap().put(userInfo.getString("account"), new com.zhuoan.biz.model.zjh.UserPacket());
+                }
+                zjhGameEventDealNew.joinRoom(client, joinData);
                 break;
             default:
                 break;
@@ -622,6 +649,75 @@ public class BaseEventDeal {
         room.getUserPacketMap().put(account, new Player());
     }
 
+    /**
+     * 设置十三水房间特殊参数
+     *
+     * @param room
+     * @param baseInfo
+     * @param account
+     */
+    public void createRoomZJH(ZJHGameRoomNew room, JSONObject baseInfo, String account) {
+        // 玩法
+        String wanFa = "";
+        switch (baseInfo.getInt("type")) {
+            case ZJHConstant.ZJH_GAME_TYPE_CLASSIC:
+                wanFa = "经典模式";
+                break;
+            case ZJHConstant.ZJH_GAME_TYPE_MEN:
+                wanFa = "必闷三圈";
+                break;
+            case ZJHConstant.ZJH_GAME_TYPE_HIGH:
+                wanFa = "激情模式";
+                break;
+            default:
+                break;
+        }
+
+        room.setWfType(wanFa);
+        // 庄家
+        room.setBanker(account);
+        // 房主
+        room.setOwner(account);
+        if (baseInfo.containsKey("di")) {
+            room.setScore(baseInfo.getDouble("di"));
+        } else {
+            room.setScore(1);
+        }
+        // 元宝模式
+        if (baseInfo.containsKey("yuanbao") && baseInfo.getDouble("yuanbao") > 0) {
+            //底分
+            room.setScore(baseInfo.getDouble("yuanbao"));
+        }
+        // 倍数
+        if(baseInfo.containsKey("baseNum")){
+            room.setBaseNum(baseInfo.getJSONArray("baseNum"));
+        }else{
+            JSONArray baseNum = new JSONArray();
+            for (int i = 1; i <= 5; i++) {
+                if (room.getScore()%1==0) {
+                    baseNum.add(String.valueOf((int)room.getScore()*i));
+                }else {
+                    baseNum.add(String.valueOf(room.getScore()*i));
+                }
+            }
+            room.setBaseNum(baseNum);
+        }
+        // 下注上限
+        if(baseInfo.containsKey("maxcoins")){
+            room.setMaxScore(baseInfo.getDouble("maxcoins"));
+        }else{
+            room.setMaxScore(100000000);
+        }
+        // 下注轮数上限
+        if(baseInfo.containsKey("gameNum")){
+            room.setTotalGameNum(baseInfo.getInt("gameNum"));
+        }else{
+            room.setTotalGameNum(15);
+        }
+        room.setCurrentScore(room.getScore());
+        room.getUserPacketMap().put(account, new com.zhuoan.biz.model.zjh.UserPacket());
+    }
+
     private JSONObject getGameInfoById() {
         JSONObject gameInfoById;
         try {
@@ -675,6 +771,9 @@ public class BaseEventDeal {
             case CommonConstant.GAME_ID_SSS:
                 key = CacheKeyConstant.GAME_SETTING_SSS;
                 break;
+            case CommonConstant.GAME_ID_ZJH:
+                key = CacheKeyConstant.GAME_SETTING_ZJH;
+                break;
             default:
                 break;
         }
@@ -719,6 +818,36 @@ public class BaseEventDeal {
             JSONObject result = new JSONObject();
             result.put(CommonConstant.RESULT_KEY_CODE, CommonConstant.GLOBAL_YES);
             CommonConstant.sendMsgEventToSingle(client, result.toString(), "checkUserPush");
+        }
+    }
+
+    /**
+     * 获取战绩记录
+     * @param client
+     * @param data
+     */
+    public void getUserGameLogs(SocketIOClient client, Object data){
+        JSONObject postData = JSONObject.fromObject(data);
+        if (postData.containsKey("user_id")&&postData.containsKey("game_id")) {
+            long userId = postData.getLong("user_id");
+            int gameId = postData.getInt("game_id");
+            JSONArray userGameLogs = gameLogBiz.getUserGameLogsByUserId(userId,gameId);
+            JSONArray result = new JSONArray();
+            if (userGameLogs.size()>0) {
+                for (int i = 0; i < userGameLogs.size(); i++) {
+                    JSONObject userGameLog = userGameLogs.getJSONObject(i);
+                    JSONObject obj = new JSONObject();
+                    obj.put("room_no",userGameLog.getString("room_no"));
+                    obj.put("createtime",userGameLog.getString("createtime"));
+                    JSONArray userResult = new JSONArray();
+                    for (int j = 0; j < userGameLog.getJSONArray("result").size(); j++) {
+                        JSONObject object = userGameLog.getJSONArray("result").getJSONObject(j);
+                        userResult.add(new JSONObject().element("name",object.getString("player")).element("score",object.getString("score")));
+                    }
+                    obj.put("result",userResult);
+                    result.add(obj);
+                }
+            }
         }
     }
 }
