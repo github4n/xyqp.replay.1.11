@@ -33,7 +33,7 @@ public class BRNNGameEvent {
 				try {
 					brnnService.enterRoom(client, data);
 				} catch (Exception e) {
-                    logger.error(e.getMessage());
+                    logger.error("加入房间，或创建房间事件异常",e);
 				}
 			}
 		});
@@ -50,7 +50,7 @@ public class BRNNGameEvent {
 				try {
 					brnnService.gameReady(client, data);
 				} catch (Exception e) {
-				    logger.error(e.getMessage());
+				    logger.error("准备方法发生异常",e);
 				}
 			}
 		});
@@ -67,7 +67,7 @@ public class BRNNGameEvent {
 				try {
 					brnnService.gameXiaZhu(client, data);
 				} catch (Exception e) {
-				    logger.error(e.getMessage());
+				    logger.error("下注方法,发生异常",e);
 				}
 			}
 		});
@@ -84,7 +84,7 @@ public class BRNNGameEvent {
 				try {
 					brnnService.gameEvent(client, data);
 				} catch (Exception e) {
-				    logger.error(e.getMessage());
+				    logger.error("游戏事件异常",e);
 				}
 			}
 		});
@@ -101,7 +101,7 @@ public class BRNNGameEvent {
 				try {
 					brnnService.exitRoom(client, data);
 				} catch (Exception e) {
-				    logger.error(e.getMessage());
+				    logger.error("退出房间事件,发生异常",e);
 				}
 			}
 		});
@@ -118,7 +118,7 @@ public class BRNNGameEvent {
 				try {
 					brnnService.reconnectGame(client, data);
 				} catch (Exception e) {
-				    logger.error(e.getMessage());
+				    logger.error("断线重连事件,发生异常",e);
 				}
 			}
 		});
@@ -135,7 +135,7 @@ public class BRNNGameEvent {
 				try {
 					brnnService.gameConnReset(client, data);
 				} catch (Exception e) {
-				    logger.error(e.getMessage());
+				    logger.error("判断玩家是否是重新连接,发生异常",e);
 				}
 			}
 		});
@@ -153,7 +153,7 @@ public class BRNNGameEvent {
 				try {
 					brnnService.revokeXiazhu(client, data);
 				} catch (Exception e) {
-				    logger.error(e.getMessage());
+				    logger.error("闲家撤销下注,发生异常",e);
 				}
 				
 			}
@@ -172,7 +172,7 @@ public class BRNNGameEvent {
 				try {
 					brnnService.sureXiazhu(client, data);
 				} catch (Exception e) {
-				    logger.error(e.getMessage());
+				    logger.error("闲家确认下注,发生异常",e);
 				}
 				
 			}

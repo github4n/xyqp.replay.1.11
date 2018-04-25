@@ -2,6 +2,8 @@ package com.zhuoan.dao;
 
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -14,6 +16,7 @@ import java.sql.SQLException;
  *
  */
 public class DBUtil {
+    private final static Logger logger = LoggerFactory.getLogger(DBUtil.class);
 
     
     /**
@@ -58,7 +61,7 @@ public class DBUtil {
 			return jsonArray;
 			
 		} catch (SQLException e) {
-			e.printStackTrace();
+            logger.error("SQL执行出错",e);
 		}finally{
 			close(conn, pstmt, rs);
 		}
@@ -103,7 +106,7 @@ public class DBUtil {
 			}
 			
 		} catch (SQLException e) {
-			e.printStackTrace();
+			logger.error("SQL执行出错",e);
 		}finally{
 			close(conn, pstmt, rs);
 		}
@@ -139,7 +142,7 @@ public class DBUtil {
 			return pstmt.executeUpdate();
 			
 		} catch (SQLException e) {
-			e.printStackTrace();
+            logger.error("SQL执行出错",e);
 		}finally{
 			close(conn, pstmt, null);
 		}
@@ -167,7 +170,7 @@ public class DBUtil {
 				DBConnectionPool.closeConnection(conn);
 			}
 		}catch (SQLException e) {
-			e.printStackTrace();
+            logger.error("释放资源出错",e);
        }
 	}
     

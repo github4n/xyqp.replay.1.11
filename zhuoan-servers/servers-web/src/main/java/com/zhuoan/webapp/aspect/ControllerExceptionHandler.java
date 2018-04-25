@@ -31,10 +31,6 @@ public class ControllerExceptionHandler {
     private void webappControllerPointcut() {
     }//定义一个切入点
 
-    @Pointcut("execution(* com.zhuoan.webapp.listener.event..*.*(..)))")
-    private void gamesEventPointcut() {
-    }//定义一个切入点
-
     /**
      * Do around response body string.
      *
@@ -50,7 +46,8 @@ public class ControllerExceptionHandler {
         Map<String, String> map = new HashMap<String, String>();
 
         try {
-            result = (String) call.proceed();//执行Controller
+            //执行Controller
+            result = (String) call.proceed();
         } catch (BizException bizE) {
             logger.error("业务异常", bizE);
             //重置result 返回业务异常

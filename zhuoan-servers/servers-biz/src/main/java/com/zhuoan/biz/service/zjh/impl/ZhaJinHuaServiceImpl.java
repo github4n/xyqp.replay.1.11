@@ -16,12 +16,16 @@ import com.zhuoan.util.LogUtil;
 import com.zhuoan.util.TimeUtil;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.math.BigDecimal;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
 public class ZhaJinHuaServiceImpl implements ZhaJinHuaService {
+
+    private final static Logger logger = LoggerFactory.getLogger(ZhaJinHuaServiceImpl.class);
 
 	MaJiangBiz mjBiz=new MajiangBizImpl();
 	public static ZJHGameEventDeal zjhGameEventDeal = new ZJHGameEventDeal();
@@ -326,7 +330,7 @@ public class ZhaJinHuaServiceImpl implements ZhaJinHuaService {
 				}
 			}
 		} catch (Exception e) {
-			e.printStackTrace();
+			logger.error("",e);
 		}
 	}
 
@@ -872,7 +876,7 @@ public class ZhaJinHuaServiceImpl implements ZhaJinHuaService {
 				mjBiz.settlementRoomNo(roomNo);
 			} catch (Exception e) {
 				LogUtil.print("扣除房卡，更改房间局数方法异常："+e.getMessage());
-				e.printStackTrace();
+				logger.error("",e);
 			}
 
 		}

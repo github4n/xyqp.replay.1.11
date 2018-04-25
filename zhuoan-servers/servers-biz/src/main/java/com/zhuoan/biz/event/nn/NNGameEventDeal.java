@@ -574,7 +574,7 @@ public class NNGameEventDeal {
 			}
 		} catch (Exception e) {
 			// TODO: handle exception
-			e.printStackTrace();
+			logger.error("",e);
 		} finally {
 			RoomManage.unLock(roomNo);
 		}
@@ -1358,7 +1358,7 @@ public class NNGameEventDeal {
 			}
 		} catch (Exception e) {
 			// TODO: handle exception
-			e.printStackTrace();
+			logger.error("",e);
 		} finally {
 			RoomManage.unLock(roomNo);
 		}
@@ -1622,7 +1622,7 @@ public class NNGameEventDeal {
 			}
 		} catch (Exception e) {
 			// TODO: handle exception
-			e.printStackTrace();
+			logger.error("",e);
 		} finally {
 		}
 		long end = System.currentTimeMillis();
@@ -1974,7 +1974,7 @@ public class NNGameEventDeal {
 			}
 		} catch (Exception e) {
 			// TODO: handle exception
-			e.printStackTrace();
+			logger.error("",e);
 		} finally {
 			//RoomManage.unLock(roomNo);
 		}
@@ -2005,7 +2005,7 @@ public class NNGameEventDeal {
 			}
 		} catch (Exception e) {
 			// TODO: handle exception
-			e.printStackTrace();
+			logger.error("",e);
 		} finally {
 			RoomManage.unLock(roomNo);
 		}
@@ -2366,7 +2366,7 @@ public class NNGameEventDeal {
 			
 		} catch (Exception e) {
 			// TODO: handle exception
-			e.printStackTrace();
+			logger.error("",e);
 		} finally {
 			RoomManage.unLock(roomNo);
 		}
@@ -3118,7 +3118,7 @@ public class NNGameEventDeal {
 			}
 		} catch (Exception e) {
 			// TODO: handle exception
-			e.printStackTrace();
+			logger.error("",e);
 		} finally {
 			RoomManage.unLock(roomNo);
 		}
@@ -3319,7 +3319,7 @@ public class NNGameEventDeal {
 			}
 		} catch (Exception e) {
 			// TODO: handle exception
-			e.printStackTrace();
+			logger.error("",e);
 		} finally {
 			RoomManage.unLock(roomNo);
 		}
@@ -3351,7 +3351,7 @@ public class NNGameEventDeal {
 			nnService.qiangZhuang(roomNo, result, Constant.getClientTag(client));
 		} catch (Exception e) {
 			// TODO: handle exception
-			e.printStackTrace();
+			logger.error("",e);
 		} finally {
 			RoomManage.unLock(roomNo);
 		}
@@ -4471,7 +4471,7 @@ public class NNGameEventDeal {
 							}
 						}
 					} catch (Exception e) {
-						e.printStackTrace();
+						logger.error("",e);
 					}
 					
 					if(room.getZhuangType()==2||room.getZhuangType()==3){
@@ -4505,7 +4505,7 @@ public class NNGameEventDeal {
 			}
 		} catch (Exception e) {
 			// TODO: handle exception
-			e.printStackTrace();
+			logger.error("",e);
 		} finally {
 			RoomManage.unLock(roomNo);
 		}
@@ -4548,14 +4548,14 @@ public class NNGameEventDeal {
 								}
 							}
 						} catch (Exception e) {
-							e.printStackTrace();
+							logger.error("",e);
 						}
 					}
 				}
 			}
 		} catch (Exception e) {
 			// TODO: handle exception
-			e.printStackTrace();
+			logger.error("",e);
 		} finally {
 			RoomManage.unLock(roomNo);
 		}
@@ -4629,7 +4629,7 @@ public class NNGameEventDeal {
 								}
 								
 							} catch (Exception e) {
-								e.printStackTrace();
+								logger.error("",e);
 							}
 						}
 					}
@@ -4637,7 +4637,7 @@ public class NNGameEventDeal {
 			}
 		} catch (Exception e) {
 			// TODO: handle exception
-			e.printStackTrace();
+			logger.error("",e);
 		} finally {
 			RoomManage.unLock(roomNo);
 		}
@@ -4701,7 +4701,7 @@ public class NNGameEventDeal {
 			}
 		} catch (Exception e) {
 			// TODO: handle exception
-			e.printStackTrace();
+			logger.error("",e);
 		} finally {
 			RoomManage.unLock(roomNo);
 		}
@@ -4759,7 +4759,7 @@ public class NNGameEventDeal {
 									startGame(room);
 									
 								} catch (Exception e) {
-									e.printStackTrace();
+									logger.error("",e);
 								}
 							}
 						}else{
@@ -4773,7 +4773,7 @@ public class NNGameEventDeal {
 			}
 		} catch (Exception e) {
 			// TODO: handle exception
-			e.printStackTrace();
+			logger.error("",e);
 		} finally {
 			RoomManage.unLock(roomNo);
 		}
@@ -4791,7 +4791,7 @@ public class NNGameEventDeal {
 				try {
 					Thread.sleep(5000);
 				} catch (InterruptedException e) {
-					e.printStackTrace();
+					logger.error("",e);
 				}
 				if (((NNGameRoom)RoomManage.gameRoomMap.get(roomNo))!=null) {
 					MaJiangBiz mjBiz=new MajiangBizImpl();

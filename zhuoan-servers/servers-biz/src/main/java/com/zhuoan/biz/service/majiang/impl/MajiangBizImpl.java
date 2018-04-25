@@ -184,7 +184,7 @@ public class MajiangBizImpl implements MaJiangBiz {
                 return true;
             }
         } catch (RemoteException | NotBoundException e) {
-            logger.error(e.getMessage());
+            logger.error("",e);
         }
         return false;
     }

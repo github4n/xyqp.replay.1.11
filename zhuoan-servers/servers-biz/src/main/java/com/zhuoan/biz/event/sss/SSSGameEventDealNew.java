@@ -21,6 +21,8 @@ import com.zhuoan.util.Dto;
 import com.zhuoan.util.thread.ThreadPoolHelper;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
@@ -37,6 +39,8 @@ import java.util.UUID;
  **/
 @Component
 public class SSSGameEventDealNew {
+
+    private final static Logger logger = LoggerFactory.getLogger(SSSGameEventDealNew.class);
 
     @Resource
     private RoomBiz roomBiz;
@@ -327,7 +331,7 @@ public class SSSGameEventDealNew {
                                     changeGameStatus(room);
                                 }
                             } catch (InterruptedException e) {
-                                e.printStackTrace();
+                                logger.error("",e);
                             }
                         }
                     }

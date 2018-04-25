@@ -42,7 +42,7 @@ public class EhCacheHelper {
         try {
             manager = CacheManager.create(EhCacheHelper.class.getClassLoader().getResourceAsStream("ehcache.xml"));
         } catch (CacheException e) {
-            logger.error("获取ehcache.xml失败", e.getMessage());
+            logger.error("获取ehcache.xml失败", e);
         }
     }
 

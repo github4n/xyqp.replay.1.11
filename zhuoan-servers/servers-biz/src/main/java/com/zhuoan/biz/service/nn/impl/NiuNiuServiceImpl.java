@@ -21,6 +21,8 @@ import com.zhuoan.util.LogUtil;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 import org.apache.commons.lang.math.RandomUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.math.BigDecimal;
 import java.text.SimpleDateFormat;
@@ -30,6 +32,8 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.CopyOnWriteArraySet;
 
 public class NiuNiuServiceImpl implements NiuNiuService {
+
+    private final static Logger logger = LoggerFactory.getLogger(NiuNiuServiceImpl.class);
 
 	MaJiangBiz mjBiz=new MajiangBizImpl();
 	public static NNGameEventDeal nnGameEventDeal = new NNGameEventDeal();
@@ -860,7 +864,7 @@ public class NiuNiuServiceImpl implements NiuNiuService {
 							mjBiz.settlementRoomNo(roomNo);
 						} catch (Exception e) {
 							LogUtil.print("扣除房卡，更改房间局数方法异常："+e.getMessage());
-							e.printStackTrace();
+							logger.error("",e);
 						}
 					}else{
 						for (int i = 0; i < array.size(); i++) {
@@ -1087,7 +1091,7 @@ public class NiuNiuServiceImpl implements NiuNiuService {
 				}
 			}
 		} catch (Exception e) {
-			e.printStackTrace();
+			logger.error("",e);
 		}
 		return lxList;
 	}
