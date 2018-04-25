@@ -59,7 +59,7 @@
 
 
     <!-- socketio start-->
-    <appender name="INVEST-APPENDER"
+    <appender name="SOCKETIO-APPENDER"
               class="ch.qos.logback.core.rolling.RollingFileAppender">
         <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
             <!--日志文件输出的文件名 -->
@@ -76,7 +76,7 @@
         </encoder>
     </appender>
     <logger name="com.zhuoan.service.socketio.impl.GameMain" level="INFO" additivity="true">
-        <appender-ref ref="INVEST-APPENDER"/>
+        <appender-ref ref="SOCKETIO-APPENDER"/>
     </logger>
     <!-- socketio end-->
 
@@ -92,11 +92,12 @@
 
     <!-- 卓安应用日志 -->
     <!--如果<logger>没有设置打印级别，都继承上级<root>的日志级别“DEBUG”-->
-    <logger name="com.zhuoan" level="INFO" additivity="false">
+    <logger name="com.zhuoan" level="INFO" additivity="true">
         <!--没有设置addtivity，默认为true，将此loger的打印信息向上级传递；-->
         <!--没有设置appender，此loger本身不打印任何信息。-->
         <appender-ref ref="APPLICATION-APPENDER"/>
         <appender-ref ref="ERROR_FILE"/>
     </logger>
+
 
 </configuration>
