@@ -15,11 +15,15 @@ import com.zhuoan.service.socketio.impl.GameMain;
 import com.zhuoan.util.Dto;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.net.SocketAddress;
 import java.util.*;
 
 public class AutoThreadNN extends Thread{
+    
+    private final static Logger logger = LoggerFactory.getLogger(AutoThreadNN.class);
 
 	private NiuNiuService nnService;
 	private String roomNo;
@@ -210,7 +214,7 @@ public class AutoThreadNN extends Thread{
 								try {
 									Thread.sleep((new Random().nextInt(3)+1)*1000);
 								} catch (InterruptedException e) {
-									e.printStackTrace();
+									logger.error("",e);
 								}
 								autoReady(userinfo.getString("account"),obj);
 							}
@@ -375,7 +379,7 @@ public class AutoThreadNN extends Thread{
 				try {
 					Thread.sleep(new Random().nextInt(3)*1000);
 				} catch (InterruptedException e) {
-					e.printStackTrace();
+					logger.error("",e);
 				}
 				if (room.getRobotList().contains(uid) && !room.getZhuang().equals(uid)) {
 					UserPacket up = room.getUserPacketMap().get(uid);
@@ -435,7 +439,7 @@ public class AutoThreadNN extends Thread{
 						try {
 							Thread.sleep(new Random().nextInt(2)*1000);
 						} catch (InterruptedException e) {
-							e.printStackTrace();
+                            logger.error("", e);
 						}
 						// 重置玩家状态信息
 						Constant.niuNiuGameMap.get(roomNo).getUserPacketMap().get(uid).setIsReady(0);
@@ -451,7 +455,7 @@ public class AutoThreadNN extends Thread{
 		try {
 			Thread.sleep(5000);
 		} catch (InterruptedException e) {
-			e.printStackTrace();
+			logger.error("",e);
 		}
 		if(Constant.niuNiuGameMap.containsKey(roomNo)){
 			if(Constant.niuNiuGameMap.get(roomNo)!=null){
@@ -468,7 +472,7 @@ public class AutoThreadNN extends Thread{
 						try {
 							Thread.sleep(new Random().nextInt(3)*1000);
 						} catch (InterruptedException e) {
-							e.printStackTrace();
+							logger.error("",e);
 						}
 						JSONObject jsonObject = new JSONObject();
 						jsonObject.element("room_no", roomNo);
@@ -492,7 +496,7 @@ public class AutoThreadNN extends Thread{
 					try {
 						Thread.sleep(new Random().nextInt(3)*500);
 					} catch (InterruptedException e) {
-						e.printStackTrace();
+						logger.error("",e);
 					}
 					if (room.getRobotList().contains(uid)) {
 						String qiang;

@@ -2,6 +2,8 @@ package com.zhuoan.util;
 
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.sql.Timestamp;
 import java.text.DateFormat;
@@ -12,6 +14,8 @@ import java.util.Date;
 import java.util.GregorianCalendar;
 
 public class DateUtils {
+
+    private final static Logger logger = LoggerFactory.getLogger(DateUtils.class);
 	/**
 	 * 1.各种时间格式
 	 */
@@ -111,7 +115,7 @@ public class DateUtils {
 		try {
 			date = getSimpleDateFormat(format).parse(time);
 		} catch (ParseException e) {
-			e.printStackTrace();
+			logger.error("",e);
 		}
 		return date;
 	}

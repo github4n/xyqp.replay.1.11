@@ -11,6 +11,8 @@ import com.zhuoan.constant.Constant;
 import com.zhuoan.dao.DBUtil;
 import com.zhuoan.service.socketio.impl.GameMain;
 import net.sf.json.JSONObject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.UUID;
 
@@ -20,6 +22,8 @@ import java.util.UUID;
  *
  */
 public class AutoExitThread extends Thread {
+
+    private final static Logger logger = LoggerFactory.getLogger(AutoExitThread.class);
 	
 	private MaJiangBiz mjBiz;
 	private SSSService sssService;
@@ -68,7 +72,7 @@ public class AutoExitThread extends Thread {
     			try {
 					Thread.sleep(1000);
 				} catch (InterruptedException e1) {
-					e1.printStackTrace();
+                    logger.error("", e1);
 				}
     			if(Constant.sssGameMap.get(roomNo)!=null&&Constant.sssGameMap.get(roomNo).getCloseTime()>1){
     				System.out.println("房间解散倒计时2："+i);

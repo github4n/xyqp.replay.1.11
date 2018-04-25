@@ -4,6 +4,8 @@ package com.zhuoan.times;
 import com.zhuoan.biz.core.sss.SSSGameRoom;
 import com.zhuoan.biz.model.RoomManage;
 import com.zhuoan.util.LogUtil;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.HashMap;
 import java.util.Iterator;
@@ -15,6 +17,8 @@ import java.util.concurrent.locks.ReentrantLock;
  * The type Single timer.
  */
 public class SingleTimer extends Thread {
+
+    private final static Logger logger = LoggerFactory.getLogger(SingleTimer.class);
 
     /**
      * 可重入锁(默认：非公平锁):线程A把此锁全部释放了，状态值减到0了，其他线程才有机会获取锁
@@ -98,7 +102,7 @@ public class SingleTimer extends Thread {
                 }
             } catch (Exception e) {
                 // TODO Auto-generated catch block
-                e.printStackTrace();
+                logger.error("",e);
             } finally {
                 m_locker.unlock();
             }

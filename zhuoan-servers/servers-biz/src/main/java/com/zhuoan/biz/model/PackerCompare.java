@@ -3,11 +3,15 @@ package com.zhuoan.biz.model;
 
 import com.zhuoan.biz.core.nn.Packer;
 import com.zhuoan.biz.core.nn.UserPacket;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * 牌的比较
  */
 public class PackerCompare {
+
+    private final static Logger logger = LoggerFactory.getLogger(PackerCompare.class);
 	
 	//得到赢得人
 	public static UserPacket getWin(UserPacket up1, UserPacket up2){
@@ -15,7 +19,7 @@ public class PackerCompare {
 			try {
 				throw new Exception("两个用户,必须一个是庄家、一个是用户");
 			} catch (Exception e) {
-				e.printStackTrace();
+				logger.error("",e);
 				return null;
 			}
 		}
@@ -73,7 +77,7 @@ public class PackerCompare {
 			try {
 				throw new Exception("服务器异常，一副牌中出现大小花色完全一样的牌");
 			} catch (Exception e) {
-				e.printStackTrace();
+				logger.error("",e);
 			}
 			return;
 		}

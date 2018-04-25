@@ -60,7 +60,7 @@ public class SqlQueue {
 //					}
 //				} catch (Exception e) {
 //					LogUtil.print("----------数据库队列处理异常----------");
-//					e.printStackTrace();
+//					logger.error("",e);
 //				}
 //			}
 //		}.start();
@@ -76,7 +76,7 @@ public class SqlQueue {
 //					}
 //				} catch (Exception e) {
 //					LogUtil.print("----------数据库队列处理异常----------");
-//					e.printStackTrace();
+//					logger.error("",e);
 //				}
 //			}
 //		}.start();

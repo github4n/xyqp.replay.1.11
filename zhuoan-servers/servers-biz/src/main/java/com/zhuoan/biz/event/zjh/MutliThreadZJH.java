@@ -7,6 +7,8 @@ import com.zhuoan.biz.service.zjh.ZhaJinHuaService;
 import com.zhuoan.constant.Constant;
 import com.zhuoan.service.socketio.impl.GameMain;
 import net.sf.json.JSONObject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -16,6 +18,8 @@ import java.util.Set;
  *	炸金花定时器
  */
 public class MutliThreadZJH extends Thread{
+
+    private final static Logger logger = LoggerFactory.getLogger(MutliThreadZJH.class);
 
 	public static int READY = 0; // 准备
 	public static int XIAZHU = 1; // 下注
@@ -130,7 +134,7 @@ public class MutliThreadZJH extends Thread{
 									 }
 								 }
 							 } catch (Exception e) {
-								 e.printStackTrace();
+								 logger.error("",e);
 							 }
 							 
 							 if(room.getReadyCount()>1 && room.getUserPacketMap().size()>1 && room.isAllReady()){
@@ -244,7 +248,7 @@ public class MutliThreadZJH extends Thread{
 						 }
 					 }
 				 } catch (InterruptedException e) {
-					 e.printStackTrace();
+					 logger.error("",e);
 				 }
 				 if (Constant.zjhGameMap.get(roomNo)!=null) {
 					 ZJHGame room = Constant.zjhGameMap.get(roomNo);

@@ -2,6 +2,8 @@ package com.zhuoan.dao;
 
 import org.apache.tomcat.jdbc.pool.DataSource;
 import org.apache.tomcat.jdbc.pool.PoolProperties;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import java.sql.Connection;
@@ -13,6 +15,8 @@ import java.util.Properties;
  */
 @Component
 public class DBConnectionPool {
+
+    private final static Logger logger = LoggerFactory.getLogger(DBConnectionPool.class);
 	
     static DataSource dataSource = new DataSource();
 
@@ -57,7 +61,7 @@ public class DBConnectionPool {
         try {
             conn = dataSource.getConnection();
         } catch (SQLException e) {
-            e.printStackTrace();
+            logger.error("",e);
         }
         return conn;
     }

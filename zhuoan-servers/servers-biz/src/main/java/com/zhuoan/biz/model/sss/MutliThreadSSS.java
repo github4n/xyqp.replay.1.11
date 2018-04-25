@@ -8,8 +8,12 @@ import com.zhuoan.biz.service.sss.SSSService;
 import com.zhuoan.biz.service.sss.impl.SSSServiceImpl;
 import com.zhuoan.service.socketio.impl.GameMain;
 import net.sf.json.JSONObject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class MutliThreadSSS extends Thread{
+    
+    private final static Logger logger = LoggerFactory.getLogger(MutliThreadSSS.class);
 
 	private SSSGameRoom game;
 	private SSSService sssService;
@@ -112,13 +116,13 @@ public class MutliThreadSSS extends Thread{
     					summary();
     					
     				}catch (Exception e) {
-						e.printStackTrace();
+						logger.error("",e);
 					}
     			}else{
     				game.setReadyTime(i);    				
     			}
     		} catch (InterruptedException e1) {
-				e1.printStackTrace();
+                logger.error("准备发生异常",e1);
 			}
     	}
 	}
@@ -173,7 +177,7 @@ public class MutliThreadSSS extends Thread{
 				}else
 					game.setPeipaiTime(i);
     		}catch (InterruptedException e1) {
-				e1.printStackTrace();
+                logger.error("配牌发生异常",e1);
 			}
     	}
 	}

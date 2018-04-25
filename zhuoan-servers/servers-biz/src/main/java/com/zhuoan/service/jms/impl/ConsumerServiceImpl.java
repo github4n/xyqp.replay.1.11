@@ -40,7 +40,7 @@ public class ConsumerServiceImpl implements ConsumerService {
                 logger.info(((ActiveMQQueue) destination).getPhysicalName()+":收到的信息为空");
             }
         } catch (JMSException e) {
-            e.printStackTrace();
+            logger.error("",e);
         }
         return textMessage;
     }

@@ -25,6 +25,8 @@ import com.zhuoan.util.TimeUtil;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 import org.apache.commons.lang.math.RandomUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
@@ -37,6 +39,7 @@ import java.util.Set;
 @Component
 public class ZJHGameEventDeal {
 
+    private final static Logger logger = LoggerFactory.getLogger(ZJHGameEventDeal.class);
 
     public static int GENDAODI = 1; // 跟到底
     public static int QIPAI = 2; // 弃牌
@@ -461,7 +464,7 @@ public class ZJHGameEventDeal {
             }
         } catch (Exception e) {
             // TODO: handle exception
-            e.printStackTrace();
+            logger.error("",e);
         } finally {
             RoomManage.unLock(roomNo);
         }
@@ -602,7 +605,7 @@ public class ZJHGameEventDeal {
             }
         } catch (Exception e) {
             // TODO: handle exception
-            e.printStackTrace();
+            logger.error("",e);
         } finally {
             RoomManage.unLock(roomNo);
         }
@@ -1027,7 +1030,7 @@ public class ZJHGameEventDeal {
                             try {
                                 Thread.sleep(5000);
                             } catch (InterruptedException e1) {
-                                e1.printStackTrace();
+                                logger.error("游戏事件发生异常",e1);
                             }
                             // 下注定时器
                             //new MutliThreadZJH(zjhService, roomNo, MutliThreadZJH.XIAZHU).start();
@@ -1057,7 +1060,7 @@ public class ZJHGameEventDeal {
                 }
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.error("",e);
         } finally {
             RoomManage.unLock(roomNo);
         }
@@ -1277,7 +1280,7 @@ public class ZJHGameEventDeal {
                 }
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.error("",e);
         } finally {
             RoomManage.unLock(roomNo);
         }
@@ -1748,7 +1751,7 @@ public class ZJHGameEventDeal {
                 LogUtil.print("创建房间（999）："+JSONObject.fromObject(result));
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.error("",e);
         } finally {
             RoomManage.unLock(roomNo);
         }
@@ -1787,7 +1790,7 @@ public class ZJHGameEventDeal {
             }
         } catch (Exception e) {
             // TODO: handle exception
-            e.printStackTrace();
+            logger.error("",e);
         } finally {
             RoomManage.unLock(roomNo);
         }
@@ -2071,7 +2074,7 @@ public class ZJHGameEventDeal {
                                 }
                             }
                         } catch (Exception e) {
-                            e.printStackTrace();
+                            logger.error("",e);
                         }
 
                         if(room.getReadyCount()>1 && room.getUserPacketMap().size()>1 && room.isAllReady()){
@@ -2082,7 +2085,7 @@ public class ZJHGameEventDeal {
                 }
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.error("",e);
         } finally {
             RoomManage.unLock(roomNo);
         }
@@ -2124,7 +2127,7 @@ public class ZJHGameEventDeal {
                 }
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.error("",e);
         } finally {
             RoomManage.unLock(roomNo);
         }
@@ -2172,7 +2175,7 @@ public class ZJHGameEventDeal {
                 }
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.error("",e);
         } finally {
             RoomManage.unLock(roomNo);
         }

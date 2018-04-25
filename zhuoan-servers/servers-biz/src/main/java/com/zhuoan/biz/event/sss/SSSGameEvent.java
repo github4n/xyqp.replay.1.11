@@ -70,7 +70,7 @@ public class SSSGameEvent {
 					MutliThreadSSS m = new MutliThreadSSS(client, data , sssService,json);
 					m.start();
 				} catch (InterruptedException e) {
-					e.printStackTrace();
+					logger.error("",e);
 				} */
 
             }
@@ -129,7 +129,7 @@ public class SSSGameEvent {
 //                    //queue.execute();
 //                    //sssService.closeRoom(client, data);
 //                } catch (Exception e) {
-//                    e.printStackTrace();
+//                    logger.error("",e);
 //                }
             }
         });
@@ -149,7 +149,7 @@ public class SSSGameEvent {
 //                    //sssService.exitRoom(client, data);
 ////					sssGameEventDeal.exitRoom(client, data);
 //                } catch (Exception e) {
-//                    e.printStackTrace();
+//                    logger.error("",e);
 //                }
             }
         });
@@ -169,7 +169,7 @@ public class SSSGameEvent {
 //                    //sssService.reconnectGame(client, data);
 ////					sssGameEventDeal.reconnectGame(client, data);
 //                } catch (Exception e) {
-//                    e.printStackTrace();
+//                    logger.error("",e);
 //                }
             }
         });
@@ -189,7 +189,7 @@ public class SSSGameEvent {
 //                    //sssService.gameConnReset(client, data);
 ////					sssGameEventDeal.gameConnReset(client, data);
 //                } catch (Exception e) {
-//                    e.printStackTrace();
+//                    logger.error("",e);
 //                }
             }
         });
@@ -208,7 +208,7 @@ public class SSSGameEvent {
 //                    //sssService.gameSummary(client, data);
 ////					sssGameEventDeal.gameSummary(client, data);
 //                } catch (Exception e) {
-//                    e.printStackTrace();
+//                    logger.error("",e);
 //                }
             }
         });
@@ -226,7 +226,7 @@ public class SSSGameEvent {
 //                    //queue.execute();
 //                    //sssService.playerInfo(client, data);
 //                } catch (Exception e) {
-//                    e.printStackTrace();
+//                    logger.error("",e);
 //                }
             }
         });

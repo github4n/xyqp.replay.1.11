@@ -6,6 +6,8 @@ import com.zhuoan.biz.model.GameRoom;
 import com.zhuoan.biz.model.bdx.BDXGameRoom;
 import com.zhuoan.biz.model.nn.NNGameRoom;
 import com.zhuoan.biz.model.zjh.ZJHGame;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.Serializable;
@@ -14,8 +16,8 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.ConcurrentHashMap;
 
-public class Constant implements Serializable{
-
+public class Constant implements Serializable {
+    private final static Logger logger = LoggerFactory.getLogger(Constant.class);
 
     // 客户端标识（用户唯一标识）
     public final static String CLIENTTAG = "clienttag";
@@ -23,20 +25,21 @@ public class Constant implements Serializable{
 
     /**
      * 获取用户标识
+     *
      * @param client
      * @return
      */
-    public static String getClientTag(SocketIOClient client){
+    public static String getClientTag(SocketIOClient client) {
 
-        if(client!=null&&client.has(Constant.CLIENTTAG)){
+        if (client != null && client.has(Constant.CLIENTTAG)) {
             return client.get(Constant.CLIENTTAG);
         }
         return "";
     }
 
     // 玩家在线状态
-    public final static int ONLINE_STATUS_YES=1;//在线
-    public final static int ONLINE_STATUS_NO=0;//不在线
+    public final static int ONLINE_STATUS_YES = 1;//在线
+    public final static int ONLINE_STATUS_NO = 0;//不在线
 
     // 加载配置文件信息
     public static Properties cfgProperties = new Properties();
@@ -46,12 +49,12 @@ public class Constant implements Serializable{
      */
     public static String DOMAIN = "/zagame";
 
-    static{
+    static {
 
         try {
             cfgProperties.load(Constant.class.getClassLoader().getResourceAsStream("config/common.properties"));
         } catch (IOException e) {
-            e.printStackTrace();
+            logger.error("", e);
         }
     }
 
@@ -61,18 +64,18 @@ public class Constant implements Serializable{
      * 20180315
      * 房间key
      */
-    public final static String ROOM_KEY_COMMEN="ROOM_KEY_COMMEN";
+    public final static String ROOM_KEY_COMMEN = "ROOM_KEY_COMMEN";
 
     /**
      * 20180315
      * 房间列表
      */
-    public static Map<String, GameRoom> gameRoomMap = new ConcurrentHashMap<String,GameRoom>();
+    public static Map<String, GameRoom> gameRoomMap = new ConcurrentHashMap<String, GameRoom>();
 
     /**
      * 麻将房间key
      */
-    public final static String ROOM_KEY_MJ="ROOM_KEY_MJ";
+    public final static String ROOM_KEY_MJ = "ROOM_KEY_MJ";
 
     /**
      * 泉州麻将游戏房间列表
@@ -104,7 +107,7 @@ public class Constant implements Serializable{
     /////////////////// 牛牛游戏 ////////////////////////
 
     /**
-     *  牛牛游戏房间Key
+     * 牛牛游戏房间Key
      */
     public final static String ROOM_KEY_NN = "ROOM_KEY_NN";
 
@@ -118,7 +121,7 @@ public class Constant implements Serializable{
     /////////////////// 斗地主游戏 ////////////////////////
 
     /**
-     *  斗地主游戏房间Key
+     * 斗地主游戏房间Key
      */
     public static String ROOM_KEY_DDZ = "ROOM_KEY_DDZ";
 
@@ -131,7 +134,7 @@ public class Constant implements Serializable{
     /////////////////// 十三水游戏 ////////////////////////
 
     /**
-     *  十三水游戏房间Key
+     * 十三水游戏房间Key
      */
     public static String ROOM_KEY_SSS = "ROOM_KEY_SSS";
 
@@ -144,7 +147,7 @@ public class Constant implements Serializable{
     /////////////////// 比大小游戏 ////////////////////////
 
     /**
-     *  比大小游戏房间Key
+     * 比大小游戏房间Key
      */
     public static String ROOM_KEY_BDX = "ROOM_KEY_BDX";
 
@@ -158,7 +161,7 @@ public class Constant implements Serializable{
     /////////////////// 牌九游戏 ////////////////////////
 
     /**
-     *  牌九游戏房间Key
+     * 牌九游戏房间Key
      */
     public static String ROOM_KEY_PJ = "ROOM_KEY_PJ";
 
@@ -170,7 +173,7 @@ public class Constant implements Serializable{
     /////////////////// 骨牌牌九游戏 ////////////////////////
 
     /**
-     *  骨牌牌九游戏房间Key
+     * 骨牌牌九游戏房间Key
      */
     public static String ROOM_KEY_PJXY = "ROOM_KEY_PJXY";
 
@@ -196,7 +199,7 @@ public class Constant implements Serializable{
     /////////////////// 炸金花游戏 ////////////////////////
 
     /**
-     *  炸金花游戏房间Key
+     * 炸金花游戏房间Key
      */
     public static String ROOM_KEY_ZJH = "ROOM_KEY_ZJH";
 
@@ -210,7 +213,7 @@ public class Constant implements Serializable{
     /////////////////// 百家乐游戏 ////////////////////////
 
     /**
-     *  百家乐游戏房间Key
+     * 百家乐游戏房间Key
      */
     public static String ROOM_KEY_BJL = "ROOM_KEY_BJL";
 
@@ -224,7 +227,7 @@ public class Constant implements Serializable{
     /////////////////// 抢红包游戏 ////////////////////////
 
     /**
-     *  抢红包游戏房间Key
+     * 抢红包游戏房间Key
      */
     public static String ROOM_KEY_HB = "ROOM_KEY_HB";
 

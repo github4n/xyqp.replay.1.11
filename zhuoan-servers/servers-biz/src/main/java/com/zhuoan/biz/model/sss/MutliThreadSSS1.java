@@ -3,8 +3,12 @@ package com.zhuoan.biz.model.sss;
 
 import com.zhuoan.biz.core.sss.SSSGameRoom;
 import com.zhuoan.constant.Constant;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class MutliThreadSSS1 extends Thread{
+
+    private final static Logger logger = LoggerFactory.getLogger(MutliThreadSSS1.class);
 
 	private SSSGameRoom game;
 	private boolean isExit=true;
@@ -76,7 +80,7 @@ public class MutliThreadSSS1 extends Thread{
 	    		Thread.sleep(1000);
 	    	}
     	} catch (InterruptedException e) {
-    		e.printStackTrace();
+    		logger.error("",e);
     	}
     	
     }

@@ -1062,7 +1062,7 @@ public class SSSServiceImpl implements SSSService{
                 mjBiz.settlementRoomNo(roomNo);
             } catch (Exception e) {
                 //LogUtil.print("扣除房卡，更改房间局数方法异常："+e.getMessage());
-                e.printStackTrace();
+                logger.error("",e);
             }
 
 
@@ -1741,7 +1741,7 @@ public class SSSServiceImpl implements SSSService{
                     GameMain.sqlQueue.addSqlTask(new SqlModel(sql2, new Object[]{roomNo}, SqlModel.EXECUTEUPDATEBYSQL));
                 } catch (Exception e) {
                     //LogUtil.print("扣除房卡，更改房间局数方法异常："+e.getMessage());
-                    e.printStackTrace();
+                    logger.error("",e);
                 }
             }else{
                 //gamelog(room,us);
@@ -1757,7 +1757,7 @@ public class SSSServiceImpl implements SSSService{
                     mjBiz.settlementRoomNo(roomNo);
 
                 } catch (Exception e) {
-                    e.printStackTrace();
+                    logger.error("",e);
                 }
 
             }

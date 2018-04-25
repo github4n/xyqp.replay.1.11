@@ -445,7 +445,7 @@ public class SSSGameEventDeal {
 								m.start();
 								Constant.sssGameMap.get(roomNo).setThread(m);
 							} catch (InterruptedException e) {
-								e.printStackTrace();
+								logger.error("",e);
 							}
 						}*/
 					}else{//加入房间
@@ -606,7 +606,7 @@ public class SSSGameEventDeal {
 								m.start();
 								Constant.sssGameMap.get(roomNo).setThread(m);
 							} catch (InterruptedException e) {
-								e.printStackTrace();
+								logger.error("",e);
 							}
 						}*/
 						 
@@ -615,7 +615,7 @@ public class SSSGameEventDeal {
 				}
 			}
 		} catch (Exception e) {
-			e.printStackTrace();
+			logger.error("",e);
 		}finally{
 			RoomManage.unLock(roomNo);
 		}
@@ -675,7 +675,7 @@ public class SSSGameEventDeal {
 						m.start();
 						Constant.sssGameMap.get(roomNo).setThread(m);
 					} catch (InterruptedException e) {
-						e.printStackTrace();
+						logger.error("",e);
 					}
 				}*/
 				
@@ -907,7 +907,7 @@ public class SSSGameEventDeal {
 				
 			}
 		}catch (Exception e) {
-			e.printStackTrace();
+			logger.error("",e);
 		}finally{
 			RoomManage.unLock(roomNo);
 		}
@@ -1071,7 +1071,7 @@ public class SSSGameEventDeal {
 			}
 			
 		}catch (Exception e) {
-			e.printStackTrace();
+			logger.error("",e);
 		}finally{
 			//RoomManage.unLock(roomNo);
 		}
@@ -1159,7 +1159,7 @@ public class SSSGameEventDeal {
 			
 			gametype1 = room.getGameType();
 		} catch (Exception e) {
-			e.printStackTrace();
+			logger.error("",e);
 		}finally{
 			RoomManage.unLock(roomNo);
 		}
@@ -1524,7 +1524,7 @@ public class SSSGameEventDeal {
 			}
 		
 		 } catch (Exception e) {
-				e.printStackTrace();
+				logger.error("",e);
 			}finally{
 				RoomManage.unLock(roomNo);
 			}

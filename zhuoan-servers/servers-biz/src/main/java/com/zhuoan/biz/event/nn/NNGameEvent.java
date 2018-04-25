@@ -36,7 +36,7 @@ public class NNGameEvent {
 //					//nnService.enterRoom(client, data);
 //				} catch (Exception e) {
 //					Logger.getLogger(NNGameEvent.class).error(e.getMessage(), e);
-//					e.printStackTrace();
+//					logger.error("",e);
 //				}
             }
         });
@@ -49,7 +49,7 @@ public class NNGameEvent {
 //					queue.addQueue(new Messages(client, data, 1, 23));
 //				} catch (Exception e) {
 //					Logger.getLogger(NNGameEvent.class).error(e.getMessage(), e);
-//					e.printStackTrace();
+//					logger.error("",e);
 //				}
             }
         });
@@ -63,7 +63,7 @@ public class NNGameEvent {
 //					//nnService.enterRoom(client, data);
 //				} catch (Exception e) {
 //					Logger.getLogger(NNGameEvent.class).error(e.getMessage(), e);
-//					e.printStackTrace();
+//					logger.error("",e);
 //				}
             }
         });
@@ -77,7 +77,7 @@ public class NNGameEvent {
 ////					//nnService.enterRoom(client, data);
 ////				} catch (Exception e) {
 ////					Logger.getLogger(NNGameEvent.class).error(e.getMessage(), e);
-////					e.printStackTrace();
+////					logger.error("",e);
 ////				}
 //            }
 //        });
@@ -96,7 +96,7 @@ public class NNGameEvent {
 //					//nnService.gameReady(client, data);
 //				} catch (Exception e) {
 //					Logger.getLogger(NNGameEvent.class).error(e.getMessage(), e);
-//					e.printStackTrace();
+//					logger.error("",e);
 //				}
             }
         });
@@ -115,7 +115,7 @@ public class NNGameEvent {
 //					//nnService.gameXiaZhu(client, data);
 //				} catch (Exception e) {
 //					Logger.getLogger(NNGameEvent.class).error(e.getMessage(), e);
-//					e.printStackTrace();
+//					logger.error("",e);
 //				}
             }
         });
@@ -134,7 +134,7 @@ public class NNGameEvent {
 //					//nnService.gameEvent(client, data);
 //				} catch (Exception e) {
 //					Logger.getLogger(NNGameEvent.class).error(e.getMessage(), e);
-//					e.printStackTrace();
+//					logger.error("",e);
 //				}
             }
         });
@@ -153,7 +153,7 @@ public class NNGameEvent {
 //					//nnService.qiangZhuang(client, data);
 //				} catch (Exception e) {
 //					Logger.getLogger(NNGameEvent.class).error(e.getMessage(), e);
-//					e.printStackTrace();
+//					logger.error("",e);
 //				}
             }
         });
@@ -172,7 +172,7 @@ public class NNGameEvent {
 //					//nnService.closeRoom(client, data);
 //				} catch (Exception e) {
 //					Logger.getLogger(NNGameEvent.class).error(e.getMessage(), e);
-//					e.printStackTrace();
+//					logger.error("",e);
 //				}
             }
         });
@@ -191,7 +191,7 @@ public class NNGameEvent {
 //					//nnService.exitRoom(client, data);
 //				} catch (Exception e) {
 //					Logger.getLogger(NNGameEvent.class).error(e.getMessage(), e);
-//					e.printStackTrace();
+//					logger.error("",e);
 //				}
             }
         });
@@ -210,7 +210,7 @@ public class NNGameEvent {
 //					//nnService.reconnectGame(client, data);
 //				} catch (Exception e) {
 //					Logger.getLogger(NNGameEvent.class).error(e.getMessage(), e);
-//					e.printStackTrace();
+//					logger.error("",e);
 //				}
             }
         });
@@ -229,7 +229,7 @@ public class NNGameEvent {
 //					//nnService.gameConnReset(client, data);
 //				} catch (Exception e) {
 //					Logger.getLogger(NNGameEvent.class).error(e.getMessage(), e);
-//					e.printStackTrace();
+//					logger.error("",e);
 //				}
             }
         });
@@ -248,7 +248,7 @@ public class NNGameEvent {
 //					//nnService.revokeXiazhu(client, data);
 //				} catch (Exception e) {
 //					Logger.getLogger(MJGameEvent.class).error(e.getMessage(), e);
-//					e.printStackTrace();
+//					logger.error("",e);
 //				}
 
             }
@@ -268,7 +268,7 @@ public class NNGameEvent {
 //					//nnService.sureXiazhu(client, data);
 //				} catch (Exception e) {
 //					Logger.getLogger(MJGameEvent.class).error(e.getMessage(), e);
-//					e.printStackTrace();
+//					logger.error("",e);
 //				}
 
             }
@@ -287,7 +287,7 @@ public class NNGameEvent {
 //					//nnService.gameRuzuo(client, data);
 //				} catch (Exception e) {
 //					Logger.getLogger(MJGameEvent.class).error(e.getMessage(), e);
-//					e.printStackTrace();
+//					logger.error("",e);
 //				}
 
             }
@@ -305,7 +305,7 @@ public class NNGameEvent {
 //					//nnService.gameZhanQi(client, data);
 //				} catch (Exception e) {
 //					Logger.getLogger(MJGameEvent.class).error(e.getMessage(), e);
-//					e.printStackTrace();
+//					logger.error("",e);
 //				}
 
             }
@@ -323,7 +323,7 @@ public class NNGameEvent {
 //					//nnService.changeTable(client, data);
 //				} catch (Exception e) {
 //					Logger.getLogger(MJGameEvent.class).error(e.getMessage(), e);
-//					e.printStackTrace();
+//					logger.error("",e);
 //				}
 
             }

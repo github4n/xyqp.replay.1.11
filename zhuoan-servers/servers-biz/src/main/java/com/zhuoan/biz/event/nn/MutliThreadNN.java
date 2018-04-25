@@ -221,7 +221,7 @@ public class MutliThreadNN extends Thread{
     								}
     								
     							} catch (Exception e) {
-    								e.printStackTrace();
+    								logger.error("",e);
     							}
     						}
     					}else{
@@ -380,7 +380,7 @@ public class MutliThreadNN extends Thread{
 //    							m.start();
     							
     						} catch (Exception e) {
-    							e.printStackTrace();
+    							logger.error("",e);
     						}
     					}
     				}else{
@@ -419,7 +419,7 @@ public class MutliThreadNN extends Thread{
 						try {
 							Thread.sleep(5000);
 						} catch (InterruptedException e) {
-							e.printStackTrace();
+							logger.error("",e);
 						}
 						if (Constant.niuNiuGameMap.get(roomNo)!=null) {
 							MaJiangBiz mjBiz=new MajiangBizImpl();
@@ -495,7 +495,7 @@ public class MutliThreadNN extends Thread{
     							new NNGameEventDeal().startGame(room);
     							
     						} catch (Exception e) {
-    							e.printStackTrace();
+    							logger.error("",e);
     						}
     					}
     				}else{
@@ -608,7 +608,7 @@ public class MutliThreadNN extends Thread{
             							}
             						}
             					} catch (Exception e) {
-            						e.printStackTrace();
+            						logger.error("",e);
             					}
             					
             					if(room.getZhuangType()==2||room.getZhuangType()==3){

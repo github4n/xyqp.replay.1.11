@@ -37,7 +37,7 @@ public class BDXGameEvent {
 //					//bdxService.enterRoom(client, data);
 //				} catch (Exception e) {
 //					Logger.getLogger(BDXGameEvent.class).error(e.getMessage(), e);
-//					e.printStackTrace();
+//					logger.error("",e);
 //				}
 
 
@@ -48,7 +48,7 @@ public class BDXGameEvent {
 					MutliThreadSSS m = new MutliThreadSSS(client, data , sssService,json);
 					m.start();
 				} catch (InterruptedException e) {
-					e.printStackTrace();
+					logger.error("",e);
 				} */
 
             }
@@ -68,7 +68,7 @@ public class BDXGameEvent {
 //					//bdxService.gameEvent(client, data);
 //				} catch (Exception e) {
 //					Logger.getLogger(BDXGameEvent.class).error(e.getMessage(), e);
-//					e.printStackTrace();
+//					logger.error("",e);
 //				}
             }
         });
@@ -86,7 +86,7 @@ public class BDXGameEvent {
 //					//bdxService.gameSummary(client, data);
 //				} catch (Exception e) {
 //					Logger.getLogger(BDXGameEvent.class).error(e.getMessage(), e);
-//					e.printStackTrace();
+//					logger.error("",e);
 //				}
             }
         });
@@ -105,7 +105,7 @@ public class BDXGameEvent {
 //					//bdxService.exitRoom(client, data);
 //				} catch (Exception e) {
 //					Logger.getLogger(BDXGameEvent.class).error(e.getMessage(), e);
-//					e.printStackTrace();
+//					logger.error("",e);
 //				}
             }
         });
@@ -124,7 +124,7 @@ public class BDXGameEvent {
 //					//bdxService.reconnectGame(client, data);
 //				} catch (Exception e) {
 //					Logger.getLogger(BDXGameEvent.class).error(e.getMessage(), e);
-//					e.printStackTrace();
+//					logger.error("",e);
 //				}
             }
         });

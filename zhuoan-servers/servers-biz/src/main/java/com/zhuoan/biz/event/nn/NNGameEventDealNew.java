@@ -23,6 +23,8 @@ import com.zhuoan.util.thread.ThreadPoolHelper;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 import org.apache.commons.lang.math.RandomUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
@@ -39,6 +41,8 @@ import java.util.UUID;
  **/
 @Component
 public class NNGameEventDealNew {
+
+    private final static Logger logger = LoggerFactory.getLogger(NNGameEventDealNew.class);
 
     @Resource
     private GameTimerNiuNiu gameTimerNiuNiu;
@@ -489,7 +493,7 @@ public class NNGameEventDealNew {
                 try {
                     Thread.sleep(800);
                 } catch (InterruptedException e) {
-                    e.printStackTrace();
+                    logger.error("",e);
                 }
             }
         }
