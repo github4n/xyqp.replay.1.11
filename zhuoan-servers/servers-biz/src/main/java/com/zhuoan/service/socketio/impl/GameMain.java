@@ -235,7 +235,6 @@ public class GameMain implements SocketIoManagerService {
         /* 获取房间设置*/
         sql = "select id,game_id,opt_key,opt_name,opt_val,is_mul,is_use,createTime,memo,sort,is_open from za_gamesetting";
         RoomManage.result = DBUtil.getObjectListBySQL(sql, new Object[]{});
-        LogUtil.print("获取房间设置：" + String.valueOf(RoomManage.result));
     }
 
 
