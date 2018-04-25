@@ -18,7 +18,7 @@ public class UserPacket {
 	private boolean isBanker=false;//是否是庄家
 	private int isReady;// 玩家准备状态
 	private int status=-1;// 玩家游戏状态
-	private int score;//分数
+	private double score;//分数
 	public int isCloseRoom=0;//解散房间申请  0:未确认 1:同意  -1:拒绝
 	public boolean isGenDaoDi=false;//是否跟到底
 	public boolean isShow=false;//是否看牌
@@ -65,10 +65,10 @@ public class UserPacket {
 	public void setStatus(int status) {
 		this.status = status;
 	}
-	public int getScore() {
+	public double getScore() {
 		return score;
 	}
-	public void setScore(int score) {
+	public void setScore(double score) {
 		this.score = score;
 	}
 	public int getIsCloseRoom() {
@@ -100,16 +100,21 @@ public class UserPacket {
 	 * 初始牌局信息
 	 */
 	public void initUserPacket(){
-		
-		type=0;//牌的类型 
-		win=false;//是否赢了
-		score=0;//分数
-		isCloseRoom=0;//解散房间申请  0:未确认 1:同意  -1:拒绝
-		isGenDaoDi=false;//是否跟到底
-		isShow=false;//是否看牌
+        //牌的类型
+        type=0;
+        //是否赢了
+        win=false;
+        //分数
+        score=0;
+        //解散房间申请  0:未确认 1:同意  -1:拒绝
+        isCloseRoom=0;
+        //是否跟到底
+        isGenDaoDi=false;
+        //是否看牌
+        isShow=false;
 		bipaiList = new JSONArray();
-		setStatus(ZhaJinHuaCore.USERPACKER_STATUS_CHUSHI);
-		setIsReady(ZhaJinHuaCore.USERPACKER_STATUS_CHUSHI);
+		//setStatus(ZhaJinHuaCore.USERPACKER_STATUS_CHUSHI);
+		//setIsReady(ZhaJinHuaCore.USERPACKER_STATUS_CHUSHI);
 	}
 	
 

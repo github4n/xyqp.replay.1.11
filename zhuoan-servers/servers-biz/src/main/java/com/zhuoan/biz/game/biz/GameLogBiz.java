@@ -58,7 +58,13 @@ public interface GameLogBiz {
      */
     public JSONArray getUserGameLogList(String account, int gid, int num,String createTime);
 
-
+    /**
+     * 根据用户id获取玩家战绩
+     * @param userId
+     * @param gameId
+     * @return
+     */
+    public JSONArray getUserGameLogsByUserId(long userId, int gameId);
 
 
 }

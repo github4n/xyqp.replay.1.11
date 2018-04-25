@@ -177,7 +177,7 @@ public class SSSGameRoomNew extends GameRoom{
     public JSONObject obtainGameData(){
         JSONObject gameData = new JSONObject();
         gameData.put("showIndex",obtainShowIndex());
-        gameData.put("dq",dqArray);
+        gameData.put("dq",getDqArray());
         gameData.put("data",obtainData());
         return gameData;
     }

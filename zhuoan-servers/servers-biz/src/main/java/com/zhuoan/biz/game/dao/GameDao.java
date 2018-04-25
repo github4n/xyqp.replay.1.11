@@ -239,4 +239,12 @@ public interface GameDao {
      */
     public JSONObject getSysUser(String adminCode, String adminPass, String memo);
 
+
+    /**
+     * 根据用户id获取玩家战绩
+     * @param userId
+     * @param gameId
+     * @return
+     */
+    public JSONArray getUserGameLogsByUserId(long userId, int gameId);
 }
