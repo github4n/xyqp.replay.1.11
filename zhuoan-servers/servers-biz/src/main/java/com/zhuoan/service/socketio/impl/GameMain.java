@@ -21,22 +21,21 @@ import com.zhuoan.util.LogUtil;
 import com.zhuoan.util.thread.ThreadPoolHelper;
 import net.sf.json.JSONArray;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.concurrent.BasicThreadFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
-import java.rmi.NotBoundException;
-import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.TimerTask;
-import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -51,9 +50,9 @@ public class GameMain implements SocketIoManagerService {
     private final static Logger logger = LoggerFactory.getLogger(GameMain.class);
 
     /**
-     * The constant server.
+     * The constant server.socketio服务
      */
-    public static SocketIOServer server; // socketio服务
+    public static SocketIOServer server;
     /**
      * The constant sqlQueue.
      */
@@ -108,6 +107,8 @@ public class GameMain implements SocketIoManagerService {
         addEventListener(server);
 
         server.start();
+        logger.info("SocketIO server 启用端口 = [" + server.getConfiguration().getPort() +
+            "] IP = [" + server.getConfiguration().getHostname() + "]");
         logger.info("SocketIO server is started successfully!!!!!!");
     }
 
@@ -118,7 +119,10 @@ public class GameMain implements SocketIoManagerService {
     public void stopServer() {
         if (server != null) {
             server.stop();
+            logger.info("关闭 SocketIO server 端口： " + server.getConfiguration().getPort() +
+                "] IP = [" + server.getConfiguration().getHostname() + "]");
             server = null;
+            logger.info("SocketIO server is closed successfully!!!!!!");
         }
     }
 
@@ -178,23 +182,21 @@ public class GameMain implements SocketIoManagerService {
             Registry registry = LocateRegistry.getRegistry(env.getProperty(EnvKeyEnum.SERVER_IP.getKey()),
                 Integer.valueOf(env.getProperty(EnvKeyEnum.SERVER_PORT.getKey())));
 
-            // 列出所有注册的服务
-            //String[] list = registry.list();
-
             // 根据命名获取服务
             IService server = (IService) registry.lookup("sysService");
 
-            // 调用远程方法
+            // 调用远程方法: 告知SOCKETIO的IP和PORT
             server.joinServer(env.getProperty(EnvKeyEnum.LOCAL_REMOTE_IP.getKey()),
                 Integer.valueOf(env.getProperty(EnvKeyEnum.LOCAL_PORT.getKey())),
                 env.getProperty(EnvKeyEnum.LOCAL_NAME.getKey()));
 
             // 开启定时任务
-            ScheduledExecutorService executor = Executors.newScheduledThreadPool(1);
+            ScheduledExecutorService executor = new ScheduledThreadPoolExecutor(1,
+                new BasicThreadFactory.Builder().namingPattern("userInfoCache-schedule-pool-%d").daemon(true).build());
             executor.scheduleWithFixedDelay(new GameTask(), 0, 1, TimeUnit.MINUTES);
 
-        } catch (NotBoundException | RemoteException e) {
-            logger.error("获取远程服务注册管理器中发生了异常",e.getMessage());
+        } catch (Exception e) {
+            logger.error("获取远程服务注册管理器中发生了异常", e);
         }
     }
 
@@ -212,7 +214,7 @@ public class GameMain implements SocketIoManagerService {
                         Thread.sleep(5000);
                     }
                 } catch (Exception e) {
-                    logger.error("数据库队列处理异常", e.getMessage());
+                    logger.error("数据库队列处理异常", e);
                 }
             }
         });
@@ -242,10 +244,11 @@ public class GameMain implements SocketIoManagerService {
      */
     class GameTask extends TimerTask {
 
+        @Override
         public void run() {
             try {
                 // 获取服务注册管理器
-                 registry = LocateRegistry.getRegistry(env.getProperty(EnvKeyEnum.SERVER_IP.getKey()),
+                registry = LocateRegistry.getRegistry(env.getProperty(EnvKeyEnum.SERVER_IP.getKey()),
                     Integer.valueOf(env.getProperty(EnvKeyEnum.SERVER_PORT.getKey())));
 
                 // 根据命名获取服务
@@ -255,7 +258,7 @@ public class GameMain implements SocketIoManagerService {
                 server.heartBeat(env.getProperty(EnvKeyEnum.LOCAL_NAME.getKey()));
 
             } catch (Exception e) {
-               logger.error("获取服务注册管理器发生异常",e.getMessage());
+                logger.error("获取服务注册管理器发生异常", e);
             }
         }
     }

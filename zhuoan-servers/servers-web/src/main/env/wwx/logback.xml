@@ -2,7 +2,7 @@
 <configuration debug="false">
 
     <!--定义日志文件的存储地址 勿在 LogBack 的配置中使用相对路径 /app/sv/logs -->
-    <property name="LOG_HOME" value="D:/data/eventlogs/games.games.server.ui"/>
+    <property name="LOG_HOME" value="E:/data/eventlogs/games.games.server.ui"/>
 
     <!-- ========================== 配置APPENDER(是负责写日志的组件) START==========================-->
 
@@ -88,12 +88,12 @@
     </appender>
 
 
-    <!-- 其它业务的日志 start-->
+    <!-- socketio start-->
     <appender name="INVEST-APPENDER"
               class="ch.qos.logback.core.rolling.RollingFileAppender">
         <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
             <!--日志文件输出的文件名 -->
-            <FileNamePattern>${LOG_HOME}/other.%d{yyyy-MM-dd}-%i.log</FileNamePattern>
+            <FileNamePattern>${LOG_HOME}/SOCKET-IO-SERVER.%d{yyyy-MM-dd}-%i.log</FileNamePattern>
             <timeBasedFileNamingAndTriggeringPolicy
                 class="ch.qos.logback.core.rolling.SizeAndTimeBasedFNATP">
                 <maxFileSize>500MB</maxFileSize>
@@ -105,10 +105,10 @@
             <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} %-5level [%thread] %logger{50} - %msg%n</pattern>
         </encoder>
     </appender>
-    <logger name="com.zhuoan.webapp.controller.DemoController" level="INFO" additivity="true">
+    <logger name="com.zhuoan.service.socketio.impl.GameMain" level="INFO" additivity="true">
         <appender-ref ref="INVEST-APPENDER"/>
     </logger>
-    <!-- 其它业务的日志 end-->
+    <!-- socketio end-->
 
 
     <!-- ========================== 配置APPENDER(是负责写日志的组件) END==========================-->
