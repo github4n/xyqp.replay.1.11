@@ -58,7 +58,7 @@ public class BDXGameEvent {
         /**
          * 游戏事件
          */
-        server.addEventListener("gameEvent_BDX", Object.class, new DataListener<Object>() {
+        server.addEventListener("gameXiazhu_BDX", Object.class, new DataListener<Object>() {
 
             @Override
             public void onData(SocketIOClient client, Object data, AckRequest ackSender) {
@@ -76,7 +76,7 @@ public class BDXGameEvent {
         /**
          * 游戏结算事件
          */
-        server.addEventListener("gameSummary_BDX", Object.class, new DataListener<Object>() {
+        server.addEventListener("gameEvent_BDX", Object.class, new DataListener<Object>() {
 
             @Override
             public void onData(SocketIOClient client, Object data, AckRequest ackSender) {

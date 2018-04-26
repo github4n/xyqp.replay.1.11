@@ -72,7 +72,7 @@ public class Packer {
         for(int i=0;i<ps.length;i++){
             int k=i;
             for(int j=i-1;j>=0;j--){
-                if(ps[k].compare(ps[j])<0){
+                if(ps[k]!=null&&ps[k].compare(ps[j])<0){
                     exchange(ps,k,j);
                     k--;
                 }else{

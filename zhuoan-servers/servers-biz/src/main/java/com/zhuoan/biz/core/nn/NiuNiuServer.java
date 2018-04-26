@@ -3,6 +3,7 @@ package com.zhuoan.biz.core.nn;
 import com.zhuoan.biz.model.RoomManage;
 import com.zhuoan.biz.model.nn.NNGameRoom;
 import com.zhuoan.biz.model.nn.NNGameRoomNew;
+import com.zhuoan.constant.NNConstant;
 import org.apache.commons.lang.math.RandomUtils;
 
 import java.util.ArrayList;
@@ -136,7 +137,7 @@ public class NiuNiuServer {
 		List<UserPacket> userPackets =NiuNiu.faPai(room.getPai(), room.getPlayerCount(), room.getSpecialType()); // 返回玩家手牌
 		List<String> uuidList = new ArrayList<String>(); 
 		for (String uuid:room.getUserPacketMap().keySet()) {
-			if(room.getUserPacketMap().get(uuid).getStatus()>=NiuNiu.USERPACKER_STATUS_CHUSHI){
+			if(room.getUserPacketMap().get(uuid).getStatus()> NNConstant.NN_USER_STATUS_INIT){
 				uuidList.add(uuid);
 			}
 		}

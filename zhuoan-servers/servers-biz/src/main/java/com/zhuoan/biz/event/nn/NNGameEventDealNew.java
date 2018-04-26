@@ -700,9 +700,8 @@ public class NNGameEventDealNew {
             boolean tongPei = true;
             for (String account : room.getUserPacketMap().keySet()) {
                 UserPacket bankerUp = room.getUserPacketMap().get(room.getBanker());
-                UserPacket up = room.getUserPacketMap().get(account);
                 // 有参与的玩家
-                if (up.getStatus() > NNConstant.NN_USER_STATUS_INIT) {
+                if (room.getUserPacketMap().get(account).getStatus() > NNConstant.NN_USER_STATUS_INIT) {
                     // 不是庄家
                     if (!account.equals(room.getBanker())) {
                         // 计算输赢
@@ -719,7 +718,7 @@ public class NNGameEventDealNew {
                         // 闲家赢
                         if (userpacket.isWin()) {
                             // 设置闲家当局输赢
-                            room.getUserPacketMap().get(account).setScore(Dto.add(up.getScore(), totalScore));
+                            room.getUserPacketMap().get(account).setScore(Dto.add(room.getUserPacketMap().get(account).getScore(), totalScore));
                             // 设置庄家当局输赢
                             room.getUserPacketMap().get(room.getBanker()).setScore(Dto.sub(bankerUp.getScore(), totalScore));
                             // 闲家当前分数
@@ -731,7 +730,7 @@ public class NNGameEventDealNew {
                             tongSha = false;
                         } else { // 庄家赢
                             // 设置闲家当局输赢
-                            room.getUserPacketMap().get(account).setScore(Dto.sub(up.getScore(), totalScore));
+                            room.getUserPacketMap().get(account).setScore(Dto.sub(room.getUserPacketMap().get(account).getScore(), totalScore));
                             // 设置庄家当局输赢
                             room.getUserPacketMap().get(room.getBanker()).setScore(Dto.add(bankerUp.getScore(), totalScore));
                             // 闲家当前分数
