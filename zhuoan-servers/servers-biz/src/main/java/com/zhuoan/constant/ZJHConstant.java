@@ -92,11 +92,32 @@ public class ZJHConstant {
      * 炸金花倒计时-下注
      */
     public static final int ZJH_TIMER_XZ = 60;
-
+    /**
+     * 炸金花游戏事件-跟到底
+     */
     public static final int GAME_ACTION_TYPE_GDD = 1;
+    /**
+     * 炸金花游戏事件-弃牌
+     */
     public static final int GAME_ACTION_TYPE_GIVE_UP = 2;
+    /**
+     * 炸金花游戏事件-比牌
+     */
     public static final int GAME_ACTION_TYPE_COMPARE = 3;
+    /**
+     * 炸金花游戏事件-看牌
+     */
     public static final int GAME_ACTION_TYPE_LOOK = 4;
+    /**
+     * 炸金花游戏事件-跟注
+     */
     public static final int GAME_ACTION_TYPE_GZ = 5;
+    /**
+     * 炸金花游戏事件-加注
+     */
     public static final int GAME_ACTION_TYPE_JZ = 6;
+    /**
+     * 炸金花游戏事件-比牌结束
+     */
+    public static final int GAME_ACTION_TYPE_COMPARE_FINISH = 9;
 }

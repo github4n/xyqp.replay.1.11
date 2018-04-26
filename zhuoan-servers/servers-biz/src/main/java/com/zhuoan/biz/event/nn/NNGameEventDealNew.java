@@ -5,7 +5,6 @@ import com.zhuoan.biz.core.nn.NiuNiuServer;
 import com.zhuoan.biz.core.nn.Packer;
 import com.zhuoan.biz.core.nn.UserPacket;
 import com.zhuoan.biz.game.biz.RoomBiz;
-import com.zhuoan.biz.game.biz.UserBiz;
 import com.zhuoan.biz.model.GameRoom;
 import com.zhuoan.biz.model.PackerCompare;
 import com.zhuoan.biz.model.Playerinfo;
@@ -48,9 +47,6 @@ public class NNGameEventDealNew {
     private GameTimerNiuNiu gameTimerNiuNiu;
 
     @Resource
-    private UserBiz userBiz;
-
-    @Resource
     private RoomBiz roomBiz;
 
     @Resource
@@ -68,6 +64,7 @@ public class NNGameEventDealNew {
      * @param client
      */
     public void createRoom(SocketIOClient client, Object data) {
+        long start = System.currentTimeMillis();
         JSONObject postData = JSONObject.fromObject(data);
         String account = postData.getString(CommonConstant.DATA_KEY_ACCOUNT);
         String roomNo = postData.getString(CommonConstant.DATA_KEY_ROOM_NO);
@@ -80,6 +77,8 @@ public class NNGameEventDealNew {
             // 通知自己
             CommonConstant.sendMsgEventToSingle(client, result.toString(), "enterRoomPush_NN");
         }
+        long end = System.currentTimeMillis();
+        logger.info("牛牛---createRoom方法耗时"+(end-start));
     }
 
     /**
@@ -89,6 +88,7 @@ public class NNGameEventDealNew {
      * @param data
      */
     public void joinRoom(SocketIOClient client, Object data) {
+        long start = System.currentTimeMillis();
         // 进入房间通知自己
         createRoom(client, data);
         JSONObject joinData = JSONObject.fromObject(data);
@@ -115,6 +115,8 @@ public class NNGameEventDealNew {
             // 通知玩家
             CommonConstant.sendMsgEventToAll(room.getAllUUIDList(account), obj.toString(), "playerEnterPush_NN");
         }
+        long end = System.currentTimeMillis();
+        logger.info("牛牛---joinRoom方法耗时"+(end-start));
     }
 
     /**
@@ -125,6 +127,7 @@ public class NNGameEventDealNew {
      * @return
      */
     public JSONObject obtainRoomData(String account, String roomNo) {
+        long start = System.currentTimeMillis();
         NNGameRoomNew room = (NNGameRoomNew) RoomManage.gameRoomMap.get(roomNo);
         JSONObject obj = new JSONObject();
         obj.put("gameStatus", room.getGameStatus());
@@ -176,6 +179,8 @@ public class NNGameEventDealNew {
             obj.put("jiesan", 1);
             obj.put("jiesanData", room.getJieSanData());
         }
+        long end = System.currentTimeMillis();
+        logger.info("牛牛---obtainRoomData方法耗时"+(end-start));
         return obj;
     }
 
@@ -186,6 +191,7 @@ public class NNGameEventDealNew {
      * @param data
      */
     public void gameReady(SocketIOClient client, Object data) {
+        long start = System.currentTimeMillis();
         JSONObject postData = JSONObject.fromObject(data);
         // 不满足准备条件直接忽略
         if (!CommonConstant.checkEvent(postData, NNConstant.NN_GAME_STATUS_INIT, client) &&
@@ -237,6 +243,8 @@ public class NNGameEventDealNew {
             result.put("timer", room.getTimeLeft());
             CommonConstant.sendMsgEventToAll(room.getAllUUIDList(), result.toString(), "playerReadyPush_NN");
         }
+        long end = System.currentTimeMillis();
+        logger.info("牛牛---gameReady方法耗时"+(end-start));
     }
 
     /**
@@ -245,6 +253,7 @@ public class NNGameEventDealNew {
      * @param room
      */
     public void startGame(final NNGameRoomNew room) {
+        long start = System.currentTimeMillis();
         // 非准备或初始阶段无法开始开始游戏
         if (room.getGameStatus() != NNConstant.NN_GAME_STATUS_READY && room.getGameStatus() != NNConstant.NN_GAME_STATUS_INIT) {
             return;
@@ -331,6 +340,8 @@ public class NNGameEventDealNew {
         }
         // 通知前端状态改变
         changeGameStatus(room);
+        long end = System.currentTimeMillis();
+        logger.info("牛牛---startGame方法耗时"+(end-start));
     }
 
 
@@ -342,6 +353,7 @@ public class NNGameEventDealNew {
      * @param data
      */
     public void gameQiangZhuang(SocketIOClient client, Object data) {
+        long start = System.currentTimeMillis();
         JSONObject postData = JSONObject.fromObject(data);
         // 非抢庄阶段收到抢庄消息不作处理
         if (!CommonConstant.checkEvent(postData, NNConstant.NN_GAME_STATUS_QZ, client)) {
@@ -392,6 +404,8 @@ public class NNGameEventDealNew {
                 }
             }
         }
+        long end = System.currentTimeMillis();
+        logger.info("牛牛---gameQiangZhuang方法耗时"+(end-start));
     }
 
     /**
@@ -401,6 +415,7 @@ public class NNGameEventDealNew {
      * @param lastAccount(最后一个抢庄玩家账号)
      */
     public void gameDingZhuang(final NNGameRoomNew room, String lastAccount) {
+        long start = System.currentTimeMillis();
         // 非抢庄阶段不作处理
         if (room.getGameStatus() != NNConstant.NN_GAME_STATUS_QZ) {
             return;
@@ -508,6 +523,8 @@ public class NNGameEventDealNew {
         });
         // 通知玩家
         changeGameStatus(room);
+        long end = System.currentTimeMillis();
+        logger.info("牛牛---gameDingZhuang方法耗时"+(end-start));
     }
 
     /**
@@ -517,6 +534,7 @@ public class NNGameEventDealNew {
      * @param data
      */
     public void gameXiaZhu(SocketIOClient client, Object data) {
+        long start = System.currentTimeMillis();
         // 非下注阶段收到下注消息不作处理
         JSONObject postData = JSONObject.fromObject(data);
         if (!CommonConstant.checkEvent(postData, NNConstant.NN_GAME_STATUS_XZ, client)) {
@@ -583,6 +601,8 @@ public class NNGameEventDealNew {
                 }
             }
         }
+        long end = System.currentTimeMillis();
+        logger.info("牛牛---gameXiaZhu方法耗时"+(end-start));
     }
 
     /**
@@ -592,6 +612,7 @@ public class NNGameEventDealNew {
      * @param data
      */
     public void showPai(SocketIOClient client, Object data) {
+        long start = System.currentTimeMillis();
         JSONObject postData = JSONObject.fromObject(data);
         // 非亮牌阶段收到亮牌消息不作处理
         if (!CommonConstant.checkEvent(postData, NNConstant.NN_GAME_STATUS_LP, client)) {
@@ -647,6 +668,8 @@ public class NNGameEventDealNew {
                 changeGameStatus(room);
             }
         }
+        long end = System.currentTimeMillis();
+        logger.info("牛牛---showPai方法耗时"+(end-start));
     }
 
     /**
@@ -655,6 +678,7 @@ public class NNGameEventDealNew {
      * @param room
      */
     public void gameJieSuan(NNGameRoomNew room) {
+        long start = System.currentTimeMillis();
         if (room.getBankerType() == NNConstant.NN_BANKER_TYPE_TB) {
             // TODO: 2018/4/18 通比结算
         } else {
@@ -793,10 +817,11 @@ public class NNGameEventDealNew {
             producerService.sendMessage(daoQueueDestination, new PumpDao(DaoTypeConstant.INSERT_GAME_LOG, gameLogObj));
             JSONArray userGameLogs = room.obtainUserGameLog(gameLogObj.getLong("id"), array, gameResult.toString());
             for (int i = 0; i < userGameLogs.size(); i++) {
-                // TODO: 2018/4/24 每个用户缓存20条数据 
                 producerService.sendMessage(daoQueueDestination, new PumpDao(DaoTypeConstant.INSERT_USER_GAME_LOG, userGameLogs.getJSONObject(i)));
             }
         }
+        long end = System.currentTimeMillis();
+        logger.info("牛牛---gameJieSuan方法耗时"+(end-start));
     }
 
     private JSONObject getRoomInfo(GameRoom room) {
@@ -816,6 +841,7 @@ public class NNGameEventDealNew {
      * @param data
      */
     public void exitRoom(SocketIOClient client, Object data) {
+        long start = System.currentTimeMillis();
         JSONObject postData = JSONObject.fromObject(data);
         if (!CommonConstant.checkEvent(postData, CommonConstant.CHECK_GAME_STATUS_NO, client)) {
             return;
@@ -890,6 +916,8 @@ public class NNGameEventDealNew {
                 CommonConstant.sendMsgEventToSingle(client, result.toString(), "exitRoomPush_NN");
             }
         }
+        long end = System.currentTimeMillis();
+        logger.info("牛牛---exitRoom方法耗时"+(end-start));
     }
 
     /**
@@ -898,6 +926,7 @@ public class NNGameEventDealNew {
      * @param room
      */
     public void changeGameStatus(NNGameRoomNew room) {
+        long start = System.currentTimeMillis();
         for (String account : room.getPlayerMap().keySet()) {
             JSONObject obj = new JSONObject();
             obj.put("gameStatus", room.getGameStatus());
@@ -925,6 +954,8 @@ public class NNGameEventDealNew {
                 CommonConstant.sendMsgEventToSingle(uuid, obj.toString(), "changeGameStatusPush_NN");
             }
         }
+        long end = System.currentTimeMillis();
+        logger.info("牛牛---changeGameStatus方法耗时"+(end-start));
     }
 
     /**
@@ -985,6 +1016,7 @@ public class NNGameEventDealNew {
      * @param data
      */
     public void reconnectGame(SocketIOClient client, Object data) {
+        long start = System.currentTimeMillis();
         JSONObject postData = JSONObject.fromObject(data);
         String roomNo = postData.getString(CommonConstant.DATA_KEY_ROOM_NO);
         String account = postData.getString(CommonConstant.DATA_KEY_ACCOUNT);
@@ -1014,6 +1046,8 @@ public class NNGameEventDealNew {
         result.put("data", obtainRoomData(account, roomNo));
         // 通知玩家
         CommonConstant.sendMsgEventToSingle(client, result.toString(), "reconnectGamePush_NN");
+        long end = System.currentTimeMillis();
+        logger.info("牛牛---reconnectGame方法耗时"+(end-start));
     }
 
     /**
@@ -1023,7 +1057,7 @@ public class NNGameEventDealNew {
      * @param uuid
      */
     public void peiNiu(String roomNo, String uuid) {
-
+        long start = System.currentTimeMillis();
         NNGameRoomNew room = ((NNGameRoomNew) RoomManage.gameRoomMap.get(roomNo));
         UserPacket packet = room.getUserPacketMap().get(uuid);
         if (uuid.equals(room.getBanker())) {
@@ -1041,5 +1075,7 @@ public class NNGameEventDealNew {
                 packet.setWin(userpacket.isWin());
             }
         }
+        long end = System.currentTimeMillis();
+        logger.info("牛牛---peiNiu方法耗时"+(end-start));
     }
 }
