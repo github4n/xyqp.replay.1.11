@@ -4,22 +4,20 @@ import com.zhuoan.service.socketio.SocketIoManagerService;
 import com.zhuoan.util.thread.ThreadPoolHelper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import javax.annotation.Resource;
 
 /**
- * PreDestroyListener
+ * PreDealSocketListener
  *
  * @author weixiang.wu
  * @date 2018 -04-25 13:42
  */
-@Component
-public class PreDestroyListener {
+public class PreDealSocketListener {
 
-    private final static Logger logger = LoggerFactory.getLogger(PreDestroyListener.class);
+    private final static Logger logger = LoggerFactory.getLogger(PreDealSocketListener.class);
 
     @Resource
     private SocketIoManagerService service;
