@@ -40,6 +40,8 @@ import java.util.UUID;
 @Component
 public class SSSGameEventDealNew {
 
+    public static int GAME_SSS = 1;
+
     private final static Logger logger = LoggerFactory.getLogger(SSSGameEventDealNew.class);
 
     @Resource
@@ -124,18 +126,32 @@ public class SSSGameEventDealNew {
         SSSGameRoomNew room = (SSSGameRoomNew) RoomManage.gameRoomMap.get(roomNo);
         // 玩家账号
         String account = postData.getString(CommonConstant.DATA_KEY_ACCOUNT);
+        if (SSSGameEventDealNew.GAME_SSS==0) {
+            postData.put("notSend",CommonConstant.GLOBAL_YES);
+            exitRoom(client,postData);
+            JSONObject result = new JSONObject();
+            result.put("type",CommonConstant.SHOW_MSG_TYPE_BIG);
+            result.put(CommonConstant.RESULT_KEY_MSG,"即将停服进行更新");
+            CommonConstant.sendMsgEventToSingle(client,result.toString(),"tipMsgPush");
+            return;
+        }
+        // 元宝不足无法准备
+        if (room.getRoomType()==CommonConstant.ROOM_TYPE_YB||room.getRoomType()==CommonConstant.ROOM_TYPE_JB){
+            if (room.getPlayerMap().get(account).getScore()<room.getLeaveScore()) {
+                postData.put("notSendToMe",CommonConstant.GLOBAL_YES);
+                exitRoom(client,data);
+                JSONObject result = new JSONObject();
+                result.put("type",CommonConstant.SHOW_MSG_TYPE_BIG);
+                result.put(CommonConstant.RESULT_KEY_MSG,"元宝不足");
+                CommonConstant.sendMsgEventToSingle(client,result.toString(),"tipMsgPush");
+                return;
+            }
+        }
         // 设置玩家准备状态
         room.getUserPacketMap().get(account).setStatus(SSSConstant.SSS_USER_STATUS_READY);
         // 设置房间准备状态
         if (room.getGameStatus()!=SSSConstant.SSS_GAME_STATUS_READY) {
             room.setGameStatus(SSSConstant.SSS_GAME_STATUS_READY);
-        }
-        // 元宝不足无法准备
-        if (room.getRoomType()==CommonConstant.ROOM_TYPE_YB||room.getRoomType()==CommonConstant.ROOM_TYPE_JB){
-            if (room.getPlayerMap().get(account).getScore()<room.getLeaveScore()) {
-                exitRoom(client,data);
-                return;
-            }
         }
         // 当前准备人数大于最低开始人数开始游戏
         if (room.getNowReadyCount()==room.getMinPlayer()) {
@@ -483,7 +499,12 @@ public class SSSGameEventDealNew {
                     result.put("showTimer",CommonConstant.GLOBAL_NO);
                 }
                 result.put("timer",room.getTimeLeft());
-                CommonConstant.sendMsgEventToAll(allUUIDList,result.toString(),"exitRoomPush_SSS");
+                if (!postData.containsKey("notSend")) {
+                    CommonConstant.sendMsgEventToAll(allUUIDList,result.toString(),"exitRoomPush_SSS");
+                }
+                if (postData.containsKey("notSendToMe")) {
+                    CommonConstant.sendMsgEventToAll(room.getAllUUIDList(), result.toString(), "exitRoomPush_SSS");
+                }
                 // 房间内所有玩家都已经完成准备且人数大于最低开始人数通知开始游戏
                 if (room.isAllReady()&&room.getPlayerMap().size()>=room.getMinPlayer()) {
                     startGame(room);

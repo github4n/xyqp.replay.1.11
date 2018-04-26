@@ -82,13 +82,16 @@ public class GameEventDeal {
                         baseEventDeal.checkUser(client, data);
                         break;
                     case 4:
-                        gameLogsCache.getGameLogsList(client, data);
+                        baseEventDeal.getUserGameLogs(client,data);
                         break;
                     case 5:
                         roomManage.getRoomCardPayInfo(client, data);
                         break;
                     case 6:
-                        //baseEventDeal.dissolveRoom(client, data);
+                        baseEventDeal.dissolveRoom(client, data);
+                        break;
+                    case 7:
+                        baseEventDeal.onOrOffGame(client, data);
                         break;
                     default:
                         break;

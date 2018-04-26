@@ -517,7 +517,7 @@ public class GameDaoImpl implements GameDao {
     @Override
     public JSONArray getUserGameLogsByUserId(long userId, int gameId) {
         String sql = "SELECT room_no,createtime,result FROM `za_usergamelogs` where user_id=? and gid=? ORDER BY id LIMIT 0,20";
-        return DBUtil.getObjectListBySQL(sql,new Object[]{userId, gameId});
+        return TimeUtil.transTimestamp(DBUtil.getObjectListBySQL(sql,new Object[]{userId, gameId}),"createtime","yyyy-MM-dd hh:mm:ss");
     }
 
     /**
