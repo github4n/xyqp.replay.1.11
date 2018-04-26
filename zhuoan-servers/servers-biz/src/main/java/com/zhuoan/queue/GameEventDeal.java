@@ -2,6 +2,7 @@ package com.zhuoan.queue;
 
 import com.corundumstudio.socketio.SocketIOClient;
 import com.zhuoan.biz.event.bdx.BDXGameEventDeal;
+import com.zhuoan.biz.event.bdx.BDXGameEventDealNew;
 import com.zhuoan.biz.event.nn.BaseEventDeal;
 import com.zhuoan.biz.event.nn.NNGameEventDeal;
 import com.zhuoan.biz.event.nn.NNGameEventDealNew;
@@ -58,6 +59,8 @@ public class GameEventDeal {
     private SSSGameEventDealNew sssGameEventDealNew;
     @Resource
     private ZJHGameEventDealNew zjhGameEventDealNew;
+    @Resource
+    private BDXGameEventDealNew bdxGameEventDealNew;
 
     public void eventsMQ(Message message) {
         JSONObject jsonObject = JSONObject.fromObject(obtainMessageStr(message));
@@ -280,16 +283,16 @@ public class GameEventDeal {
                         bdxGameEventDeal.enterRoom(client, data);
                         break;
                     case 2:
-                        bdxGameEventDeal.gameEvent(client, data);
+                        bdxGameEventDealNew.xiaZhu(client, data);
                         break;
                     case 3:
-                        bdxGameEventDeal.gameSummary(client, data);
+                        bdxGameEventDealNew.gameEvent(client, data);
                         break;
                     case 4:
-                        bdxGameEventDeal.exitRoom(client, data);
+                        bdxGameEventDealNew.exitRoom(client, data);
                         break;
                     case 5:
-                        bdxGameEventDeal.reconnectGame(client, data);
+                        bdxGameEventDealNew.reconnectGame(client, data);
                         break;
 
                     default:

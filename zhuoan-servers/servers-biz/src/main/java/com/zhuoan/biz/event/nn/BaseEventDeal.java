@@ -2,6 +2,7 @@ package com.zhuoan.biz.event.nn;
 
 import com.corundumstudio.socketio.SocketIOClient;
 import com.zhuoan.biz.core.nn.UserPacket;
+import com.zhuoan.biz.event.bdx.BDXGameEventDealNew;
 import com.zhuoan.biz.event.sss.SSSGameEventDealNew;
 import com.zhuoan.biz.event.zjh.ZJHGameEventDealNew;
 import com.zhuoan.biz.game.biz.GameLogBiz;
@@ -11,6 +12,8 @@ import com.zhuoan.biz.game.biz.UserBiz;
 import com.zhuoan.biz.model.GameRoom;
 import com.zhuoan.biz.model.Playerinfo;
 import com.zhuoan.biz.model.RoomManage;
+import com.zhuoan.biz.model.bdx.BDXGameRoomNew;
+import com.zhuoan.biz.model.bdx.UserPackerBDX;
 import com.zhuoan.biz.model.dao.PumpDao;
 import com.zhuoan.biz.model.nn.NNGameRoomNew;
 import com.zhuoan.biz.model.sss.Player;
@@ -68,6 +71,9 @@ public class BaseEventDeal {
 
     @Resource
     private ZJHGameEventDealNew zjhGameEventDealNew;
+
+    @Resource
+    private BDXGameEventDealNew bdxGameEventDealNew;
 
     @Resource
     private Destination daoQueueDestination;
@@ -144,6 +150,10 @@ public class BaseEventDeal {
             case CommonConstant.GAME_ID_ZJH:
                 gameRoom = new ZJHGameRoomNew();
                 createRoomZJH((ZJHGameRoomNew) gameRoom, baseInfo, userInfo.getString("account"));
+                break;
+            case CommonConstant.GAME_ID_BDX:
+                gameRoom = new BDXGameRoomNew();
+                ((BDXGameRoomNew)gameRoom).getUserPacketMap().put(userInfo.getString("account"), new UserPackerBDX());
                 break;
             default:
                 gameRoom = new GameRoom();
@@ -283,6 +293,9 @@ public class BaseEventDeal {
                 break;
             case CommonConstant.GAME_ID_ZJH:
                 zjhGameEventDealNew.createRoom(client, object);
+                break;
+            case CommonConstant.GAME_ID_BDX:
+                bdxGameEventDealNew.createRoom(client, object);
                 break;
             default:
                 break;
@@ -463,6 +476,13 @@ public class BaseEventDeal {
                     ((ZJHGameRoomNew) gameRoom).getUserPacketMap().put(userInfo.getString("account"), new com.zhuoan.biz.model.zjh.UserPacket());
                 }
                 zjhGameEventDealNew.joinRoom(client, joinData);
+                break;
+            case CommonConstant.GAME_ID_BDX:
+                // 重连不需要重新设置用户牌局信息
+                if (!((BDXGameRoomNew) gameRoom).getUserPacketMap().containsKey(userInfo.getString("account"))) {
+                    ((BDXGameRoomNew) gameRoom).getUserPacketMap().put(userInfo.getString("account"), new UserPackerBDX());
+                }
+                bdxGameEventDealNew.joinRoom(client, joinData);
                 break;
             default:
                 break;
@@ -889,10 +909,9 @@ public class BaseEventDeal {
             }
             if (result.size()==0) {
                 back.put(CommonConstant.RESULT_KEY_CODE,CommonConstant.GLOBAL_NO);
-                back.put("gid",gameId);
             }else {
                 back.put(CommonConstant.RESULT_KEY_CODE,CommonConstant.GLOBAL_YES);
-                back.put("data",result.toString());
+                back.put("data",result);
                 back.put("gid",gameId);
             }
             CommonConstant.sendMsgEventToSingle(client,back.toString(),"getGameLogsListPush");
