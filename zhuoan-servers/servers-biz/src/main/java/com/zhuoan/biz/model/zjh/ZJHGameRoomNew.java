@@ -193,6 +193,8 @@ public class ZJHGameRoomNew extends GameRoom{
         currentScore = getScore();
         // 轮数
         gameNum = 1;
+        // 初始化下注时间
+        setTimeLeft(ZJHConstant.ZJH_TIMER_INIT);
         yiXiaZhu.clear();
         xiaZhuList.clear();
         for (String account : getUserPacketMap().keySet()) {

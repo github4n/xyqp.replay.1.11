@@ -2,17 +2,25 @@ package com.zhuoan.biz.event.zjh;
 
 import com.corundumstudio.socketio.SocketIOClient;
 import com.zhuoan.biz.core.zjh.ZhaJinHuaCore;
+import com.zhuoan.biz.game.biz.RoomBiz;
 import com.zhuoan.biz.model.Playerinfo;
 import com.zhuoan.biz.model.RoomManage;
+import com.zhuoan.biz.model.dao.PumpDao;
 import com.zhuoan.biz.model.zjh.ZJHGameRoomNew;
 import com.zhuoan.constant.CommonConstant;
+import com.zhuoan.constant.DaoTypeConstant;
+import com.zhuoan.constant.NNConstant;
 import com.zhuoan.constant.ZJHConstant;
+import com.zhuoan.service.jms.ProducerService;
 import com.zhuoan.util.Dto;
 import com.zhuoan.util.thread.ThreadPoolHelper;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 import org.springframework.stereotype.Component;
 
+import javax.annotation.Resource;
+import javax.jms.Destination;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
@@ -26,6 +34,17 @@ import java.util.UUID;
 @Component
 public class ZJHGameEventDealNew {
 
+    @Resource
+    private GameTimerZJH gameTimerZJH;
+
+    @Resource
+    private RoomBiz roomBiz;
+
+    @Resource
+    private Destination daoQueueDestination;
+
+    @Resource
+    private ProducerService producerService;
     /**
      * 创建房间通知自己
      *
@@ -112,7 +131,7 @@ public class ZJHGameEventDealNew {
             ThreadPoolHelper.executorService.submit(new Runnable() {
                 @Override
                 public void run() {
-                    // TODO: 2018/4/25 定时器
+                    gameTimerZJH.readyOverTime(roomNo,ZJHConstant.ZJH_GAME_STATUS_READY);
                 }
             });
         }
@@ -131,7 +150,7 @@ public class ZJHGameEventDealNew {
         }
     }
 
-    public void startGame(ZJHGameRoomNew room) {
+    public void startGame(final ZJHGameRoomNew room) {
         // 非准备或初始阶段无法开始开始游戏
         if (room.getGameStatus() != ZJHConstant.ZJH_GAME_STATUS_READY && room.getGameStatus() != ZJHConstant.ZJH_GAME_STATUS_INIT) {
             return;
@@ -157,8 +176,7 @@ public class ZJHGameEventDealNew {
                     array.add(playerinfo.getId());
                 }
             }
-            // TODO: 2018/4/25 抽水
-            //producerService.sendMessage(daoQueueDestination, new PumpDao(DaoTypeConstant.PUMP, room.getJsonObject(array)));
+            producerService.sendMessage(daoQueueDestination, new PumpDao(DaoTypeConstant.PUMP, room.getJsonObject(array)));
         }
         // 玩家下注（底注）
         for (String account : room.getPlayerMap().keySet()) {
@@ -171,7 +189,15 @@ public class ZJHGameEventDealNew {
                 room.addScoreChange(account, score);
             }
         }
-        JSONObject result = obtainStartData(room);
+        final String player = room.getNextOperationPlayer(room.getBanker());
+        // 检查下家跟注状态
+        ThreadPoolHelper.executorService.submit(new Runnable() {
+            @Override
+            public void run() {
+                gameTimerZJH.gameOverTime(room.getRoomNo(),ZJHConstant.ZJH_GAME_STATUS_GAME,player);
+            }
+        });
+        JSONObject result = obtainStartData(room,player);
         room.setGameStatus(ZJHConstant.ZJH_GAME_STATUS_GAME);
         // 通知玩家
         CommonConstant.sendMsgEventToAll(room.getAllUUIDList(),result.toString(),"gameStartPush_ZJH");
@@ -262,7 +288,7 @@ public class ZJHGameEventDealNew {
      * @param score
      * @param type
      */
-    public boolean xiaZhu(ZJHGameRoomNew room,String account,double score,int type){
+    public boolean xiaZhu(final ZJHGameRoomNew room,String account,double score,int type){
         JSONObject result = new JSONObject();
         // 看牌翻倍
         if (type==ZJHConstant.GAME_ACTION_TYPE_JZ) {
@@ -285,19 +311,29 @@ public class ZJHGameEventDealNew {
         room.addScoreChange(account, score);
         // 添加下注用户
         room.addXzPlayer(myIndex);
-
-        // 到达下注论述强制比牌
-        if (room.getGameNum()==room.getTotalGameNum()||room.getTotalScore()==room.getMaxScore()) {
-            // TODO: 2018/4/25 强制结算
-            
-        }
-
+        final String nextPlayer = room.getNextOperationPlayer(account);
         if (type!=ZJHConstant.GAME_ACTION_TYPE_COMPARE) {
+            // 检查下家跟注状态
+            ThreadPoolHelper.executorService.submit(new Runnable() {
+                @Override
+                public void run() {
+                    gameTimerZJH.gameOverTime(room.getRoomNo(),ZJHConstant.ZJH_GAME_STATUS_GAME,nextPlayer);
+                }
+            });
+        }
+        int isGameOver = 0;
+        // 到达下注论述强制比牌
+        if (room.getGameNum()==room.getTotalGameNum()||room.getTotalScore()>=room.getMaxScore()) {
+            compelCompare(room,account);
+            isGameOver = 1;
+        }
+        // 比牌下注不需要通知玩家
+        if (type!=ZJHConstant.GAME_ACTION_TYPE_COMPARE||isGameOver==1) {
             // 通知玩家
             for (String uuid  : room.getUserPacketMap().keySet()) {
                 result.put(CommonConstant.RESULT_KEY_CODE, CommonConstant.GLOBAL_YES);
                 result.put("index", room.getPlayerMap().get(account).getMyIndex());
-                result.put("nextNum", room.getPlayerIndex(room.getNextOperationPlayer(account)));
+                result.put("nextNum", room.getPlayerIndex(nextPlayer));
                 result.put("gameNum", room.getGameNum());
                 result.put("currentScore", room.getCurrentScore());
                 result.put("totalScore", room.getTotalScore());
@@ -305,8 +341,17 @@ public class ZJHGameEventDealNew {
                 result.put("score", score);
                 result.put("realScore", room.getPlayerMap().get(account).getScore());
                 result.put("type", type);
+                result.put("isGameover", isGameOver);
+                if (isGameOver==1){
+                    result.put("jiesuan",obtainSummaryData(room));
+                    result.put("showPai",room.getUserPacketMap().get(uuid).getBipaiList());
+                }
                 CommonConstant.sendMsgEventToSingle(room.getPlayerMap().get(uuid).getUuid(),result.toString(),"gameActionPush_ZJH");
             }
+        }
+        // 游戏结束
+        if (type==ZJHConstant.GAME_ACTION_TYPE_COMPARE&&isGameOver==1) {
+            return false;
         }
         return true;
     }
@@ -317,7 +362,7 @@ public class ZJHGameEventDealNew {
      * @param account
      * @param index
      */
-    public void compare(ZJHGameRoomNew room,String account,int index){
+    public void compare(final ZJHGameRoomNew room,String account,int index){
         if (xiaZhu(room,account,room.getCurrentScore(),ZJHConstant.GAME_ACTION_TYPE_COMPARE)) {
             double score = room.getCurrentScore();
             if (room.getUserPacketMap().get(account).getStatus()==ZJHConstant.ZJH_USER_STATUS_KP) {
@@ -380,9 +425,6 @@ public class ZJHGameEventDealNew {
                         }
                     }
 
-                    // 确定下次操作的玩家
-                    String nextPlayer = room.getNextOperationPlayer(account);
-                    int nextNum = room.getPlayerIndex(nextPlayer);
                     int gameNum = room.getGameNum();
                     if (isGameOver==1) {
                         summary(room);
@@ -392,13 +434,44 @@ public class ZJHGameEventDealNew {
                         JSONObject result = new JSONObject();
                         result.put(CommonConstant.RESULT_KEY_CODE, CommonConstant.GLOBAL_YES);
                         result.put("index", room.getPlayerIndex(account));
-                        result.put("nextNum", nextNum);
+                        result.put("nextNum", -1);
                         result.put("gameNum", gameNum);
                         result.put("currentScore", room.getCurrentScore());
                         result.put("totalScore", room.getTotalScore());
-                        result.put("myScore", room.getUserPacketMap().get(uid).getScore());
-                        result.put("score", room.getCurrentScore());
+                        result.put("myScore", room.getUserPacketMap().get(account).getScore());
+                        result.put("score", score);
+                        result.put("realScore", room.getPlayerMap().get(account).getScore());
                         result.put("type", ZJHConstant.GAME_ACTION_TYPE_COMPARE);
+                        result.put("result", compareResult);
+                        result.put("isGameover", isGameOver);
+                        /*if(isGameOver==1){
+                            result.put("jiesuan",obtainSummaryData(room));
+                            result.put("showPai",room.getUserPacketMap().get(uid).getBipaiList());
+                        }*/
+                        CommonConstant.sendMsgEventToSingle(room.getPlayerMap().get(uid).getUuid(),result.toString(),"gameActionPush_ZJH");
+                    }
+                    // 休眠4.5秒前端播放动画
+                    try {
+                        Thread.sleep(4500);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                    // 确定下次操作的玩家
+                    final String nextPlayer = room.getNextOperationPlayer(account);
+                    int nextNum = room.getPlayerIndex(nextPlayer);
+                    // 通知玩家比牌结束
+                    for (String uid : room.getUserPacketMap().keySet()) {
+                        JSONObject result = new JSONObject();
+                        result.put(CommonConstant.RESULT_KEY_CODE, CommonConstant.GLOBAL_YES);
+                        result.put("type", ZJHConstant.GAME_ACTION_TYPE_COMPARE_FINISH);
+                        result.put("nextNum", nextNum);
+                        result.put("index", room.getPlayerIndex(account));
+                        result.put("gameNum", gameNum);
+                        result.put("currentScore", room.getCurrentScore());
+                        result.put("totalScore", room.getTotalScore());
+                        result.put("myScore", room.getUserPacketMap().get(account).getScore());
+                        result.put("score", score);
+                        result.put("realScore", room.getPlayerMap().get(account).getScore());
                         result.put("result", compareResult);
                         result.put("isGameover", isGameOver);
                         if(isGameOver==1){
@@ -406,6 +479,15 @@ public class ZJHGameEventDealNew {
                             result.put("showPai",room.getUserPacketMap().get(uid).getBipaiList());
                         }
                         CommonConstant.sendMsgEventToSingle(room.getPlayerMap().get(uid).getUuid(),result.toString(),"gameActionPush_ZJH");
+                    }
+                    if(isGameOver!=1){
+                        // 检查下家跟注状态
+                        ThreadPoolHelper.executorService.submit(new Runnable() {
+                            @Override
+                            public void run() {
+                                gameTimerZJH.gameOverTime(room.getRoomNo(),ZJHConstant.ZJH_GAME_STATUS_GAME,nextPlayer);
+                            }
+                        });
                     }
                 }
             }
@@ -435,7 +517,7 @@ public class ZJHGameEventDealNew {
         return summaryData;
     }
 
-    public void giveUp(ZJHGameRoomNew room,String account) {
+    public void giveUp(final ZJHGameRoomNew room, String account) {
         room.getUserPacketMap().get(account).setStatus(ZJHConstant.ZJH_USER_STATUS_QP);
 
         // 游戏是否结束
@@ -462,7 +544,14 @@ public class ZJHGameEventDealNew {
         }
 
         // 确定下次操作的玩家
-        String nextPlayer = room.getNextOperationPlayer(account);
+        final String nextPlayer = room.getNextOperationPlayer(account);
+        // 检查下家跟注状态
+        ThreadPoolHelper.executorService.submit(new Runnable() {
+            @Override
+            public void run() {
+                gameTimerZJH.gameOverTime(room.getRoomNo(),ZJHConstant.ZJH_GAME_STATUS_GAME,nextPlayer);
+            }
+        });
         int nextNum = room.getPlayerIndex(nextPlayer);
         int gameNum = room.getGameNum();
         if(isGameOver==0 && room.getYiXiaZhu().contains(nextNum)){
@@ -492,8 +581,70 @@ public class ZJHGameEventDealNew {
         }
     }
 
+    public void compelCompare(ZJHGameRoomNew room, String opuuid) {
+
+        // 获取还在游戏中的玩家
+        List<String> uuidList = new ArrayList<String>();
+        for (String uuid : room.getUserPacketMap().keySet()) {
+            if(room.getUserPacketMap().get(uuid).getStatus()==ZJHConstant.ZJH_USER_STATUS_AP
+                || room.getUserPacketMap().get(uuid).getStatus()==ZJHConstant.ZJH_USER_STATUS_KP){
+
+                uuidList.add(uuid);
+            }
+        }
+
+        // 比较牌的大小，牌最大者获胜
+        if(uuidList.size()>1){
+
+            // 添加比牌记录
+            for (String uuid : uuidList) {
+                for (String uuid1 : uuidList) {
+                    room.getUserPacketMap().get(uuid).addBiPaiList(room.getPlayerMap().get(uuid1).getMyIndex(),
+                        room.getUserPacketMap().get(uuid1).getPai());
+                }
+            }
+
+            // 弃牌玩家可以看到强制结算玩家的牌
+            for (String string : room.getUserPacketMap().keySet()) {
+                if (!uuidList.contains(string)) {
+                    for (String uuid : uuidList) {
+                        room.getUserPacketMap().get(string).addBiPaiList(room.getPlayerMap().get(uuid).getMyIndex(),
+                            room.getUserPacketMap().get(uuid).getPai());
+                    }
+                }
+            }
+
+            String maxUUID = uuidList.get(0);
+            for (int i = 1; i < uuidList.size(); i++) {
+
+                String uuid = uuidList.get(i);
+                Integer[] paiA = room.getUserPacketMap().get(maxUUID).getPai();
+                Integer[] paiB = room.getUserPacketMap().get(uuid).getPai();
+
+                int biPaiResult = ZhaJinHuaCore.compare(Arrays.asList(paiA), Arrays.asList(paiB));
+
+                if(biPaiResult>0){
+                    // 失败
+                    room.getUserPacketMap().get(uuid).setStatus(ZJHConstant.ZJH_USER_STATUS_LOSE);
+
+                }else{ // 相等比牌的人输
+                    // 失败
+                    room.getUserPacketMap().get(maxUUID).setStatus(ZJHConstant.ZJH_USER_STATUS_LOSE);
+                    // 重置最大牌
+                    maxUUID = uuid;
+                }
+            }
+
+            room.getUserPacketMap().get(maxUUID).setStatus(ZJHConstant.ZJH_USER_STATUS_WIN);
+            // 结算
+            summary(room);
+        }
+    }
+
     public void summary(ZJHGameRoomNew room){
         room.setGameStatus(ZJHConstant.ZJH_GAME_STATUS_SUMMARY);
+        // 重置房间倒计时
+        room.setTimeLeft(ZJHConstant.ZJH_TIMER_INIT);
         for (String uuid : room.getUserPacketMap().keySet()) {
 
             Playerinfo player = room.getPlayerMap().get(uuid);
@@ -507,7 +658,87 @@ public class ZJHGameEventDealNew {
                 }
             }
         }
-        // TODO: 2018/4/25 更新数据库
+        JSONArray array = new JSONArray();
+        JSONArray userDeductionData = new JSONArray();
+        JSONArray gameLogResults = new JSONArray();
+        JSONArray gameResult = new JSONArray();
+        // 存放游戏记录
+        JSONArray gameProcessJS = new JSONArray();
+        for (String account : room.getUserPacketMap().keySet()) {
+            // 有参与的玩家
+            if (room.getUserPacketMap().get(account).getStatus() > NNConstant.NN_USER_STATUS_INIT) {
+                JSONObject userJS = new JSONObject();
+                userJS.put("account", account);
+                userJS.put("name", room.getPlayerMap().get(account).getName());
+                userJS.put("sum", room.getUserPacketMap().get(account).getScore());
+                userJS.put("pai", room.getUserPacketMap().get(account).getPai());
+                userJS.put("paiType", room.getUserPacketMap().get(account).getType());
+                gameProcessJS.add(userJS);
+                // 元宝输赢情况
+                JSONObject obj = new JSONObject();
+                obj.put("total", room.getPlayerMap().get(account).getScore());
+                if (room.getUserPacketMap().get(account).getStatus()==ZJHConstant.ZJH_USER_STATUS_WIN) {
+                    obj.put("fen", Dto.sub(room.getTotalScore(),room.getUserPacketMap().get(account).getScore()));
+                }else {
+                    obj.put("fen", -room.getUserPacketMap().get(account).getScore());
+                }
+                obj.put("id", room.getPlayerMap().get(account).getId());
+                array.add(obj);
+                // 用户游戏记录
+                JSONObject object = new JSONObject();
+                object.put("id", room.getPlayerMap().get(account).getId());
+                object.put("gid", room.getGid());
+                object.put("roomNo", room.getRoomNo());
+                object.put("type", 4);
+                object.put("fen", room.getUserPacketMap().get(account).getScore());
+                userDeductionData.add(object);
+                // 战绩记录
+                JSONObject gameLogResult = new JSONObject();
+                gameLogResult.put("account", account);
+                gameLogResult.put("name", room.getPlayerMap().get(account).getName());
+                gameLogResult.put("headimg", room.getPlayerMap().get(account).getHeadimg());
+                gameLogResult.put("zhuang", room.getPlayerMap().get(room.getBanker()).getMyIndex());
+                gameLogResult.put("myIndex", room.getPlayerMap().get(account).getMyIndex());
+                gameLogResult.put("myPai", room.getUserPacketMap().get(account).getPai());
+                gameLogResult.put("score", room.getUserPacketMap().get(account).getScore());
+                gameLogResult.put("totalScore", room.getPlayerMap().get(account).getScore());
+                gameLogResult.put("win", 1);
+                if (room.getUserPacketMap().get(account).getStatus() < 0) {
+                    gameLogResult.put("win", 0);
+                }
+                gameLogResults.add(gameLogResult);
+                // 用户战绩
+                JSONObject userResult = new JSONObject();
+                userResult.put("zhuang", room.getBanker());
+                userResult.put("isWinner", CommonConstant.GLOBAL_NO);
+                if (room.getUserPacketMap().get(account).getScore() > 0) {
+                    userResult.put("isWinner", CommonConstant.GLOBAL_YES);
+                }
+                userResult.put("score", room.getUserPacketMap().get(account).getScore());
+                userResult.put("totalScore", room.getPlayerMap().get(account).getScore());
+                userResult.put("player", room.getPlayerMap().get(account).getName());
+                gameResult.add(userResult);
+            }
+        }
+        room.getGameProcess().put("xiazhu", room.getXiaZhuList());
+        room.getGameProcess().put("JieSuan", gameProcessJS);
+        if (room.getId()==0) {
+            JSONObject roomInfo = roomBiz.getRoomInfoByRno(room.getRoomNo());
+            if (!Dto.isObjNull(roomInfo)) {
+                room.setId(roomInfo.getLong("id"));
+            }
+        }
+        // 更新玩家分数
+        producerService.sendMessage(daoQueueDestination, new PumpDao(DaoTypeConstant.UPDATE_SCORE, room.getPumpObject(array)));
+        // 玩家输赢记录
+        producerService.sendMessage(daoQueueDestination, new PumpDao(DaoTypeConstant.USER_DEDUCTION, new JSONObject().element("user", userDeductionData)));
+        // 战绩信息
+        JSONObject gameLogObj = room.obtainGameLog(gameLogResults.toString(), room.getGameProcess().toString());
+        producerService.sendMessage(daoQueueDestination, new PumpDao(DaoTypeConstant.INSERT_GAME_LOG, gameLogObj));
+        JSONArray userGameLogs = room.obtainUserGameLog(gameLogObj.getLong("id"), array, gameResult.toString());
+        for (int i = 0; i < userGameLogs.size(); i++) {
+            producerService.sendMessage(daoQueueDestination, new PumpDao(DaoTypeConstant.INSERT_USER_GAME_LOG, userGameLogs.getJSONObject(i)));
+        }
     }
 
 
@@ -629,12 +860,12 @@ public class ZJHGameEventDealNew {
      * @param room
      * @return
      */
-    public JSONObject obtainStartData(ZJHGameRoomNew room){
+    public JSONObject obtainStartData(ZJHGameRoomNew room,String player){
         JSONObject object = new JSONObject();
         object.put("gameStatus",room.getGameStatus());
         object.put("zhuang",room.getBanker());
         object.put("game_index",room.getGameIndex());
-        object.put("nextNum",room.getPlayerIndex(room.getNextOperationPlayer(room.getBanker())));
+        object.put("nextNum",room.getPlayerIndex(player));
         object.put("gameNum",room.getGameNum());
         object.put("currentScore",room.getCurrentScore());
         object.put("totalScore",room.getTotalScore());
@@ -654,7 +885,7 @@ public class ZJHGameEventDealNew {
         obj.put("room_no", room.getRoomNo());
         obj.put("roomType", room.getRoomType());
         obj.put("game_count", room.getGameCount());
-        obj.put("xzTimer", room.getXzTimer());
+        obj.put("xzTimer", ZJHConstant.ZJH_TIMER_XZ);
         if (room.getRoomType() == CommonConstant.ROOM_TYPE_YB) {
             StringBuffer roominfo = new StringBuffer();
             roominfo.append("底注:");
@@ -679,7 +910,7 @@ public class ZJHGameEventDealNew {
         obj.put("baseNum", room.getBaseNum());
         obj.put("totalGameNum", room.getTotalGameNum());
         obj.put("dizhu", room.getScore());
-        obj.put("wanfa", room.getWfType());
+        obj.put("wanfa", room.getGameType());
         obj.put("gameStatus", room.getGameStatus());
         if (room.getUserPacketMap().containsKey(room.getBanker()) && room.getUserPacketMap().get(room.getBanker()) != null) {
             obj.put("zhuang", room.getPlayerMap().get(room.getBanker()).getMyIndex());
@@ -692,6 +923,9 @@ public class ZJHGameEventDealNew {
             obj.put("showTimer", CommonConstant.GLOBAL_YES);
         }
         obj.put("timer", room.getTimeLeft());
+        if (room.getGameStatus()==ZJHConstant.ZJH_GAME_STATUS_GAME) {
+            obj.put("timer", room.getXzTimer());
+        }
         obj.put("myIndex", room.getPlayerMap().get(account).getMyIndex());
         obj.put("mypai", room.getUserPacketMap().get(account).getPai());
         obj.put("paiType", room.getUserPacketMap().get(account).getType());
