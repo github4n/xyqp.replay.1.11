@@ -71,4 +71,7 @@
     <!-- 统一公共异常处理 -->
     <bean id="exceptionHandler" class="com.zhuoan.webapp.aspect.UnCatchExceptionHandler"/>
 
+    <!--此配置防止该类被重复加载，用来启用和关闭socketio服务-->
+    <bean id="preDealSocketListener" class="com.zhuoan.webapp.listener.socketio.PreDealSocketListener"/>
+
 </beans>

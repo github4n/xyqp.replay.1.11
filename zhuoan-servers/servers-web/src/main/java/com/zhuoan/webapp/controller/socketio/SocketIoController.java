@@ -4,7 +4,6 @@ import com.corundumstudio.socketio.Configuration;
 import com.zhuoan.service.socketio.SocketIoManagerService;
 import com.zhuoan.util.thread.ThreadPoolHelper;
 import com.zhuoan.webapp.controller.BaseController;
-import com.zhuoan.webapp.listener.socketio.ServerStartListener;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Controller;
@@ -31,8 +30,6 @@ public class SocketIoController extends BaseController {
 
     /**
      * Start server.手动启动socket 服务
-     *
-     * @see ServerStartListener 此处默认启动socket 服务，无需手动调用
      */
     @RequestMapping(value = "startServer", method = RequestMethod.POST)
     @ResponseBody
