@@ -87,7 +87,7 @@ public class MutliThreadNN extends Thread{
     			try {
 					Thread.sleep(1000);
 				} catch (InterruptedException e1) {
-					e1.printStackTrace();
+					logger.error("",e1);
 				}
     			////System.out.println("牛牛准备倒计时："+i);
     			if(Constant.niuNiuGameMap.get(roomNo)!=null){
@@ -158,7 +158,7 @@ public class MutliThreadNN extends Thread{
     			try {
 					Thread.sleep(1000);
 				} catch (InterruptedException e1) {
-					e1.printStackTrace();
+					logger.error("",e1);
 				}
 //    			System.out.println("牛牛下注倒计时："+i);
     			if(Constant.niuNiuGameMap.get(roomNo)!=null){
@@ -255,7 +255,7 @@ public class MutliThreadNN extends Thread{
     			try {
 					Thread.sleep(1000);
 				} catch (InterruptedException e1) {
-					e1.printStackTrace();
+					logger.error("",e1);
 				}
     			//System.out.println("牛牛亮牌倒计时："+i);
     			if(Constant.niuNiuGameMap.get(roomNo)!=null){
@@ -348,7 +348,7 @@ public class MutliThreadNN extends Thread{
     			try {
 					Thread.sleep(1000);
 				} catch (InterruptedException e1) {
-					e1.printStackTrace();
+					logger.error("",e1);
 				}
     			if(Constant.niuNiuGameMap.get(roomNo)!=null){
     				NNGameRoom room = Constant.niuNiuGameMap.get(roomNo);
@@ -409,7 +409,7 @@ public class MutliThreadNN extends Thread{
     			try {
 					Thread.sleep(1000);
 				} catch (InterruptedException e1) {
-					e1.printStackTrace();
+					logger.error("",e1);
 				}
     			if(Constant.niuNiuGameMap.get(roomNo)!=null&&Constant.niuNiuGameMap.get(roomNo).getCloseTime()>0){
     				
@@ -480,7 +480,7 @@ public class MutliThreadNN extends Thread{
     			try {
 					Thread.sleep(1000);
 				} catch (InterruptedException e1) {
-					e1.printStackTrace();
+					logger.error("",e1);
 				}
     			if(Constant.niuNiuGameMap.get(roomNo)!=null){
     				
@@ -551,7 +551,7 @@ public class MutliThreadNN extends Thread{
     			try {
 					Thread.sleep(1000);
 				} catch (InterruptedException e1) {
-					e1.printStackTrace();
+					logger.error("",e1);
 				}
     			//System.out.println("牛牛准备倒计时："+i);
     			if(Constant.niuNiuGameMap.get(roomNo)!=null){

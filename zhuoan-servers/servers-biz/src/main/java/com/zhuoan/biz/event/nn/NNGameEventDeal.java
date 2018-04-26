@@ -4743,7 +4743,7 @@ public class NNGameEventDeal {
 						try {
 							Thread.sleep(800);
 						} catch (InterruptedException e1) {
-							e1.printStackTrace();
+							logger.error("",e1);
 						}
 					}
 					if(((NNGameRoom)RoomManage.gameRoomMap.get(roomNo))!=null){

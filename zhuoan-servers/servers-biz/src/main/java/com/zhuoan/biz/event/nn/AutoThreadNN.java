@@ -182,7 +182,7 @@ public class AutoThreadNN extends Thread{
 				try {
 					Thread.sleep(1000);
 				} catch (InterruptedException e1) {
-					e1.printStackTrace();
+					logger.error("",e1);
 				}
 				if(Constant.niuNiuGameMap.get(roomNo)!=null){
 
@@ -487,7 +487,7 @@ public class AutoThreadNN extends Thread{
 		try {
 			Thread.sleep(1000);
 		} catch (InterruptedException e1) {
-			e1.printStackTrace();
+			logger.error("",e1);
 		}
 		if(Constant.niuNiuGameMap.containsKey(roomNo)){
 			if(Constant.niuNiuGameMap.get(roomNo)!=null){

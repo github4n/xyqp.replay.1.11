@@ -97,7 +97,7 @@ public class MutliThreadZJH extends Thread{
 					 }
 					 Thread.sleep(1000);
 				 } catch (InterruptedException e1) {
-					 e1.printStackTrace();
+					 logger.error("",e1);
 				 }
 				 if(Constant.zjhGameMap.get(roomNo)!=null){
 
@@ -172,7 +172,7 @@ public class MutliThreadZJH extends Thread{
 					 }
 					 Thread.sleep(1000);
 				 } catch (InterruptedException e1) {
-					 e1.printStackTrace();
+					 logger.error("",e1);
 				 }
 				 if(Constant.zjhGameMap.get(roomNo)!=null){
 
