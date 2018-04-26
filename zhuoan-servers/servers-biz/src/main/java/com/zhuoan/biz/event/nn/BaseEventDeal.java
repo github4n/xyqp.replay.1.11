@@ -866,25 +866,91 @@ public class BaseEventDeal {
      */
     public void getUserGameLogs(SocketIOClient client, Object data){
         JSONObject postData = JSONObject.fromObject(data);
-        if (postData.containsKey("user_id")&&postData.containsKey("game_id")) {
-            long userId = postData.getLong("user_id");
-            int gameId = postData.getInt("game_id");
+        if (postData.containsKey("id")&&postData.containsKey("gid")) {
+            long userId = postData.getLong("id");
+            int gameId = postData.getInt("gid");
             JSONArray userGameLogs = gameLogBiz.getUserGameLogsByUserId(userId,gameId);
+            JSONObject back = new JSONObject();
             JSONArray result = new JSONArray();
             if (userGameLogs.size()>0) {
                 for (int i = 0; i < userGameLogs.size(); i++) {
                     JSONObject userGameLog = userGameLogs.getJSONObject(i);
                     JSONObject obj = new JSONObject();
                     obj.put("room_no",userGameLog.getString("room_no"));
-                    obj.put("createtime",userGameLog.getString("createtime"));
+                    obj.put("createTime",userGameLog.getString("createtime"));
                     JSONArray userResult = new JSONArray();
                     for (int j = 0; j < userGameLog.getJSONArray("result").size(); j++) {
                         JSONObject object = userGameLog.getJSONArray("result").getJSONObject(j);
-                        userResult.add(new JSONObject().element("name",object.getString("player")).element("score",object.getString("score")));
+                        userResult.add(new JSONObject().element("player",object.getString("player")).element("score",object.getString("score")));
                     }
-                    obj.put("result",userResult);
+                    obj.put("playermap",userResult);
                     result.add(obj);
                 }
+            }
+            if (result.size()==0) {
+                back.put(CommonConstant.RESULT_KEY_CODE,CommonConstant.GLOBAL_NO);
+                back.put("gid",gameId);
+            }else {
+                back.put(CommonConstant.RESULT_KEY_CODE,CommonConstant.GLOBAL_YES);
+                back.put("data",result.toString());
+                back.put("gid",gameId);
+            }
+            CommonConstant.sendMsgEventToSingle(client,back.toString(),"getGameLogsListPush");
+        }
+    }
+
+    /**
+     * 解散房间
+     * @param client
+     * @param data
+     */
+    public void dissolveRoom(SocketIOClient client,Object data){
+        JSONObject postData = JSONObject.fromObject(data);
+        if (postData.containsKey("adminCode")&&postData.containsKey("adminPass")&&postData.containsKey("memo")) {
+            String adminCode = postData.getString("adminCode");
+            String adminPass = postData.getString("adminPass");
+            String memo = postData.getString("memo");
+            if (postData.containsKey("room_no")) {
+                String roomNo = postData.getString("room_no");
+                if (RoomManage.gameRoomMap.containsKey(roomNo)) {
+                    JSONObject sysUser = userBiz.getSysUser(adminCode,adminPass,memo);
+                    if (!Dto.isObjNull(sysUser)) {
+                        RoomManage.gameRoomMap.remove(roomNo);
+                    }
+                }
+            }
+        }
+    }
+
+    /**
+     * 开关游戏
+     * @param client
+     * @param data
+     */
+    public void onOrOffGame(SocketIOClient client,Object data){
+        JSONObject postData = JSONObject.fromObject(data);
+        if (postData.containsKey("adminCode")&&postData.containsKey("adminPass")&&postData.containsKey("memo")) {
+            String adminCode = postData.getString("adminCode");
+            String adminPass = postData.getString("adminPass");
+            String memo = postData.getString("memo");
+            if (postData.containsKey("game_id")&&postData.containsKey("value")) {
+                try {
+                    int gameId = postData.getInt("game_id");
+                    int value = postData.getInt("value");
+                    switch (gameId) {
+                        case CommonConstant.GAME_ID_NN:
+                            NNGameEventDealNew.GAME_NN = value;
+                            break;
+                        case CommonConstant.GAME_ID_SSS:
+                            SSSGameEventDealNew.GAME_SSS = value;
+                            break;
+                        case CommonConstant.GAME_ID_ZJH:
+                            ZJHGameEventDealNew.GAME_ZJH = value;
+                            break;
+                        default:
+                            break;
+                    }
+                } catch (Exception e) {}
             }
         }
     }

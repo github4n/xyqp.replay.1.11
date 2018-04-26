@@ -43,6 +43,8 @@ public class NNGameEventDealNew {
 
     private final static Logger logger = LoggerFactory.getLogger(NNGameEventDealNew.class);
 
+    public static int GAME_NN = 1;
+
     @Resource
     private GameTimerNiuNiu gameTimerNiuNiu;
 
@@ -204,14 +206,24 @@ public class NNGameEventDealNew {
         NNGameRoomNew room = (NNGameRoomNew) RoomManage.gameRoomMap.get(roomNo);
         // 玩家账号
         String account = postData.getString(CommonConstant.DATA_KEY_ACCOUNT);
+        if (NNGameEventDealNew.GAME_NN==0) {
+            postData.put("notSend",CommonConstant.GLOBAL_YES);
+            exitRoom(client,postData);
+            JSONObject result = new JSONObject();
+            result.put("type",CommonConstant.SHOW_MSG_TYPE_BIG);
+            result.put(CommonConstant.RESULT_KEY_MSG,"即将停服进行更新");
+            CommonConstant.sendMsgEventToSingle(client,result.toString(),"tipMsgPush");
+            return;
+        }
         // 元宝不足无法准备
         if (room.getPlayerMap().get(account).getScore() < room.getLeaveScore()) {
+            // 清出房间
+            postData.put("notSendToMe",CommonConstant.GLOBAL_YES);
+            exitRoom(client,postData);
             JSONObject result = new JSONObject();
             result.put("type",CommonConstant.SHOW_MSG_TYPE_BIG);
             result.put("msg","元宝不足");
             CommonConstant.sendMsgEventToSingle(client,result.toString(),"tipMsgPush");
-            // 清出房间
-            exitRoom(client,data);
             return;
         }
         // 设置玩家准备状态
@@ -893,7 +905,12 @@ public class NNGameEventDealNew {
                     result.put("showTimer", CommonConstant.GLOBAL_NO);
                 }
                 result.put("timer", room.getTimeLeft());
-                CommonConstant.sendMsgEventToAll(allUUIDList, result.toString(), "exitRoomPush_NN");
+                if (!postData.containsKey("notSend")) {
+                    CommonConstant.sendMsgEventToAll(allUUIDList, result.toString(), "exitRoomPush_NN");
+                }
+                if (postData.containsKey("notSendToMe")) {
+                    CommonConstant.sendMsgEventToAll(room.getAllUUIDList(), result.toString(), "exitRoomPush_NN");
+                }
                 // 房间内所有玩家都已经完成准备且人数大于两人通知开始游戏
                 if (room.isAllReady() && room.getPlayerMap().size() >= NNConstant.NN_MIN_START_COUNT) {
                     startGame(room);

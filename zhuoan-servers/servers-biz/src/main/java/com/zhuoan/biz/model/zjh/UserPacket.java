@@ -17,7 +17,7 @@ public class UserPacket {
 	private boolean win=false;//是否赢了
 	private boolean isBanker=false;//是否是庄家
 	private int isReady;// 玩家准备状态
-	private int status=-1;// 玩家游戏状态
+	private int status=0;// 玩家游戏状态
 	private double score;//分数
 	public int isCloseRoom=0;//解散房间申请  0:未确认 1:同意  -1:拒绝
 	public boolean isGenDaoDi=false;//是否跟到底
