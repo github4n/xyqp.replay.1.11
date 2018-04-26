@@ -109,7 +109,7 @@ public class GameMain implements SocketIoManagerService {
         server.start();
         logger.info("SocketIO server 启用端口 = [" + server.getConfiguration().getPort() +
             "] IP = [" + server.getConfiguration().getHostname() + "]");
-        logger.info("SocketIO server is started successfully!!!!!!");
+        logger.info("SocketIO server is started successfully!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!![STARTED]!!!!!!!!!");
     }
 
     /**
@@ -122,7 +122,7 @@ public class GameMain implements SocketIoManagerService {
             logger.info("关闭 SocketIO server 端口 =  [" + server.getConfiguration().getPort() +
                 "] IP = [" + server.getConfiguration().getHostname() + "]");
             server = null;
-            logger.info("SocketIO server is closed successfully!!!!!!");
+            logger.info("socketio server is closed successfully!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!![CLOSED]!!!!!!!!!");
         }
     }
 
