@@ -1,6 +1,7 @@
 package com.zhuoan.webapp.controller.socketio;
 
 import com.corundumstudio.socketio.Configuration;
+import com.corundumstudio.socketio.SocketIOServer;
 import com.zhuoan.service.socketio.SocketIoManagerService;
 import com.zhuoan.util.thread.ThreadPoolHelper;
 import com.zhuoan.webapp.controller.BaseController;
@@ -31,7 +32,7 @@ public class SocketIoController extends BaseController {
     /**
      * Start server.手动启动socket 服务
      */
-    @RequestMapping(value = "startServer", method = RequestMethod.POST)
+    @RequestMapping(value = "startServer", method = RequestMethod.GET)
     @ResponseBody
     public String startServer(final HttpServletRequest request) {
         logger.info("当前IP = [" + getIp(request) + "] 手动启动 socket服务");
@@ -46,7 +47,8 @@ public class SocketIoController extends BaseController {
             Configuration configuration = service.getServer().getConfiguration();
             logger.info("socket 服务已绑定 ip：" + configuration.getHostname() + " port:" + configuration.getPort());
         }
-        return "SocketIO server is started successfully!!!!!!";
+        return "<br><br><br><br><br>" +
+            "<h1><div style=\"text-align: center;color: #4caf50;\">恭喜你，服务启动完成！</div></h1>";
     }
 
     /**
@@ -64,6 +66,28 @@ public class SocketIoController extends BaseController {
         }
         return "SocketIO server is closed successfully!!!!!!";
     }
+
+    /**
+     * Query status string.查看服务状态
+     *
+     * @param request the request
+     * @return the string
+     */
+    @RequestMapping(value = "queryStatus", method = RequestMethod.GET)
+    @ResponseBody
+    public String queryStatus(HttpServletRequest request) {
+        logger.info("当前IP = [" + getIp(request) + "] 查看 socket服务状态");
+        SocketIOServer server = service.getServer();
+        if (server != null) {
+            int port = server.getConfiguration().getPort();
+            String host = server.getConfiguration().getHostname();
+            return "<br><br><br><br><br>" +
+                "<h1><div style=\"text-align: center;color: #4CAF50;\">服务状态：进行中</h1></div><br><p><div style=\"text-align: center;\"> [" + host + ":" + port + "]</p>";
+        }
+        return "<br><br><br><br><br>" +
+            "<h1><div style=\"text-align: center;color: #F44336;\">服务状态：关闭</div></h1>";
+    }
+
 
     /**
      * Send advert info msg.给指定的客户端推送消息

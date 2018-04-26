@@ -81,7 +81,7 @@ public class DemoController extends BaseController {
          */
         @RequestMapping
         public String enter () {
-            return "redirect:index";
+            return "redirect:admin";
         }
 
         /**
@@ -89,10 +89,11 @@ public class DemoController extends BaseController {
          *
          * @param request the request
          */
-        @RequestMapping("index")
+        @RequestMapping("admin")
         public void demo (HttpServletRequest request){
-            logger.info("用户IP = [" + getIp(request) + "] 访问了index.html");
+            logger.info("用户IP = [" + getIp(request) + "] 访问了admin.html");
         }
+
 
         /**
          * For 404 string.

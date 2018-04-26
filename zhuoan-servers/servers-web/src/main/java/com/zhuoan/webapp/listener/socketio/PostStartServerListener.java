@@ -6,6 +6,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationListener;
 import org.springframework.context.event.ContextRefreshedEvent;
+import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
 
@@ -16,17 +17,18 @@ import javax.annotation.Resource;
  * @author weixiang.wu
  * @date 2018-04-02 10:53
  **/
-public class PostConstructListener implements ApplicationListener<ContextRefreshedEvent> {
+@Component
+public class PostStartServerListener implements ApplicationListener<ContextRefreshedEvent> {
 
-    private final static Logger logger = LoggerFactory.getLogger(PostConstructListener.class);
+    private final static Logger logger = LoggerFactory.getLogger(PostStartServerListener.class);
 
     @Resource
     private SocketIoManagerService socketIoManagerService;
 
     @Override
     public void onApplicationEvent(ContextRefreshedEvent contextRefreshedEvent) {
-        logger.info("默认启动socket 服务");
         if (socketIoManagerService.getServer() == null) {
+            logger.info("默认启动socket 服务");
             ThreadPoolHelper.executorService.submit(new Runnable() {
                 @Override
                 public void run() {
