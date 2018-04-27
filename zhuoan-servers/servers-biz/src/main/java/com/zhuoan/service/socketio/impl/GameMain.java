@@ -99,7 +99,7 @@ public class GameMain implements SocketIoManagerService {
         String remotePort = env.getProperty(EnvKeyEnum.SERVER_PORT.getKey());
 
         /* 调用远程方法：告知本地服务的ip:port*/
-        asRemoteServer(remoteHostName, remotePort, localHostName, localPort);
+        invokeRemoteMethod(remoteHostName, remotePort, localHostName, localPort);
 
         /* 创建SocketIO服务 */
         server = new SocketIOServer(serverConfig(localHostName, localPort));
@@ -184,7 +184,7 @@ public class GameMain implements SocketIoManagerService {
         return config;
     }
 
-    private void asRemoteServer(String remoteHostName, String remotePort, String localHostName, String localPort) {
+    private void invokeRemoteMethod(String remoteHostName, String remotePort, String localHostName, String localPort) {
         try {
             // 获取RMI注册管理器
             Registry registry = LocateRegistry.getRegistry(remoteHostName,Integer.valueOf(remotePort));

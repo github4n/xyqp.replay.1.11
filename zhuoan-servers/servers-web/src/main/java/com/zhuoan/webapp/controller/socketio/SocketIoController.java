@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.ResponseBody;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
+import java.util.Arrays;
 
 /**
  * SocketIoController
@@ -39,14 +40,14 @@ public class SocketIoController extends BaseController {
                 service.startServer();
             } catch (Exception e) {
                 return "<br><br><br><br><br>" +
-                    "<h1><div style=\"text-align: center;color: #F44336;\">服务启动失败：RMI远程调用发生异常<br>" + e + "</div></h1>";
-           }
+                    "<h1><div style=\"text-align: center;color: #F44336;\">服务启动失败：RMI异常"+ e +"</div></h1><br><p><div><br>" + Arrays.toString(e.getStackTrace()) + "</div></p>";
+            }
         }
         Configuration configuration = service.getServer().getConfiguration();
         int port = configuration.getPort();
         String host = configuration.getHostname();
         return "<br><br><br><br><br>" +
-            "<h1><div style=\"text-align: center;color: #4CAF50;\">服务状态：进行中</h1></div><br><p><div style=\"text-align: center;\"> [" + host + ":" + port + "]</p>";
+            "<h1><div style=\"text-align: center;color: #4CAF50;\">服务状态：进行中</h1></div><br><p><div style=\"text-align: center;\"> [" + host + ":" + port + "]</div></p>";
     }
 
     /**
