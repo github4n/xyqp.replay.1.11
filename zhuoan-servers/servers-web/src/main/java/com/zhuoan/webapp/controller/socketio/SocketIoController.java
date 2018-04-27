@@ -47,7 +47,7 @@ public class SocketIoController extends BaseController {
         int port = configuration.getPort();
         String host = configuration.getHostname();
         return "<br><br><br><br><br>" +
-            "<h1><div style=\"text-align: center;color: #4CAF50;\">服务状态：进行中</h1></div><br><p><div style=\"text-align: center;\"> [" + host + ":" + port + "]</div></p>";
+            "<h1><div style=\"text-align: center;color: #4CAF50;\">恭喜你，成功启用服务</h1></div><br><p><div style=\"text-align: center;\"> [" + host + ":" + port + "]</div></p>";
     }
 
     /**

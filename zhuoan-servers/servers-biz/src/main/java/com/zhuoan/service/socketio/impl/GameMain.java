@@ -108,10 +108,10 @@ public class GameMain implements SocketIoManagerService {
 
         /* 添加监听事件 */
         addEventListener(server);
-        logger.info("==============================[ 紧接,SocketIO服务完成了监听事件的添加  ]==============================");
+        logger.info("============================== 紧接,SocketIO服务完成了监听事件的添加  ==============================");
 
         server.start();
-        logger.info("==============================[ 最终,SOCKET-IO服务开启成功!  ]==============================");
+        logger.info("==============================[ SOCKET-IO服务启用成功 ]==============================");
 
         /* 调度器处理：更新缓存+房间定时器 */
         scheduleDeal();
@@ -128,7 +128,7 @@ public class GameMain implements SocketIoManagerService {
             int port = configuration.getPort();
             String host = configuration.getHostname();
             server = null;
-            logger.info("==============================[ SOCKET-IO服务[" + host + ":" + port + " ]已关闭!  ]==============================");
+            logger.info("==============================[ SOCKET-IO服务[" + host + ":" + port + "]已关闭 ]==============================");
         }
     }
 
