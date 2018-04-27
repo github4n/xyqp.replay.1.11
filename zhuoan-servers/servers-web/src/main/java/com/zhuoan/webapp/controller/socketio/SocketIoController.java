@@ -1,9 +1,7 @@
 package com.zhuoan.webapp.controller.socketio;
 
 import com.corundumstudio.socketio.Configuration;
-import com.corundumstudio.socketio.SocketIOServer;
 import com.zhuoan.service.socketio.SocketIoManagerService;
-import com.zhuoan.util.thread.ThreadPoolHelper;
 import com.zhuoan.webapp.controller.BaseController;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -30,41 +28,25 @@ public class SocketIoController extends BaseController {
     private SocketIoManagerService service;
 
     /**
-     * Start server.手动启动socket 服务
+     * Start server.手动启用SocketIO服务
      */
     @RequestMapping(value = "startServer", method = RequestMethod.GET)
     @ResponseBody
     public String startServer(final HttpServletRequest request) {
-        logger.info("当前IP = [" + getIp(request) + "] 手动启动 socket服务");
+        logger.info("[" + getIp(request) + "] 手动启动 SocketIO服务");
         if (service.getServer() == null) {
-            ThreadPoolHelper.executorService.submit(new Runnable() {
-                @Override
-                public void run() {
-                    service.startServer();
-                }
-            });
-        } else {
-            Configuration configuration = service.getServer().getConfiguration();
-            logger.info("socket 服务已绑定 ip：" + configuration.getHostname() + " port:" + configuration.getPort());
+            try {
+                service.startServer();
+            } catch (Exception e) {
+                return "<br><br><br><br><br>" +
+                    "<h1><div style=\"text-align: center;color: #F44336;\">服务启动失败：RMI远程调用发生异常<br>" + e + "</div></h1>";
+           }
         }
+        Configuration configuration = service.getServer().getConfiguration();
+        int port = configuration.getPort();
+        String host = configuration.getHostname();
         return "<br><br><br><br><br>" +
-            "<h1><div style=\"text-align: center;color: #4caf50;\">恭喜你，服务启动完成！</div></h1>";
-    }
-
-    /**
-     * Stop server.停止socket服务
-     *
-     * @param request the request
-     * @throws Exception the com.zhuoan.exception
-     */
-    @RequestMapping(value = "stopServer", method = RequestMethod.POST)
-    @ResponseBody
-    public String stopServer(HttpServletRequest request) {
-        logger.info("当前IP = [" + getIp(request) + "] 手动停止 socket服务");
-        if (service.getServer() != null) {
-            service.stopServer();
-        }
-        return "SocketIO server is closed successfully!!!!!!";
+            "<h1><div style=\"text-align: center;color: #4CAF50;\">服务状态：进行中</h1></div><br><p><div style=\"text-align: center;\"> [" + host + ":" + port + "]</p>";
     }
 
     /**
@@ -76,16 +58,32 @@ public class SocketIoController extends BaseController {
     @RequestMapping(value = "queryStatus", method = RequestMethod.GET)
     @ResponseBody
     public String queryStatus(HttpServletRequest request) {
-        logger.info("当前IP = [" + getIp(request) + "] 查看 socket服务状态");
-        SocketIOServer server = service.getServer();
-        if (server != null) {
-            int port = server.getConfiguration().getPort();
-            String host = server.getConfiguration().getHostname();
+        logger.info(" [" + getIp(request) + "] 查看 SocketIO服务状态");
+        if (service.getServer() != null) {
+            Configuration configuration = service.getServer().getConfiguration();
+            int port = configuration.getPort();
+            String host = configuration.getHostname();
             return "<br><br><br><br><br>" +
-                "<h1><div style=\"text-align: center;color: #4CAF50;\">服务状态：进行中</h1></div><br><p><div style=\"text-align: center;\"> [" + host + ":" + port + "]</p>";
+                "<h1><div style=\"text-align: center;color: #4CAF50;\">SocketIO服务状态：进行中</h1></div><br><p><div style=\"text-align: center;\"> [" + host + ":" + port + "]</p>";
         }
         return "<br><br><br><br><br>" +
-            "<h1><div style=\"text-align: center;color: #F44336;\">服务状态：关闭</div></h1>";
+            "<h1><div style=\"text-align: center;color: #F44336;\">SocketIO服务状态：未启动</div></h1>";
+    }
+
+    /**
+     * Stop server.停止socket服务
+     *
+     * @param request the request
+     * @throws Exception the com.zhuoan.exception
+     */
+    @RequestMapping(value = "stopServer", method = RequestMethod.POST)
+    @ResponseBody
+    public String stopServer(HttpServletRequest request) {
+        logger.info(" [" + getIp(request) + "] 手动停止 SocketIO服务");
+        if (service.getServer() != null) {
+            service.stopServer();
+        }
+        return "服务状态：关闭";
     }
 
 
