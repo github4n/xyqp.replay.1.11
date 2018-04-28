@@ -94,17 +94,18 @@ public class GameMain implements SocketIoManagerService {
     @Override
     public void startServer() {
         //本地Server ip：port
-        String localHostName = env.getProperty(EnvKeyEnum.LOCAL_IP.getKey());
+        String localOuterNetIp = env.getProperty(EnvKeyEnum.LOCAL_REMOTE_IP.getKey());
+        String localIp = env.getProperty(EnvKeyEnum.LOCAL_IP.getKey());
         String localPort = env.getProperty(EnvKeyEnum.LOCAL_PORT.getKey());
         //远程Server ip：port
         String remoteHostName = env.getProperty(EnvKeyEnum.SERVER_IP.getKey());
         String remotePort = env.getProperty(EnvKeyEnum.SERVER_PORT.getKey());
 
         /* 调用远程方法：告知本地服务的ip:port*/
-        invokeRemoteMethod(remoteHostName, remotePort, localHostName, localPort);
+        invokeRemoteMethod(remoteHostName, remotePort, localOuterNetIp, localPort);
 
         /* 创建SocketIO服务 */
-        server = new SocketIOServer(serverConfig(localHostName, localPort));
+        server = new SocketIOServer(serverConfig(localIp, localPort));
 
         /* 添加监听事件 */
         addEventListener(server);
@@ -186,7 +187,7 @@ public class GameMain implements SocketIoManagerService {
         return config;
     }
 
-    private void invokeRemoteMethod(String remoteHostName, String remotePort, String localHostName, String localPort) {
+    private void invokeRemoteMethod(String remoteHostName, String remotePort, String localOuterNetIp, String localPort) {
         try {
             // 获取RMI注册管理器
             Registry registry = LocateRegistry.getRegistry(remoteHostName, Integer.valueOf(remotePort));
@@ -194,9 +195,9 @@ public class GameMain implements SocketIoManagerService {
             IService server = (IService) registry.lookup("sysService");
 
             // 调用远程方法: 告知SOCKETIO的IP和PORT
-            server.joinServer(localHostName, Integer.valueOf(localPort),
+            server.joinServer(localOuterNetIp, Integer.valueOf(localPort),
                 env.getProperty(EnvKeyEnum.LOCAL_NAME.getKey()));
-            logger.info("============================== 首先,调用远程方法：告知本地服务 [" + localHostName + ":" + localPort + "] ==============================");
+            logger.info("============================== 首先,调用远程方法：告知本地服务 [" + localOuterNetIp + ":" + localPort + "] ==============================");
 
             // 开启定时任务
             ScheduledExecutorService executor = new ScheduledThreadPoolExecutor(1,

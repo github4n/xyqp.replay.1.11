@@ -14,12 +14,17 @@ import javax.jms.Queue;
 
 /**
  * 1、兴起一条队列
- *
+ * @see ActiveConfig#baseQueueDestination()
+ * <p>
+ * 2、配置监听，即消费者
+ * @see com.zhuoan.webapp.listener.event
+ * @see ActiveConfig#baseQueueListenerContainer(ConnectionFactory)
+ * <p>
+ * 3、消费者监听当前队列
+ * @see ActiveConfig#configListenerMQ(ConnectionFactory, MessageListener, Queue)
+ * <p>
  * @author weixiang.wu
  * @date 2018 -04-09 21:02
- * @see ActiveConfig#baseQueueDestination() ActiveConfig#baseQueueDestination()ActiveConfig#baseQueueDestination()ActiveConfig#baseQueueDestination() <p> 2、配置监听，即消费者
- * @see < com.zhuoan.webapp.listener.eventp> 3、消费者监听当前队列
- * @see ActiveConfig#baseQueueListenerContainer(ConnectionFactory connectionFactory) ActiveConfig#queueListenerContainer(ConnectionFactory connectionFactory)ActiveConfig#queueListenerContainer(ConnectionFactory connectionFactory)ActiveConfig#queueListenerContainer(ConnectionFactory connectionFactory) <p>
  */
 @Configuration
 public class ActiveConfig {
@@ -238,6 +243,14 @@ public class ActiveConfig {
         queueListenerContainer.setConnectionFactory(connectionFactory);
         queueListenerContainer.setMessageListener(messageListener);
         queueListenerContainer.setDestination(queue);
+        /**
+         * Specify concurrency limits via a "lower-upper" String, e.g. "5-10", or a simple
+         * upper limit String, e.g. "10" (the lower limit will be 1 in this case).
+         * <p>This listener container will always hold on to the minimum number of consumers
+         * ({@link #setConcurrentConsumers}) and will slowly scale up to the maximum number
+         * of consumers {@link #setMaxConcurrentConsumers} in case of increasing load.
+         */
+        queueListenerContainer.setConcurrency("25");
         return queueListenerContainer;
     }
 
