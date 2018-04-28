@@ -12,7 +12,12 @@
     <amq:connectionFactory id="amqConnectionFactory"
                            brokerURL="${activemq.brokerURL}"
                            userName="${activemq.userName}"
-                           password="${activemq.password}"/>
+                           password="${activemq.password}"
+    />
+    <!--producerWindowSize="1024000"-->
+    <!--configure the ProducerWindowSize connection option so that even async messages are flow controlled per producer.-->
+
+
 
     <!-- Spring Caching连接工厂 -->
     <!-- Spring用于管理真正的ConnectionFactory的ConnectionFactory -->

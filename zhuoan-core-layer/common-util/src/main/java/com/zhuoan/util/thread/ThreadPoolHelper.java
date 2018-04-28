@@ -15,8 +15,8 @@ import java.util.concurrent.TimeUnit;
  **/
 public class ThreadPoolHelper {
 
-    public static  ExecutorService executorService = new ThreadPoolExecutor(8, 24,
+    public static  ExecutorService executorService = new ThreadPoolExecutor(8, 200,
         60L, TimeUnit.SECONDS,
-        new LinkedBlockingQueue<Runnable>(200), new ThreadFactoryBuilder().setNameFormat("call-back-handle-pool-%d").build(), new ThreadPoolExecutor.AbortPolicy());
+        new LinkedBlockingQueue<Runnable>(10), new ThreadFactoryBuilder().setNameFormat("call-back-handle-pool-%d").build(), new ThreadPoolExecutor.AbortPolicy());
 
 }
