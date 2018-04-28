@@ -334,7 +334,7 @@ public class SSSGameEventDealNew {
                 ThreadPoolHelper.executorService.submit(new Runnable() {
                     @Override
                     public void run() {
-                        int  compareTime = 26;
+                        int  compareTime = 20;
                         compareTime += room.obtainNotSpecialCount()*3*7;
                         compareTime += room.getDqArray().size()*11;
                         compareTime += room.getSwat()*38;
@@ -399,7 +399,11 @@ public class SSSGameEventDealNew {
                         gameLogResult.put("account", uuid);
                         gameLogResult.put("name", room.getPlayerMap().get(uuid).getName());
                         gameLogResult.put("headimg", room.getPlayerMap().get(uuid).getHeadimg());
-                        gameLogResult.put("zhuang", room.getPlayerMap().get(room.getBanker()).getMyIndex());
+                        if (room.getPlayerMap().get(room.getBanker())==null) {
+                            gameLogResult.put("zhuang", -1);
+                        }else {
+                            gameLogResult.put("zhuang", room.getPlayerMap().get(room.getBanker()).getMyIndex());
+                        }
                         gameLogResult.put("myIndex", room.getPlayerMap().get(uuid).getMyIndex());
                         gameLogResult.put("myPai", room.getUserPacketMap().get(uuid).getMyPai());
                         gameLogResult.put("score", room.getUserPacketMap().get(uuid).getScore());
