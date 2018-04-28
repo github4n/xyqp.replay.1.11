@@ -198,7 +198,7 @@ public class MutliThreadSSS extends Thread{
 						eventDel.playerExit( new JSONObject().element("room_no", game.getRoomNo()));
 					}
 	    		}catch (InterruptedException e1) {
-					e1.printStackTrace();
+					logger.error("",e1);
 				}
 	    	}
     	}else{

@@ -16,6 +16,8 @@ import com.zhuoan.util.Dto;
 import com.zhuoan.util.LogUtil;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.List;
 import java.util.Set;
@@ -24,6 +26,8 @@ import java.util.Set;
  * 线程异步 
  */
 public class MutliThreadBRNN extends Thread{
+
+    private final static Logger logger = LoggerFactory.getLogger(MutliThreadBRNN.class);
 	
 	public static int[] GLOBALTIMER = new int[]{5,15,20};
 	
@@ -85,7 +89,7 @@ public class MutliThreadBRNN extends Thread{
     				try {
     					Thread.sleep(1000);
     				} catch (InterruptedException e1) {
-    					e1.printStackTrace();
+    					logger.error("",e1);
     				}
     				if(Constant.niuNiuGameMap.get(roomNo)!=null){
     					
@@ -140,7 +144,7 @@ public class MutliThreadBRNN extends Thread{
     				Thread.sleep(3000);
     				System.out.println("上庄");
     			} catch (InterruptedException e1) {
-    				e1.printStackTrace();
+    				logger.error("",e1);
     			}
         		
 				// 开启准备定时器
@@ -247,7 +251,7 @@ public class MutliThreadBRNN extends Thread{
     			try {
 					Thread.sleep(1000);
 				} catch (InterruptedException e1) {
-					e1.printStackTrace();
+					logger.error("",e1);
 				}
     			System.out.println("牛牛下注倒计时："+i);
     			if(Constant.niuNiuGameMap.get(roomNo)!=null){
@@ -487,7 +491,7 @@ public class MutliThreadBRNN extends Thread{
 				new MutliThreadBRNN(null, roomNo, 0).start();
 				
 			} catch (InterruptedException e1) {
-				e1.printStackTrace();
+				logger.error("",e1);
 			}
 		}
 	}

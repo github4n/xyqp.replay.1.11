@@ -64,11 +64,13 @@
         <property name="maxInMemorySize" value="40960" />
     </bean>
 
-    <!--检验用户浏览器中的Cookie，用CookieLocaleResolver来解析区-->
+    <!-- 检验用户浏览器中的Cookie，用CookieLocaleResolver来解析区-->
     <!--<bean id="localeResolver"-->
     <!--class="org.springframework.web.servlet.i18n.CookieLocaleResolver" />-->
 
     <!-- 统一公共异常处理 -->
     <bean id="exceptionHandler" class="com.zhuoan.webapp.aspect.UnCatchExceptionHandler"/>
+    <!-- SocketIO服务自启动-->
+    <bean id="postStartServerListener" class="com.zhuoan.webapp.listener.socketio.PostStartServerListener"/>
 
 </beans>

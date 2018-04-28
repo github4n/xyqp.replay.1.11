@@ -28,6 +28,8 @@ import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
+import java.rmi.NotBoundException;
+import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.util.Collection;
@@ -50,7 +52,7 @@ public class GameMain implements SocketIoManagerService {
     private final static Logger logger = LoggerFactory.getLogger(GameMain.class);
 
     /**
-     * The constant server.socketio服务
+     * The constant server.SocketIO服务
      */
     public static SocketIOServer server;
     /**
@@ -91,25 +93,29 @@ public class GameMain implements SocketIoManagerService {
 
     @Override
     public void startServer() {
-        /* 创建socketio服务 */
-        server = new SocketIOServer(serverConfig());
+        //本地Server ip：port
+        String localOuterNetIp = env.getProperty(EnvKeyEnum.LOCAL_REMOTE_IP.getKey());
+        String localIp = env.getProperty(EnvKeyEnum.LOCAL_IP.getKey());
+        String localPort = env.getProperty(EnvKeyEnum.LOCAL_PORT.getKey());
+        //远程Server ip：port
+        String remoteHostName = env.getProperty(EnvKeyEnum.SERVER_IP.getKey());
+        String remotePort = env.getProperty(EnvKeyEnum.SERVER_PORT.getKey());
 
-        /*
-         *  调用远程服务：  joinServerList + pingpong
-         *  作用：远程服务注册中心调用此服务器 ip port 进行 socketio 事件通讯
-         */
-        asRemoteServer();
+        /* 调用远程方法：告知本地服务的ip:port*/
+        invokeRemoteMethod(remoteHostName, remotePort, localOuterNetIp, localPort);
 
-        /* 调度器处理：更新缓存+房间定时器 */
-        scheduleDeal();
+        /* 创建SocketIO服务 */
+        server = new SocketIOServer(serverConfig(localIp, localPort));
 
         /* 添加监听事件 */
         addEventListener(server);
+        logger.info("============================== 紧接,SocketIO服务完成了监听事件的添加  ==============================");
 
         server.start();
-        logger.info("SocketIO server 启用端口 = [" + server.getConfiguration().getPort() +
-            "] IP = [" + server.getConfiguration().getHostname() + "]");
-        logger.info("SocketIO server is started successfully!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!![STARTED]!!!!!!!!!");
+        logger.info("==============================[ SOCKET-IO服务启用成功 ]==============================");
+
+        /* 调度器处理：更新缓存+房间定时器 */
+        scheduleDeal();
     }
 
     /**
@@ -119,10 +125,11 @@ public class GameMain implements SocketIoManagerService {
     public void stopServer() {
         if (server != null) {
             server.stop();
-            logger.info("关闭 SocketIO server 端口 =  [" + server.getConfiguration().getPort() +
-                "] IP = [" + server.getConfiguration().getHostname() + "]");
+            Configuration configuration = server.getConfiguration();
+            int port = configuration.getPort();
+            String host = configuration.getHostname();
             server = null;
-            logger.info("socketio server is closed successfully!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!![CLOSED]!!!!!!!!!");
+            logger.info("==============================[ SOCKET-IO服务[" + host + ":" + port + "]已关闭 ]==============================");
         }
     }
 
@@ -164,31 +171,33 @@ public class GameMain implements SocketIoManagerService {
     }
 
 
-    private Configuration serverConfig() {
+    private Configuration serverConfig(String localHostName, String localPort) {
         Configuration config = new Configuration();
+
         // 服务器主机IP
-        config.setHostname(env.getProperty(EnvKeyEnum.LOCAL_IP.getKey()));
+        config.setHostname(localHostName);
         // 端口
-        config.setPort(Integer.valueOf(env.getProperty(EnvKeyEnum.LOCAL_PORT.getKey())));
+        config.setPort(Integer.valueOf(localPort));
+
+        logger.info("============================== 其次,SocketIO 启用本地服务 [" + localHostName + ":" + localPort + "] ==============================");
+
         config.setWorkerThreads(SocketListenerConstant.WORKER_THREADS);
         config.setMaxFramePayloadLength(SocketListenerConstant.MAX_FRAME_PAYLOAD_LENGTH);
         config.setMaxHttpContentLength(SocketListenerConstant.MAX_HTTP_CONTENT_LENGTH);
         return config;
     }
 
-    private void asRemoteServer() {
+    private void invokeRemoteMethod(String remoteHostName, String remotePort, String localOuterNetIp, String localPort) {
         try {
-            // 获取服务注册管理器
-            Registry registry = LocateRegistry.getRegistry(env.getProperty(EnvKeyEnum.SERVER_IP.getKey()),
-                Integer.valueOf(env.getProperty(EnvKeyEnum.SERVER_PORT.getKey())));
-
+            // 获取RMI注册管理器
+            Registry registry = LocateRegistry.getRegistry(remoteHostName, Integer.valueOf(remotePort));
             // 根据命名获取服务
             IService server = (IService) registry.lookup("sysService");
 
             // 调用远程方法: 告知SOCKETIO的IP和PORT
-            server.joinServer(env.getProperty(EnvKeyEnum.LOCAL_REMOTE_IP.getKey()),
-                Integer.valueOf(env.getProperty(EnvKeyEnum.LOCAL_PORT.getKey())),
+            server.joinServer(localOuterNetIp, Integer.valueOf(localPort),
                 env.getProperty(EnvKeyEnum.LOCAL_NAME.getKey()));
+            logger.info("============================== 首先,调用远程方法：告知本地服务 [" + localOuterNetIp + ":" + localPort + "] ==============================");
 
             // 开启定时任务
             ScheduledExecutorService executor = new ScheduledThreadPoolExecutor(1,
@@ -196,14 +205,12 @@ public class GameMain implements SocketIoManagerService {
             executor.scheduleWithFixedDelay(new GameTask(), 0, 1, TimeUnit.MINUTES);
 
         } catch (Exception e) {
-            logger.error("获取远程服务注册管理器中发生了异常", e);
+            logger.error("RMI异常", e);
+            throw new RuntimeException(e);
         }
     }
 
     private void scheduleDeal() {
-//        messageQueue = new MessageQueue(16);
-
-
         sqlQueue = sqlQueue1;
         ThreadPoolHelper.executorService.submit(new Runnable() {
             @Override
@@ -256,8 +263,13 @@ public class GameMain implements SocketIoManagerService {
                 // 心跳请求
                 server.heartBeat(env.getProperty(EnvKeyEnum.LOCAL_NAME.getKey()));
 
+                logger.info("I am a RMI-heartbeat");
+
+            } catch (RemoteException | NotBoundException e) {
+                logger.info("尝试重新连接");
+                startServer();
             } catch (Exception e) {
-                logger.error("获取服务注册管理器发生异常", e);
+                logger.error("RMI异常", e);
             }
         }
     }
