@@ -148,9 +148,6 @@ public class NNGameEventDealNew {
             obj.put("roominfo", roomInfo.toString());
             obj.put("roominfo2", room.getWfType());
         }
-        if (room.getBankerType()==NNConstant.NN_BANKER_TYPE_TB) {
-            obj.put("wanfaType", 1);
-        }
         // 通比模式没有庄家，其他模式除了准备、抢庄阶段庄家已经确定
         if (room.getGameStatus() > NNConstant.NN_GAME_STATUS_DZ && room.getBankerType() != NNConstant.NN_BANKER_TYPE_TB) {
             if (room.getUserPacketMap().containsKey(room.getBanker()) && room.getUserPacketMap().get(room.getBanker()) != null) {
@@ -532,16 +529,16 @@ public class NNGameEventDealNew {
             sleepTime = 0;
         }
         // 设置游戏状态
-        room.setGameStatus(NNConstant.NN_GAME_STATUS_XZ);
+        room.setGameStatus(NNConstant.NN_GAME_STATUS_DZ);
         room.setTimeLeft(NNConstant.NN_TIMER_XZ);
         ThreadPoolHelper.executorService.submit(new Runnable() {
             @Override
             public void run() {
-                gameTimerNiuNiu.gameOverTime(room.getRoomNo(), NNConstant.NN_GAME_STATUS_XZ, sleepTime);
+                gameTimerNiuNiu.gameOverTime(room.getRoomNo(), NNConstant.NN_GAME_STATUS_DZ, sleepTime);
             }
         });
         // 通知玩家
-        changeGameStatus(room);
+        //changeGameStatus(room);
         long end = System.currentTimeMillis();
         logger.info("牛牛---gameDingZhuang方法耗时"+(end-start));
     }

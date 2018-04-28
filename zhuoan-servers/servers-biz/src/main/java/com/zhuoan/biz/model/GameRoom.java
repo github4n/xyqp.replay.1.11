@@ -1,10 +1,10 @@
 package com.zhuoan.biz.model;
 
 import com.zhuoan.constant.CommonConstant;
+import com.zhuoan.util.TimeUtil;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 
-import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -559,7 +559,7 @@ public class GameRoom {
             userGameLog.put("user_id", userId);
             userGameLog.put("gamelog_id", gameLogId);
             userGameLog.put("result", gameResult);
-            userGameLog.put("createtime", new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date()));
+            userGameLog.put("createtime", TimeUtil.getNowDate());
             userGameLog.put("account", users.getJSONObject(i).getDouble("fen"));
             userGameLog.put("fee", getFee());
             userGameLogs.add(userGameLog);
@@ -584,7 +584,7 @@ public class GameRoom {
         gamelog.put("base_info", getRoomInfo());
         gamelog.put("result", result);
         gamelog.put("action_records", gameProcess);
-        String nowTime = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date());
+        String nowTime = TimeUtil.getNowDate();
         gamelog.put("finishtime", nowTime);
         gamelog.put("createtime", nowTime);
         gamelog.put("status", 1);

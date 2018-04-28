@@ -46,12 +46,13 @@ public class GameTimerNiuNiu{
                 e.printStackTrace();
             }
         }
-        if (gameStatus==NNConstant.NN_GAME_STATUS_XZ) {
+        if (gameStatus==NNConstant.NN_GAME_STATUS_DZ) {
             // 设置游戏状态
             if (RoomManage.gameRoomMap.containsKey(roomNo)&&RoomManage.gameRoomMap.get(roomNo)!=null) {
                 NNGameRoomNew room = (NNGameRoomNew)RoomManage.gameRoomMap.get(roomNo);
                 room.setGameStatus(NNConstant.NN_GAME_STATUS_XZ);
                 room.setTimeLeft(NNConstant.NN_TIMER_XZ);
+                gameStatus = NNConstant.NN_GAME_STATUS_XZ;
                 // 通知玩家
                 for (String account : room.getPlayerMap().keySet()) {
                     JSONObject obj = new JSONObject();
