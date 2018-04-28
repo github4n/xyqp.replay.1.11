@@ -247,4 +247,33 @@ public interface GameDao {
      * @return
      */
     public JSONArray getUserGameLogsByUserId(long userId, int gameId);
+
+    /**
+     * 获取系统配置
+     * @return
+     */
+    public JSONObject getSysBaseSet();
+
+    /**
+     * 获取游戏配置
+     * @return
+     */
+    public JSONObject getAPPGameSetting();
+
+    /**
+     * 获取道具扣除记录
+     * @param userId
+     * @param doType
+     * @param gid
+     * @param roomid
+     * @param roomNo
+     * @return
+     */
+    public JSONArray getAppObjRec(Long userId, int doType, String gid,String roomid, String roomNo);
+
+    /**
+     * 添加道具扣除记录
+     * @param object
+     */
+    public void addAppObjRec(JSONObject object);
 }

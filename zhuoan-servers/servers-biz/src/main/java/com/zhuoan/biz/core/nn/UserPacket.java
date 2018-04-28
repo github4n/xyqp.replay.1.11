@@ -446,25 +446,15 @@ public class UserPacket extends UserPacketCommen implements Serializable{
 			this.type=isNiuNum();
 			
 			if(this.type==10){
-				
-				if(types.contains(NiuNiu.SPECIALTYPE_HULUNIU) && isHuLuNiu()){ // 葫芦牛
+                // 葫芦牛
+				if(types.contains(NiuNiu.SPECIALTYPE_HULUNIU) && isHuLuNiu()){
 					this.type=NiuNiu.SPECIALTYPE_HULUNIU;
 				}
 			}
 		}
 	}
 
-	
-	
-//	/**
-//	 * 倍率计算
-//	 * @return
-//	 */
-//	public int getRatio(){
-//		return RatioConfig.ratio.get(this.type);
-//	}
-	
-	
+
 	/**
 	 * 倍率计算
 	 * @return

@@ -97,8 +97,21 @@ public class CommonConstant {
      * 是否检查游戏状态
      */
     public static final int CHECK_GAME_STATUS_NO = -1;
-
+    /**
+     * 公告类型-大厅
+     */
+    public static final int NOTICE_TYPE_MALL = 1;
+    /**
+     * 公告类型-游戏内
+     */
+    public static final int NOTICE_TYPE_GAME = 2;
+    /**
+     * 提示消息类型-普通提示
+     */
     public static final int SHOW_MSG_TYPE_SMALL = 1;
+    /**
+     * 提示消息类型-弹窗
+     */
     public static final int SHOW_MSG_TYPE_BIG = 2;
 
     public static final String DATA_KEY_ROOM_NO = "room_no";

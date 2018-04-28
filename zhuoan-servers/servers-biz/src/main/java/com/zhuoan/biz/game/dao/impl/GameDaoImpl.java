@@ -516,8 +516,33 @@ public class GameDaoImpl implements GameDao {
 
     @Override
     public JSONArray getUserGameLogsByUserId(long userId, int gameId) {
-        String sql = "SELECT room_no,createtime,result FROM `za_usergamelogs` where user_id=? and gid=? ORDER BY id LIMIT 0,20";
+        String sql = "SELECT room_no,createtime,result FROM `za_usergamelogs` where user_id=? and gid=? ORDER BY id DESC LIMIT 0,20";
         return TimeUtil.transTimestamp(DBUtil.getObjectListBySQL(sql,new Object[]{userId, gameId}),"createtime","yyyy-MM-dd hh:mm:ss");
+    }
+
+    @Override
+    public JSONObject getSysBaseSet() {
+        String sql="SELECT appShareFrequency,appShareCircle,appShareFriend,cardname,coinsname,yuanbaoname,appShareObj FROM sys_base_set WHERE id=1";
+        return DBUtil.getObjectBySQL(sql, new Object[]{});
+    }
+
+    @Override
+    public JSONObject getAPPGameSetting() {
+        String sql="SELECT isXipai,xipaiLayer,xipaiCount,xipaiObj,bangData FROM app_game_setting WHERE id=1";
+        return DBUtil.getObjectBySQL(sql, new Object[]{});
+    }
+
+    @Override
+    public JSONArray getAppObjRec(Long userId, int doType, String gid, String roomid, String roomNo) {
+        String sql="SELECT id FROM za_userdeduction WHERE userid=? AND gid=? AND roomid=? AND roomNo=? AND doType=?";
+        return DBUtil.getObjectListBySQL(sql, new Object[]{userId,gid,roomid,roomNo,doType});
+    }
+
+    @Override
+    public void addAppObjRec(JSONObject object) {
+        String sql = "insert into za_userdeduction(userid,gid,roomNo,doType,roomid,creataTime) values(?,?,?,?,?,?)";
+        DBUtil.executeUpdateBySQL(sql,new Object[]{object.getLong("userId"),object.getInt("gameId"),object.getString("room_no"),
+            1,object.getLong("room_id"),new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date())});
     }
 
     /**

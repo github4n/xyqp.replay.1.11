@@ -457,7 +457,11 @@ public class NNGameRoomNew extends GameRoom{
             if (userPacketMap.get(uuid).getStatus()>NNConstant.NN_USER_STATUS_INIT) {
                 // 自己或者已经亮牌的玩家
                 if (uuid.equals(account)||userPacketMap.get(uuid).getStatus()==NNConstant.NN_USER_STATUS_LP) {
-                    pai = userPacketMap.get(uuid).getMingPai();
+                    if (getBankerType()==NNConstant.NN_BANKER_TYPE_MP) {
+                        pai = userPacketMap.get(uuid).getMingPai();
+                    } else {
+                        pai = userPacketMap.get(uuid).getMyPai();
+                    }
                     // 已亮牌展示牌型
                     if (userPacketMap.get(uuid).getStatus()==NNConstant.NN_USER_STATUS_LP){
                         pai = userPacketMap.get(uuid).getSortPai();

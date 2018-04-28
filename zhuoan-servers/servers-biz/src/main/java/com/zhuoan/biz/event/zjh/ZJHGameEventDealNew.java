@@ -120,7 +120,7 @@ public class ZJHGameEventDealNew {
             exitRoom(client,postData);
             JSONObject result = new JSONObject();
             result.put("type",CommonConstant.SHOW_MSG_TYPE_BIG);
-            result.put(CommonConstant.RESULT_KEY_MSG,"即将停服进行更新");
+            result.put(CommonConstant.RESULT_KEY_MSG,"游戏即将停止");
             CommonConstant.sendMsgEventToSingle(client,result.toString(),"tipMsgPush");
             return;
         }
@@ -343,13 +343,13 @@ public class ZJHGameEventDealNew {
             return false;
         }
         int myIndex = room.getPlayerIndex(account);
+        final String nextPlayer = room.getNextOperationPlayer(account);
         // 添加下注记录
         room.addXiazhuList(myIndex, score);
         // 更新下注记录
         room.addScoreChange(account, score);
         // 添加下注用户
-        room.addXzPlayer(myIndex);
-        final String nextPlayer = room.getNextOperationPlayer(account);
+        room.addXzPlayer(myIndex,room.getPlayerIndex(nextPlayer));
         if (type!=ZJHConstant.GAME_ACTION_TYPE_COMPARE) {
             // 检查下家跟注状态
             ThreadPoolHelper.executorService.submit(new Runnable() {
@@ -370,6 +370,7 @@ public class ZJHGameEventDealNew {
             // 通知玩家
             for (String uuid  : room.getUserPacketMap().keySet()) {
                 result.put(CommonConstant.RESULT_KEY_CODE, CommonConstant.GLOBAL_YES);
+                result.put("gameStatus", room.getGameStatus());
                 result.put("index", room.getPlayerMap().get(account).getMyIndex());
                 result.put("nextNum", room.getPlayerIndex(nextPlayer));
                 result.put("gameNum", room.getGameNum());
@@ -462,8 +463,15 @@ public class ZJHGameEventDealNew {
                             room.getUserPacketMap().get(other).setStatus(ZJHConstant.ZJH_USER_STATUS_WIN);
                         }
                     }
-
+                    // 确定下次操作的玩家
+                    final String nextPlayer = room.getNextOperationPlayer(account);
+                    // 轮数+1
+                    if (room.getYiXiaZhu().contains(room.getPlayerIndex(nextPlayer))) {
+                        room.getYiXiaZhu().clear();
+                        room.setGameNum(room.getGameNum()+1);
+                    }
                     int gameNum = room.getGameNum();
+                    // 结算
                     if (isGameOver==1) {
                         summary(room);
                     }
@@ -471,6 +479,7 @@ public class ZJHGameEventDealNew {
                     for (String uid : room.getUserPacketMap().keySet()) {
                         JSONObject result = new JSONObject();
                         result.put(CommonConstant.RESULT_KEY_CODE, CommonConstant.GLOBAL_YES);
+                        result.put("gameStatus", room.getGameStatus());
                         result.put("index", room.getPlayerIndex(account));
                         result.put("nextNum", -1);
                         result.put("gameNum", gameNum);
@@ -494,14 +503,13 @@ public class ZJHGameEventDealNew {
                     } catch (InterruptedException e) {
                         e.printStackTrace();
                     }
-                    // 确定下次操作的玩家
-                    final String nextPlayer = room.getNextOperationPlayer(account);
                     int nextNum = room.getPlayerIndex(nextPlayer);
                     // 通知玩家比牌结束
                     for (String uid : room.getUserPacketMap().keySet()) {
                         JSONObject result = new JSONObject();
                         result.put(CommonConstant.RESULT_KEY_CODE, CommonConstant.GLOBAL_YES);
                         result.put("type", ZJHConstant.GAME_ACTION_TYPE_COMPARE_FINISH);
+                        result.put("gameStatus", room.getGameStatus());
                         result.put("nextNum", nextNum);
                         result.put("index", room.getPlayerIndex(account));
                         result.put("gameNum", gameNum);
@@ -604,6 +612,7 @@ public class ZJHGameEventDealNew {
             JSONObject result = new JSONObject();
             result.put(CommonConstant.RESULT_KEY_CODE, CommonConstant.GLOBAL_YES);
             result.put("index", room.getPlayerIndex(account));
+            result.put("gameStatus", room.getGameStatus());
             result.put("nextNum", nextNum);
             result.put("gameNum", gameNum);
             result.put("currentScore", room.getCurrentScore());

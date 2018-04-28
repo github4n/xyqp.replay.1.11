@@ -96,6 +96,24 @@ public class GameEventDeal {
                     case 7:
                         baseEventDeal.onOrOffGame(client, data);
                         break;
+                    case 8:
+                        baseEventDeal.sendNotice(client, data);
+                        break;
+                    case 9:
+                        baseEventDeal.getShuffleInfo(client, data);
+                        break;
+                    case 10:
+                        baseEventDeal.doShuffle(client, data);
+                        break;
+                    case 11:
+                        baseEventDeal.sendMessage(client, data);
+                        break;
+                    case 12:
+                        baseEventDeal.sendVoice(client, data);
+                        break;
+                    case 13:
+                        baseEventDeal.getNotice(client, data);
+                        break;
                     default:
                         break;
                 }

@@ -16,7 +16,7 @@ public class ZJHConstant {
      */
     public static final int ZJH_GAME_STATUS_READY=1;
     /**
-     * 炸金花游戏状态-抢庄
+     * 炸金花游戏状态-游戏事件
      */
     public static final int ZJH_GAME_STATUS_GAME=2;
     /**

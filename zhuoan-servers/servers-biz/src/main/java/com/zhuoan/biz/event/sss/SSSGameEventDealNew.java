@@ -14,7 +14,6 @@ import com.zhuoan.biz.model.sss.Player;
 import com.zhuoan.biz.model.sss.SSSGameRoomNew;
 import com.zhuoan.constant.CommonConstant;
 import com.zhuoan.constant.DaoTypeConstant;
-import com.zhuoan.constant.NNConstant;
 import com.zhuoan.constant.SSSConstant;
 import com.zhuoan.service.jms.ProducerService;
 import com.zhuoan.util.Dto;
@@ -246,9 +245,19 @@ public class SSSGameEventDealNew {
             int type = postData.getInt(SSSConstant.SSS_DATA_KET_TYPE);
             switch (type) {
                 case SSSConstant.SSS_GAME_ACTION_TYPE_AUTO:
-                    String[] auto = SSSOrdinaryCards.sort(player.getPai());
-                    room.getUserPacketMap().get(account).setPai(auto);
-                    room.changePlayerPai(auto,account);
+                    if (room.getUserPacketMap().get(account).getPaiType()>0) {
+                        int specialType = SSSSpecialCards.isSpecialCards(player.getPai(),room.getSetting());
+                        String[] specialPai = SSSSpecialCardSort.CardSort(player.getPai(), specialType);
+                        room.getUserPacketMap().get(account).setPai(specialPai);
+                        // 设置特殊牌型分数
+                        room.getUserPacketMap().get(account).setPaiScore(SSSSpecialCards.score(specialType,room.getSetting()));
+                        // 设置玩家头中尾手牌
+                        room.changePlayerPai(specialPai,account);
+                    } else {
+                        String[] auto = SSSOrdinaryCards.sort(player.getPai());
+                        room.getUserPacketMap().get(account).setPai(auto);
+                        room.changePlayerPai(auto,account);
+                    }
                     break;
                 case SSSConstant.SSS_GAME_ACTION_TYPE_COMMON:
                     JSONArray myPai = postData.getJSONArray(SSSConstant.SSS_DATA_KET_MY_PAI);
@@ -297,6 +306,10 @@ public class SSSGameEventDealNew {
                     int specialType = SSSSpecialCards.isSpecialCards(player.getPai(),room.getSetting());
                     String[] specialPai = SSSSpecialCardSort.CardSort(player.getPai(), specialType);
                     room.getUserPacketMap().get(account).setPai(specialPai);
+                    // 设置特殊牌型分数
+                    room.getUserPacketMap().get(account).setPaiScore(SSSSpecialCards.score(specialType,room.getSetting()));
+                    // 设置玩家头中尾手牌
+                    room.changePlayerPai(specialPai,account);
                     break;
                 default:
                     break;
@@ -339,7 +352,6 @@ public class SSSGameEventDealNew {
                                             room.getPlayerMap().get(account).setScore(Dto.add(sum,oldScore));
                                         }
                                     }
-                                    // TODO: 2018/4/23 操作数据库
                                     room.setGameStatus(SSSConstant.SSS_GAME_STATUS_SUMMARY);
                                     // 初始化倒计时
                                     room.setTimeLeft(SSSConstant.SSS_TIMER_INIT);
@@ -360,7 +372,7 @@ public class SSSGameEventDealNew {
                 JSONArray gameProcessJS = new JSONArray();
                 for (String uuid : room.getUserPacketMap().keySet()) {
                     // 有参与的玩家
-                    if (room.getUserPacketMap().get(uuid).getStatus() > NNConstant.NN_USER_STATUS_INIT) {
+                    if (room.getUserPacketMap().get(uuid).getStatus() > SSSConstant.SSS_USER_STATUS_INIT) {
                         JSONObject userJS = new JSONObject();
                         userJS.put("account", uuid);
                         userJS.put("name", room.getPlayerMap().get(uuid).getName());
@@ -584,13 +596,13 @@ public class SSSGameEventDealNew {
             obj.put("mapai",0);
             obj.put("isma",0);
             obj.put("myPai",room.getUserPacketMap().get(account).getMyPai());
-            obj.put("myPaiType",room.getUserPacketMap().get(account).getSpecial());
+            obj.put("myPaiType",room.getUserPacketMap().get(account).getPaiType());
             obj.put("gameData",room.obtainGameData());
             // TODO: 2018/4/18 总结算数据
             obj.put("jiesuanData","");
             UUID uuid = room.getPlayerMap().get(account).getUuid();
             if (uuid!=null) {
-                CommonConstant.sendMsgEventToSingle(uuid,obj.toString(),"changeGameStatusPush_NN");
+                CommonConstant.sendMsgEventToSingle(uuid,obj.toString(),"changeGameStatusPush_SSS");
             }
         }
     }
@@ -670,13 +682,58 @@ public class SSSGameEventDealNew {
                     gameList.add(account);
                 }
             }
+            // 是否全垒打
+            boolean isSwat = false;
+            for (String account : gameList) {
+                Player player = room.getUserPacketMap().get(account);
+                // 赢几个人人
+                int winPlayer = 0;
+                int special = player.getPaiType();
+                if (special>0) {
+                    break;
+                }
+                for (String other : gameList) {
+                    if (!other.equals(account)) {
+                        Player otherPlayer = room.getUserPacketMap().get(other);
+                        int otherSpecial = player.getPaiType();
+                        if (otherSpecial>0) {
+                            break;
+                        }else {
+                            // 比牌结果
+                            JSONObject compareResult = SSSComputeCards.compare(player.getPai(), otherPlayer.getPai());
+                            // 自己的牌型及分数
+                            JSONArray mySingleResult = JSONArray.fromObject(compareResult.getJSONArray("result").get(0));
+                            // 其他玩家的牌型及分数
+                            JSONArray otherSingleResult = JSONArray.fromObject(compareResult.getJSONArray("result").get(1));
+                            int winTime = 0;
+                            for (int i = 0; i < mySingleResult.size(); i++) {
+                                if (mySingleResult.getJSONObject(i).getInt("score")>otherSingleResult.getJSONObject(i).getInt("score")) {
+                                    winTime ++;
+                                }
+                            }
+                            // 三道全赢打枪
+                            if (winTime==3) {
+                                winPlayer++;
+                            }else {
+                                break;
+                            }
+                        }
+                    }
+                }
+                if (gameList.size()>=SSSConstant.SSS_MIN_SWAT_COUNT&&winPlayer==gameList.size()-1) {
+                    room.setSwat(1);
+                    isSwat = true;
+                    room.getUserPacketMap().get(account).setSwat(1);
+                    break;
+                }
+            }
             for (String account : gameList) {
                 // 当局总计输赢
                 int sumScoreAll = 0;
                 // 自己
                 Player player = room.getUserPacketMap().get(account);
                 // 自己是否是特殊牌
-                int special = player.getSpecial();
+                int special = player.getPaiType();
                 // 单局结果
                 JSONArray myResult = new JSONArray();
                 // 头道
@@ -692,11 +749,13 @@ public class SSSGameEventDealNew {
                     if (!other.equals(account)) {
                         // 其他玩家
                         Player otherPlayer = room.getUserPacketMap().get(other);
-                        int otherSpecial = player.getSpecial();
+                        int otherSpecial = otherPlayer.getPaiType();
                         if (special>otherSpecial) {
                             sumScoreSingle += player.getPaiScore();
                         } else if (special<otherSpecial) {
                             sumScoreSingle -= otherPlayer.getPaiScore();
+                        } else if (special==otherSpecial&&special>0) {
+                            // TODO: 2018/4/27 同为特殊牌且牌型相同
                         } else {
                             // 比牌结果
                             JSONObject compareResult = SSSComputeCards.compare(player.getPai(), otherPlayer.getPai());
@@ -712,7 +771,7 @@ public class SSSGameEventDealNew {
                                 myResult.getJSONObject(i).put("type",mySingleResult.getJSONObject(i).getInt("type"));
                                 if (mySingleResult.getJSONObject(i).getInt("score")>otherSingleResult.getJSONObject(i).getInt("score")) {
                                     winTime ++;
-                                } else {
+                                } else if (mySingleResult.getJSONObject(i).getInt("score")<otherSingleResult.getJSONObject(i).getInt("score")){
                                     winTime --;
                                 }
                             }
@@ -738,16 +797,18 @@ public class SSSGameEventDealNew {
                                     room.getDqArray().add(dq);
                                 }
                             }
-                            sumScoreAll += sumScoreSingle;
+                            // 全垒打只对全垒打的人翻倍
+                            if (isSwat) {
+                                // 自己或者他人全垒打
+                                if (room.getUserPacketMap().get(account).getSwat()==1||room.getUserPacketMap().get(other).getSwat()==1) {
+                                    sumScoreSingle *= 2;
+                                }
+                            }
                         }
+                        sumScoreAll += sumScoreSingle;
                     }
                 }
-                // 全垒打
-                if (gameList.size()>=SSSConstant.SSS_MIN_SWAT_COUNT&&allWinList.size()==gameList.size()-1) {
-                    room.setSwat(1);
-                    room.getUserPacketMap().get(account).setSwat(CommonConstant.GLOBAL_YES);
-                }
-                // 设置当局输赢分数(不计算全垒打)
+                // 设置玩家当局输赢
                 room.getUserPacketMap().get(account).setScore(sumScoreAll*room.getScore());
                 // 设置头道输赢情况
                 room.getUserPacketMap().get(account).setHeadResult(myResult.getJSONObject(0));
@@ -755,13 +816,6 @@ public class SSSGameEventDealNew {
                 room.getUserPacketMap().get(account).setMidResult(myResult.getJSONObject(1));
                 // 设置尾道输赢情况
                 room.getUserPacketMap().get(account).setFootResult(myResult.getJSONObject(2));
-            }
-            // 设置当局输赢分数，计算全垒打
-            if (room.getSwat()==1) {
-                for (String account : gameList) {
-                    double sum = room.getUserPacketMap().get(account).getScore();
-                    room.getUserPacketMap().get(account).setScore(sum*2);
-                }
             }
         }
     }

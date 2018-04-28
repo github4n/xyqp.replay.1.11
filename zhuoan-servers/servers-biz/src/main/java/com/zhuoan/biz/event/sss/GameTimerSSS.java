@@ -25,7 +25,7 @@ import java.util.List;
 @Component
 public class GameTimerSSS {
     @Resource
-    private Destination nnQueueDestination;
+    private Destination sssQueueDestination;
 
     @Resource
     private ProducerService producerService;
@@ -98,7 +98,7 @@ public class GameTimerSSS {
                         }
                         if (messageSort>0) {
                             SocketIOClient client = GameMain.server.getClient(room.getPlayerMap().get(account).getUuid());
-                            producerService.sendMessage(nnQueueDestination, new Messages(client, data, 4, messageSort));
+                            producerService.sendMessage(sssQueueDestination, new Messages(client, data, 4, messageSort));
                         }
                     }
                 }

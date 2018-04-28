@@ -2,6 +2,7 @@ package com.zhuoan.biz.game.biz;
 
 
 import net.sf.json.JSONArray;
+import net.sf.json.JSONObject;
 
 /**
  * @author huaping.li
@@ -18,4 +19,32 @@ public interface PublicBiz {
      */
     public JSONArray getRoomSetting(int gid, String platform);
 
+    /**
+     * 获取系统配置
+     * @return
+     */
+    public JSONObject getSysBaseSet();
+
+    /**
+     * 获取游戏配置
+     * @return
+     */
+    public JSONObject getAPPGameSetting();
+
+    /**
+     * 获取道具扣除记录
+     * @param userId
+     * @param doType
+     * @param gid
+     * @param roomid
+     * @param roomNo
+     * @return
+     */
+    public JSONArray getAppObjRec(Long userId, int doType, String gid,String roomid, String roomNo);
+
+    /**
+     * 添加道具扣除记录
+     * @param object
+     */
+    public void addAppObjRec(JSONObject object);
 }

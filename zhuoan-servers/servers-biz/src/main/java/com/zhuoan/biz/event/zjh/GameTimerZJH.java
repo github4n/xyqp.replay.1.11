@@ -25,7 +25,7 @@ import java.util.List;
 @Component
 public class GameTimerZJH {
     @Resource
-    private Destination nnQueueDestination;
+    private Destination zjhQueueDestination;
 
     @Resource
     private ProducerService producerService;
@@ -69,7 +69,7 @@ public class GameTimerZJH {
                         // 账号
                         data.put(CommonConstant.DATA_KEY_ACCOUNT,account);
                         SocketIOClient client = GameMain.server.getClient(room.getPlayerMap().get(account).getUuid());
-                        producerService.sendMessage(nnQueueDestination, new Messages(client, data, 6, 5));
+                        producerService.sendMessage(zjhQueueDestination, new Messages(client, data, 6, 5));
                     }
                 }
                 try {
@@ -105,7 +105,7 @@ public class GameTimerZJH {
                         data.put(CommonConstant.DATA_KEY_ACCOUNT,account);
                         data.put("type",ZJHConstant.GAME_ACTION_TYPE_GZ);
                         SocketIOClient client = GameMain.server.getClient(room.getPlayerMap().get(account).getUuid());
-                        producerService.sendMessage(nnQueueDestination, new Messages(client, data, 6, 3));
+                        producerService.sendMessage(zjhQueueDestination, new Messages(client, data, 6, 3));
                     }
                 }
                 // 设置倒计时
@@ -119,7 +119,7 @@ public class GameTimerZJH {
                     data.put(CommonConstant.DATA_KEY_ACCOUNT,account);
                     data.put("type",ZJHConstant.GAME_ACTION_TYPE_GIVE_UP);
                     SocketIOClient client = GameMain.server.getClient(room.getPlayerMap().get(account).getUuid());
-                    producerService.sendMessage(nnQueueDestination, new Messages(client, data, 6, 3));
+                    producerService.sendMessage(zjhQueueDestination, new Messages(client, data, 6, 3));
                 }
                 try {
                     Thread.sleep(1000);

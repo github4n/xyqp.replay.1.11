@@ -154,6 +154,60 @@ public class BaseGameEvent {
                 producerService.sendMessage(baseQueueDestination, new Messages(client, object, 0, 7));
             }
         });
+        /**
+         *   发送滚动公告
+         */
+        server.addEventListener("sendNotice", Object.class, new DataListener<Object>() {
+            @Override
+            public void onData(SocketIOClient client, Object object, AckRequest ackSender) {
+                producerService.sendMessage(baseQueueDestination, new Messages(client, object, 0, 8));
+            }
+        });
+        /**
+         *  获取洗牌次数和消耗
+         */
+        server.addEventListener("xipaiMessa", Object.class, new DataListener<Object>() {
+            @Override
+            public void onData(SocketIOClient client, Object object, AckRequest ackSender) {
+                producerService.sendMessage(baseQueueDestination, new Messages(client, object, 0, 9));
+            }
+        });
+        /**
+         *   洗牌
+         */
+        server.addEventListener("xipaiFun", Object.class, new DataListener<Object>() {
+            @Override
+            public void onData(SocketIOClient client, Object object, AckRequest ackSender) {
+                producerService.sendMessage(baseQueueDestination, new Messages(client, object, 0, 10));
+            }
+        });
+        /**
+         *   发送消息
+         */
+        server.addEventListener("sendMsgEvent", Object.class, new DataListener<Object>() {
+            @Override
+            public void onData(SocketIOClient client, Object object, AckRequest ackSender) {
+                producerService.sendMessage(baseQueueDestination, new Messages(client, object, 0, 11));
+            }
+        });
+        /**
+         *   发送语音
+         */
+        server.addEventListener("voiceCallGame", Object.class, new DataListener<Object>() {
+            @Override
+            public void onData(SocketIOClient client, Object object, AckRequest ackSender) {
+                producerService.sendMessage(baseQueueDestination, new Messages(client, object, 0, 12));
+            }
+        });
+        /**
+         *   获取滚动公告
+         */
+        server.addEventListener("getMessage", Object.class, new DataListener<Object>() {
+            @Override
+            public void onData(SocketIOClient client, Object object, AckRequest ackSender) {
+                producerService.sendMessage(baseQueueDestination, new Messages(client, object, 0, 13));
+            }
+        });
 
     }
 

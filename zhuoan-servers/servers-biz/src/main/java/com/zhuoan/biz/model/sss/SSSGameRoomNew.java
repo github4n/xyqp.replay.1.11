@@ -230,9 +230,11 @@ public class SSSGameRoomNew extends GameRoom{
             // 获取所有参与玩家得分情况
             for (String account : getUserPacketMap().keySet()) {
                 if (getUserPacketMap().get(account).getStatus()!=SSSConstant.SSS_USER_STATUS_INIT) {
-                    headMap.put(account,getUserPacketMap().get(account).getHeadResult().getDouble("score"));
-                    midMap.put(account,getUserPacketMap().get(account).getMidResult().getDouble("score"));
-                    footMap.put(account,getUserPacketMap().get(account).getFootResult().getDouble("score"));
+                    if (getUserPacketMap().get(account).getPaiType()==0) {
+                        headMap.put(account,getUserPacketMap().get(account).getHeadResult().getDouble("score"));
+                        midMap.put(account,getUserPacketMap().get(account).getMidResult().getDouble("score"));
+                        footMap.put(account,getUserPacketMap().get(account).getFootResult().getDouble("score"));
+                    }
                 }
             }
             showIndex.add(sortUserScore(headMap));
@@ -382,7 +384,6 @@ public class SSSGameRoomNew extends GameRoom{
      * 发牌
      */
     public void faPai() {
-        List<String[]> allPai = new ArrayList<String[]>();
         int paiIndex = 0;
         for (String account : getUserPacketMap().keySet()) {
             String[] userPai = new String[13];

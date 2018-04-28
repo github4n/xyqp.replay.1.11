@@ -325,10 +325,10 @@ public class ZJHGameRoomNew extends GameRoom{
      * 添加已下注用户
      * @param myIndex
      */
-    public void addXzPlayer(int myIndex){
+    public void addXzPlayer(int myIndex,int nextIndex){
         getYiXiaZhu().add(myIndex);
         // 更新下注轮数
-        if(getYiXiaZhu().size()==getProgressIndex().length){
+        if(getYiXiaZhu().contains(nextIndex)){
             getYiXiaZhu().clear();
             setGameNum(getGameNum()+1);
         }

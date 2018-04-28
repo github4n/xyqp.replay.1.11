@@ -16,6 +16,7 @@ import javax.annotation.Resource;
 import javax.jms.Destination;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 /**
  * @author wqm
@@ -37,7 +38,48 @@ public class GameTimerNiuNiu{
      * @param roomNo
      * @param gameStatus
      */
-    public void gameOverTime(String roomNo,int gameStatus){
+    public void gameOverTime(String roomNo,int gameStatus,int sleepTime){
+        if (sleepTime>0) {
+            try {
+                Thread.sleep(sleepTime);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+        if (gameStatus==NNConstant.NN_GAME_STATUS_XZ) {
+            // 设置游戏状态
+            if (RoomManage.gameRoomMap.containsKey(roomNo)&&RoomManage.gameRoomMap.get(roomNo)!=null) {
+                NNGameRoomNew room = (NNGameRoomNew)RoomManage.gameRoomMap.get(roomNo);
+                room.setGameStatus(NNConstant.NN_GAME_STATUS_XZ);
+                room.setTimeLeft(NNConstant.NN_TIMER_XZ);
+                // 通知玩家
+                for (String account : room.getPlayerMap().keySet()) {
+                    JSONObject obj = new JSONObject();
+                    obj.put("gameStatus", room.getGameStatus());
+                    if (room.getGameStatus() > NNConstant.NN_GAME_STATUS_DZ && room.getBankerType() != NNConstant.NN_BANKER_TYPE_TB) {
+                        obj.put("zhuang", room.getPlayerMap().get(room.getBanker()).getMyIndex());
+                        obj.put("qzScore", room.getUserPacketMap().get(room.getBanker()).getQzTimes());
+                    } else {
+                        obj.put("zhuang", -1);
+                        obj.put("qzScore", 0);
+                    }
+                    obj.put("game_index", room.getGameIndex());
+                    obj.put("showTimer", CommonConstant.GLOBAL_YES);
+                    if (room.getTimeLeft() == NNConstant.NN_TIMER_INIT) {
+                        obj.put("showTimer", CommonConstant.GLOBAL_NO);
+                    }
+                    obj.put("timer", room.getTimeLeft());
+                    obj.put("qzTimes", room.getQzTimes(room.getPlayerMap().get(account).getScore()));
+                    obj.put("baseNum", room.getBaseNumTimes(room.getPlayerMap().get(account).getScore()));
+                    obj.put("users", room.getAllPlayer());
+                    obj.put("gameData", room.getGameData(account));
+                    UUID uuid = room.getPlayerMap().get(account).getUuid();
+                    if (uuid != null) {
+                        CommonConstant.sendMsgEventToSingle(uuid, obj.toString(), "changeGameStatusPush_NN");
+                    }
+                }
+            }
+        }
         // 倒计时
         int timeLeft = 0;
         // 玩家状态
