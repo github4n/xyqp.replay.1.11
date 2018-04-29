@@ -30,6 +30,9 @@
             <timeBasedFileNamingAndTriggeringPolicy
                 class="ch.qos.logback.core.rolling.SizeAndTimeBasedFNATP">
                 <maxFileSize>500MB</maxFileSize>
+                <!-- keep 30 days' worth of history capped at 3GB total size -->
+                <maxHistory>60</maxHistory>
+                <totalSizeCap>8GB</totalSizeCap>
             </timeBasedFileNamingAndTriggeringPolicy>
         </rollingPolicy>
         <encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
