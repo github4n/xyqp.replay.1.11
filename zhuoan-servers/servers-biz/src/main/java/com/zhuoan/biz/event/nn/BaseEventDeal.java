@@ -342,8 +342,8 @@ public class BaseEventDeal {
                 redisService.insertKey(CacheKeyConstant.GAME_SETTING, String.valueOf(gameSetting), null);
             }
         } catch (Exception e) {
+            logger.error("请启动REmote DIctionary Server");
             gameSetting = roomBiz.getGameSetting();
-            redisService.insertKey(CacheKeyConstant.GAME_SETTING, String.valueOf(gameSetting), null);
         }
         long end = System.currentTimeMillis();
         logger.info("公共---getGameSetting(GameRoom gameRoom)"+(end-start));
@@ -787,8 +787,8 @@ public class BaseEventDeal {
                 redisService.insertKey(CacheKeyConstant.GAME_INFO_BY_ID, String.valueOf(gameInfoById), null);
             }
         } catch (Exception e) {
+            logger.error("请启动REmote DIctionary Server");
             gameInfoById = roomBiz.getGameInfoByID(CommonConstant.GAME_ID_SSS).getJSONObject("setting");
-            redisService.insertKey(CacheKeyConstant.GAME_INFO_BY_ID, String.valueOf(gameInfoById), null);
         }
         long end = System.currentTimeMillis();
         logger.info("公共---getGameInfoById()"+(end-start));
@@ -851,8 +851,8 @@ public class BaseEventDeal {
                     redisService.insertKey(key, String.valueOf(gameSetting), null);
                 }
             } catch (Exception e) {
+                logger.error("请启动REmote DIctionary Server");
                 gameSetting = publicBiz.getRoomSetting(gid, platform);
-                redisService.insertKey(key, String.valueOf(gameSetting), null);
             }
         }
         long end = System.currentTimeMillis();
