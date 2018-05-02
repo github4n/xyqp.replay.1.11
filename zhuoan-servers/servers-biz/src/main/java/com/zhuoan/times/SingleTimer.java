@@ -1,12 +1,18 @@
 package com.zhuoan.times;
 
 
-import com.zhuoan.biz.core.sss.SSSGameRoom;
+import com.zhuoan.biz.model.GameRoom;
 import com.zhuoan.biz.model.RoomManage;
-import com.zhuoan.util.LogUtil;
+import com.zhuoan.constant.CommonConstant;
+import com.zhuoan.queue.Messages;
+import com.zhuoan.service.jms.ProducerService;
+import net.sf.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Component;
 
+import javax.annotation.Resource;
+import javax.jms.Destination;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
@@ -16,7 +22,14 @@ import java.util.concurrent.locks.ReentrantLock;
 /**
  * The type Single timer.
  */
+@Component
 public class SingleTimer extends Thread {
+
+    @Resource
+    private Destination nnQueueDestination;
+
+    @Resource
+    private ProducerService producerService;
 
     private final static Logger logger = LoggerFactory.getLogger(SingleTimer.class);
 
@@ -26,14 +39,14 @@ public class SingleTimer extends Thread {
     private Lock m_locker = new ReentrantLock();
 
 
-    private Map<String, TimerMsgData> m_map = new HashMap<String, TimerMsgData>();
+    private Map<String, Messages> m_map = new HashMap<String, Messages>();
 
     /**
      * Gets m map.
      *
      * @return the m map
      */
-    public Map<String, TimerMsgData> getM_map() {
+    public Map<String, Messages> getM_map() {
         return m_map;
     }
 
@@ -42,7 +55,7 @@ public class SingleTimer extends Thread {
      *
      * @param m_map the m map
      */
-    public void setM_map(Map<String, TimerMsgData> m_map) {
+    public void setM_map(Map<String, Messages> m_map) {
         this.m_map = m_map;
     }
 
@@ -67,38 +80,29 @@ public class SingleTimer extends Thread {
     /**
      *
      */
+    @Override
     public void run() {
         while (true) {
             try {
-                Thread.sleep(1000);//ÿ��һ��
+                Thread.sleep(1000);
 
-                m_locker.lock();//����,�������
-                //���������map
-                Iterator<Map.Entry<String, TimerMsgData>> it = m_map.entrySet().iterator();
+                m_locker.lock();
+                Iterator<Map.Entry<String, Messages>> it = m_map.entrySet().iterator();
                 while (it.hasNext()) {
-                    Map.Entry<String, TimerMsgData> entry = it.next();
-                    //LogUtil.print("定时器："+entry.getValue().nTimeLimit+",游戏："+entry.getValue().gid+",方法："+entry.getValue().nType);
-                    if (RoomManage.gameRoomMap.get(entry.getValue().roomid) != null) {
-                        if (entry.getValue().gid == 4 && entry.getValue().nType == 10) {
-                            ((SSSGameRoom) RoomManage.gameRoomMap.get(entry.getValue().roomid)).setReadyTime(entry.getValue().nTimeLimit);
-                        } else if (entry.getValue().gid == 4 && entry.getValue().nType == 11) {
-                            ((SSSGameRoom) RoomManage.gameRoomMap.get(entry.getValue().roomid)).setPeipaiTime(entry.getValue().nTimeLimit);
+                    Map.Entry<String, Messages> entry = it.next();
+                    Object data = entry.getValue().getDataObject();
+                    JSONObject obj = JSONObject.fromObject(data);
+                    String roomNo = obj.getString(CommonConstant.DATA_KEY_ROOM_NO);
+                    if (RoomManage.gameRoomMap.get(roomNo) != null) {
+                        GameRoom gameRoom = RoomManage.gameRoomMap.get(roomNo);
+                        gameRoom.setTimeLeft(gameRoom.getTimeLeft()-1);
+                        if (gameRoom.getTimeLeft()==0) {
+                            producerService.sendMessage(nnQueueDestination, entry.getValue());
+                            it.remove();
                         }
-
-                        RoomManage.gameRoomMap.get(entry.getValue().roomid).setTimeLeft(entry.getValue().nTimeLimit);
-                    }
-                    // 炸金花跟到底特殊处理
-//					if (entry.getValue().gid==6&&entry.getValue().nType==10&&entry.getValue().nTimeLimit== MutliThreadZJH.xzTimer) {
-//						GameMain.messageQueue.addQueue(new Messages(null, entry.getValue().gmd.getDataObject(), 6, 11));
-//					}
-                    if (entry.getValue().nTimeLimit <= 1) {
-                        LogUtil.print("-----------定时器投递事件-----------");
-//                        GameMain.messageQueue.addQueue(entry.getValue().gmd);
-
-                        // GameMain.messageQueue.addQueue(new Messages(entry.getValue().client, entry.getValue().data, entry.getValue().gid, entry.getValue().nType));
+                    }else {
                         it.remove();
                     }
-                    entry.getValue().nTimeLimit--;
                 }
             } catch (Exception e) {
                 // TODO Auto-generated catch block
@@ -110,15 +114,14 @@ public class SingleTimer extends Thread {
     }
 
     /**
-     * Create timer.
-     *
-     * @param tmd the tmd
+     * 创建定时器
+     * @param roomNo
+     * @param messages
      */
-    public void createTimer(TimerMsgData tmd) {
+    public void createTimer(String roomNo,Messages messages) {
         try {
-            m_locker.lock();//����,�������
-            //������TMD ����new �����ľ���Ҫ������new һ�����ƺ�ֵ;
-            m_map.put(tmd.roomid, tmd);
+            m_locker.lock();
+            m_map.put(roomNo, messages);
 
         } finally {
             m_locker.unlock();
@@ -132,9 +135,8 @@ public class SingleTimer extends Thread {
      */
     public void deleteTimer(String roomid) {
         try {
-            m_locker.lock();//����,�������
+            m_locker.lock();
             m_map.remove(roomid);
-
         } finally {
             m_locker.unlock();
         }

@@ -211,11 +211,11 @@ public class GameRoom {
         this.gid = gid;
     }
 
-    public int getGameStatus() {
+    public synchronized int getGameStatus() {
         return gameStatus;
     }
 
-    public void setGameStatus(int gameStatus) {
+    public synchronized void setGameStatus(int gameStatus) {
         this.gameStatus = gameStatus;
     }
 

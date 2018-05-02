@@ -742,7 +742,7 @@ public class NiuNiuServiceImpl implements NiuNiuService {
 				tmd.data=new JSONObject().element("room_no", roomNo);
 				tmd.gid=1;
 				tmd.gmd= new Messages(null, new JSONObject().element("room_no", roomNo), 1, 20);
-				GameMain.singleTime.createTimer(tmd);
+				//GameMain.singleTime.createTimer(tmd);
 				
 				//更新房间信息
 				//JSONObject roomInfo = mjBiz.getRoomInfoByRno(roomNo);
@@ -1294,7 +1294,7 @@ public class NiuNiuServiceImpl implements NiuNiuService {
 			tmd.data=new JSONObject().element("room_no", roomNo);
 			tmd.gid=1;
 			tmd.gmd= new Messages(null, new JSONObject().element("room_no", roomNo), 1, 21);
-			GameMain.singleTime.createTimer(tmd);
+			//GameMain.singleTime.createTimer(tmd);
 
 		}else{
 

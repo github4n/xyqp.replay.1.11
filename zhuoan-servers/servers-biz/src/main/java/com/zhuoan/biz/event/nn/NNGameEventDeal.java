@@ -1170,7 +1170,7 @@ public class NNGameEventDeal {
 					tmd.data=new JSONObject().element("room_no", roomNo);
 					tmd.gid=1;
 					tmd.gmd= new Messages(client, new JSONObject().element("room_no", roomNo), 1, 17);
-					GameMain.singleTime.createTimer(tmd);
+					//GameMain.singleTime.createTimer(tmd);
 				}
 				
 				boolean temp = false;
@@ -1288,7 +1288,7 @@ public class NNGameEventDeal {
 								tmd.data=new JSONObject().element("room_no", roomNo);
 								tmd.gid=1;
 								tmd.gmd= new Messages(client, new JSONObject().element("room_no", roomNo), 1, 18);
-								GameMain.singleTime.createTimer(tmd);
+								//GameMain.singleTime.createTimer(tmd);
 							}
 							
 							// 明牌抢庄发牌
@@ -1441,7 +1441,7 @@ public class NNGameEventDeal {
 					tmd.data=new JSONObject().element("room_no", roomNo);
 					tmd.gid=1;
 					tmd.gmd= new Messages(client, new JSONObject().element("room_no", roomNo), 1, 17);
-					GameMain.singleTime.createTimer(tmd);
+					//GameMain.singleTime.createTimer(tmd);
 				}
 				
 				// 6人场两人以上就可以开始
@@ -1552,7 +1552,7 @@ public class NNGameEventDeal {
 								tmd.data=new JSONObject().element("room_no", roomNo);
 								tmd.gid=1;
 								tmd.gmd= new Messages(client, new JSONObject().element("room_no", roomNo), 1, 18);
-								GameMain.singleTime.createTimer(tmd);
+								//GameMain.singleTime.createTimer(tmd);
 							}
 							
 							// 明牌抢庄发牌
@@ -1941,7 +1941,7 @@ public class NNGameEventDeal {
 				tmd.data=new JSONObject().element("room_no", roomNo);
 				tmd.gid=1;
 				tmd.gmd= new Messages(null, new JSONObject().element("room_no", roomNo), 1, 19);
-				GameMain.singleTime.createTimer(tmd);
+				//GameMain.singleTime.createTimer(tmd);
 			}
 			
 			// 玩家扣服务费
@@ -2059,7 +2059,7 @@ public class NNGameEventDeal {
 					tmd.data=new JSONObject().element("room_no", roomNo);
 					tmd.gid=1;
 					tmd.gmd= new Messages(client, new JSONObject().element("room_no", roomNo), 1, 22);
-					GameMain.singleTime.createTimer(tmd);
+					//GameMain.singleTime.createTimer(tmd);
 
 				}
 				game.getUserPacketMap().get(clientTag).isCloseRoom=1; 

@@ -889,6 +889,52 @@ public class BaseEventDeal {
     }
 
     /**
+     * 获取房间列表
+     * @param client
+     * @param data
+     */
+    public void getAllRoomList(SocketIOClient client, Object data){
+        JSONObject fromObject = JSONObject.fromObject(data);
+        int gameId = fromObject.getInt("gid");
+        JSONObject result = new JSONObject();
+        int type = 0;
+        if (fromObject.containsKey("type")) {
+            type = fromObject.getInt("type");
+        }
+        JSONArray allRoom = new JSONArray();
+        for (String roomNo : RoomManage.gameRoomMap.keySet()) {
+            if (RoomManage.gameRoomMap.get(roomNo).getGid()==gameId&&RoomManage.gameRoomMap.get(roomNo).isOpen()) {
+                GameRoom gameRoom = RoomManage.gameRoomMap.get(roomNo);
+                JSONObject obj = new JSONObject();
+                obj.put("room_no", gameRoom.getRoomNo());
+                obj.put("gid", gameId);
+                for (int i = 0; i < gameRoom.getUserIdList().size(); i++) {
+                    obj.put("user_id"+i, gameRoom.getUserIdList().get(i));
+                }
+                obj.put("base_info", gameRoom.getRoomInfo());
+                obj.put("fytype", gameRoom.getWfType());
+                obj.put("iszs", 0);
+                obj.put("player", gameRoom.getPlayerCount());
+                int playerCount = 0;
+                for (long id : gameRoom.getUserIdList()) {
+                    if (id>0) {
+                        playerCount++;
+                    }
+                }
+                obj.put("renshu", playerCount);
+                if (type==0||(type==1&&playerCount<gameRoom.getPlayerCount())) {
+                    allRoom.add(obj);
+                }
+            }
+        }
+        result.element(CommonConstant.RESULT_KEY_CODE, CommonConstant.GLOBAL_YES);
+        result.element("gid", gameId);
+        result.element("array", allRoom);
+        result.element("sType", fromObject.get("sType"));
+        CommonConstant.sendMsgEventToSingle(client,result.toString(),"getAllRoomListPush");
+    }
+
+    /**
      * 获取战绩记录
      * @param client
      * @param data
@@ -1239,4 +1285,53 @@ public class BaseEventDeal {
                 break;
         }
     }
-}
+
+    /**
+     * 测试-机器人加入创建房间
+     * @param client
+     * @param data
+     */
+    public void test(SocketIOClient client,Object data){
+        JSONObject postData = JSONObject.fromObject(data);
+        int gameId = postData.getInt("gid");
+        String account = postData.getString("account");
+        List<String> roomNoList = new ArrayList<String>();
+        int limit = postData.getInt("limit");
+        for (String roomNo : RoomManage.gameRoomMap.keySet()) {
+            GameRoom room = RoomManage.gameRoomMap.get(roomNo);
+            if (room.getGid()==gameId&&!room.getPlayerMap().containsKey(account)&&room.getPlayerMap().size()<=limit) {
+                roomNoList.add(roomNo);
+                break;
+            }
+        }
+        if (roomNoList.size()>0) {
+            postData.put("room_no",roomNoList.get(0));
+            joinRoomBase(client,postData);
+        }else {
+            createRoomBase(client,data);
+        }
+    }
+
+    /**
+     * 测试-获取当前房间数和游戏中玩家数量
+     * @param client
+     * @param data
+     */
+    public void getRoomAndPlayerCount(SocketIOClient client, Object data) {
+        JSONObject postData = JSONObject.fromObject(data);
+        int gameId = postData.getInt("game_id");
+        int roomCount = 0;
+        int playerCount = 0;
+        for (String roomNo : RoomManage.gameRoomMap.keySet()) {
+            GameRoom room = RoomManage.gameRoomMap.get(roomNo);
+            if (room.getGid()==gameId) {
+                roomCount ++;
+                playerCount += room.getPlayerMap().size();
+            }
+        }
+        JSONObject result = new JSONObject();
+        result.put("roomCount",roomCount);
+        result.put("playerCount",playerCount);
+        CommonConstant.sendMsgEventToSingle(client,result.toString(),"getRoomAndPlayerCountPush");
+    }
+ }

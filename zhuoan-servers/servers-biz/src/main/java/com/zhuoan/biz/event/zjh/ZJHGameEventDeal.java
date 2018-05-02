@@ -593,7 +593,7 @@ public class ZJHGameEventDeal {
                         tmd.data=new JSONObject().element("room_no", roomNo);
                         tmd.gid=6;
                         tmd.gmd= new Messages(null, new JSONObject().element("room_no", roomNo), 6, 9);
-                        GameMain.singleTime.createTimer(tmd);
+                        //GameMain.singleTime.createTimer(tmd);
                     }
 
                     if(room.getReadyCount()>1 && room.getUserPacketMap().size()>1 && room.isAllReady()){
@@ -778,7 +778,7 @@ public class ZJHGameEventDeal {
             tmd.data=new JSONObject().element("room_no", roomNo).element("focus", room.getFocus());
             tmd.gid=6;
             tmd.gmd= new Messages(null, new JSONObject().element("room_no", roomNo).element("focus", room.getFocus()), 6, 10);
-            GameMain.singleTime.createTimer(tmd);
+            //GameMain.singleTime.createTimer(tmd);
 
             // 游戏状态
             ((ZJHGame) RoomManage.gameRoomMap.get(roomNo)).setGameStatus(ZhaJinHuaCore.GAMESTATUS_XIAZHU);
@@ -869,7 +869,7 @@ public class ZJHGameEventDeal {
                             tmd.data=new JSONObject().element("room_no", roomNo).element("focus", nextUUID);
                             tmd.gid=6;
                             tmd.gmd= new Messages(client, new JSONObject().element("room_no", roomNo).element("focus", nextUUID), 6, 10);
-                            GameMain.singleTime.createTimer(tmd);
+                            //GameMain.singleTime.createTimer(tmd);
                         }
 
                     }else if(type==GENZHU){// 跟注
@@ -916,7 +916,7 @@ public class ZJHGameEventDeal {
                             tmd.data=new JSONObject().element("room_no", roomNo).element("focus", nextUUID);
                             tmd.gid=6;
                             tmd.gmd= new Messages(client, new JSONObject().element("room_no", roomNo).element("focus", nextUUID), 6, 10);
-                            GameMain.singleTime.createTimer(tmd);
+                            //GameMain.singleTime.createTimer(tmd);
                         }
 
                     }else if(type==GENDAODI){// 跟到底
@@ -967,7 +967,7 @@ public class ZJHGameEventDeal {
                                 tmd.data=new JSONObject().element("room_no", roomNo).element("focus", nextUUID);
                                 tmd.gid=6;
                                 tmd.gmd= new Messages(client, new JSONObject().element("room_no", roomNo).element("focus", nextUUID), 6, 10);
-                                GameMain.singleTime.createTimer(tmd);
+                                //GameMain.singleTime.createTimer(tmd);
                             }
                         }
 
@@ -989,7 +989,7 @@ public class ZJHGameEventDeal {
                         tmd.data=new JSONObject().element("room_no", roomNo).element("focus", nextUUID);
                         tmd.gid=6;
                         tmd.gmd= new Messages(client, new JSONObject().element("room_no", roomNo).element("focus", nextUUID), 6, 10);
-                        GameMain.singleTime.createTimer(tmd);
+                        //GameMain.singleTime.createTimer(tmd);
 
                     }else if(type==KANPAI){// 看牌
 
@@ -1044,7 +1044,7 @@ public class ZJHGameEventDeal {
                             tmd.data=new JSONObject().element("room_no", roomNo).element("focus", nextUUID);
                             tmd.gid=6;
                             tmd.gmd= new Messages(client, new JSONObject().element("room_no", roomNo).element("focus", nextUUID), 6, 10);
-                            GameMain.singleTime.createTimer(tmd);
+                            //GameMain.singleTime.createTimer(tmd);
                         }else {
                             SocketIOClient clientother=GameMain.server.getClient(room.getUUIDByClientTag(uuid));
                             if(clientother!=null){
@@ -2121,7 +2121,7 @@ public class ZJHGameEventDeal {
                         tmd.data=new JSONObject().element("room_no", roomNo).element("focus", nextUUID);
                         tmd.gid=6;
                         tmd.gmd= new Messages(client, new JSONObject().element("room_no", roomNo).element("focus", nextUUID), 6, 10);
-                        GameMain.singleTime.createTimer(tmd);
+                        //GameMain.singleTime.createTimer(tmd);
 
                     }
                 }
@@ -2163,7 +2163,7 @@ public class ZJHGameEventDeal {
                                     tmd.data=new JSONObject().element("room_no", roomNo).element("focus", nextUUID1);
                                     tmd.gid=6;
                                     tmd.gmd= new Messages(client, new JSONObject().element("room_no", roomNo).element("focus", nextUUID1), 6, 10);
-                                    GameMain.singleTime.createTimer(tmd);
+                                    //GameMain.singleTime.createTimer(tmd);
                                 }
                             }
                         }

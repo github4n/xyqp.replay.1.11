@@ -15,10 +15,11 @@ import com.zhuoan.constant.CacheKeyConstant;
 import com.zhuoan.constant.CommonConstant;
 import com.zhuoan.constant.DaoTypeConstant;
 import com.zhuoan.constant.NNConstant;
+import com.zhuoan.queue.Messages;
 import com.zhuoan.service.cache.RedisService;
 import com.zhuoan.service.jms.ProducerService;
+import com.zhuoan.times.SingleTimer;
 import com.zhuoan.util.Dto;
-import com.zhuoan.util.thread.ThreadPoolHelper;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 import org.apache.commons.lang.math.RandomUtils;
@@ -59,6 +60,9 @@ public class NNGameEventDealNew {
 
     @Resource
     private RedisService redisService;
+
+    @Resource
+    private SingleTimer singleTimer;
 
     /**
      * 创建房间通知自己
@@ -235,12 +239,17 @@ public class NNGameEventDealNew {
         // 当前准备人数大于最低开始人数开始游戏
         if (room.getNowReadyCount() == NNConstant.NN_MIN_START_COUNT) {
             room.setTimeLeft(NNConstant.NN_TIMER_READY);
-            ThreadPoolHelper.executorService.submit(new Runnable() {
-                @Override
-                public void run() {
-                    gameTimerNiuNiu.gameOverTime(roomNo, NNConstant.NN_GAME_STATUS_READY,0);
-                }
-            });
+//            ThreadPoolHelper.executorService.submit(new Runnable() {
+//                @Override
+//                public void run() {
+//                    gameTimerNiuNiu.gameOverTime(roomNo, NNConstant.NN_GAME_STATUS_READY,0);
+//                }
+//            });
+            JSONObject obj = new JSONObject();
+            obj.put("room_no",roomNo);
+            obj.put("gameStatus",NNConstant.NN_GAME_STATUS_READY);
+            obj.put("userStatus",NNConstant.NN_USER_STATUS_READY);
+            singleTimer.createTimer(roomNo,new Messages(null,obj,1,24));
         }
         // 房间内所有玩家都已经完成准备且人数大于最低开始人数通知开始游戏,否则通知玩家准备
         if (room.isAllReady() && room.getPlayerMap().size() >= NNConstant.NN_MIN_START_COUNT) {
@@ -293,12 +302,17 @@ public class NNGameEventDealNew {
             // 设置房间状态(抢庄)
             room.setGameStatus(NNConstant.NN_GAME_STATUS_QZ);
             room.setTimeLeft(NNConstant.NN_TIMER_QZ);
-            ThreadPoolHelper.executorService.submit(new Runnable() {
+            /*ThreadPoolHelper.executorService.submit(new Runnable() {
                 @Override
                 public void run() {
                     gameTimerNiuNiu.gameOverTime(room.getRoomNo(), NNConstant.NN_GAME_STATUS_QZ,0);
                 }
-            });
+            });*/
+            JSONObject obj = new JSONObject();
+            obj.put("room_no",room.getRoomNo());
+            obj.put("gameStatus",NNConstant.NN_GAME_STATUS_QZ);
+            obj.put("userStatus",NNConstant.NN_USER_STATUS_QZ);
+            singleTimer.createTimer(room.getRoomNo(),new Messages(null,obj,1,24));
         } else if (room.getBankerType() == NNConstant.NN_BANKER_TYPE_QZ) {
             // 设置房间状态(抢庄)
             room.setGameStatus(NNConstant.NN_GAME_STATUS_QZ);
@@ -326,12 +340,17 @@ public class NNGameEventDealNew {
             room.setGameStatus(NNConstant.NN_GAME_STATUS_LP);
             room.setTimeLeft(NNConstant.NN_TIMER_SHOW);
             // 开启亮牌定时器
-            ThreadPoolHelper.executorService.submit(new Runnable() {
+            /*ThreadPoolHelper.executorService.submit(new Runnable() {
                 @Override
                 public void run() {
                     gameTimerNiuNiu.gameOverTime(room.getRoomNo(), NNConstant.NN_GAME_STATUS_LP,0);
                 }
-            });
+            });*/
+            JSONObject obj = new JSONObject();
+            obj.put("room_no",room.getRoomNo());
+            obj.put("gameStatus",NNConstant.NN_GAME_STATUS_LP);
+            obj.put("userStatus",NNConstant.NN_USER_STATUS_LP);
+            singleTimer.createTimer(room.getRoomNo(),new Messages(null,obj,1,24));
             // 通知玩家
             changeGameStatus(room);
             return;
@@ -522,21 +541,35 @@ public class NNGameEventDealNew {
             sjCount = allList.size();
         }
         // 多人抢庄才进行休眠
-        final int sleepTime;
+        /*final int sleepTime;
         if (sjCount>1) {
             sleepTime = sjCount*800;
         }else {
             sleepTime = 0;
         }
-        // 设置游戏状态
-        room.setGameStatus(NNConstant.NN_GAME_STATUS_DZ);
-        room.setTimeLeft(NNConstant.NN_TIMER_XZ);
         ThreadPoolHelper.executorService.submit(new Runnable() {
             @Override
             public void run() {
                 gameTimerNiuNiu.gameOverTime(room.getRoomNo(), NNConstant.NN_GAME_STATUS_DZ, sleepTime);
             }
-        });
+        });*/
+        JSONObject obj = new JSONObject();
+        obj.put("room_no",room.getRoomNo());
+        if (sjCount>1) {
+            // 设置游戏状态
+            room.setGameStatus(NNConstant.NN_GAME_STATUS_DZ);
+            room.setTimeLeft(sjCount);
+            obj.put("gameStatus",NNConstant.NN_GAME_STATUS_DZ);
+            obj.put("userStatus",NNConstant.NN_USER_STATUS_DZ);
+        }else {
+            // 设置游戏状态
+            room.setGameStatus(NNConstant.NN_GAME_STATUS_XZ);
+            room.setTimeLeft(NNConstant.NN_TIMER_XZ);
+            changeGameStatus(room);
+            obj.put("gameStatus",NNConstant.NN_GAME_STATUS_XZ);
+            obj.put("userStatus",NNConstant.NN_USER_STATUS_XZ);
+        }
+        singleTimer.createTimer(room.getRoomNo(),new Messages(null,obj,1,24));
         // 通知玩家
         //changeGameStatus(room);
         long end = System.currentTimeMillis();
@@ -591,12 +624,18 @@ public class NNGameEventDealNew {
                     // 设置游戏状态
                     room.setGameStatus(NNConstant.NN_GAME_STATUS_LP);
                     room.setTimeLeft(NNConstant.NN_TIMER_SHOW);
-                    ThreadPoolHelper.executorService.submit(new Runnable() {
+                    /*ThreadPoolHelper.executorService.submit(new Runnable() {
                         @Override
                         public void run() {
                             gameTimerNiuNiu.gameOverTime(room.getRoomNo(), NNConstant.NN_GAME_STATUS_LP,0);
                         }
-                    });
+                    });*/
+                    JSONObject obj = new JSONObject();
+                    obj.put("room_no",room.getRoomNo());
+                    obj.put("gameStatus",NNConstant.NN_GAME_STATUS_LP);
+                    obj.put("userStatus",NNConstant.NN_USER_STATUS_LP);
+                    singleTimer.createTimer(room.getRoomNo(),new Messages(null,obj,1,24));
+
                     // 存放游戏记录
                     JSONArray gameProcessXZ = new JSONArray();
                     for (String uuid : room.getUserPacketMap().keySet()) {
@@ -943,6 +982,76 @@ public class NNGameEventDealNew {
         }
         long end = System.currentTimeMillis();
         logger.info("牛牛---exitRoom方法耗时"+(end-start));
+    }
+
+    public void gameOvertime(Object data){
+        JSONObject postData = JSONObject.fromObject(data);
+        String roomNo = postData.getString(CommonConstant.DATA_KEY_ROOM_NO);
+        int gameStatus = postData.getInt("gameStatus");
+        int userStatus = postData.getInt("userStatus");
+        // 房间存在
+        if (RoomManage.gameRoomMap.containsKey(roomNo)&&RoomManage.gameRoomMap.get(roomNo)!=null) {
+            NNGameRoomNew room = (NNGameRoomNew)RoomManage.gameRoomMap.get(roomNo);
+            // 非当前游戏状态停止定时器
+            if (room.getGameStatus()!=gameStatus) {
+                return ;
+            }
+            // 准备状态需要检查当前准备人数是否大于最低开始人数
+            if (gameStatus==NNConstant.NN_GAME_STATUS_READY&&room.getNowReadyCount()<NNConstant.NN_MIN_START_COUNT) {
+                return ;
+            }
+            // 当前阶段所有未完成操作的玩家
+            List<String> autoAccountList = new ArrayList<String>();
+            for (String account : room.getUserPacketMap().keySet()) {
+                // 除准备阶段以外不需要判断中途加入的玩家
+                if (gameStatus==NNConstant.NN_GAME_STATUS_READY||room.getUserPacketMap().get(account).getStatus()!= NNConstant.NN_USER_STATUS_INIT) {
+                    if (room.getUserPacketMap().get(account).getStatus()!=userStatus) {
+                        autoAccountList.add(account);
+                    }
+                }
+            }
+            // 投递消息类型
+            for (String account : autoAccountList) {
+                // 组织数据
+                JSONObject obj = new JSONObject();
+                // 房间号
+                obj.put(CommonConstant.DATA_KEY_ROOM_NO,room.getRoomNo());
+                // 账号
+                obj.put(CommonConstant.DATA_KEY_ACCOUNT,account);
+                if (gameStatus==NNConstant.NN_GAME_STATUS_READY) {
+                    // 准备阶段超时踢出
+                    if (room.getReadyOvertime()==CommonConstant.READY_OVERTIME_OUT) {
+                        exitRoom(null,obj);
+                    }
+                    // 准备阶段超时自动准备
+                    if (room.getReadyOvertime()==CommonConstant.READY_OVERTIME_AUTO) {
+                        gameReady(null,obj);
+                    }
+                }
+                if (gameStatus==NNConstant.NN_GAME_STATUS_DZ) {
+                    room.setGameStatus(NNConstant.NN_GAME_STATUS_XZ);
+                    room.setTimeLeft(NNConstant.NN_TIMER_XZ);
+                    changeGameStatus(room);
+                    obj.put("gameStatus",NNConstant.NN_GAME_STATUS_XZ);
+                    obj.put("userStatus",NNConstant.NN_USER_STATUS_XZ);
+                    singleTimer.createTimer(room.getRoomNo(),new Messages(null,obj,1,24));
+                }
+                if (gameStatus==NNConstant.NN_GAME_STATUS_QZ) {
+                    // 抢庄阶段超时不抢
+                    obj.put(NNConstant.DATA_KEY_VALUE,0);
+                    gameQiangZhuang(null,obj);
+                }
+                if (gameStatus==NNConstant.NN_GAME_STATUS_XZ) {
+                    // 下注阶段默认下最小倍数
+                    JSONArray baseNum = JSONArray.fromObject(room.getBaseNum());
+                    obj.put(NNConstant.DATA_KEY_MONEY,baseNum.getJSONObject(0).getInt("val"));
+                    gameXiaZhu(null,obj);
+                }
+                if (gameStatus==NNConstant.NN_GAME_STATUS_LP) {
+                    showPai(null,obj);
+                }
+            }
+        }
     }
 
     /**

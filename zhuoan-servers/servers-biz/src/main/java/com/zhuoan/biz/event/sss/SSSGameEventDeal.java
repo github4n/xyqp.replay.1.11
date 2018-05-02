@@ -698,7 +698,7 @@ public class SSSGameEventDeal {
 						tmd.data=postdata;
 						tmd.gid=4;
 						tmd.gmd= new Messages(client, postdata, 4, 10);
-						GameMain.singleTime.createTimer(tmd);
+						//GameMain.singleTime.createTimer(tmd);
 					}
 				}
 				
@@ -1049,7 +1049,7 @@ public class SSSGameEventDeal {
 					tmd.data=postdata;
 					tmd.gid=4;
 					tmd.gmd= new Messages(null, postdata, 4, 11);
-					GameMain.singleTime.createTimer(tmd);
+					//GameMain.singleTime.createTimer(tmd);
 				}else{
 					System.out.println("配牌倒记时没有进入");
 				}
@@ -1642,7 +1642,7 @@ public class SSSGameEventDeal {
 							tmd.data=postdata;
 							tmd.gid=4;
 							tmd.gmd= new Messages(client, postdata, 4, 10);
-							GameMain.singleTime.createTimer(tmd);
+							//GameMain.singleTime.createTimer(tmd);
 	
 						}else{
 							
@@ -1661,7 +1661,7 @@ public class SSSGameEventDeal {
 							tmd.gid=4;
 							tmd.gmd= new Messages(client, postdata, 4, 10);
 							if (!GameMain.singleTime.getM_map().containsKey(roomNo)) {
-								GameMain.singleTime.createTimer(tmd);
+								//GameMain.singleTime.createTimer(tmd);
 							}
 						}
 					}

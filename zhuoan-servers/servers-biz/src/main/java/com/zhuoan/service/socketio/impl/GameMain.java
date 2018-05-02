@@ -72,6 +72,8 @@ public class GameMain implements SocketIoManagerService {
      */
     public static Registry registry = null;
 
+    @Resource
+    private SingleTimer singleTimer;
 
     @Resource
     private Environment env;
@@ -226,8 +228,8 @@ public class GameMain implements SocketIoManagerService {
             }
         });
 
-        singleTime = new SingleTimer();
-        singleTime.start();
+        //singleTime = new SingleTimer();
+        singleTimer.start();
 
         /* 获取房间设置放入Json数组里面*/
         preSelectRoomSetting();

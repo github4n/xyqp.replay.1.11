@@ -208,6 +208,24 @@ public class BaseGameEvent {
                 producerService.sendMessage(baseQueueDestination, new Messages(client, object, 0, 13));
             }
         });
+        /**
+         *   测试接口
+         */
+        server.addEventListener("testInterface", Object.class, new DataListener<Object>() {
+            @Override
+            public void onData(SocketIOClient client, Object object, AckRequest ackSender) {
+                producerService.sendMessage(baseQueueDestination, new Messages(client, object, 0, 14));
+            }
+        });
+        /**
+         *   测试接口
+         */
+        server.addEventListener("getRoomAndPlayerCount", Object.class, new DataListener<Object>() {
+            @Override
+            public void onData(SocketIOClient client, Object object, AckRequest ackSender) {
+                producerService.sendMessage(baseQueueDestination, new Messages(client, object, 0, 15));
+            }
+        });
 
     }
 
