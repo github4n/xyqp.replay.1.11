@@ -16,7 +16,6 @@ import com.zhuoan.constant.event.GidConstant;
 import com.zhuoan.exception.EventException;
 import com.zhuoan.service.socketio.SocketIoManagerService;
 import com.zhuoan.service.socketio.impl.GameMain;
-import com.zhuoan.util.Dto;
 import net.sf.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -74,8 +73,7 @@ public class GameEventDeal {
         Object data = jsonObject.get("dataObject");
         Integer gid = (Integer) jsonObject.get("gid");
         Integer sorts = (Integer) jsonObject.get("sorts");
-        SocketIOClient client = obtainSocketIOClient(jsonObject);
-        /* todo Messages可以重新封装 */
+        SocketIOClient client = GameMain.server.getClient(UUID.fromString((String) jsonObject.get("sessionId")));
 
 
         // 处理队列中的信息。。。。。
@@ -336,20 +334,11 @@ public class GameEventDeal {
             try {
                 TextMessage tm = (TextMessage) message;
                 messageStr = tm.getText();
-                logger.info("[" + this.getClass().getName() + "] 接收了消息 = [" + messageStr + "]");
+                logger.info("[" + this.getClass().getName() + "] 接收 = [" + messageStr + "]");
             } catch (JMSException e) {
                 throw new EventException("[" + this.getClass().getName() + "] 信息接收出现异常");
             }
         }
         return messageStr;
-    }
-
-    private SocketIOClient obtainSocketIOClient(JSONObject jsonObject) {
-        JSONObject clientObject = (JSONObject) jsonObject.get("client");
-        if (Dto.isObjNull(clientObject)) {
-            return null;
-        }
-        String sessionId = String.valueOf(clientObject.get("sessionId"));
-        return GameMain.server.getClient(UUID.fromString(sessionId));
     }
 }
