@@ -95,7 +95,6 @@ public class BaseEventDeal {
      * @param data
      */
     public void createRoomBase(SocketIOClient client, Object data) {
-        long start = System.currentTimeMillis();
         // 检查是否能加入房间
         JSONObject postData = fromObject(data);
         JSONObject result = new JSONObject();
@@ -124,8 +123,6 @@ public class BaseEventDeal {
         client.set(CommonConstant.CLIENT_TAG_ACCOUNT, account);
         // 创建房间
         createRoomBase(client, JSONObject.fromObject(data), userInfo);
-        long end = System.currentTimeMillis();
-        logger.info("公共---createRoomBase(SocketIOClient client, Object data)"+(end-start));
     }
 
     /**
@@ -136,7 +133,6 @@ public class BaseEventDeal {
      * @param userInfo
      */
     public void createRoomBase(SocketIOClient client, JSONObject postData, JSONObject userInfo) {
-        long start = System.currentTimeMillis();
         JSONObject baseInfo = postData.getJSONObject("base_info");
         // 添加房间信息
         String roomNo = RoomManage.randomRoomNo();
@@ -326,12 +322,9 @@ public class BaseEventDeal {
 
         producerService.sendMessage(daoQueueDestination, new PumpDao(DaoTypeConstant.INSERT_GAME_ROOM, obj));
 
-        long end = System.currentTimeMillis();
-        logger.info("公共---createRoomBase(SocketIOClient client, JSONObject postData, JSONObject userInfo)"+(end-start));
     }
 
     private JSONObject getGameSetting(GameRoom gameRoom) {
-        long start = System.currentTimeMillis();
         JSONObject gameSetting;
         try {
             Object object = redisService.queryValueByKey(CacheKeyConstant.GAME_SETTING);
@@ -345,8 +338,6 @@ public class BaseEventDeal {
             logger.error("请启动REmote DIctionary Server");
             gameSetting = roomBiz.getGameSetting();
         }
-        long end = System.currentTimeMillis();
-        logger.info("公共---getGameSetting(GameRoom gameRoom)"+(end-start));
         return gameSetting;
     }
 
@@ -357,7 +348,6 @@ public class BaseEventDeal {
      * @param data
      */
     public void joinRoomBase(SocketIOClient client, Object data) {
-        long start = System.currentTimeMillis();
         JSONObject postData = fromObject(data);
         JSONObject result = new JSONObject();
         // 玩家账号
@@ -392,8 +382,6 @@ public class BaseEventDeal {
         client.set(CommonConstant.CLIENT_TAG_ROOM_NO, roomNo);
 
         joinRoomBase(client, postData, userInfo);
-        long end = System.currentTimeMillis();
-        logger.info("公共---joinRoomBase(SocketIOClient client, Object data)"+(end-start));
     }
 
     /**
@@ -404,7 +392,6 @@ public class BaseEventDeal {
      * @param userInfo
      */
     public void joinRoomBase(SocketIOClient client, JSONObject postData, JSONObject userInfo) {
-        long start = System.currentTimeMillis();
         String roomNo = postData.getString(CommonConstant.DATA_KEY_ROOM_NO);
         GameRoom gameRoom = RoomManage.gameRoomMap.get(roomNo);
         JSONObject result = new JSONObject();
@@ -491,8 +478,6 @@ public class BaseEventDeal {
             default:
                 break;
         }
-        long end = System.currentTimeMillis();
-        logger.info("公共---joinRoomBase(SocketIOClient client, JSONObject postData, JSONObject userInfo)"+(end-start));
     }
 
     /**
@@ -502,7 +487,6 @@ public class BaseEventDeal {
      * @return
      */
     public Playerinfo obtainPlayerInfo(JSONObject data) {
-        long start = System.currentTimeMillis();
         JSONObject userInfo = data.getJSONObject("userInfo");
         int myIndex = data.getInt("myIndex");
         UUID uuid = UUID.fromString(data.getString("uuid"));
@@ -554,8 +538,6 @@ public class BaseEventDeal {
         if (userInfo.containsKey("luck")) {
             playerinfo.setLuck(userInfo.getInt("luck"));
         }
-        long end = System.currentTimeMillis();
-        logger.info("公共---obtainPlayerInfo(JSONObject data)"+(end-start));
         return playerinfo;
     }
 
@@ -567,7 +549,6 @@ public class BaseEventDeal {
      * @param account
      */
     public void createRoomNN(NNGameRoomNew room, JSONObject baseInfo, String account) {
-        long start = System.currentTimeMillis();
         room.setBankerType(baseInfo.getInt("type"));
         // 玩法
         String wanFa = "";
@@ -660,8 +641,6 @@ public class BaseEventDeal {
             room.setBaseNum(array.toString());
         }
         room.getUserPacketMap().put(account, new UserPacket());
-        long end = System.currentTimeMillis();
-        logger.info("公共---createRoomNN(NNGameRoomNew room, JSONObject baseInfo, String account)"+(end-start));
     }
 
     /**
@@ -775,7 +754,6 @@ public class BaseEventDeal {
     }
 
     private JSONObject getGameInfoById() {
-        long start = System.currentTimeMillis();
         JSONObject gameInfoById;
         try {
             Object object = redisService.queryValueByKey(CacheKeyConstant.GAME_INFO_BY_ID);
@@ -790,8 +768,6 @@ public class BaseEventDeal {
             logger.error("请启动REmote DIctionary Server");
             gameInfoById = roomBiz.getGameInfoByID(CommonConstant.GAME_ID_SSS).getJSONObject("setting");
         }
-        long end = System.currentTimeMillis();
-        logger.info("公共---getGameInfoById()"+(end-start));
         return gameInfoById;
     }
 
@@ -802,7 +778,6 @@ public class BaseEventDeal {
      * @param data
      */
     public void getGameSetting(SocketIOClient client, Object data) {
-        long start = System.currentTimeMillis();
         JSONObject fromObject = JSONObject.fromObject(data);
         int gid = fromObject.getInt("gid");
         String platform = fromObject.getString("platform");
@@ -820,12 +795,9 @@ public class BaseEventDeal {
             result.put(CommonConstant.RESULT_KEY_CODE, CommonConstant.GLOBAL_YES);
             CommonConstant.sendMsgEventToSingle(client, result.toString(), "getGameSettingPush");
         }
-        long end = System.currentTimeMillis();
-        logger.info("公共---getGameSetting(SocketIOClient client, Object data)"+(end-start));
     }
 
     private JSONArray getGameSetting(int gid, String platform) {
-        long start = System.currentTimeMillis();
         String key = "";
         switch (gid) {
             case CommonConstant.GAME_ID_NN:
@@ -855,8 +827,6 @@ public class BaseEventDeal {
                 gameSetting = publicBiz.getRoomSetting(gid, platform);
             }
         }
-        long end = System.currentTimeMillis();
-        logger.info("公共---getGameSetting(int gid, String platform)"+(end-start));
         return gameSetting;
     }
 
@@ -866,7 +836,6 @@ public class BaseEventDeal {
      * @param data
      */
     public void checkUser(SocketIOClient client, Object data) {
-        long start = System.currentTimeMillis();
         JSONObject postData = JSONObject.fromObject(data);
         if (postData.containsKey("account")) {
             String account = postData.getString("account");
@@ -884,8 +853,6 @@ public class BaseEventDeal {
             result.put(CommonConstant.RESULT_KEY_CODE, CommonConstant.GLOBAL_YES);
             CommonConstant.sendMsgEventToSingle(client, result.toString(), "checkUserPush");
         }
-        long end = System.currentTimeMillis();
-        logger.info("公共---checkUser(SocketIOClient client, Object data)"+(end-start));
     }
 
     /**

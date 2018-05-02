@@ -364,7 +364,6 @@ public class NNGameEventDealNew {
      * @param data
      */
     public void gameQiangZhuang(SocketIOClient client, Object data) {
-        long start = System.currentTimeMillis();
         JSONObject postData = JSONObject.fromObject(data);
         // 非抢庄阶段收到抢庄消息不作处理
         if (!CommonConstant.checkEvent(postData, NNConstant.NN_GAME_STATUS_QZ, client)) {
@@ -420,7 +419,6 @@ public class NNGameEventDealNew {
      * @param lastAccount(最后一个抢庄玩家账号)
      */
     public void gameDingZhuang(final NNGameRoomNew room, String lastAccount) {
-        long start = System.currentTimeMillis();
         // 非抢庄阶段不作处理
         if (room.getGameStatus() != NNConstant.NN_GAME_STATUS_QZ) {
             return;
@@ -532,7 +530,6 @@ public class NNGameEventDealNew {
      * @param data
      */
     public void gameXiaZhu(SocketIOClient client, Object data) {
-        long start = System.currentTimeMillis();
         // 非下注阶段收到下注消息不作处理
         JSONObject postData = JSONObject.fromObject(data);
         if (!CommonConstant.checkEvent(postData, NNConstant.NN_GAME_STATUS_XZ, client)) {
@@ -606,7 +603,6 @@ public class NNGameEventDealNew {
      * @param data
      */
     public void showPai(SocketIOClient client, Object data) {
-        long start = System.currentTimeMillis();
         JSONObject postData = JSONObject.fromObject(data);
         // 非亮牌阶段收到亮牌消息不作处理
         if (!CommonConstant.checkEvent(postData, NNConstant.NN_GAME_STATUS_LP, client)) {
@@ -676,8 +672,6 @@ public class NNGameEventDealNew {
                 changeGameStatus(room);
             }
         }
-        long end = System.currentTimeMillis();
-        logger.info("牛牛---showPai方法耗时"+(end-start));
     }
 
     /**
@@ -686,7 +680,6 @@ public class NNGameEventDealNew {
      * @param room
      */
     public void gameJieSuan(NNGameRoomNew room) {
-        long start = System.currentTimeMillis();
         if (room.getBankerType() == NNConstant.NN_BANKER_TYPE_TB) {
             niuNiuTongBi(room);
         } else {
@@ -827,8 +820,6 @@ public class NNGameEventDealNew {
         for (int i = 0; i < userGameLogs.size(); i++) {
             producerService.sendMessage(daoQueueDestination, new PumpDao(DaoTypeConstant.INSERT_USER_GAME_LOG, userGameLogs.getJSONObject(i)));
         }
-        long end = System.currentTimeMillis();
-        logger.info("牛牛---gameJieSuan方法耗时"+(end-start));
     }
 
     private JSONObject getRoomInfo(GameRoom room) {
@@ -848,7 +839,6 @@ public class NNGameEventDealNew {
      * @param data
      */
     public void exitRoom(SocketIOClient client, Object data) {
-        long start = System.currentTimeMillis();
         JSONObject postData = JSONObject.fromObject(data);
         if (!CommonConstant.checkEvent(postData, CommonConstant.CHECK_GAME_STATUS_NO, client)) {
             return;
@@ -1007,7 +997,6 @@ public class NNGameEventDealNew {
      * @param room
      */
     public void changeGameStatus(NNGameRoomNew room) {
-        long start = System.currentTimeMillis();
         for (String account : room.getPlayerMap().keySet()) {
             JSONObject obj = new JSONObject();
             obj.put("gameStatus", room.getGameStatus());
@@ -1035,8 +1024,6 @@ public class NNGameEventDealNew {
                 CommonConstant.sendMsgEventToSingle(uuid, obj.toString(), "changeGameStatusPush_NN");
             }
         }
-        long end = System.currentTimeMillis();
-        logger.info("牛牛---changeGameStatus方法耗时"+(end-start));
     }
 
     /**
@@ -1097,7 +1084,6 @@ public class NNGameEventDealNew {
      * @param data
      */
     public void reconnectGame(SocketIOClient client, Object data) {
-        long start = System.currentTimeMillis();
         JSONObject postData = JSONObject.fromObject(data);
         String roomNo = postData.getString(CommonConstant.DATA_KEY_ROOM_NO);
         String account = postData.getString(CommonConstant.DATA_KEY_ACCOUNT);
@@ -1127,8 +1113,6 @@ public class NNGameEventDealNew {
         result.put("data", obtainRoomData(account, roomNo));
         // 通知玩家
         CommonConstant.sendMsgEventToSingle(client, result.toString(), "reconnectGamePush_NN");
-        long end = System.currentTimeMillis();
-        logger.info("牛牛---reconnectGame方法耗时"+(end-start));
     }
 
     /**
