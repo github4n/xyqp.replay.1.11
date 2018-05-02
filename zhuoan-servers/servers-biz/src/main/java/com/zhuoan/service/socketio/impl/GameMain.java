@@ -211,6 +211,7 @@ public class GameMain implements SocketIoManagerService {
             startServer();
         } catch (Exception e) {
             logger.error("RMI异常", e);
+            throw new RuntimeException(e);
         }
     }
 
@@ -274,6 +275,7 @@ public class GameMain implements SocketIoManagerService {
                 startServer();
             } catch (Exception e) {
                 logger.error("RMI异常", e);
+                throw new RuntimeException(e);
             }
         }
     }
