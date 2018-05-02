@@ -206,9 +206,11 @@ public class GameMain implements SocketIoManagerService {
                 new BasicThreadFactory.Builder().namingPattern("userInfoCache-schedule-pool-%d").daemon(true).build());
             executor.scheduleWithFixedDelay(new GameTask(), 0, 1, TimeUnit.MINUTES);
 
+        } catch (RemoteException | NotBoundException e) {
+            logger.info("尝试重新连接Socket");
+            startServer();
         } catch (Exception e) {
             logger.error("RMI异常", e);
-            throw new RuntimeException(e);
         }
     }
 
@@ -268,7 +270,7 @@ public class GameMain implements SocketIoManagerService {
                 logger.info("I am a RMI-heartbeat");
 
             } catch (RemoteException | NotBoundException e) {
-                logger.info("尝试重新连接");
+                logger.info("尝试重新连接Socket");
                 startServer();
             } catch (Exception e) {
                 logger.error("RMI异常", e);

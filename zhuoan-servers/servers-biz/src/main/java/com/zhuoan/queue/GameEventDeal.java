@@ -14,6 +14,7 @@ import com.zhuoan.biz.model.GameLogsCache;
 import com.zhuoan.biz.model.RoomManage;
 import com.zhuoan.constant.event.GidConstant;
 import com.zhuoan.exception.EventException;
+import com.zhuoan.service.socketio.SocketIoManagerService;
 import com.zhuoan.service.socketio.impl.GameMain;
 import com.zhuoan.util.Dto;
 import net.sf.json.JSONObject;
@@ -61,8 +62,14 @@ public class GameEventDeal {
     private ZJHGameEventDealNew zjhGameEventDealNew;
     @Resource
     private BDXGameEventDealNew bdxGameEventDealNew;
+    @Resource
+    private SocketIoManagerService socketIoManagerService;
 
     public void eventsMQ(Message message) {
+        if (GameMain.server == null) {
+            // 当MQ宕机重启时，若socket服务未启动，则先启动socket服务
+            socketIoManagerService.startServer();
+        }
         JSONObject jsonObject = JSONObject.fromObject(obtainMessageStr(message));
         Object data = jsonObject.get("dataObject");
         Integer gid = (Integer) jsonObject.get("gid");
@@ -85,7 +92,7 @@ public class GameEventDeal {
                         baseEventDeal.checkUser(client, data);
                         break;
                     case 4:
-                        baseEventDeal.getUserGameLogs(client,data);
+                        baseEventDeal.getUserGameLogs(client, data);
                         break;
                     case 5:
                         roomManage.getRoomCardPayInfo(client, data);
