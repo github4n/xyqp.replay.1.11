@@ -266,6 +266,10 @@ public class GameEventDeal {
                         // 游戏结算-结算（没有监听事件，只有推送事件）
                         sssGameEventDeal.gameEnd(data);
                         break;
+                    case 12:
+                        // 游戏结算-结算（没有监听事件，只有推送事件）
+                        sssGameEventDealNew.gameOvertime(data);
+                        break;
                     default:
                         break;
                 }

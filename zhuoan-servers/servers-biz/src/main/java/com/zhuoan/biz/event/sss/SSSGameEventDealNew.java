@@ -6,7 +6,6 @@ import com.zhuoan.biz.core.sss.SSSOrdinaryCards;
 import com.zhuoan.biz.core.sss.SSSSpecialCardSort;
 import com.zhuoan.biz.core.sss.SSSSpecialCards;
 import com.zhuoan.biz.game.biz.RoomBiz;
-import com.zhuoan.biz.game.biz.UserBiz;
 import com.zhuoan.biz.model.Playerinfo;
 import com.zhuoan.biz.model.RoomManage;
 import com.zhuoan.biz.model.dao.PumpDao;
@@ -15,7 +14,9 @@ import com.zhuoan.biz.model.sss.SSSGameRoomNew;
 import com.zhuoan.constant.CommonConstant;
 import com.zhuoan.constant.DaoTypeConstant;
 import com.zhuoan.constant.SSSConstant;
+import com.zhuoan.queue.Messages;
 import com.zhuoan.service.jms.ProducerService;
+import com.zhuoan.times.SingleTimer;
 import com.zhuoan.util.Dto;
 import com.zhuoan.util.thread.ThreadPoolHelper;
 import net.sf.json.JSONArray;
@@ -47,9 +48,6 @@ public class SSSGameEventDealNew {
     private RoomBiz roomBiz;
 
     @Resource
-    private UserBiz userBiz;
-
-    @Resource
     private GameTimerSSS gameTimerSSS;
 
     @Resource
@@ -58,6 +56,8 @@ public class SSSGameEventDealNew {
     @Resource
     private ProducerService producerService;
 
+    @Resource
+    private SingleTimer singleTimer;
 
     /**
      * 创建房间通知自己
@@ -177,6 +177,10 @@ public class SSSGameEventDealNew {
         }
     }
 
+    /**
+     * 开始游戏
+     * @param room
+     */
     public void startGame(final SSSGameRoomNew room) {
         // 非准备或初始阶段无法开始开始游戏
         if (room.getGameStatus()!= SSSConstant.SSS_GAME_STATUS_READY) {
@@ -229,8 +233,18 @@ public class SSSGameEventDealNew {
                 gameTimerSSS.gameOverTime(room.getRoomNo(),SSSConstant.SSS_GAME_STATUS_GAME_EVENT);
             }
         });
+        JSONObject obj = new JSONObject();
+        obj.put("room_no",room.getRoomNo());
+        obj.put("gameStatus", SSSConstant.SSS_GAME_STATUS_GAME_EVENT);
+        obj.put("userStatus",SSSConstant.SSS_USER_STATUS_GAME_EVENT);
+        singleTimer.createTimer(room.getRoomNo(),new Messages(null,obj,4,12));
     }
 
+    /**
+     * 游戏事件
+     * @param client
+     * @param data
+     */
     public void gameEvent(SocketIOClient client, Object data){
         JSONObject postData = JSONObject.fromObject(data);
         if (!CommonConstant.checkEvent(postData,SSSConstant.SSS_GAME_STATUS_GAME_EVENT, client)) {
@@ -442,7 +456,6 @@ public class SSSGameEventDealNew {
                 producerService.sendMessage(daoQueueDestination, new PumpDao(DaoTypeConstant.INSERT_GAME_LOG, gameLogObj));
                 JSONArray userGameLogs = room.obtainUserGameLog(gameLogObj.getLong("id"), array, gameResult.toString());
                 for (int i = 0; i < userGameLogs.size(); i++) {
-                    // TODO: 2018/4/24 每个用户缓存20条数据
                     producerService.sendMessage(daoQueueDestination, new PumpDao(DaoTypeConstant.INSERT_USER_GAME_LOG, userGameLogs.getJSONObject(i)));
                 }
             }else {
@@ -544,6 +557,11 @@ public class SSSGameEventDealNew {
         }
     }
 
+    /**
+     * 重连
+     * @param client
+     * @param data
+     */
     public void reconnectGame(SocketIOClient client,Object data){
         JSONObject postData = JSONObject.fromObject(data);
         String roomNo = postData.getString(CommonConstant.DATA_KEY_ROOM_NO);
@@ -576,6 +594,67 @@ public class SSSGameEventDealNew {
         CommonConstant.sendMsgEventToSingle(client,result.toString(),"reconnectGamePush_SSS");
     }
 
+    /**
+     * 游戏超时事件
+     * @param data
+     */
+    public void gameOvertime(Object data){
+        JSONObject postData = JSONObject.fromObject(data);
+        String roomNo = postData.getString(CommonConstant.DATA_KEY_ROOM_NO);
+        int gameStatus = postData.getInt("gameStatus");
+        int userStatus = postData.getInt("userStatus");
+        // 房间存在
+        if (RoomManage.gameRoomMap.containsKey(roomNo)&&RoomManage.gameRoomMap.get(roomNo)!=null) {
+            SSSGameRoomNew room = (SSSGameRoomNew)RoomManage.gameRoomMap.get(roomNo);
+            // 非当前游戏状态停止定时器
+            if (room.getGameStatus()!=gameStatus) {
+                return;
+            }
+            // 准备状态需要检查当前准备人数是否大于最低开始人数
+            if (gameStatus==SSSConstant.SSS_GAME_STATUS_READY&&room.getNowReadyCount()<room.getMinPlayer()) {
+                return;
+            }
+            // 当前阶段所有未完成操作的玩家
+            List<String> autoAccountList = new ArrayList<String>();
+            for (String account : room.getUserPacketMap().keySet()) {
+                // 除准备阶段以外不需要判断中途加入的玩家
+                if (gameStatus==SSSConstant.SSS_GAME_STATUS_READY||room.getUserPacketMap().get(account).getStatus()!=SSSConstant.SSS_USER_STATUS_INIT) {
+                    if (room.getUserPacketMap().get(account).getStatus()!=userStatus) {
+                        autoAccountList.add(account);
+                    }
+                }
+            }
+            for (String account : autoAccountList) {
+                // 组织数据
+                JSONObject obj = new JSONObject();
+                // 房间号
+                obj.put(CommonConstant.DATA_KEY_ROOM_NO,room.getRoomNo());
+                // 账号
+                obj.put(CommonConstant.DATA_KEY_ACCOUNT,account);
+                if (gameStatus==SSSConstant.SSS_GAME_STATUS_READY) {
+                    // 准备阶段超时踢出
+                    exitRoom(null,obj);
+                }
+                if (gameStatus==SSSConstant.SSS_GAME_STATUS_COMPARE) {
+                    room.setGameStatus(SSSConstant.SSS_GAME_STATUS_SUMMARY);
+                    // 初始化倒计时
+                    room.setTimeLeft(SSSConstant.SSS_TIMER_INIT);
+                    // 改变状态，通知玩家
+                    changeGameStatus(room);
+                }
+                if (gameStatus==SSSConstant.SSS_USER_STATUS_GAME_EVENT) {
+                    // 自动配牌
+                    obj.put("type",1);
+                    gameEvent(null,obj);
+                }
+            }
+        }
+    }
+
+    /**
+     * 游戏状态改变通知玩家
+     * @param room
+     */
     public void changeGameStatus(SSSGameRoomNew room) {
         for (String account : room.getPlayerMap().keySet()) {
             JSONObject obj = new JSONObject();
@@ -657,7 +736,7 @@ public class SSSGameEventDealNew {
             }
             if (room.getGameStatus()==SSSConstant.SSS_GAME_STATUS_COMPARE) {
                 roomData.put("showTimer",CommonConstant.GLOBAL_NO);
-                roomData.put("bipaiTimer",room.getCompareTimer()*100);
+                roomData.put("bipaiTimer",room.getCompareTimer());
             }
             roomData.put("timer",room.getTimeLeft());
             roomData.put("myIndex",room.getPlayerMap().get(account).getMyIndex());
