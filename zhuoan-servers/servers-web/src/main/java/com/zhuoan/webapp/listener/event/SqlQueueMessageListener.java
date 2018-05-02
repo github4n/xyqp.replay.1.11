@@ -46,7 +46,7 @@ public class SqlQueueMessageListener implements MessageListener {
         SqlModel sqlModel;
         try {
             sqlModel = (SqlModel) ((ActiveMQObjectMessage) message).getObject();
-            logger.info("[" + this.getClass().getName() + "] 接收了消息 = [" + JSONObject.fromObject(sqlModel) + "]");
+            logger.info("[" + this.getClass().getName() + "] 接收 = [" + JSONObject.fromObject(sqlModel) + "]");
         } catch (JMSException e) {
             throw new EventException("sqlModel对象接收异常", e.getMessage());
         }

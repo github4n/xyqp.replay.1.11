@@ -7,8 +7,10 @@ import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 
 import java.io.Serializable;
+import java.util.Arrays;
 
 public class SqlModel implements Serializable{
+    private static final long serialVersionUID = -5236848137376023025L;
     public static final int GETOBJECTBYSQL = 1;
     public static final int GETOBJECTLISTBYSQL = 2;
     public static final int EXECUTEUPDATEBYSQL = 3;
@@ -272,5 +274,33 @@ public class SqlModel implements Serializable{
 
     public void setUs_bdx(JSONArray us_bdx) {
         this.us_bdx = us_bdx;
+    }
+
+    @Override
+    public String toString() {
+        return "SqlModel{" +
+            "sql='" + sql + '\'' +
+            ", params=" + Arrays.toString(params) +
+            ", type=" + type +
+            ", userIds=" + userIds +
+            ", roomNo='" + roomNo + '\'' +
+            ", gid=" + gid +
+            ", fee=" + fee +
+            ", type1='" + type1 + '\'' +
+            ", room_nn=" + room_nn +
+            ", gamelog_nn=" + gamelog_nn +
+            ", uglogs_nn=" + uglogs_nn +
+            ", type_nn=" + type_nn +
+            ", array_nn=" + array_nn +
+            ", roomNo_zjh='" + roomNo_zjh + '\'' +
+            ", jiesuanData_zjh=" + jiesuanData_zjh +
+            ", jiesuanArray_zjh=" + jiesuanArray_zjh +
+            ", room_sss=" + room_sss +
+            ", us_sss=" + us_sss +
+            ", uid_sss=" + uid_sss +
+            ", e_sss=" + e_sss +
+            ", room_bdx=" + room_bdx +
+            ", us_bdx=" + us_bdx +
+            '}';
     }
 }

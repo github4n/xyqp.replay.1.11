@@ -279,19 +279,11 @@ public class GameMain implements SocketIoManagerService {
     }
 
     /**
-     * @param server 方便后续配置至不同服务器
+     * @param server
      */
     private void addEventListener(SocketIOServer server) {
-
-        /**
-         * todo：  后续需在配置文件配置： (ip1：events标识1)|(ip2：events标识2)……并完善代码！  作用：event绑定对应的server，后续打包只要动配置
-         */
-//        String configHostIp = env.getProperty(EnvKeyEnum.SERVER_IP.getKey());
-//        String currentHostIp = server.getConfiguration().getHostname();
-
         /* 公共事件监听 */
         baseGameEvent.listenerBaseGameEvent(server);
-
 
         /* 比大小 */
         bdxGameEvent.listenerBDXGameEvent(server);

@@ -43,4 +43,12 @@ public class PumpDao implements Serializable{
     public void setObjectDao(JSONObject objectDao) {
         this.objectDao = objectDao;
     }
+
+    @Override
+    public String toString() {
+        return "PumpDao{" +
+            "daoType='" + daoType + '\'' +
+            ", objectDao=" + objectDao +
+            '}';
+    }
 }

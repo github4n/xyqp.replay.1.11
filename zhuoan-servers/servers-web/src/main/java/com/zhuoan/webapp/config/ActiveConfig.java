@@ -250,7 +250,7 @@ public class ActiveConfig {
          * ({@link #setConcurrentConsumers}) and will slowly scale up to the maximum number
          * of consumers {@link #setMaxConcurrentConsumers} in case of increasing load.
          */
-        queueListenerContainer.setConcurrency("1-10");
+        queueListenerContainer.setConcurrency("1-5");
         return queueListenerContainer;
     }
 
