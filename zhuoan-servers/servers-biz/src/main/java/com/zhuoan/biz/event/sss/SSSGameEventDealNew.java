@@ -14,9 +14,7 @@ import com.zhuoan.biz.model.sss.SSSGameRoomNew;
 import com.zhuoan.constant.CommonConstant;
 import com.zhuoan.constant.DaoTypeConstant;
 import com.zhuoan.constant.SSSConstant;
-import com.zhuoan.queue.Messages;
 import com.zhuoan.service.jms.ProducerService;
-import com.zhuoan.times.SingleTimer;
 import com.zhuoan.util.Dto;
 import com.zhuoan.util.thread.ThreadPoolHelper;
 import net.sf.json.JSONArray;
@@ -55,9 +53,6 @@ public class SSSGameEventDealNew {
 
     @Resource
     private ProducerService producerService;
-
-    @Resource
-    private SingleTimer singleTimer;
 
     /**
      * 创建房间通知自己
@@ -233,11 +228,6 @@ public class SSSGameEventDealNew {
                 gameTimerSSS.gameOverTime(room.getRoomNo(),SSSConstant.SSS_GAME_STATUS_GAME_EVENT);
             }
         });
-        JSONObject obj = new JSONObject();
-        obj.put("room_no",room.getRoomNo());
-        obj.put("gameStatus", SSSConstant.SSS_GAME_STATUS_GAME_EVENT);
-        obj.put("userStatus",SSSConstant.SSS_USER_STATUS_GAME_EVENT);
-        singleTimer.createTimer(room.getRoomNo(),new Messages(null,obj,4,12));
     }
 
     /**

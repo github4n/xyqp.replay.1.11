@@ -7,6 +7,7 @@ import com.zhuoan.biz.model.nn.NNGameRoom;
 import com.zhuoan.biz.model.zjh.ZJHGame;
 import com.zhuoan.biz.service.majiang.MaJiangBiz;
 import com.zhuoan.biz.service.majiang.impl.MajiangBizImpl;
+import com.zhuoan.constant.CommonConstant;
 import com.zhuoan.constant.Constant;
 import com.zhuoan.dao.DBUtil;
 import com.zhuoan.queue.SqlModel;
@@ -125,7 +126,7 @@ public class RoomManage {
                 result.put("code", 0);
             }
         }
-        client.sendEvent("getUserInfoPush", result);
+        CommonConstant.sendMsgEventToSingle(client, String.valueOf(result),"getUserInfoPush");
     }
 
 	/**

@@ -15,10 +15,8 @@ import com.zhuoan.constant.CacheKeyConstant;
 import com.zhuoan.constant.CommonConstant;
 import com.zhuoan.constant.DaoTypeConstant;
 import com.zhuoan.constant.NNConstant;
-import com.zhuoan.queue.Messages;
 import com.zhuoan.service.cache.RedisService;
 import com.zhuoan.service.jms.ProducerService;
-import com.zhuoan.times.SingleTimer;
 import com.zhuoan.util.Dto;
 import com.zhuoan.util.thread.ThreadPoolHelper;
 import net.sf.json.JSONArray;
@@ -61,9 +59,6 @@ public class NNGameEventDealNew {
 
     @Resource
     private RedisService redisService;
-
-    @Resource
-    private SingleTimer singleTimer;
 
     /**
      * 创建房间通知自己
@@ -970,7 +965,7 @@ public class NNGameEventDealNew {
                     changeGameStatus(room);
                     obj.put("gameStatus",NNConstant.NN_GAME_STATUS_XZ);
                     obj.put("userStatus",NNConstant.NN_USER_STATUS_XZ);
-                    singleTimer.createTimer(room.getRoomNo(),new Messages(null,obj,1,24));
+                    //singleTimer.createTimer(room.getRoomNo(),new Messages(null,obj,1,24));
                     break;
                 }
                 if (gameStatus==NNConstant.NN_GAME_STATUS_QZ) {
