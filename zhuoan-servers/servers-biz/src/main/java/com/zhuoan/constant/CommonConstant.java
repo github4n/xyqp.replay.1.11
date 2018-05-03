@@ -113,6 +113,18 @@ public class CommonConstant {
      * 提示消息类型-弹窗
      */
     public static final int SHOW_MSG_TYPE_BIG = 2;
+    /**
+     * 积分变动类型-抽水
+     */
+    public static final int SCORE_CHANGE_TYPE_PUMP = 10;
+    /**
+     * 积分变动类型-游戏输赢
+     */
+    public static final int SCORE_CHANGE_TYPE_GAME = 20;
+    /**
+     * 积分变动类型-洗牌
+     */
+    public static final int SCORE_CHANGE_TYPE_SHUFFLE = 30;
 
     public static final String DATA_KEY_ROOM_NO = "room_no";
     public static final String DATA_KEY_ACCOUNT = "account";

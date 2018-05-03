@@ -1183,6 +1183,9 @@ public class BaseEventDeal {
                 object.put("gameId",gameId);
                 object.put("room_id",room.getId());
                 object.put("room_no",roomNo);
+                object.put("new",room.getPlayerMap().get(account).getScore());
+                object.put("old",oldScore);
+                object.put("change",-sum);
                 publicBiz.addAppObjRec(object);
                 // 通知玩家
                 result.element(CommonConstant.RESULT_KEY_CODE, CommonConstant.GLOBAL_YES);

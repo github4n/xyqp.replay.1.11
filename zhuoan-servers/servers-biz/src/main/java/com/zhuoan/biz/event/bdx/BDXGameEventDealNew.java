@@ -288,8 +288,10 @@ public class BDXGameEventDealNew {
             object.put("id", room.getPlayerMap().get(account).getId());
             object.put("gid", room.getGid());
             object.put("roomNo", room.getRoomNo());
-            object.put("type", 4);
+            object.put("type", 3);
             object.put("fen", room.getUserPacketMap().get(account).getScore());
+            object.put("old", Dto.sub(room.getPlayerMap().get(account).getScore(),room.getUserPacketMap().get(account).getScore()));
+            object.put("new", room.getPlayerMap().get(account).getScore());
             userDeductionData.add(object);
             // 战绩记录
             JSONObject gameLogResult = new JSONObject();

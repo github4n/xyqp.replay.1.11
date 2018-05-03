@@ -491,10 +491,6 @@ public class ZJHGameEventDealNew {
                         result.put("type", ZJHConstant.GAME_ACTION_TYPE_COMPARE);
                         result.put("result", compareResult);
                         result.put("isGameover", isGameOver);
-                        /*if(isGameOver==1){
-                            result.put("jiesuan",obtainSummaryData(room));
-                            result.put("showPai",room.getUserPacketMap().get(uid).getBipaiList());
-                        }*/
                         CommonConstant.sendMsgEventToSingle(room.getPlayerMap().get(uid).getUuid(),result.toString(),"gameActionPush_ZJH");
                     }
                     // 休眠4.5秒前端播放动画
@@ -698,7 +694,6 @@ public class ZJHGameEventDealNew {
             // 参与游戏的玩家才能参与结算
             if(room.getUserPacketMap().get(uuid).getStatus()>ZJHConstant.ZJH_USER_STATUS_INIT) {
                 if (room.getUserPacketMap().get(uuid).getStatus()==ZJHConstant.ZJH_USER_STATUS_WIN) {
-                    double d = room.getTotalScore();
                     double oldScore = player.getScore();
                     room.getPlayerMap().get(uuid).setScore(Dto.add(oldScore,room.getTotalScore()));
                     room.setBanker(uuid);
@@ -736,8 +731,10 @@ public class ZJHGameEventDealNew {
                 object.put("id", room.getPlayerMap().get(account).getId());
                 object.put("gid", room.getGid());
                 object.put("roomNo", room.getRoomNo());
-                object.put("type", 4);
-                object.put("fen", room.getUserPacketMap().get(account).getScore());
+                object.put("type", 3);
+                object.put("fen", obj.getDouble("fen"));
+                object.put("old", Dto.sub(room.getPlayerMap().get(account).getScore(),obj.getDouble("fen")));
+                object.put("new", room.getPlayerMap().get(account).getScore());
                 userDeductionData.add(object);
                 // 战绩记录
                 JSONObject gameLogResult = new JSONObject();
@@ -765,6 +762,10 @@ public class ZJHGameEventDealNew {
                 userResult.put("totalScore", room.getPlayerMap().get(account).getScore());
                 userResult.put("player", room.getPlayerMap().get(account).getName());
                 gameResult.add(userResult);
+                // 负数清零
+                if (room.getPlayerMap().get(account).getScore()<0) {
+                    room.getPlayerMap().get(account).setScore(0);
+                }
             }
         }
         room.getGameProcess().put("xiazhu", room.getXiaZhuList());

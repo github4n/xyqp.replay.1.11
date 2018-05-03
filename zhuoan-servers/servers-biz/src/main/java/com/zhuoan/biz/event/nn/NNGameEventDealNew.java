@@ -764,8 +764,10 @@ public class NNGameEventDealNew {
                 object.put("id", room.getPlayerMap().get(account).getId());
                 object.put("gid", room.getGid());
                 object.put("roomNo", room.getRoomNo());
-                object.put("type", 4);
+                object.put("type", 3);
                 object.put("fen", room.getUserPacketMap().get(account).getScore());
+                object.put("old", Dto.sub(room.getPlayerMap().get(account).getScore(),room.getUserPacketMap().get(account).getScore()));
+                object.put("new", room.getPlayerMap().get(account).getScore());
                 userDeductionData.add(object);
                 // 战绩记录
                 JSONObject gameLogResult = new JSONObject();
@@ -795,6 +797,10 @@ public class NNGameEventDealNew {
                 userResult.put("totalScore", room.getPlayerMap().get(account).getScore());
                 userResult.put("player", room.getPlayerMap().get(account).getName());
                 gameResult.add(userResult);
+                // 负数清零
+                if (room.getPlayerMap().get(account).getScore()<0) {
+                    room.getPlayerMap().get(account).setScore(0);
+                }
             }
         }
         room.getGameProcess().put("JieSuan", gameProcessJS);

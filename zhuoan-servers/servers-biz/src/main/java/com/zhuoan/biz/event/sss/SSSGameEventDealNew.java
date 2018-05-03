@@ -353,7 +353,12 @@ public class SSSGameEventDealNew {
                                         if (room.getUserPacketMap().get(account).getStatus()!=SSSConstant.SSS_USER_STATUS_INIT) {
                                             double sum = room.getUserPacketMap().get(account).getScore();
                                             double oldScore = room.getPlayerMap().get(account).getScore();
-                                            room.getPlayerMap().get(account).setScore(Dto.add(sum,oldScore));
+                                            double newScore = Dto.add(sum,oldScore);
+                                            // 负数清零
+                                            if (newScore<0) {
+                                                newScore = 0;
+                                            }
+                                            room.getPlayerMap().get(account).setScore(newScore);
                                         }
                                     }
                                     room.setGameStatus(SSSConstant.SSS_GAME_STATUS_SUMMARY);
@@ -395,8 +400,14 @@ public class SSSGameEventDealNew {
                         object.put("id", room.getPlayerMap().get(uuid).getId());
                         object.put("gid", room.getGid());
                         object.put("roomNo", room.getRoomNo());
-                        object.put("type", 4);
+                        object.put("type", 3);
                         object.put("fen", room.getUserPacketMap().get(uuid).getScore());
+                        object.put("old", room.getPlayerMap().get(uuid).getScore());
+                        double newScore = Dto.add(room.getPlayerMap().get(uuid).getScore(),room.getUserPacketMap().get(uuid).getScore());
+                        if (newScore<0) {
+                            newScore = 0;
+                        }
+                        object.put("new", newScore);
                         userDeductionData.add(object);
                         // 战绩记录
                         JSONObject gameLogResult = new JSONObject();

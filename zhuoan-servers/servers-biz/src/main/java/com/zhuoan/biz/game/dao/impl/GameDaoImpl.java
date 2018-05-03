@@ -2,6 +2,7 @@ package com.zhuoan.biz.game.dao.impl;
 
 import com.zhuoan.biz.game.dao.GameDao;
 import com.zhuoan.biz.model.RoomManage;
+import com.zhuoan.constant.CommonConstant;
 import com.zhuoan.dao.DBJsonUtil;
 import com.zhuoan.dao.DBUtil;
 import com.zhuoan.queue.SqlModel;
@@ -101,14 +102,16 @@ public class GameDaoImpl implements GameDao {
 
         // TODO: 2018-04-18
         StringBuffer sqlx=new StringBuffer();
-        sqlx.append("insert into za_userdeduction(userid,gid,roomNo,type,sum,creataTime) values $");
+        sqlx.append("insert into za_userdeduction(userid,gid,roomNo,type,sum,creataTime,pocketNew,pocketOld,pocketChange,operatorType,memo) values $");
         String ve="";
         String te=new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date());
 
         JSONArray jsoaArray =obj.getJSONArray("user");
         for (int i = 0; i < jsoaArray.size(); i++) {
             JSONObject uuu = jsoaArray.getJSONObject(i);
-            ve=ve+"("+uuu.getLong("id")+","+uuu.getInt("gid")+",'"+uuu.getString("roomNo")+"',"+uuu.getInt("type")+","+uuu.getDouble("fen")+",'"+te+"'),";
+            ve=ve+"("+uuu.getLong("id")+","+uuu.getInt("gid")+",'"+uuu.getString("roomNo")+"',"+uuu.getInt("type")+","+
+                uuu.getDouble("fen")+",'"+te+"',"+uuu.getDouble("new")+","+uuu.getDouble("old")+","+uuu.getDouble("fen")+
+                ","+CommonConstant.SCORE_CHANGE_TYPE_GAME+",'游戏输赢'),";
         }
         GameMain.sqlQueue.addSqlTask(new SqlModel(sqlx.toString().replace("$", ve.substring(0, ve.length()-1)), new Object[]{}, SqlModel.EXECUTEUPDATEBYSQL));
     }
@@ -400,31 +403,40 @@ public class GameDaoImpl implements GameDao {
         // 更新元宝、房卡、金币
         sql = "UPDATE za_users SET "+type+"="+type+"- CASE id";
         String sqlString2 = " END WHERE $ IN (";
-        String addSql = "insert into za_userdeduction (userid,roomid,roomNO,gid,type,sum,doType,creataTime,memo,"
-            + "platform) values ";
+        String addSql = "insert into za_userdeduction (userid,roomid,roomNo,gid,type,sum,doType,creataTime,memo,"
+            + "platform,pocketNew,pocketOld,pocketChange,operatorType) values ";
         for (int i = 0; i < objectListBySQL.size(); i++) {
             JSONObject user = objectListBySQL.getJSONObject(i);
             long uid = user.getLong("id");
             if (user.containsKey("platform")&&!Dto.stringIsNULL(user.getString("platform"))) {
                 platform=user.getString("platform");
             }
+            double pocketOld = 0;
+            double pocketNew = 0;
             // 数量不足
             if (type.equals("yuanbao")) {
                 if (user.getDouble(type)<Double.parseDouble(String.valueOf(fee))) {
                     fee=user.getDouble("yuanbao");
                 }
+                pocketOld = user.getDouble("yuanbao");
+                pocketNew = Dto.sub(pocketOld,fee);
             }else if (type.equals("roomcard")) {
                 if (user.getInt(type)<Integer.parseInt(String.valueOf(fee))) {
                     fee=user.getInt("roomcard");
                 }
+                pocketOld = user.getDouble("roomcard");
+                pocketNew = Dto.sub(pocketOld,fee);
             }else if (type.equals("coins")) {
                 if (user.getDouble(type)<Double.parseDouble(String.valueOf(fee))) {
                     fee=user.getDouble("coins");
                 }
+                pocketOld = user.getDouble("coins");
+                pocketNew = Dto.sub(pocketOld,fee);
             }
             sql += " WHEN "+uid+" THEN "+fee;
             addSql += "("+uid+","+roomId+",'"+roomNo+"',"+gid+","+type1+","+(-fee)+","+
-                2+",'"+nowTime+"','','"+platform+"')";
+                2+",'"+nowTime+"','抽水','"+platform+"',"+pocketNew+","+pocketOld+","+fee+","+
+                CommonConstant.SCORE_CHANGE_TYPE_PUMP+")";
             if (i==objectListBySQL.size()-1) {
                 sqlString2 += uid+")";
             }else {
@@ -540,9 +552,10 @@ public class GameDaoImpl implements GameDao {
 
     @Override
     public void addAppObjRec(JSONObject object) {
-        String sql = "insert into za_userdeduction(userid,gid,roomNo,doType,roomid,creataTime) values(?,?,?,?,?,?)";
+        String sql = "insert into za_userdeduction(userid,gid,roomNo,doType,roomid,creataTime,pocketNew,pocketOld,pocketChange,operatorType,memo) values(?,?,?,?,?,?,?,?,?,?,?)";
         DBUtil.executeUpdateBySQL(sql,new Object[]{object.getLong("userId"),object.getInt("gameId"),object.getString("room_no"),
-            1,object.getLong("room_id"),new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date())});
+            1,object.getLong("room_id"),new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date()),object.getDouble("new"),
+            object.getDouble("old"),object.getDouble("change"),CommonConstant.SCORE_CHANGE_TYPE_SHUFFLE,"洗牌"});
     }
 
     /**
