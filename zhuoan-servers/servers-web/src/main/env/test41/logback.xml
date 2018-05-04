@@ -2,7 +2,7 @@
 <configuration>
 
     <!--定义日志文件的存储地址 勿在 LogBack 的配置中使用相对路径 /app/sv/logs -->
-    <property name="LOG_HOME" value="C:/by-wuweixiang/data/eventlogs/games.games.server.ui"/>
+    <property name="LOG_HOME" value="C:/by-wuweixiang/data/eventlogs/games.zhuoan.server.ui"/>
 
     <!-- ========================== 配置APPENDER(是负责写日志的组件) START==========================-->
 
