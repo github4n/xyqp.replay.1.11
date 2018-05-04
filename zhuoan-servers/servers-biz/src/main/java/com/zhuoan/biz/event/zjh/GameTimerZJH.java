@@ -69,7 +69,7 @@ public class GameTimerZJH {
                         // 账号
                         data.put(CommonConstant.DATA_KEY_ACCOUNT,account);
                         SocketIOClient client = GameMain.server.getClient(room.getPlayerMap().get(account).getUuid());
-                        producerService.sendMessage(zjhQueueDestination, new Messages(client, data, 6, 5));
+                        producerService.sendMessage(zjhQueueDestination, new Messages(client, data, CommonConstant.GAME_ID_ZJH, ZJHConstant.ZJH_GAME_EVENT_EXIT));
                     }
                 }
                 try {
@@ -105,7 +105,7 @@ public class GameTimerZJH {
                         data.put(CommonConstant.DATA_KEY_ACCOUNT,account);
                         data.put("type",ZJHConstant.GAME_ACTION_TYPE_GZ);
                         SocketIOClient client = GameMain.server.getClient(room.getPlayerMap().get(account).getUuid());
-                        producerService.sendMessage(zjhQueueDestination, new Messages(client, data, 6, 3));
+                        producerService.sendMessage(zjhQueueDestination, new Messages(client, data, CommonConstant.GAME_ID_ZJH, ZJHConstant.ZJH_GAME_EVENT_GAME));
                     }
                 }
                 // 设置倒计时
@@ -119,7 +119,7 @@ public class GameTimerZJH {
                     data.put(CommonConstant.DATA_KEY_ACCOUNT,account);
                     data.put("type",ZJHConstant.GAME_ACTION_TYPE_GIVE_UP);
                     SocketIOClient client = GameMain.server.getClient(room.getPlayerMap().get(account).getUuid());
-                    producerService.sendMessage(zjhQueueDestination, new Messages(client, data, 6, 3));
+                    producerService.sendMessage(zjhQueueDestination, new Messages(client, data, CommonConstant.GAME_ID_ZJH, ZJHConstant.ZJH_GAME_EVENT_GAME));
                 }
                 try {
                     Thread.sleep(1000);

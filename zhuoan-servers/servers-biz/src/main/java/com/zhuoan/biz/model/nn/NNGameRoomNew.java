@@ -269,7 +269,7 @@ public class NNGameRoomNew extends GameRoom{
      */
     public boolean isAgreeClose(){
         for (String account : userPacketMap.keySet()){
-            if (userPacketMap.get(account).isCloseRoom!= CommonConstant.CLOSE_ROOM_AGREE) {
+            if (userPacketMap.get(account).getIsCloseRoom()!= CommonConstant.CLOSE_ROOM_AGREE) {
                 return false;
             }
         }
@@ -304,9 +304,9 @@ public class NNGameRoomNew extends GameRoom{
             obj.put("name", new StringBuffer().append(String.valueOf(val)).append("倍").toString());
             obj.put("val", val);
             if(beiShu>=val){
-                obj.put("isuse",1);
+                obj.put("isuse",CommonConstant.GLOBAL_YES);
             }else{
-                obj.put("isuse", 0);
+                obj.put("isuse", CommonConstant.GLOBAL_NO);
             }
             qzts.add(obj);
         }
@@ -341,9 +341,9 @@ public class NNGameRoomNew extends GameRoom{
             obj.put("name", new StringBuffer().append(String.valueOf(val)).append("倍").toString());
             obj.put("val", val);
             if(beiShu>=val){
-                obj.put("isuse", 1);
+                obj.put("isuse", CommonConstant.GLOBAL_YES);
             }else{
-                obj.put("isuse", 0);
+                obj.put("isuse", CommonConstant.GLOBAL_NO);
             }
             baseNums.add(obj);
         }
@@ -410,7 +410,6 @@ public class NNGameRoomNew extends GameRoom{
      * @return
      */
     public JSONObject getGameDataQzOrXz(String account){
-        //JSONArray array = new JSONArray();
         JSONObject data = new JSONObject();
         for (String uuid : userPacketMap.keySet()) {
             JSONObject obj = new JSONObject();
@@ -434,7 +433,8 @@ public class NNGameRoomNew extends GameRoom{
                 } else {// 中途加入玩家传[]
                     pai = new int[0];
                 }
-            }else {// 其余模式下注阶段之前都没有牌
+            }else {
+                // 其余模式下注阶段之前都没有牌
                 pai = new int[0];
             }
             obj.put("pai",pai);
@@ -514,8 +514,8 @@ public class NNGameRoomNew extends GameRoom{
             JSONObject obj = new JSONObject();
             obj.put("index",getPlayerMap().get(account).getMyIndex());
             obj.put("name",getPlayerMap().get(account).getName());
-            obj.put("result",userPacketMap.get(account).isCloseRoom);
-            obj.put("showTimer",1);
+            obj.put("result",userPacketMap.get(account).getIsCloseRoom());
+            obj.put("showTimer",CommonConstant.GLOBAL_YES);
             obj.put("timer",getJieSanTime());
             array.add(obj);
         }
@@ -532,4 +532,7 @@ public class NNGameRoomNew extends GameRoom{
         return readyCount;
     }
 
+    public String getNextPlayer(String account){
+        return account;
+    }
 }

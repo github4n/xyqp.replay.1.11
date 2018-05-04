@@ -1,5 +1,6 @@
 package com.zhuoan.biz.core.sss;
 
+import com.zhuoan.biz.model.sss.SSSGameRoomNew;
 import com.zhuoan.util.LogUtil;
 
 import java.util.ArrayList;
@@ -311,7 +312,7 @@ public class SSSSpecialCardSort {
 
 			for (int j = i + 1; j < car.length; j++) {
 
-				if (SSSGameRoom.getValue(car[i]) > SSSGameRoom.getValue(car[j])) {
+				if (SSSGameRoomNew.getValue(car[i]) > SSSGameRoomNew.getValue(car[j])) {
 					String o = car[i];
 					String o1 = car[j];
 					car[i] = o1;
@@ -330,7 +331,7 @@ public class SSSSpecialCardSort {
 
 			for (int j = i + 1; j < car.length; j++) {
 
-				if (SSSGameRoom.getValue(car[i]) > SSSGameRoom.getValue(car[j])) {
+				if (SSSGameRoomNew.getValue(car[i]) > SSSGameRoomNew.getValue(car[j])) {
 					String o = car[i];
 					String o1 = car[j];
 					car[i] = o1;
@@ -347,7 +348,7 @@ public class SSSSpecialCardSort {
 	public static String[] twelfth(String[] car) {
 		for (int i = 0; i < car.length - 1; i++) {
 			for (int j = i + 1; j < car.length; j++) {
-				if (SSSGameRoom.getValue(car[i]) > SSSGameRoom.getValue(car[j])) {
+				if (SSSGameRoomNew.getValue(car[i]) > SSSGameRoomNew.getValue(car[j])) {
 					String o = car[i];
 					String o1 = car[j];
 					car[i] = o1;
@@ -380,7 +381,7 @@ public class SSSSpecialCardSort {
 	public static String[] allBig(String[] car) {
 		for (int i = 0; i < car.length - 1; i++) {
 			for (int j = i + 1; j < car.length; j++) {
-				if (SSSGameRoom.getValue(car[i]) > SSSGameRoom.getValue(car[j])) {
+				if (SSSGameRoomNew.getValue(car[i]) > SSSGameRoomNew.getValue(car[j])) {
 					String o = car[i];
 					String o1 = car[j];
 					car[i] = o1;
@@ -400,7 +401,7 @@ public class SSSSpecialCardSort {
 
 			for (int j = i + 1; j < car.length; j++) {
 
-				if (SSSGameRoom.getValue(car[i]) > SSSGameRoom.getValue(car[j])) {
+				if (SSSGameRoomNew.getValue(car[i]) > SSSGameRoomNew.getValue(car[j])) {
 					String o = car[i];
 					String o1 = car[j];
 					car[i] = o1;
@@ -419,7 +420,7 @@ public class SSSSpecialCardSort {
 
 			for (int j = i + 1; j < car.length; j++) {
 
-				if (SSSGameRoom.getValue(car[i]) > SSSGameRoom.getValue(car[j])) {
+				if (SSSGameRoomNew.getValue(car[i]) > SSSGameRoomNew.getValue(car[j])) {
 					String o = car[i];
 					String o1 = car[j];
 					car[i] = o1;
@@ -545,17 +546,17 @@ public class SSSSpecialCardSort {
 						player1.remove(five2.get(k));
 					}
 					if (player1.size()==3) {
-						int one=SSSGameRoom.getValue(player1.get(0));
-						int two=SSSGameRoom.getValue(player1.get(1));
-						int three=SSSGameRoom.getValue(player1.get(2));
+						int one=SSSGameRoomNew.getValue(player1.get(0));
+						int two=SSSGameRoomNew.getValue(player1.get(1));
+						int three=SSSGameRoomNew.getValue(player1.get(2));
 						ArrayList<Integer> ps=new ArrayList<Integer>();
 						ps.add(one);
 						ps.add(two);
 						ps.add(three);
 						Collections.sort(ps);
 						if (ps.get(0)+1==ps.get(1)&&ps.get(1)+1==ps.get(2)&&ps.get(2)-2==ps.get(0)) {
-							if (SSSGameRoom.getValue(five1.get(4))>SSSGameRoom.getValue(five2.get(4))) {
-								if ((SSSGameRoom.getValue(five1.get(0))!=1&&SSSGameRoom.getValue(five2.get(0))!=1)||(SSSGameRoom.getValue(five1.get(0))==1&&SSSGameRoom.getValue(five2.get(0))!=1)) {
+							if (SSSGameRoomNew.getValue(five1.get(4))>SSSGameRoomNew.getValue(five2.get(4))) {
+								if ((SSSGameRoomNew.getValue(five1.get(0))!=1&&SSSGameRoomNew.getValue(five2.get(0))!=1)||(SSSGameRoomNew.getValue(five1.get(0))==1&&SSSGameRoomNew.getValue(five2.get(0))!=1)) {
 									cars[12]=five1.get(4);
 									cars[11]=five1.get(3);
 									cars[10]=five1.get(2);
@@ -569,7 +570,7 @@ public class SSSSpecialCardSort {
 									cars[2]=player1.get(2);
 									cars[1]=player1.get(1);
 									cars[0]=player1.get(0);
-								}else if (SSSGameRoom.getValue(five1.get(0))!=1&&SSSGameRoom.getValue(five2.get(0))==1){
+								}else if (SSSGameRoomNew.getValue(five1.get(0))!=1&&SSSGameRoomNew.getValue(five2.get(0))==1){
 									cars[12]=five2.get(4);
 									cars[11]=five2.get(3);
 									cars[10]=five2.get(2);
@@ -585,7 +586,7 @@ public class SSSSpecialCardSort {
 									cars[0]=player1.get(0);
 								}
 							}else{
-								if ((SSSGameRoom.getValue(five1.get(0))!=1&&SSSGameRoom.getValue(five2.get(0))!=1)||(SSSGameRoom.getValue(five1.get(0))==1&&SSSGameRoom.getValue(five2.get(0))!=1)) {
+								if ((SSSGameRoomNew.getValue(five1.get(0))!=1&&SSSGameRoomNew.getValue(five2.get(0))!=1)||(SSSGameRoomNew.getValue(five1.get(0))==1&&SSSGameRoomNew.getValue(five2.get(0))!=1)) {
 									cars[12]=five2.get(4);
 									cars[11]=five2.get(3);
 									cars[10]=five2.get(2);
@@ -600,7 +601,7 @@ public class SSSSpecialCardSort {
 									cars[1]=player1.get(1);
 									cars[0]=player1.get(0);
 									
-								}else if (SSSGameRoom.getValue(five1.get(0))!=1&&SSSGameRoom.getValue(five2.get(0))==1){
+								}else if (SSSGameRoomNew.getValue(five1.get(0))!=1&&SSSGameRoomNew.getValue(five2.get(0))==1){
 									cars[12]=five1.get(4);
 									cars[11]=five1.get(3);
 									cars[10]=five1.get(2);
@@ -617,7 +618,7 @@ public class SSSSpecialCardSort {
 								}
 							}
 						}else if(ps.get(0)==1&&ps.get(1)==12&&ps.get(2)==13){
-							if ((SSSGameRoom.getValue(five1.get(0))!=1&&SSSGameRoom.getValue(five2.get(0))!=1)||(SSSGameRoom.getValue(five1.get(0))==1&&SSSGameRoom.getValue(five2.get(0))!=1)) {
+							if ((SSSGameRoomNew.getValue(five1.get(0))!=1&&SSSGameRoomNew.getValue(five2.get(0))!=1)||(SSSGameRoomNew.getValue(five1.get(0))==1&&SSSGameRoomNew.getValue(five2.get(0))!=1)) {
 								cars[12]=five1.get(4);
 								cars[11]=five1.get(3);
 								cars[10]=five1.get(2);
@@ -631,7 +632,7 @@ public class SSSSpecialCardSort {
 								cars[2]=player1.get(2);
 								cars[1]=player1.get(1);
 								cars[0]=player1.get(0);
-							}else if (SSSGameRoom.getValue(five1.get(0))!=1&&SSSGameRoom.getValue(five2.get(0))==1){
+							}else if (SSSGameRoomNew.getValue(five1.get(0))!=1&&SSSGameRoomNew.getValue(five2.get(0))==1){
 								cars[12]=five2.get(4);
 								cars[11]=five2.get(3);
 								cars[10]=five2.get(2);

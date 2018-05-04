@@ -77,7 +77,6 @@ public class GameTimerSSS {
                             }
                         }
                     }
-                    // TODO: 2018/4/21 常量定义
                     // 投递消息类型
                     int messageSort = 0;
                     for (String account : autoAccountList) {
@@ -89,16 +88,16 @@ public class GameTimerSSS {
                         data.put(CommonConstant.DATA_KEY_ACCOUNT,account);
                         if (gameStatus==SSSConstant.SSS_GAME_STATUS_READY) {
                             // 准备阶段超时踢出
-                            messageSort = 5;
+                            messageSort = SSSConstant.SSS_GAME_EVENT_EXIT;
                         }
                         if (gameStatus==SSSConstant.SSS_USER_STATUS_GAME_EVENT) {
-                            messageSort = 3;
+                            messageSort = SSSConstant.SSS_GAME_EVENT_EVENT;
                             // 自动配牌
                             data.put("type",1);
                         }
                         if (messageSort>0) {
                             SocketIOClient client = GameMain.server.getClient(room.getPlayerMap().get(account).getUuid());
-                            producerService.sendMessage(sssQueueDestination, new Messages(client, data, 4, messageSort));
+                            producerService.sendMessage(sssQueueDestination, new Messages(client, data, CommonConstant.GAME_ID_SSS, messageSort));
                         }
                     }
                 }

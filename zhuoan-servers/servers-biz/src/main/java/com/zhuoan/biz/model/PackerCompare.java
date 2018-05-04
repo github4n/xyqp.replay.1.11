@@ -29,7 +29,7 @@ public class PackerCompare {
 	
 	//比较两个人的牌类型的大小，并计算输赢
 	private static UserPacket CompareType(UserPacket up1,UserPacket up2){
-		if(up1.type==up2.type){//当手牌类型相同时
+		if(up1.getType()==up2.getType()){//当手牌类型相同时
 			//其他类型的话就开始比较牌点
 			compareNum(up1,up2);
 			return up1.isWin()?up1:up2;
@@ -57,7 +57,7 @@ public class PackerCompare {
 //			}
 //		}
 		
-		if(up1.type>up2.type){
+		if(up1.getType()>up2.getType()){
 			up1.setWin(true);
 			up2.setWin(false);
 		}else{

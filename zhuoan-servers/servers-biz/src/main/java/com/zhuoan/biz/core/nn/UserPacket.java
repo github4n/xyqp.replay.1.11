@@ -1,7 +1,7 @@
 package com.zhuoan.biz.core.nn;
 
-import com.zhuoan.biz.model.UserPacketCommen;
-import com.zhuoan.biz.model.nn.NNGameRoom;
+import com.zhuoan.constant.CommonConstant;
+import com.zhuoan.constant.NNConstant;
 import org.apache.commons.lang.math.RandomUtils;
 
 import java.io.Serializable;
@@ -13,20 +13,67 @@ import java.util.Map;
 /**
  * 
  */
-public class UserPacket extends UserPacketCommen implements Serializable{
-	
-	private Packer[] ps = new Packer[5];//手里的5张牌
-	public int type;//牌的类型  0:无牛，1~9:牛一~牛9，10:牛牛
-	private boolean win = false;//是否赢了
-	private boolean isBanker = false;//是否是庄家
-	private int isReady;// 玩家准备状态
-	private int status = 0;// 玩家游戏状态
-	private double score = 0;//分数
-	public int isCloseRoom = 0;//解散房间申请  0:未确认 1:同意  -1:拒绝
-	public int[] mingPai;//明牌抢庄
-	public int qzTimes = 0;//抢庄倍数
-	public int luck;// 幸运值
-    private int xzTimes;// 下注倍数
+public class UserPacket implements Serializable{
+
+    /**
+     * 手里的5张牌
+     */
+	private Packer[] ps = new Packer[5];
+    /**
+     * 牌的类型  0:无牛，1~9:牛一~牛9，10:牛牛
+     */
+	private int type;
+    /**
+     * 是否赢了
+     */
+	private boolean win = false;
+    /**
+     * 是否是庄家
+     */
+	private boolean isBanker = false;
+    /**
+     * 玩家游戏状态
+     */
+	private int status = NNConstant.NN_USER_STATUS_INIT;
+    /**
+     * 分数
+     */
+	private double score = 0;
+    /**
+     * 解散房间申请  0:未确认 1:同意  -1:拒绝
+     */
+	private int isCloseRoom = CommonConstant.CLOSE_ROOM_UNSURE;
+    /**
+     * 明牌抢庄
+     */
+	private int[] mingPai;
+    /**
+     * 抢庄倍数
+     */
+	private int qzTimes = 0;
+    /**
+     * 幸运值
+     */
+	private int luck;
+    /**
+     * 下注倍数
+     */
+    private int xzTimes;
+
+	// 牌局统计数据
+	private int tongShaTimes;
+	private int tongPeiTimes;
+	private int niuNiuTimes;
+	private int wuNiuTimes;
+	private int winTimes;
+
+    public Packer[] getPs() {
+        return ps;
+    }
+
+    public void setPs(Packer[] ps) {
+        this.ps = ps;
+    }
 
     public int getType() {
         return type;
@@ -34,6 +81,54 @@ public class UserPacket extends UserPacketCommen implements Serializable{
 
     public void setType(int type) {
         this.type = type;
+    }
+
+    public boolean isWin() {
+        return win;
+    }
+
+    public void setWin(boolean win) {
+        this.win = win;
+    }
+
+    public boolean isBanker() {
+        return isBanker;
+    }
+
+    public void setBanker(boolean banker) {
+        isBanker = banker;
+    }
+
+    public int getStatus() {
+        return status;
+    }
+
+    public void setStatus(int status) {
+        this.status = status;
+    }
+
+    public double getScore() {
+        return score;
+    }
+
+    public void setScore(double score) {
+        this.score = score;
+    }
+
+    public int getIsCloseRoom() {
+        return isCloseRoom;
+    }
+
+    public void setIsCloseRoom(int isCloseRoom) {
+        this.isCloseRoom = isCloseRoom;
+    }
+
+    public int[] getMingPai() {
+        return mingPai;
+    }
+
+    public void setMingPai(int[] mingPai) {
+        this.mingPai = mingPai;
     }
 
     public int getQzTimes() {
@@ -44,6 +139,14 @@ public class UserPacket extends UserPacketCommen implements Serializable{
         this.qzTimes = qzTimes;
     }
 
+    public int getLuck() {
+        return luck;
+    }
+
+    public void setLuck(int luck) {
+        this.luck = luck;
+    }
+
     public int getXzTimes() {
         return xzTimes;
     }
@@ -52,90 +155,47 @@ public class UserPacket extends UserPacketCommen implements Serializable{
         this.xzTimes = xzTimes;
     }
 
-    // ===============================闲家推注开始===============================
-	public int isBankerLast=-1;// 上局是否是庄家  -1:刚加入房间,0:不是,1:是
-	public int typeLast = -1;// 上局牌型 -1:刚加入房间,0:无牛,1~9:牛一~牛九,10:牛牛,100:特殊牌型
-	public int winLast = -1;// 上局输赢 -1:刚加入房间,0:输,1:赢
-	public boolean isTuiZhuLast = false;// 上局是否已经推注
-	public double scoreLast;// 上局下注金额
-	public boolean tzChouma = true;// 是否选择特殊筹码
-	private String baseNumTuiZhu;// 闲家推注下注列表
-	
-	public int getLuck() {
-		return luck;
-	}
+    public int getTongShaTimes() {
+        return tongShaTimes;
+    }
 
-	public void setLuck(int luck) {
-		this.luck = luck;
-	}
+    public void setTongShaTimes(int tongShaTimes) {
+        this.tongShaTimes = tongShaTimes;
+    }
 
-	public String getBaseNumTuiZhu() {
-		return baseNumTuiZhu;
-	}
+    public int getTongPeiTimes() {
+        return tongPeiTimes;
+    }
 
-	public void setBaseNumTuiZhu(String baseNumTuiZhu) {
-		this.baseNumTuiZhu = baseNumTuiZhu;
-	}
+    public void setTongPeiTimes(int tongPeiTimes) {
+        this.tongPeiTimes = tongPeiTimes;
+    }
 
-	public boolean isTzChouma() {
-		return tzChouma;
-	}
+    public int getNiuNiuTimes() {
+        return niuNiuTimes;
+    }
 
-	public void setTzChouma(boolean tzChouma) {
-		this.tzChouma = tzChouma;
-	}
+    public void setNiuNiuTimes(int niuNiuTimes) {
+        this.niuNiuTimes = niuNiuTimes;
+    }
 
-	public double getScoreLast() {
-		return scoreLast;
-	}
+    public int getWuNiuTimes() {
+        return wuNiuTimes;
+    }
 
-	public void setScoreLast(double scoreLast) {
-		this.scoreLast = scoreLast;
-	}
+    public void setWuNiuTimes(int wuNiuTimes) {
+        this.wuNiuTimes = wuNiuTimes;
+    }
 
-	public boolean isTuiZhuLast() {
-		return isTuiZhuLast;
-	}
+    public int getWinTimes() {
+        return winTimes;
+    }
 
-	public void setTuiZhuLast(boolean isTuiZhuLast) {
-		this.isTuiZhuLast = isTuiZhuLast;
-	}
+    public void setWinTimes(int winTimes) {
+        this.winTimes = winTimes;
+    }
 
-	public int getIsBankerLast() {
-		return isBankerLast;
-	}
-
-	public void setIsBankerLast(int isBankerLast) {
-		this.isBankerLast = isBankerLast;
-	}
-
-	public int getTypeLast() {
-		return typeLast;
-	}
-
-	public void setTypeLast(int typeLast) {
-		this.typeLast = typeLast;
-	}
-
-	public int getWinLast() {
-		return winLast;
-	}
-
-	public void setWinLast(int winLast) {
-		this.winLast = winLast;
-	}
-
-	// ===============================闲家推注结束===============================
-
-	// 牌局统计数据
-	private int tongShaTimes;
-	private int tongPeiTimes;
-	private int niuNiuTimes;
-	private int wuNiuTimes;
-	private int winTimes;
-	
-	
-	/**
+    /**
 	 * 保存明牌抢庄的牌组
 	 */
 	public void saveMingPai() {
@@ -158,7 +218,6 @@ public class UserPacket extends UserPacketCommen implements Serializable{
 	public void initUserPacket(){
 		
 		win=false;
-		isReady=0;
 		isCloseRoom=0;
         score = 0;
         xzTimes = 0;
@@ -166,99 +225,6 @@ public class UserPacket extends UserPacketCommen implements Serializable{
     }
 	
 	public UserPacket() {
-	}
-
-	public boolean isWin() {
-		return win;
-	}
-
-	public void setWin(boolean win) {
-		this.win = win;
-	}
-
-	public int getIsReady() {
-		return isReady;
-	}
-
-	public void setIsReady(int isReady) {
-		this.isReady = isReady;
-	}
-
-	public int getStatus() {
-		return status;
-	}
-
-	public void setStatus(int status) {
-		this.status = status;
-	}
-
-	public double getScore() {
-		return score;
-	}
-
-	public void setScore(double score) {
-		this.score = score;
-	}
-
-	public boolean isBanker() {
-		return isBanker;
-	}
-
-	public void setBanker(boolean isBanker) {
-		this.isBanker = isBanker;
-	}
-
-	public Packer[] getPs() {
-		return ps;
-	}
-
-	public void setPs(Packer[] ps) {
-		this.ps = ps;
-	}
-
-	
-	public int getTongShaTimes() {
-		return tongShaTimes;
-	}
-
-	public void setTongShaTimes(int tongShaTimes) {
-		this.tongShaTimes = tongShaTimes;
-	}
-
-	public int getTongPeiTimes() {
-		return tongPeiTimes;
-	}
-
-	public void setTongPeiTimes(int tongPeiTimes) {
-		this.tongPeiTimes = tongPeiTimes;
-	}
-
-	public int getNiuNiuTimes() {
-		return niuNiuTimes;
-	}
-
-	public void setNiuNiuTimes(int niuNiuTimes) {
-		this.niuNiuTimes = niuNiuTimes;
-	}
-
-	public int getWuNiuTimes() {
-		return wuNiuTimes;
-	}
-
-	public void setWuNiuTimes(int wuNiuTimes) {
-		this.wuNiuTimes = wuNiuTimes;
-	}
-
-	public int getWinTimes() {
-		return winTimes;
-	}
-
-	public void setWinTimes(int winTimes) {
-		this.winTimes = winTimes;
-	}
-
-	public int[] getMingPai() {
-		return mingPai;
 	}
 
 	/**
@@ -455,15 +421,6 @@ public class UserPacket extends UserPacketCommen implements Serializable{
 	}
 
 
-	/**
-	 * 倍率计算
-	 * @return
-	 */
-	public int getRatio(NNGameRoom room){
-		return room.ratio.get(this.type);
-	}
-	
-	
 	/**
 	 * 获取玩家手牌
 	 * @return

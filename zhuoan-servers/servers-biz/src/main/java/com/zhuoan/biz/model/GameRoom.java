@@ -6,7 +6,6 @@ import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 
 import java.util.*;
-import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * @author wqm
@@ -75,13 +74,10 @@ public class GameRoom {
      * 是否观战模式
      */
     private boolean visit;
-	private String fangzhu;// 房主
-	private String zhuang;// 庄家
     /**
      * 玩家人数
      */
 	private int playerCount;
-	private int readyCount;// 准备人数
     /**
      * 一局的底分
      */
@@ -90,7 +86,6 @@ public class GameRoom {
      * 是否开放
      */
 	private boolean isOpen;
-	private int level;//房间等级
     /**
      * 房间支付类型
      */
@@ -135,9 +130,6 @@ public class GameRoom {
      * 玩家座位号
      */
 	private List<Long> userIdList;
-    private List<String> userIconList;// 玩家图标
-    private List<String> userNameList;// 玩家昵称
-    private List<Integer> userScoreList;// 玩家积分
     /**
      * 房主
      */
@@ -211,11 +203,11 @@ public class GameRoom {
         this.gid = gid;
     }
 
-    public synchronized int getGameStatus() {
+    public int getGameStatus() {
         return gameStatus;
     }
 
-    public synchronized void setGameStatus(int gameStatus) {
+    public void setGameStatus(int gameStatus) {
         this.gameStatus = gameStatus;
     }
 
@@ -275,36 +267,12 @@ public class GameRoom {
         this.visit = visit;
     }
 
-    public String getFangzhu() {
-        return fangzhu;
-    }
-
-    public void setFangzhu(String fangzhu) {
-        this.fangzhu = fangzhu;
-    }
-
-    public String getZhuang() {
-        return zhuang;
-    }
-
-    public void setZhuang(String zhuang) {
-        this.zhuang = zhuang;
-    }
-
     public int getPlayerCount() {
         return playerCount;
     }
 
     public void setPlayerCount(int playerCount) {
         this.playerCount = playerCount;
-    }
-
-    public int getReadyCount() {
-        return readyCount;
-    }
-
-    public void setReadyCount(int readyCount) {
-        this.readyCount = readyCount;
     }
 
     public double getScore() {
@@ -321,14 +289,6 @@ public class GameRoom {
 
     public void setOpen(boolean open) {
         isOpen = open;
-    }
-
-    public int getLevel() {
-        return level;
-    }
-
-    public void setLevel(int level) {
-        this.level = level;
     }
 
     public int getPayType() {
@@ -419,30 +379,6 @@ public class GameRoom {
         this.userIdList = userIdList;
     }
 
-    public List<String> getUserIconList() {
-        return userIconList;
-    }
-
-    public void setUserIconList(List<String> userIconList) {
-        this.userIconList = userIconList;
-    }
-
-    public List<String> getUserNameList() {
-        return userNameList;
-    }
-
-    public void setUserNameList(List<String> userNameList) {
-        this.userNameList = userNameList;
-    }
-
-    public List<Integer> getUserScoreList() {
-        return userScoreList;
-    }
-
-    public void setUserScoreList(List<Integer> userScoreList) {
-        this.userScoreList = userScoreList;
-    }
-
     public String getOwner() {
         return owner;
     }
@@ -521,9 +457,6 @@ public class GameRoom {
         }
     }
 
-
-    //==================================组织数据开始======================================
-
     public JSONObject getJsonObject(JSONArray array) {
         JSONObject objectDao = new JSONObject();
         objectDao.put("array",array);
@@ -590,23 +523,5 @@ public class GameRoom {
         gamelog.put("status", 1);
         gamelog.put("roomtype", getRoomType());
         return gamelog;
-    }
-    //==================================组织数据结束======================================
-
-    public ReentrantLock getM_locker() {
-        return m_locker;
-    }
-
-    public void setM_locker(ReentrantLock m_locker) {
-        this.m_locker = m_locker;
-    }
-
-    private ReentrantLock m_locker = new ReentrantLock(true);
-    public void lock(){
-        m_locker.lock();
-    }
-
-    public void unlock(){
-        m_locker.unlock();
     }
 }

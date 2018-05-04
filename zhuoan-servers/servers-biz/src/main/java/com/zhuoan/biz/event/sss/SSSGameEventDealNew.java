@@ -132,6 +132,7 @@ public class SSSGameEventDealNew {
         // 元宝不足无法准备
         if (room.getRoomType()==CommonConstant.ROOM_TYPE_YB||room.getRoomType()==CommonConstant.ROOM_TYPE_JB){
             if (room.getPlayerMap().get(account).getScore()<room.getLeaveScore()) {
+                postData.put("notSend",CommonConstant.GLOBAL_YES);
                 postData.put("notSendToMe",CommonConstant.GLOBAL_YES);
                 exitRoom(client,data);
                 JSONObject result = new JSONObject();
@@ -338,10 +339,10 @@ public class SSSGameEventDealNew {
                 ThreadPoolHelper.executorService.submit(new Runnable() {
                     @Override
                     public void run() {
-                        int  compareTime = 20;
-                        compareTime += room.obtainNotSpecialCount()*3*7;
-                        compareTime += room.getDqArray().size()*11;
-                        compareTime += room.getSwat()*38;
+                        int  compareTime = SSSConstant.SSS_COMPARE_TIME_BASE;
+                        compareTime += room.obtainNotSpecialCount()*3*SSSConstant.SSS_COMPARE_TIME_SHOW;
+                        compareTime += room.getDqArray().size()*SSSConstant.SSS_COMPARE_TIME_DQ;
+                        compareTime += room.getSwat()*SSSConstant.SSS_COMPARE_TIME_SWAT;
                         room.setCompareTimer(compareTime);
                         for (int i = 1; i <= compareTime; i++) {
                             try {
@@ -354,10 +355,6 @@ public class SSSGameEventDealNew {
                                             double sum = room.getUserPacketMap().get(account).getScore();
                                             double oldScore = room.getPlayerMap().get(account).getScore();
                                             double newScore = Dto.add(sum,oldScore);
-                                            // 负数清零
-                                            if (newScore<0) {
-                                                newScore = 0;
-                                            }
                                             room.getPlayerMap().get(account).setScore(newScore);
                                         }
                                     }
@@ -366,6 +363,8 @@ public class SSSGameEventDealNew {
                                     room.setTimeLeft(SSSConstant.SSS_TIMER_INIT);
                                     // 改变状态，通知玩家
                                     changeGameStatus(room);
+                                    // 更新数据库
+                                    updateUserScore(room);
                                 }
                             } catch (InterruptedException e) {
                                 logger.error("",e);
@@ -373,92 +372,6 @@ public class SSSGameEventDealNew {
                         }
                     }
                 });
-                JSONArray array = new JSONArray();
-                JSONArray userDeductionData = new JSONArray();
-                JSONArray gameLogResults = new JSONArray();
-                JSONArray gameResult = new JSONArray();
-                // 存放游戏记录
-                JSONArray gameProcessJS = new JSONArray();
-                for (String uuid : room.getUserPacketMap().keySet()) {
-                    // 有参与的玩家
-                    if (room.getUserPacketMap().get(uuid).getStatus() > SSSConstant.SSS_USER_STATUS_INIT) {
-                        JSONObject userJS = new JSONObject();
-                        userJS.put("account", uuid);
-                        userJS.put("name", room.getPlayerMap().get(uuid).getName());
-                        userJS.put("sum", room.getUserPacketMap().get(uuid).getScore());
-                        userJS.put("pai", room.getUserPacketMap().get(uuid).getMyPai());
-                        userJS.put("paiType", room.getUserPacketMap().get(uuid).getPaiType());
-                        gameProcessJS.add(userJS);
-                        // 元宝输赢情况
-                        JSONObject obj = new JSONObject();
-                        obj.put("total", room.getPlayerMap().get(uuid).getScore());
-                        obj.put("fen", room.getUserPacketMap().get(uuid).getScore());
-                        obj.put("id", room.getPlayerMap().get(uuid).getId());
-                        array.add(obj);
-                        // 用户游戏记录
-                        JSONObject object = new JSONObject();
-                        object.put("id", room.getPlayerMap().get(uuid).getId());
-                        object.put("gid", room.getGid());
-                        object.put("roomNo", room.getRoomNo());
-                        object.put("type", 3);
-                        object.put("fen", room.getUserPacketMap().get(uuid).getScore());
-                        object.put("old", room.getPlayerMap().get(uuid).getScore());
-                        double newScore = Dto.add(room.getPlayerMap().get(uuid).getScore(),room.getUserPacketMap().get(uuid).getScore());
-                        if (newScore<0) {
-                            newScore = 0;
-                        }
-                        object.put("new", newScore);
-                        userDeductionData.add(object);
-                        // 战绩记录
-                        JSONObject gameLogResult = new JSONObject();
-                        gameLogResult.put("account", uuid);
-                        gameLogResult.put("name", room.getPlayerMap().get(uuid).getName());
-                        gameLogResult.put("headimg", room.getPlayerMap().get(uuid).getHeadimg());
-                        if (room.getPlayerMap().get(room.getBanker())==null) {
-                            gameLogResult.put("zhuang", -1);
-                        }else {
-                            gameLogResult.put("zhuang", room.getPlayerMap().get(room.getBanker()).getMyIndex());
-                        }
-                        gameLogResult.put("myIndex", room.getPlayerMap().get(uuid).getMyIndex());
-                        gameLogResult.put("myPai", room.getUserPacketMap().get(uuid).getMyPai());
-                        gameLogResult.put("score", room.getUserPacketMap().get(uuid).getScore());
-                        gameLogResult.put("totalScore", room.getPlayerMap().get(uuid).getScore());
-                        gameLogResult.put("win", 1);
-                        if (room.getUserPacketMap().get(uuid).getStatus() < 0) {
-                            gameLogResult.put("win", 0);
-                        }
-                        gameLogResults.add(gameLogResult);
-                        // 用户战绩
-                        JSONObject userResult = new JSONObject();
-                        userResult.put("zhuang", room.getBanker());
-                        userResult.put("isWinner", CommonConstant.GLOBAL_NO);
-                        if (room.getUserPacketMap().get(uuid).getScore() > 0) {
-                            userResult.put("isWinner", CommonConstant.GLOBAL_YES);
-                        }
-                        userResult.put("score", room.getUserPacketMap().get(uuid).getScore());
-                        userResult.put("totalScore", room.getPlayerMap().get(uuid).getScore());
-                        userResult.put("player", room.getPlayerMap().get(uuid).getName());
-                        gameResult.add(userResult);
-                    }
-                }
-                room.getGameProcess().put("JieSuan", gameProcessJS);
-                if (room.getId()==0) {
-                    JSONObject roomInfo = roomBiz.getRoomInfoByRno(room.getRoomNo());
-                    if (!Dto.isObjNull(roomInfo)) {
-                        room.setId(roomInfo.getLong("id"));
-                    }
-                }
-                // 更新玩家分数
-                producerService.sendMessage(daoQueueDestination, new PumpDao(DaoTypeConstant.UPDATE_SCORE, room.getPumpObject(array)));
-                // 玩家输赢记录
-                producerService.sendMessage(daoQueueDestination, new PumpDao(DaoTypeConstant.USER_DEDUCTION, new JSONObject().element("user", userDeductionData)));
-                // 战绩信息
-                JSONObject gameLogObj = room.obtainGameLog(gameLogResults.toString(), room.getGameProcess().toString());
-                producerService.sendMessage(daoQueueDestination, new PumpDao(DaoTypeConstant.INSERT_GAME_LOG, gameLogObj));
-                JSONArray userGameLogs = room.obtainUserGameLog(gameLogObj.getLong("id"), array, gameResult.toString());
-                for (int i = 0; i < userGameLogs.size(); i++) {
-                    producerService.sendMessage(daoQueueDestination, new PumpDao(DaoTypeConstant.INSERT_USER_GAME_LOG, userGameLogs.getJSONObject(i)));
-                }
             }else {
                 JSONObject result = new JSONObject();
                 result.put("index",room.getPlayerMap().get(account).getMyIndex());
@@ -469,6 +382,99 @@ public class SSSGameEventDealNew {
                 result.put("timer",room.getTimeLeft());
                 CommonConstant.sendMsgEventToAll(room.getAllUUIDList(),result.toString(),"gameActionPush_SSS");
             }
+        }
+    }
+
+    /**
+     * 更新数据库
+     * @param room
+     */
+    public void updateUserScore(SSSGameRoomNew room){
+        JSONArray array = new JSONArray();
+        JSONArray userDeductionData = new JSONArray();
+        JSONArray gameLogResults = new JSONArray();
+        JSONArray gameResult = new JSONArray();
+        // 存放游戏记录
+        JSONArray gameProcessJS = new JSONArray();
+        for (String uuid : room.getUserPacketMap().keySet()) {
+            // 有参与的玩家
+            if (room.getUserPacketMap().get(uuid).getStatus() > SSSConstant.SSS_USER_STATUS_INIT) {
+                JSONObject userJS = new JSONObject();
+                userJS.put("account", uuid);
+                userJS.put("name", room.getPlayerMap().get(uuid).getName());
+                userJS.put("sum", room.getUserPacketMap().get(uuid).getScore());
+                userJS.put("pai", room.getUserPacketMap().get(uuid).getMyPai());
+                userJS.put("paiType", room.getUserPacketMap().get(uuid).getPaiType());
+                gameProcessJS.add(userJS);
+                // 元宝输赢情况
+                JSONObject obj = new JSONObject();
+                obj.put("total", room.getPlayerMap().get(uuid).getScore());
+                obj.put("fen", room.getUserPacketMap().get(uuid).getScore());
+                obj.put("id", room.getPlayerMap().get(uuid).getId());
+                array.add(obj);
+                // 用户游戏记录
+                JSONObject object = new JSONObject();
+                object.put("id", room.getPlayerMap().get(uuid).getId());
+                object.put("gid", room.getGid());
+                object.put("roomNo", room.getRoomNo());
+                object.put("type", room.getRoomType());
+                object.put("fen", room.getUserPacketMap().get(uuid).getScore());
+                object.put("old", Dto.sub(room.getPlayerMap().get(uuid).getScore(),room.getUserPacketMap().get(uuid).getScore()));
+                if (room.getPlayerMap().get(uuid).getScore()<0) {
+                    object.put("new", 0);
+                }else {
+                    object.put("new", room.getPlayerMap().get(uuid).getScore());
+                }
+                userDeductionData.add(object);
+                // 战绩记录
+                JSONObject gameLogResult = new JSONObject();
+                gameLogResult.put("account", uuid);
+                gameLogResult.put("name", room.getPlayerMap().get(uuid).getName());
+                gameLogResult.put("headimg", room.getPlayerMap().get(uuid).getHeadimg());
+                if (room.getPlayerMap().get(room.getBanker())==null) {
+                    gameLogResult.put("zhuang", CommonConstant.NO_BANKER_INDEX);
+                }else {
+                    gameLogResult.put("zhuang", room.getPlayerMap().get(room.getBanker()).getMyIndex());
+                }
+                gameLogResult.put("myIndex", room.getPlayerMap().get(uuid).getMyIndex());
+                gameLogResult.put("myPai", room.getUserPacketMap().get(uuid).getMyPai());
+                gameLogResult.put("score", room.getUserPacketMap().get(uuid).getScore());
+                gameLogResult.put("totalScore", room.getPlayerMap().get(uuid).getScore());
+                gameLogResult.put("win", CommonConstant.GLOBAL_YES);
+                if (room.getUserPacketMap().get(uuid).getScore() < 0) {
+                    gameLogResult.put("win", CommonConstant.GLOBAL_NO);
+                }
+                gameLogResults.add(gameLogResult);
+                // 用户战绩
+                JSONObject userResult = new JSONObject();
+                userResult.put("zhuang", room.getBanker());
+                userResult.put("isWinner", CommonConstant.GLOBAL_NO);
+                if (room.getUserPacketMap().get(uuid).getScore() > 0) {
+                    userResult.put("isWinner", CommonConstant.GLOBAL_YES);
+                }
+                userResult.put("score", room.getUserPacketMap().get(uuid).getScore());
+                userResult.put("totalScore", room.getPlayerMap().get(uuid).getScore());
+                userResult.put("player", room.getPlayerMap().get(uuid).getName());
+                gameResult.add(userResult);
+            }
+        }
+        room.getGameProcess().put("JieSuan", gameProcessJS);
+        if (room.getId()==0) {
+            JSONObject roomInfo = roomBiz.getRoomInfoByRno(room.getRoomNo());
+            if (!Dto.isObjNull(roomInfo)) {
+                room.setId(roomInfo.getLong("id"));
+            }
+        }
+        // 更新玩家分数
+        producerService.sendMessage(daoQueueDestination, new PumpDao(DaoTypeConstant.UPDATE_SCORE, room.getPumpObject(array)));
+        // 玩家输赢记录
+        producerService.sendMessage(daoQueueDestination, new PumpDao(DaoTypeConstant.USER_DEDUCTION, new JSONObject().element("user", userDeductionData)));
+        // 战绩信息
+        JSONObject gameLogObj = room.obtainGameLog(gameLogResults.toString(), room.getGameProcess().toString());
+        producerService.sendMessage(daoQueueDestination, new PumpDao(DaoTypeConstant.INSERT_GAME_LOG, gameLogObj));
+        JSONArray userGameLogs = room.obtainUserGameLog(gameLogObj.getLong("id"), array, gameResult.toString());
+        for (int j = 0; j < userGameLogs.size(); j++) {
+            producerService.sendMessage(daoQueueDestination, new PumpDao(DaoTypeConstant.INSERT_USER_GAME_LOG, userGameLogs.getJSONObject(j)));
         }
     }
 
@@ -523,7 +529,7 @@ public class SSSGameEventDealNew {
                     // 重置房间倒计时
                     room.setTimeLeft(SSSConstant.SSS_TIMER_INIT);
                 }
-                if (room.getTimeLeft()>0&&room.getGameStatus()!=SSSConstant.SSS_GAME_STATUS_COMPARE) {
+                if (room.getTimeLeft()>SSSConstant.SSS_TIMER_INIT&&room.getGameStatus()!=SSSConstant.SSS_GAME_STATUS_COMPARE) {
                     result.put("showTimer",CommonConstant.GLOBAL_YES);
                 }else {
                     result.put("showTimer",CommonConstant.GLOBAL_NO);
@@ -586,70 +592,11 @@ public class SSSGameEventDealNew {
         }
         // 刷新uuid
         room.getPlayerMap().get(account).setUuid(client.getSessionId());
-        client.set(CommonConstant.CLIENT_TAG_ACCOUNT,account);
-        client.set(CommonConstant.CLIENT_TAG_ROOM_NO,roomNo);
         // 组织数据，通知玩家
         result.put("type",1);
         result.put("data",obtainRoomData(roomNo,account));
         // 通知玩家
         CommonConstant.sendMsgEventToSingle(client,result.toString(),"reconnectGamePush_SSS");
-    }
-
-    /**
-     * 游戏超时事件
-     * @param data
-     */
-    public void gameOvertime(Object data){
-        JSONObject postData = JSONObject.fromObject(data);
-        String roomNo = postData.getString(CommonConstant.DATA_KEY_ROOM_NO);
-        int gameStatus = postData.getInt("gameStatus");
-        int userStatus = postData.getInt("userStatus");
-        // 房间存在
-        if (RoomManage.gameRoomMap.containsKey(roomNo)&&RoomManage.gameRoomMap.get(roomNo)!=null) {
-            SSSGameRoomNew room = (SSSGameRoomNew)RoomManage.gameRoomMap.get(roomNo);
-            // 非当前游戏状态停止定时器
-            if (room.getGameStatus()!=gameStatus) {
-                return;
-            }
-            // 准备状态需要检查当前准备人数是否大于最低开始人数
-            if (gameStatus==SSSConstant.SSS_GAME_STATUS_READY&&room.getNowReadyCount()<room.getMinPlayer()) {
-                return;
-            }
-            // 当前阶段所有未完成操作的玩家
-            List<String> autoAccountList = new ArrayList<String>();
-            for (String account : room.getUserPacketMap().keySet()) {
-                // 除准备阶段以外不需要判断中途加入的玩家
-                if (gameStatus==SSSConstant.SSS_GAME_STATUS_READY||room.getUserPacketMap().get(account).getStatus()!=SSSConstant.SSS_USER_STATUS_INIT) {
-                    if (room.getUserPacketMap().get(account).getStatus()!=userStatus) {
-                        autoAccountList.add(account);
-                    }
-                }
-            }
-            for (String account : autoAccountList) {
-                // 组织数据
-                JSONObject obj = new JSONObject();
-                // 房间号
-                obj.put(CommonConstant.DATA_KEY_ROOM_NO,room.getRoomNo());
-                // 账号
-                obj.put(CommonConstant.DATA_KEY_ACCOUNT,account);
-                if (gameStatus==SSSConstant.SSS_GAME_STATUS_READY) {
-                    // 准备阶段超时踢出
-                    exitRoom(null,obj);
-                }
-                if (gameStatus==SSSConstant.SSS_GAME_STATUS_COMPARE) {
-                    room.setGameStatus(SSSConstant.SSS_GAME_STATUS_SUMMARY);
-                    // 初始化倒计时
-                    room.setTimeLeft(SSSConstant.SSS_TIMER_INIT);
-                    // 改变状态，通知玩家
-                    changeGameStatus(room);
-                }
-                if (gameStatus==SSSConstant.SSS_USER_STATUS_GAME_EVENT) {
-                    // 自动配牌
-                    obj.put("type",1);
-                    gameEvent(null,obj);
-                }
-            }
-        }
     }
 
     /**
@@ -664,7 +611,7 @@ public class SSSGameEventDealNew {
             if (room.getBankerType()==SSSConstant.SSS_BANKER_TYPE_BWZ) {
                 obj.put("zhuang",room.getPlayerMap().get(room.getBanker()).getMyIndex());
             }else if (room.getBankerType()==SSSConstant.SSS_BANKER_TYPE_HB) {
-                obj.put("zhuang",-1);
+                obj.put("zhuang",CommonConstant.NO_BANKER_INDEX);
             }
             obj.put("game_index",room.getGameIndex());
             obj.put("showTimer",CommonConstant.GLOBAL_NO);
@@ -726,7 +673,7 @@ public class SSSGameEventDealNew {
                 roomInfo2.append(room.getLeaveScore());
                 roomData.put("roominfo2", roomInfo2.toString());
             }
-            roomData.put("zhuang",-1);
+            roomData.put("zhuang",CommonConstant.NO_BANKER_INDEX);
             if (room.getRoomType()!=CommonConstant.ROOM_TYPE_YB&&room.getPlayerMap().get(room.getBanker())!=null) {
                 roomData.put("zhuang",room.getPlayerMap().get(room.getBanker()).getMyIndex());
             }
@@ -770,7 +717,7 @@ public class SSSGameEventDealNew {
             boolean isSwat = false;
             for (String account : gameList) {
                 Player player = room.getUserPacketMap().get(account);
-                // 赢几个人人
+                // 赢几个人
                 int winPlayer = 0;
                 int special = player.getPaiType();
                 if (special>0) {
@@ -805,9 +752,9 @@ public class SSSGameEventDealNew {
                     }
                 }
                 if (gameList.size()>=SSSConstant.SSS_MIN_SWAT_COUNT&&winPlayer==gameList.size()-1) {
-                    room.setSwat(1);
+                    room.setSwat(CommonConstant.GLOBAL_YES);
                     isSwat = true;
-                    room.getUserPacketMap().get(account).setSwat(1);
+                    room.getUserPacketMap().get(account).setSwat(CommonConstant.GLOBAL_YES);
                     break;
                 }
             }
@@ -839,7 +786,7 @@ public class SSSGameEventDealNew {
                         } else if (special<otherSpecial) {
                             sumScoreSingle -= otherPlayer.getPaiScore();
                         } else if (special==otherSpecial&&special>0) {
-                            // TODO: 2018/4/27 同为特殊牌且牌型相同
+                            // 同为特殊牌
                         } else {
                             // 比牌结果
                             JSONObject compareResult = SSSComputeCards.compare(player.getPai(), otherPlayer.getPai());
@@ -884,7 +831,8 @@ public class SSSGameEventDealNew {
                             // 全垒打只对全垒打的人翻倍
                             if (isSwat) {
                                 // 自己或者他人全垒打
-                                if (room.getUserPacketMap().get(account).getSwat()==1||room.getUserPacketMap().get(other).getSwat()==1) {
+                                if (room.getUserPacketMap().get(account).getSwat()==CommonConstant.GLOBAL_YES||
+                                    room.getUserPacketMap().get(other).getSwat()==CommonConstant.GLOBAL_YES) {
                                     sumScoreSingle *= 2;
                                 }
                             }

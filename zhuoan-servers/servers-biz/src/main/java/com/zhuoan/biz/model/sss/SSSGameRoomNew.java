@@ -158,7 +158,11 @@ public class SSSGameRoomNew extends GameRoom{
                 obj.put("vip", player.getVip());
                 obj.put("location", player.getLocation());
                 obj.put("area", player.getArea());
-                obj.put("score", player.getScore());
+                if (player.getScore()<0) {
+                    obj.put("score", 0);
+                }else {
+                    obj.put("score", player.getScore());
+                }
                 obj.put("index", player.getMyIndex());
                 obj.put("userOnlineStatus", player.getStatus());
                 obj.put("ghName", player.getGhName());
@@ -205,6 +209,9 @@ public class SSSGameRoomNew extends GameRoom{
                     userData.put("account",account);
                     if (getGameStatus()==SSSConstant.SSS_GAME_STATUS_COMPARE) {
                         double scoreLeft = Dto.add(getPlayerMap().get(account).getScore(),getUserPacketMap().get(account).getScore());
+                        if (scoreLeft<0) {
+                            scoreLeft = 0;
+                        }
                         userData.put("scoreLeft",scoreLeft);
                     }else {
                         userData.put("scoreLeft",getPlayerMap().get(account).getScore());

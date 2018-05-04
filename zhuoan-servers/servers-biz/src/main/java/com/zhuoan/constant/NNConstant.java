@@ -9,6 +9,30 @@ package com.zhuoan.constant;
 public class NNConstant {
 
     /**
+     * 牛牛游戏事件-准备
+     */
+    public static final int NN_GAME_EVENT_READY = 1;
+    /**
+     * 牛牛游戏事件-抢庄
+     */
+    public static final int NN_GAME_EVENT_QZ = 2;
+    /**
+     * 牛牛游戏事件-下注
+     */
+    public static final int NN_GAME_EVENT_XZ = 3;
+    /**
+     * 牛牛游戏事件-亮牌
+     */
+    public static final int NN_GAME_EVENT_LP = 4;
+    /**
+     * 牛牛游戏事件-退出
+     */
+    public static final int NN_GAME_EVENT_EXIT = 5;
+    /**
+     * 牛牛游戏事件-重连
+     */
+    public static final int NN_GAME_EVENT_RECONNECT = 6;
+    /**
      * 抢庄类型-房主坐庄
      */
     public static final int NN_BANKER_TYPE_FZ = 0;
@@ -136,6 +160,14 @@ public class NNConstant {
      * 牛牛游戏倒计时-亮牌
      */
     public static final int NN_TIMER_SHOW = 15;
+    /**
+     * 抢庄类型-明牌抢庄
+     */
+    public static final int NN_QZ_TYPE = 1;
+    /**
+     * 玩法-斗公牛
+     */
+    public static final int NN_GAME_TYPE = 1;
 
     public static final String DATA_KEY_VALUE = "value";
     public static final String DATA_KEY_MONEY = "money";

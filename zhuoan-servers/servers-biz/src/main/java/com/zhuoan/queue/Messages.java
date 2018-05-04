@@ -37,7 +37,11 @@ public class Messages implements Serializable {
      */
     public Messages(SocketIOClient client, Object dataObject, int gid, int sorts) {
         super();
-        this.sessionId = client.getSessionId();
+        if (client==null) {
+            this.sessionId = UUID.randomUUID();
+        }else {
+            this.sessionId = client.getSessionId();
+        }
         this.dataObject = dataObject;
         this.gid = gid;
         this.sorts = sorts;

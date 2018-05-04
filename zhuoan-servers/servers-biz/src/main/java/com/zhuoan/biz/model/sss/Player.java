@@ -4,8 +4,6 @@ import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 
 import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.List;
 
 
 /**
@@ -26,18 +24,6 @@ public class Player implements Serializable{
      */
     private int status=0;
     /**
-     * 普通牌型
-     */
-    private int ordinary;
-    /**
-     * 特殊牌型
-     */
-    private int special = 0;
-    /**
-     * 打枪
-     */
-    private int gun;
-    /**
      * 全垒打
      */
     private int swat = 0;
@@ -49,13 +35,10 @@ public class Player implements Serializable{
      * 单局分数
      */
     private double score;
-    private double totalScore;//总分数
-    private int isReady; // 准备状态
-    private int isAuto;//是否自动配牌
     /**
      * 解散房间申请  0:未确认 1:同意  -1:拒绝
      */
-    public int isCloseRoom=0;
+    private int isCloseRoom=0;
     /**
      * 牌型
      */
@@ -64,35 +47,96 @@ public class Player implements Serializable{
      * 牌型分数
      */
     private int paiScore;
+    /**
+     * 头道输赢结果
+     */
     private JSONObject headResult = new JSONObject();
+    /**
+     * 中道输赢结果
+     */
     private JSONObject midResult = new JSONObject();
+    /**
+     * 尾道输赢结果
+     */
     private JSONObject footResult = new JSONObject();
+    /**
+     * 头道手牌
+     */
     private int[] headPai;
+    /**
+     * 中道手牌
+     */
     private int[] midPai;
+    /**
+     * 尾道手牌
+     */
     private int[] footPai;
 
-    public int[] getHeadPai() {
-        return headPai;
+    public static long getSerialVersionUID() {
+        return serialVersionUID;
     }
 
-    public void setHeadPai(int[] headPai) {
-        this.headPai = headPai;
+    public String[] getPai() {
+        return pai;
     }
 
-    public int[] getMidPai() {
-        return midPai;
+    public void setPai(String[] pai) {
+        this.pai = pai;
     }
 
-    public void setMidPai(int[] midPai) {
-        this.midPai = midPai;
+    public int getStatus() {
+        return status;
     }
 
-    public int[] getFootPai() {
-        return footPai;
+    public void setStatus(int status) {
+        this.status = status;
+    }
+    public int getSwat() {
+        return swat;
     }
 
-    public void setFootPai(int[] footPai) {
-        this.footPai = footPai;
+    public void setSwat(int swat) {
+        this.swat = swat;
+    }
+
+    public int getGameNum() {
+        return gameNum;
+    }
+
+    public void setGameNum(int gameNum) {
+        this.gameNum = gameNum;
+    }
+
+    public double getScore() {
+        return score;
+    }
+
+    public void setScore(double score) {
+        this.score = score;
+    }
+
+    public int getIsCloseRoom() {
+        return isCloseRoom;
+    }
+
+    public void setIsCloseRoom(int isCloseRoom) {
+        this.isCloseRoom = isCloseRoom;
+    }
+
+    public int getPaiType() {
+        return paiType;
+    }
+
+    public void setPaiType(int paiType) {
+        this.paiType = paiType;
+    }
+
+    public int getPaiScore() {
+        return paiScore;
+    }
+
+    public void setPaiScore(int paiScore) {
+        this.paiScore = paiScore;
     }
 
     public JSONObject getHeadResult() {
@@ -119,72 +163,28 @@ public class Player implements Serializable{
         this.footResult = footResult;
     }
 
-    /**
-     * 打枪下标
-     */
-    private List<Integer> allWinIndex = new ArrayList<Integer>();
-    /**
-     * 被打枪下标
-     */
-    private List<Integer> allLoseIndex = new ArrayList<Integer>();
-
-    public List<Integer> getAllWinIndex() {
-        return allWinIndex;
+    public int[] getHeadPai() {
+        return headPai;
     }
 
-    public void setAllWinIndex(List<Integer> allWinIndex) {
-        this.allWinIndex = allWinIndex;
+    public void setHeadPai(int[] headPai) {
+        this.headPai = headPai;
     }
 
-    public List<Integer> getAllLoseIndex() {
-        return allLoseIndex;
+    public int[] getMidPai() {
+        return midPai;
     }
 
-    public void setAllLoseIndex(List<Integer> allLoseIndex) {
-        this.allLoseIndex = allLoseIndex;
+    public void setMidPai(int[] midPai) {
+        this.midPai = midPai;
     }
 
-    public int getPaiScore() {
-        return paiScore;
+    public int[] getFootPai() {
+        return footPai;
     }
-    public void setPaiScore(int paiScore) {
-        this.paiScore = paiScore;
-    }
-    public int getPaiType() {
-        return paiType;
-    }
-    public void setPaiType(int paiType) {
-        this.paiType = paiType;
-    }
-    public String[] getPai() {
-        return pai;
-    }
-    public void setPai(String[] pai) {
-        this.pai = pai;
-    }
-    public int getStatus() {
-        return status;
-    }
-    public void setStatus(int status) {
-        this.status = status;
-    }
-    public double getScore() {
-        return score;
-    }
-    public void setScore(double score) {
-        this.score = score;
-    }
-    public double getTotalScore() {
-        return totalScore;
-    }
-    public void setTotalScore(double totalScore) {
-        this.totalScore = totalScore;
-    }
-    public int getIsReady() {
-        return isReady;
-    }
-    public void setIsReady(int isReady) {
-        this.isReady = isReady;
+
+    public void setFootPai(int[] footPai) {
+        this.footPai = footPai;
     }
 
     /**
@@ -238,45 +238,11 @@ public class Player implements Serializable{
         }
         return pais;
     }
-    public int getOrdinary() {
-        return ordinary;
-    }
-    public void setOrdinary(int ordinary) {
-        this.ordinary = ordinary;
-    }
-    public int getSpecial() {
-        return special;
-    }
-    public void setSpecial(int special) {
-        this.special = special;
-    }
-    public int getGun() {
-        return gun;
-    }
-    public void setGun(int gun) {
-        this.gun = gun;
-    }
-    public int getSwat() {
-        return swat;
-    }
-    public void setSwat(int swat) {
-        this.swat = swat;
-    }
-    public int getIsAuto() {
-        return isAuto;
-    }
-    public void setIsAuto(int isAuto) {
-        this.isAuto = isAuto;
-    }
-    public int getGameNum() {
-        return gameNum;
-    }
-    public void setGameNum(int gameNum) {
-        this.gameNum = gameNum;
-    }
 
+    /**
+     * 初始化
+     */
     public void initUserPacket(){
-        special = 0;
         score = 0;
         paiScore = 0;
         paiType = 0;

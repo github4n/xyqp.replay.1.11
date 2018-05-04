@@ -12,75 +12,31 @@ import java.util.Random;
 public class NiuNiu {
 	
 	/**
-	 * 特殊牌型（从小到大）
+	 * 特殊牌型-四花牛
 	 */
-	public static int SPECIALTYPE_SIHUANIU = 19; // 四花牛
-	public static int SPECIALTYPE_WUHUANIU = 20; // 五花牛
-	public static int SPECIALTYPE_HULUNIU = 30; // 葫芦牛
-	public static int SPECIALTYPE_ZHADANNIU = 40; // 炸弹牛
-	public static int SPECIALTYPE_WUXIAONIU = 50; // 五小牛
+	public static int SPECIALTYPE_SIHUANIU = 19;
+    /**
+     * 特殊牌型-五花牛
+     */
+	public static int SPECIALTYPE_WUHUANIU = 20;
+    /**
+     * 特殊牌型-葫芦牛
+     */
+	public static int SPECIALTYPE_HULUNIU = 30;
+    /**
+     * 特殊牌型-炸弹牛
+     */
+	public static int SPECIALTYPE_ZHADANNIU = 40;
+    /**
+     * 特殊牌型-五小牛
+     */
+	public static int SPECIALTYPE_WUXIAONIU = 50;
 	
 	/**
 	 * 牌的下标
 	 */
 	private static int paiIndex = 0;
-	
-	/**
-	 * 每局玩家人数
-	 */
-	public static int PLAYERCOUNT = 6;
-	
-	
-	/**
-	 * 牌局抢庄阶段
-	 */
-	public static int GAMESTATUS_QIANGZHUANG = 10;
-	/**
-	 * 牌局准备（初始）阶段
-	 */
-	public static int GAMESTATUS_READY = 0;
-	/**
-	 * 牌局下注阶段
-	 */
-	public static int GAMESTATUS_XIAZHU = 1;
-	/**
-	 * 牌局结算阶段
-	 */
-	public static int GAMESTATUS_JIESUAN = 2;
-	/**
-	 * 牌局亮牌阶段
-	 */
-	public static int GAMESTATUS_LIANGPAI = 3;
-	
-	/**
-	 * 玩家状态（初始）
-	 */
-	public static int USERPACKER_STATUS_CHUSHI = 0;
-	/**
-	 * 玩家状态（发牌）
-	 */
-	public static int USERPACKER_STATUS_FAPAI = 1;
-	/**
-	 * 玩家状态（亮牌）
-	 */
-	public static int USERPACKER_STATUS_LIANGPAI = 2;
-	
-	/**
-	 * 上局状态（是）
-	 */
-	public static int USERPACKER_LAST_YES = 1;
-	
-	/**
-	 * 上局状态（否）
-	 */
-	public static int USERPACKER_LAST_NO = 0;
-	
-	/**
-	 * 观战玩家下标
-	 */
-	public static int USERPACKER_STATUS_GUANZHAN = -1;
-	
-	
+
 	/**
 	 * 牌面
 	 */
@@ -178,7 +134,8 @@ public class NiuNiu {
 				if(!ArrayUtils.contains(nums,num)){
 					nums[i] = num;
 					break;
-				}else if(num==0){ //若是0，判断之前是否已存在
+				}else if(num==0){
+				    //若是0，判断之前是否已存在
 					if(ArrayUtils.indexOf(nums, num) == i){
 						break;
 					}
@@ -243,9 +200,9 @@ public class NiuNiu {
 		UserPacket u = PackerCompare.getWin(up1, up);
 		
 		System.out.println(up.isWin());
-		
-		System.out.println(u.type);
-		
+
+		System.out.println(u.getType());
+
 	}
 	
 }

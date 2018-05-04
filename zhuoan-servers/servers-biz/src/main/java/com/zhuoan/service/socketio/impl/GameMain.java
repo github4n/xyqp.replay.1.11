@@ -10,7 +10,6 @@ import com.zhuoan.biz.event.nn.NNGameEvent;
 import com.zhuoan.biz.event.sss.SSSGameEvent;
 import com.zhuoan.biz.event.zjh.ZJHGameEvent;
 import com.zhuoan.biz.model.RoomManage;
-import com.zhuoan.biz.model.UserInfoCache;
 import com.zhuoan.constant.SocketListenerConstant;
 import com.zhuoan.dao.DBUtil;
 import com.zhuoan.enumtype.EnvKeyEnum;
@@ -18,7 +17,6 @@ import com.zhuoan.queue.SqlQueue;
 import com.zhuoan.service.socketio.SocketIoManagerService;
 import com.zhuoan.times.SingleTimer;
 import com.zhuoan.util.LogUtil;
-import com.zhuoan.util.thread.ThreadPoolHelper;
 import net.sf.json.JSONArray;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.concurrent.BasicThreadFactory;
@@ -214,20 +212,6 @@ public class GameMain implements SocketIoManagerService {
 
     private void scheduleDeal() {
         sqlQueue = sqlQueue1;
-        ThreadPoolHelper.executorService.submit(new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    while (true) {
-                        UserInfoCache.updateCache();
-                        Thread.sleep(5000);
-                    }
-                } catch (Exception e) {
-                    logger.error("数据库队列处理异常", e);
-                }
-            }
-        });
-
         /* 获取房间设置放入Json数组里面*/
         preSelectRoomSetting();
     }

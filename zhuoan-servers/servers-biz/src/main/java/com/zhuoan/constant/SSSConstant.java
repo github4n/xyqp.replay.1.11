@@ -8,6 +8,22 @@ package com.zhuoan.constant;
  **/
 public class SSSConstant {
     /**
+     * 十三水游戏事件-准备
+     */
+    public static final int SSS_GAME_EVENT_READY = 1;
+    /**
+     * 十三水游戏事件-配牌
+     */
+    public static final int SSS_GAME_EVENT_EVENT = 2;
+    /**
+     * 十三水游戏事件-退出
+     */
+    public static final int SSS_GAME_EVENT_EXIT = 3;
+    /**
+     * 十三水游戏事件-重连
+     */
+    public static final int SSS_GAME_EVENT_RECONNECT = 4;
+    /**
      * 十三水庄家类型-霸王庄
      */
     public static final int SSS_BANKER_TYPE_BWZ = 1;
@@ -69,17 +85,46 @@ public class SSSConstant {
      * 最低打枪人数
      */
     public static final int SSS_MIN_SWAT_COUNT = 3;
-
+    /**
+     * 初始倒计时
+     */
     public static final int SSS_TIMER_INIT = 0;
+    /**
+     * 准备倒计时
+     */
     public static final int SSS_TIMER_READY = 15;
-
-    public static final int SSS_TIMER_GAME_EVENT = 30;
-
+    /**
+     * 配牌倒计时
+     */
+    public static final int SSS_TIMER_GAME_EVENT = 180;
+    /**
+     * 配牌类型-自动
+     */
     public static final int SSS_GAME_ACTION_TYPE_AUTO = 1;
-
+    /**
+     * 配牌类型-手动
+     */
     public static final int SSS_GAME_ACTION_TYPE_COMMON = 2;
-
+    /**
+     * 配牌类型-特殊牌
+     */
     public static final int SSS_GAME_ACTION_TYPE_SPECIAL = 3;
+    /**
+     * 比牌动画时间-基础时间
+     */
+    public static final int SSS_COMPARE_TIME_BASE = 20;
+    /**
+     * 比牌动画时间-翻牌时间
+     */
+    public static final int SSS_COMPARE_TIME_SHOW = 7;
+    /**
+     * 比牌动画时间-打枪时间
+     */
+    public static final int SSS_COMPARE_TIME_DQ = 11;
+    /**
+     * 比牌动画时间-全垒打时间
+     */
+    public static final int SSS_COMPARE_TIME_SWAT = 38;
 
     public static final String SSS_DATA_KET_TYPE = "type";
     public static final String SSS_DATA_KET_MY_PAI = "myPai";

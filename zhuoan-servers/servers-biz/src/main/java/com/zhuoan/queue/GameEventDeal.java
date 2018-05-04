@@ -1,18 +1,12 @@
 package com.zhuoan.queue;
 
 import com.corundumstudio.socketio.SocketIOClient;
-import com.zhuoan.biz.event.bdx.BDXGameEventDeal;
 import com.zhuoan.biz.event.bdx.BDXGameEventDealNew;
 import com.zhuoan.biz.event.nn.BaseEventDeal;
-import com.zhuoan.biz.event.nn.NNGameEventDeal;
 import com.zhuoan.biz.event.nn.NNGameEventDealNew;
-import com.zhuoan.biz.event.sss.SSSGameEventDeal;
 import com.zhuoan.biz.event.sss.SSSGameEventDealNew;
-import com.zhuoan.biz.event.zjh.ZJHGameEventDeal;
 import com.zhuoan.biz.event.zjh.ZJHGameEventDealNew;
-import com.zhuoan.biz.model.GameLogsCache;
-import com.zhuoan.biz.model.RoomManage;
-import com.zhuoan.constant.event.GidConstant;
+import com.zhuoan.constant.*;
 import com.zhuoan.exception.EventException;
 import com.zhuoan.service.socketio.SocketIoManagerService;
 import com.zhuoan.service.socketio.impl.GameMain;
@@ -40,18 +34,6 @@ public class GameEventDeal {
     private final static Logger logger = LoggerFactory.getLogger(GameEventDeal.class);
 
     @Resource
-    private RoomManage roomManage;
-    @Resource
-    private GameLogsCache gameLogsCache;
-    @Resource
-    private SSSGameEventDeal sssGameEventDeal;
-    @Resource
-    private NNGameEventDeal nnGameEventDeal;
-    @Resource
-    private ZJHGameEventDeal zjhGameEventDeal;
-    @Resource
-    private BDXGameEventDeal bdxGameEventDeal;
-    @Resource
     private BaseEventDeal baseEventDeal;
     @Resource
     private NNGameEventDealNew nnGameEventDealNew;
@@ -78,257 +60,143 @@ public class GameEventDeal {
 
         // 处理队列中的信息。。。。。
         switch (gid) {
-            case GidConstant.COMMON:
+            case CommonConstant.GAME_BASE:
                 switch (sorts) {
-                    case 1:
-                        baseEventDeal.getGameSetting(client, data);
+                    case CommonConstant.BASE_GAME_GET_USER_INFO:
+                        baseEventDeal.getUserInfo(client, data);
                         break;
-                    case 2:
-                        baseEventDeal.getAllRoomList(client, data);
-                        break;
-                    case 3:
+                    case CommonConstant.BASE_GAME_EVENT_CHECK_USER:
                         baseEventDeal.checkUser(client, data);
                         break;
-                    case 4:
-                        baseEventDeal.getUserGameLogs(client, data);
+                    case CommonConstant.BASE_GAME_EVENT_GET_GAME_SETTING:
+                        baseEventDeal.getGameSetting(client, data);
                         break;
-                    case 5:
-                        roomManage.getRoomCardPayInfo(client, data);
+                    case CommonConstant.BASE_GAME_EVENT_GET_ALL_ROOM_LIST:
+                        baseEventDeal.getAllRoomList(client, data);
                         break;
-                    case 6:
-                        baseEventDeal.dissolveRoom(client, data);
-                        break;
-                    case 7:
-                        baseEventDeal.onOrOffGame(client, data);
-                        break;
-                    case 8:
-                        baseEventDeal.sendNotice(client, data);
-                        break;
-                    case 9:
-                        baseEventDeal.getShuffleInfo(client, data);
-                        break;
-                    case 10:
-                        baseEventDeal.doShuffle(client, data);
-                        break;
-                    case 11:
-                        baseEventDeal.sendMessage(client, data);
-                        break;
-                    case 12:
-                        baseEventDeal.sendVoice(client, data);
-                        break;
-                    case 13:
-                        baseEventDeal.getNotice(client, data);
-                        break;
-                    case 14:
-                        baseEventDeal.test(client, data);
-                        break;
-                    case 15:
-                        baseEventDeal.getRoomAndPlayerCount(client, data);
-                        break;
-                    default:
-                        break;
-                }
-                break;
-            case GidConstant.NN:
-                // 牛牛
-                switch (sorts) {
-                    case 1:
-                        nnGameEventDeal.enterRoom(client, data);
-                        break;
-                    case 2:
-                        nnGameEventDealNew.gameReady(client, data);
-                        break;
-                    case 3:
-                        nnGameEventDealNew.gameXiaZhu(client, data);
-                        break;
-                    case 4:
-                        nnGameEventDealNew.showPai(client, data);
-                        break;
-                    case 5:
-                        nnGameEventDealNew.gameQiangZhuang(client, data);
-                        break;
-                    case 6:
-                        nnGameEventDeal.closeRoom(client, data);
-                        break;
-                    case 7:
-                        nnGameEventDealNew.exitRoom(client, data);
-                        break;
-                    case 8:
-                        nnGameEventDealNew.reconnectGame(client, data);
-                        break;
-                    case 9:
-                        nnGameEventDeal.gameConnReset(client, data);
-                        break;
-                    case 10:
-                        nnGameEventDeal.revokeXiazhu(client, data);
-                        break;
-                    case 11:
-                        nnGameEventDeal.sureXiazhu(client, data);
-                        break;
-                    case 12:
-                        nnGameEventDeal.gameRuzuo(client, data);
-                        break;
-                    case 13:
-                        nnGameEventDeal.gameZhanQi(client, data);
-                        break;
-                    case 14:
-                        nnGameEventDeal.changeTable(client, data);
-                        break;
-                    case 15:
+                    case CommonConstant.BASE_GAME_EVENT_CREATE_ROOM:
                         baseEventDeal.createRoomBase(client, data);
                         break;
-                    case 16:
+                    case CommonConstant.BASE_GAME_EVENT_JOIN_ROOM:
                         baseEventDeal.joinRoomBase(client, data);
                         break;
-                    case 17:
-                        // 准备定时器
-                        nnGameEventDeal.autoReady(client, data);
+                    case CommonConstant.BASE_GAME_EVENT_GET_SHUFFLE_INFO:
+                        baseEventDeal.getShuffleInfo(client, data);
                         break;
-                    case 18:
-                        // 抢庄定时器
-                        nnGameEventDeal.qiangzhuang(client, data);
+                    case CommonConstant.BASE_GAME_EVENT_DO_SHUFFLE:
+                        baseEventDeal.doShuffle(client, data);
                         break;
-                    case 19:
-                        // 下注定时器
-                        nnGameEventDeal.xiazhu(client, data);
+                    case CommonConstant.BASE_GAME_EVENT_SEND_MESSAGE:
+                        baseEventDeal.sendMessage(client, data);
                         break;
-                    case 20:
-                        // 亮牌定时器
-                        nnGameEventDeal.showPai(client, data);
+                    case CommonConstant.BASE_GAME_EVENT_SEND_VOICE:
+                        baseEventDeal.sendVoice(client, data);
                         break;
-                    case 21:
-                        // 开始游戏（抢庄）定时器
-                        nnGameEventDeal.startgameqz(client, data);
+                    case CommonConstant.BASE_GAME_EVENT_GET_USER_GAME_LOGS:
+                        baseEventDeal.getUserGameLogs(client, data);
                         break;
-                    case 22:
-                        // 解散定时器
-                        nnGameEventDeal.jiesan(client, data);
+                    case CommonConstant.BASE_GAME_EVENT_DISSOLVE_ROOM:
+                        baseEventDeal.dissolveRoom(client, data);
                         break;
-                    case 23:
-                        // 获取最新用户信息
-                        roomManage.getUserInfo(client, data);
+                    case CommonConstant.BASE_GAME_EVENT_ON_OR_OFF_GAME:
+                        baseEventDeal.onOrOffGame(client, data);
                         break;
-                    case 24:
-                        // 获取最新用户信息
-                        nnGameEventDealNew.gameOvertime(data);
+                    case CommonConstant.BASE_GAME_EVENT_SEND_NOTICE:
+                        baseEventDeal.sendNotice(client, data);
                         break;
-
+                    case CommonConstant.BASE_GAME_EVENT_GET_NOTICE:
+                        baseEventDeal.getNotice(client, data);
+                        break;
+                    case CommonConstant.BASE_GAME_EVENT_GET_ROOM_AND_PLAYER_COUNT:
+                        baseEventDeal.getRoomAndPlayerCount(client, data);
+                        break;
+                    case CommonConstant.BASE_GAME_EVENT_TEST:
+                        baseEventDeal.test(client, data);
+                        break;
                     default:
                         break;
                 }
                 break;
-            case GidConstant.SSS:
+            case CommonConstant.GAME_ID_NN:
+                // 牛牛
+                switch (sorts) {
+                    case NNConstant.NN_GAME_EVENT_READY:
+                        nnGameEventDealNew.gameReady(client, data);
+                        break;
+                    case NNConstant.NN_GAME_EVENT_QZ:
+                        nnGameEventDealNew.gameQiangZhuang(client, data);
+                        break;
+                    case NNConstant.NN_GAME_EVENT_XZ:
+                        nnGameEventDealNew.gameXiaZhu(client, data);
+                        break;
+                    case NNConstant.NN_GAME_EVENT_LP:
+                        nnGameEventDealNew.showPai(client, data);
+                        break;
+                    case NNConstant.NN_GAME_EVENT_EXIT:
+                        nnGameEventDealNew.exitRoom(client, data);
+                        break;
+                    case NNConstant.NN_GAME_EVENT_RECONNECT:
+                        nnGameEventDealNew.reconnectGame(client, data);
+                        break;
+                    default:
+                        break;
+                }
+                break;
+            case CommonConstant.GAME_ID_SSS:
                 // 十三水
                 switch (sorts) {
-                    case 1:
-                        // 创建房间或加入房间
-                        sssGameEventDeal.enterRoom(client, data);
-                        break;
-                    case 2:
+                    case SSSConstant.SSS_GAME_EVENT_READY:
                         // 玩家准备
                         sssGameEventDealNew.gameReady(client, data);
                         break;
-                    case 3:
+                    case SSSConstant.SSS_GAME_EVENT_EVENT:
                         // 游戏中
                         sssGameEventDealNew.gameEvent(client, data);
                         break;
-                    case 4:
-                        // 解散房间
-                        sssGameEventDeal.closeRoom(client, data);
-                        break;
-                    case 5:
+                    case SSSConstant.SSS_GAME_EVENT_EXIT:
                         // 离开房间
                         sssGameEventDealNew.exitRoom(client, data);
                         break;
-                    case 6:
+                    case SSSConstant.SSS_GAME_EVENT_RECONNECT:
                         // 断线重连
                         sssGameEventDealNew.reconnectGame(client, data);
                         break;
-                    case 7:
-                        // 判断玩家是否需要断线重连
-                        sssGameEventDeal.gameConnReset(client, data);
-                        break;
-                    case 8:
-                        // 总结算
-                        sssGameEventDeal.gameSummary(client, data);
-                        break;
-                    case 9:
-                        // 查询更新用户实时信息
-                        sssGameEventDeal.playerInfo(client, data);
-                        break;
-                    case 10:
-                        // 游戏开始-发牌（没有监听事件，只有推送事件）
-                        sssGameEventDeal.gameStart(data);
-                        break;
-                    case 11:
-                        // 游戏结算-结算（没有监听事件，只有推送事件）
-                        sssGameEventDeal.gameEnd(data);
-                        break;
-                    case 12:
-                        // 游戏结算-结算（没有监听事件，只有推送事件）
-                        sssGameEventDealNew.gameOvertime(data);
-                        break;
                     default:
                         break;
                 }
                 break;
-            case GidConstant.ZJH:
+            case CommonConstant.GAME_ID_ZJH:
                 // 炸金花
                 switch (sorts) {
-                    case 1:
-                        zjhGameEventDeal.enterRoom(client, data);
-                        break;
-                    case 2:
+                    case ZJHConstant.ZJH_GAME_EVENT_READY:
                         zjhGameEventDealNew.gameReady(client, data);
                         break;
-                    case 3:
+                    case ZJHConstant.ZJH_GAME_EVENT_GAME:
                         zjhGameEventDealNew.gameEvent(client, data);
                         break;
-                    case 4:
-                        zjhGameEventDeal.closeRoom(client, data);
-                        break;
-                    case 5:
+                    case ZJHConstant.ZJH_GAME_EVENT_EXIT:
                         zjhGameEventDealNew.exitRoom(client, data);
                         break;
-                    case 6:
+                    case ZJHConstant.ZJH_GAME_EVENT_RECONNECT:
                         zjhGameEventDealNew.reconnectGame(client, data);
                         break;
-                    case 7:
-                        zjhGameEventDeal.gameConnReset(client, data);
-                        break;
-                    case 8:
-                        zjhGameEventDeal.changeTable(client, data);
-                        break;
-                    case 9:
-                        zjhGameEventDeal.ready(client, data);
-                        break;
-                    case 10:
-                        zjhGameEventDeal.xiazhu(client, data);
-                        break;
-                    case 11:
-                        zjhGameEventDeal.gendaodi(client, data);
-                        break;
-
                     default:
                         break;
                 }
                 break;
-            case GidConstant.BDX:
+            case CommonConstant.GAME_ID_BDX:
                 // 比大小
                 switch (sorts) {
-                    case 1:
-                        bdxGameEventDeal.enterRoom(client, data);
-                        break;
-                    case 2:
+                    case BDXConstant.BDX_GAME_EVENT_XZ:
                         bdxGameEventDealNew.xiaZhu(client, data);
                         break;
-                    case 3:
+                    case BDXConstant.BDX_GAME_EVENT_GIVE_UP:
                         bdxGameEventDealNew.gameEvent(client, data);
                         break;
-                    case 4:
+                    case BDXConstant.BDX_GAME_EVENT_EXIT:
                         bdxGameEventDealNew.exitRoom(client, data);
                         break;
-                    case 5:
+                    case BDXConstant.BDX_GAME_EVENT_RECONNECT:
                         bdxGameEventDealNew.reconnectGame(client, data);
                         break;
 

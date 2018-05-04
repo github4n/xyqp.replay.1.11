@@ -8,6 +8,22 @@ package com.zhuoan.constant;
  **/
 public class ZJHConstant {
     /**
+     * 炸金花游戏事件-准备
+     */
+    public static final int ZJH_GAME_EVENT_READY = 1;
+    /**
+     * 炸金花游戏事件-配牌
+     */
+    public static final int ZJH_GAME_EVENT_GAME = 2;
+    /**
+     * 炸金花游戏事件-退出
+     */
+    public static final int ZJH_GAME_EVENT_EXIT = 3;
+    /**
+     * 炸金花游戏事件-重连
+     */
+    public static final int ZJH_GAME_EVENT_RECONNECT = 4;
+    /**
      * 炸金花游戏状态-初始
      */
     public static final int ZJH_GAME_STATUS_INIT=0;

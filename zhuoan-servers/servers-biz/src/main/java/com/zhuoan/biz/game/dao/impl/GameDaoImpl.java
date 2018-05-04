@@ -88,7 +88,7 @@ public class GameDaoImpl implements GameDao {
             }
             d=d+uuu.getLong("id")+",";
         }
-        GameMain.sqlQueue.addSqlTask(new SqlModel(sql.replace("$", z).replace("/", d.substring(0, d.length() - 1)), new Object[]{}, SqlModel.EXECUTEUPDATEBYSQL));
+        DBUtil.executeUpdateBySQL(sql.replace("$", z).replace("/", d.substring(0, d.length() - 1)), new Object[]{});
         return false;
     }
 
@@ -113,7 +113,7 @@ public class GameDaoImpl implements GameDao {
                 uuu.getDouble("fen")+",'"+te+"',"+uuu.getDouble("new")+","+uuu.getDouble("old")+","+uuu.getDouble("fen")+
                 ","+CommonConstant.SCORE_CHANGE_TYPE_GAME+",'游戏输赢'),";
         }
-        GameMain.sqlQueue.addSqlTask(new SqlModel(sqlx.toString().replace("$", ve.substring(0, ve.length()-1)), new Object[]{}, SqlModel.EXECUTEUPDATEBYSQL));
+        DBUtil.executeUpdateBySQL(sqlx.toString().replace("$", ve.substring(0, ve.length()-1)), new Object[]{});
     }
 
     /**

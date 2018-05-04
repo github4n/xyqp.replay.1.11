@@ -7,7 +7,22 @@ package com.zhuoan.constant;
  * @Modified By:
  **/
 public class BDXConstant {
-
+    /**
+     * 比大小游戏事件-下注
+     */
+    public static final int BDX_GAME_EVENT_XZ = 1;
+    /**
+     * 比大小游戏事件-弃牌
+     */
+        public static final int BDX_GAME_EVENT_GIVE_UP = 2;
+    /**
+     * 比大小游戏事件-退出
+     */
+    public static final int BDX_GAME_EVENT_EXIT = 3;
+    /**
+     * 比大小游戏事件-重连
+     */
+    public static final int BDX_GAME_EVENT_RECONNECT = 4;
     /**
      * 比大小游戏状态-初始
      */

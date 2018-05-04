@@ -1,6 +1,7 @@
 package com.zhuoan.webapp.listener.event;
 
 import com.zhuoan.biz.game.biz.GameLogBiz;
+import com.zhuoan.biz.game.biz.PublicBiz;
 import com.zhuoan.biz.game.biz.RoomBiz;
 import com.zhuoan.biz.game.biz.UserBiz;
 import com.zhuoan.biz.model.dao.PumpDao;
@@ -33,6 +34,8 @@ public class DAOQueueMessageListener implements MessageListener {
     private RoomBiz roomBiz;
     @Resource
     private UserBiz userBiz;
+    @Resource
+    private PublicBiz publicBiz;
     @Resource
     private GameLogBiz gameLogBiz;
 
@@ -71,6 +74,10 @@ public class DAOQueueMessageListener implements MessageListener {
             case DaoTypeConstant.INSERT_USER_GAME_LOG:
                 logger.info("插入玩家战绩信息ING");
                 gameLogBiz.addUserGameLog(o);
+                break;
+            case DaoTypeConstant.INSERT_APP_OBJ_REC:
+                logger.info("插入玩家洗牌记录ING");
+                publicBiz.addAppObjRec(o);
                 break;
             default:
                 break;

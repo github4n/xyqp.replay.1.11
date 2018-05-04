@@ -23,6 +23,7 @@ import com.zhuoan.constant.*;
 import com.zhuoan.service.cache.RedisService;
 import com.zhuoan.service.jms.ProducerService;
 import com.zhuoan.util.Dto;
+import com.zhuoan.util.MathDelUtil;
 import com.zhuoan.util.SensitivewordFilter;
 import com.zhuoan.util.TimeUtil;
 import net.sf.json.JSONArray;
@@ -50,7 +51,7 @@ import static net.sf.json.JSONObject.fromObject;
 @Component
 public class BaseEventDeal {
 
-    public static String noticeContentMall = "111111111111111111欢迎来到山弹头棋牌，本游戏限制赌博谢谢！";
+    public static String noticeContentMall = "欢迎来到山弹头棋牌，本游戏限制赌博谢谢！";
     public static String noticeContentGame = "";
 
     private final static Logger logger = LoggerFactory.getLogger(BaseEventDeal.class);
@@ -102,7 +103,6 @@ public class BaseEventDeal {
         String account = postData.getString("account");
         // 房间信息
         JSONObject baseInfo = postData.getJSONObject("base_info");
-        baseInfo.put("roomType", 3);
         // 获取用户信息
         JSONObject userInfo = userBiz.getUserByAccount(account);
         if (Dto.isObjNull(userInfo)) {
@@ -119,8 +119,6 @@ public class BaseEventDeal {
             CommonConstant.sendMsgEventToSingle(client, result.toString(), "enterRoomPush_NN");
             return;
         }
-        // 设置客户端标识
-        client.set(CommonConstant.CLIENT_TAG_ACCOUNT, account);
         // 创建房间
         createRoomBase(client, JSONObject.fromObject(data), userInfo);
     }
@@ -135,8 +133,7 @@ public class BaseEventDeal {
     public void createRoomBase(SocketIOClient client, JSONObject postData, JSONObject userInfo) {
         JSONObject baseInfo = postData.getJSONObject("base_info");
         // 添加房间信息
-        String roomNo = RoomManage.randomRoomNo();
-        client.set(CommonConstant.CLIENT_TAG_ROOM_NO, roomNo);
+        String roomNo = randomRoomNo();
         GameRoom gameRoom;
         switch (postData.getInt("gid")) {
             case CommonConstant.GAME_ID_NN:
@@ -172,26 +169,14 @@ public class BaseEventDeal {
             playerNum = baseInfo.getInt("maxPlayer");
         }
         List<Long> idList = new ArrayList<Long>();
-        List<String> iconList = new ArrayList<String>();
-        List<String> nameList = new ArrayList<String>();
-        List<Integer> scoreList = new ArrayList<Integer>();
         for (int i = 0; i < playerNum; i++) {
             if (i == 0) {
                 idList.add(userInfo.getLong("id"));
-                iconList.add(userInfo.getString("headimg"));
-                nameList.add(userInfo.getString("name"));
-                scoreList.add(userInfo.getInt("score"));
             } else {
                 idList.add((long) 0);
-                iconList.add("");
-                nameList.add("");
-                scoreList.add(0);
             }
         }
         gameRoom.setUserIdList(idList);
-        gameRoom.setUserIconList(iconList);
-        gameRoom.setUserNameList(nameList);
-        gameRoom.setUserScoreList(scoreList);
         if (gameRoom.getRoomType() == CommonConstant.ROOM_TYPE_JB || gameRoom.getRoomType() == CommonConstant.ROOM_TYPE_JB) {
             gameRoom.setGameCount(9999);
         }
@@ -315,13 +300,21 @@ public class BaseEventDeal {
         obj.put("port", gameRoom.getPort());
         obj.put("status", 0);
         if (gameRoom.isOpen()) {
-            obj.put("open", 1);
+            obj.put("open", CommonConstant.GLOBAL_YES);
         } else {
-            obj.put("open", 0);
+            obj.put("open", CommonConstant.GLOBAL_NO);
         }
 
         producerService.sendMessage(daoQueueDestination, new PumpDao(DaoTypeConstant.INSERT_GAME_ROOM, obj));
 
+    }
+
+    public static String randomRoomNo(){
+        String roomNo = MathDelUtil.getRandomStr(6);
+        if (RoomManage.gameRoomMap.containsKey(roomNo)) {
+            return randomRoomNo();
+        }
+        return roomNo;
     }
 
     private JSONObject getGameSetting(GameRoom gameRoom) {
@@ -378,8 +371,6 @@ public class BaseEventDeal {
             return;
         }
         // 设置客户端标识
-        client.set(CommonConstant.CLIENT_TAG_ACCOUNT, account);
-        client.set(CommonConstant.CLIENT_TAG_ROOM_NO, roomNo);
 
         joinRoomBase(client, postData, userInfo);
     }
@@ -429,18 +420,17 @@ public class BaseEventDeal {
         JSONObject joinData = new JSONObject();
         // 是否重连
         if (gameRoom.getPlayerMap().containsKey(playerinfo.getAccount())) {
-            joinData.put("isReconnect", 1);
+            joinData.put("isReconnect", CommonConstant.GLOBAL_YES);
         } else {
             // 更新数据库
             JSONObject roomInfo = new JSONObject();
             roomInfo.put("room_no", gameRoom.getRoomNo());
-            // TODO: 2018/4/20 字符串拼接
             roomInfo.put("user_id" + myIndex, playerinfo.getId());
             roomInfo.put("user_icon" + myIndex, playerinfo.getHeadimg());
             roomInfo.put("user_name" + myIndex, playerinfo.getName());
             // 更新房间信息
             producerService.sendMessage(daoQueueDestination, new PumpDao(DaoTypeConstant.UPDATE_ROOM_INFO, roomInfo));
-            joinData.put("isReconnect", 0);
+            joinData.put("isReconnect", CommonConstant.GLOBAL_NO);
         }
         joinData.put(CommonConstant.DATA_KEY_ACCOUNT, userInfo.getString("account"));
         joinData.put(CommonConstant.DATA_KEY_ROOM_NO, roomNo);
@@ -856,6 +846,28 @@ public class BaseEventDeal {
     }
 
     /**
+     * 获取玩家信息
+     * @param client
+     * @param data
+     */
+    public void getUserInfo(SocketIOClient client, Object data){
+        JSONObject postdata = JSONObject.fromObject(data);
+        if (!postdata.containsKey("account")) {
+            return;
+        }
+        JSONObject result = new JSONObject();
+        String account = postdata.getString(CommonConstant.DATA_KEY_ACCOUNT);
+        JSONObject userInfo = userBiz.getUserByAccount(account);
+        if (!Dto.isObjNull(userInfo)) {
+            result.put(CommonConstant.RESULT_KEY_CODE, CommonConstant.GLOBAL_YES);
+            result.put("user", userInfo);
+        }else {
+            result.put(CommonConstant.RESULT_KEY_CODE, CommonConstant.GLOBAL_NO);
+        }
+        CommonConstant.sendMsgEventToSingle(client, String.valueOf(result),"getUserInfoPush");
+    }
+
+    /**
      * 获取房间列表
      * @param client
      * @param data
@@ -1186,7 +1198,7 @@ public class BaseEventDeal {
                 object.put("new",room.getPlayerMap().get(account).getScore());
                 object.put("old",oldScore);
                 object.put("change",-sum);
-                publicBiz.addAppObjRec(object);
+                producerService.sendMessage(daoQueueDestination, new PumpDao(DaoTypeConstant.INSERT_APP_OBJ_REC, object));
                 // 通知玩家
                 result.element(CommonConstant.RESULT_KEY_CODE, CommonConstant.GLOBAL_YES);
                 result.element("index",room.getPlayerMap().get(account).getMyIndex());

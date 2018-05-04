@@ -35,6 +35,10 @@ public class DaoTypeConstant {
      * The constant INSERT_USER_GAME_LOG.插入玩家战绩战绩信息
      */
     public static final String INSERT_USER_GAME_LOG = "insert_user_game_log";
+    /**
+     * The constant INSERT_USER_GAME_LOG.插入玩家战绩战绩信息
+     */
+    public static final String INSERT_APP_OBJ_REC = "insert_app_obj_rec";
 
 
 }

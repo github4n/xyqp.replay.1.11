@@ -130,7 +130,6 @@ public class GameTimerNiuNiu{
                             }
                         }
                     }
-                    // TODO: 2018/4/21 常量定义
                     // 投递消息类型
                     int messageSort = 0;
                     for (String account : autoAccountList) {
@@ -143,26 +142,26 @@ public class GameTimerNiuNiu{
                         if (gameStatus==NNConstant.NN_GAME_STATUS_READY) {
                             // 准备阶段超时踢出
                             if (room.getReadyOvertime()==CommonConstant.READY_OVERTIME_OUT) {
-                                messageSort = 7;
+                                messageSort = NNConstant.NN_GAME_EVENT_EXIT;
                             }
                             // 准备阶段超时自动准备
                             if (room.getReadyOvertime()==CommonConstant.READY_OVERTIME_AUTO) {
-                                messageSort = 2;
+                                messageSort = NNConstant.NN_GAME_EVENT_READY;
                             }
                         }
                         if (gameStatus==NNConstant.NN_GAME_STATUS_QZ) {
-                            messageSort = 5;
+                            messageSort = NNConstant.NN_GAME_EVENT_QZ;
                             // 抢庄阶段超时不抢
                             data.put(NNConstant.DATA_KEY_VALUE,0);
                         }
                         if (gameStatus==NNConstant.NN_GAME_STATUS_XZ) {
-                            messageSort = 3;
+                            messageSort = NNConstant.NN_GAME_EVENT_XZ;
                             // 下注阶段默认下最小倍数
                             JSONArray baseNum = JSONArray.fromObject(room.getBaseNum());
                             data.put(NNConstant.DATA_KEY_MONEY,baseNum.getJSONObject(0).getInt("val"));
                         }
                         if (gameStatus==NNConstant.NN_GAME_STATUS_LP) {
-                            messageSort = 4;
+                            messageSort = NNConstant.NN_GAME_EVENT_LP;
                         }
                         if (messageSort>0) {
                             SocketIOClient client = GameMain.server.getClient(room.getPlayerMap().get(account).getUuid());

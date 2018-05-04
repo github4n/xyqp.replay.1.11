@@ -16,6 +16,79 @@ import java.util.UUID;
  * @Modified By:
  **/
 public class CommonConstant {
+
+    /**
+     * 公共游戏事件-获取玩家信息
+     */
+    public static final int BASE_GAME_GET_USER_INFO = 1;
+    /**
+     * 公共游戏事件-检查是否在房间内
+     */
+    public static final int BASE_GAME_EVENT_CHECK_USER = 2;
+    /**
+     * 公共游戏事件-获取游戏设置
+     */
+    public static final int BASE_GAME_EVENT_GET_GAME_SETTING = 3;
+    /**
+     * 公共游戏事件-获取房间列表
+     */
+    public static final int BASE_GAME_EVENT_GET_ALL_ROOM_LIST = 4;
+    /**
+     * 公共游戏事件-创建房间
+     */
+    public static final int BASE_GAME_EVENT_CREATE_ROOM = 5;
+    /**
+     * 公共游戏事件-加入房间
+     */
+    public static final int BASE_GAME_EVENT_JOIN_ROOM = 6;
+    /**
+     * 公共游戏事件-获取洗牌信息
+     */
+    public static final int BASE_GAME_EVENT_GET_SHUFFLE_INFO = 7;
+    /**
+     * 公共游戏事件-洗牌
+     */
+    public static final int BASE_GAME_EVENT_DO_SHUFFLE = 8;
+    /**
+     * 公共游戏事件-发送聊天信息
+     */
+    public static final int BASE_GAME_EVENT_SEND_MESSAGE = 9;
+    /**
+     * 公共游戏事件-发送语音
+     */
+    public static final int BASE_GAME_EVENT_SEND_VOICE = 10;
+    /**
+     * 公共游戏事件-获取玩家战绩
+     */
+    public static final int BASE_GAME_EVENT_GET_USER_GAME_LOGS = 11;
+    /**
+     * 公共游戏事件-解散房间
+     */
+    public static final int BASE_GAME_EVENT_DISSOLVE_ROOM = 12;
+    /**
+     * 公共游戏事件-开关游戏
+     */
+    public static final int BASE_GAME_EVENT_ON_OR_OFF_GAME = 13;
+    /**
+     * 公共游戏事件-发送滚动公告
+     */
+    public static final int BASE_GAME_EVENT_SEND_NOTICE = 14;
+    /**
+     * 公共游戏事件-获取滚动公告
+     */
+    public static final int BASE_GAME_EVENT_GET_NOTICE = 15;
+    /**
+     * 公共游戏事件-获取房间数、玩家数
+     */
+    public static final int BASE_GAME_EVENT_GET_ROOM_AND_PLAYER_COUNT = 16;
+    /**
+     * 公共游戏事件-测试接口
+     */
+    public static final int BASE_GAME_EVENT_TEST = 17;
+    /**
+     * 游戏公共部分
+     */
+    public static final int GAME_BASE = 0;
     /**
      * 游戏id-牛牛
      */
@@ -32,16 +105,6 @@ public class CommonConstant {
      * 游戏id-比大小
      */
     public static final int GAME_ID_BDX = 10;
-
-    /**
-     * 客户端标识-账号
-      */
-    public static final String CLIENT_TAG_ACCOUNT = "account";
-    /**
-     * 客户端标识-房间号
-     */
-    public static final String CLIENT_TAG_ROOM_NO = "roomNo";
-
     /**
      * 房间类型-房卡
      */
@@ -125,6 +188,10 @@ public class CommonConstant {
      * 积分变动类型-洗牌
      */
     public static final int SCORE_CHANGE_TYPE_SHUFFLE = 30;
+    /**
+     * 无庄家
+     */
+    public static final int NO_BANKER_INDEX = -1;
 
     public static final String DATA_KEY_ROOM_NO = "room_no";
     public static final String DATA_KEY_ACCOUNT = "account";

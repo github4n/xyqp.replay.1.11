@@ -13,10 +13,12 @@ import com.zhuoan.service.jms.ProducerService;
 import com.zhuoan.util.Dto;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
+import org.apache.commons.lang.math.RandomUtils;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
 import javax.jms.Destination;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -235,8 +237,6 @@ public class BDXGameEventDealNew {
         }
         // 刷新uuid
         room.getPlayerMap().get(account).setUuid(client.getSessionId());
-        client.set(CommonConstant.CLIENT_TAG_ACCOUNT, account);
-        client.set(CommonConstant.CLIENT_TAG_ROOM_NO, roomNo);
         // 组织数据，通知玩家
         result.put("type", 1);
         result.put("data", obtainRoomData(roomNo, account));
@@ -249,18 +249,19 @@ public class BDXGameEventDealNew {
         room.setGameStatus(BDXConstant.BDX_GAME_STATUS_SUMMARY);
         // 当局输赢
         double sum = room.getUserPacketMap().get(giveUpAccount).getValue();
+        List<Integer> pai = obtainPai();
         for (String account : room.getUserPacketMap().keySet()) {
             room.getUserPacketMap().get(account).setStatus(BDXConstant.BDX_USER_STATUS_INIT);
             double oldScore = room.getPlayerMap().get(account).getScore();
             if (account.equals(giveUpAccount)) {
                 room.getUserPacketMap().get(account).setScore(-sum);
-                room.getUserPacketMap().get(account).setPai(new int[]{1});
-                room.getUserPacketMap().get(account).setIsWin(0);
+                room.getUserPacketMap().get(account).setPai(new int[]{pai.get(1)});
+                room.getUserPacketMap().get(account).setIsWin(CommonConstant.GLOBAL_NO);
                 room.getPlayerMap().get(account).setScore(Dto.sub(oldScore,sum));
             }else {
                 room.getUserPacketMap().get(account).setScore(sum);
-                room.getUserPacketMap().get(account).setPai(new int[]{2});
-                room.getUserPacketMap().get(account).setIsWin(1);
+                room.getUserPacketMap().get(account).setPai(new int[]{pai.get(0)});
+                room.getUserPacketMap().get(account).setIsWin(CommonConstant.GLOBAL_YES);
                 room.getPlayerMap().get(account).setScore(Dto.add(oldScore,sum));
             }
         }
@@ -288,7 +289,7 @@ public class BDXGameEventDealNew {
             object.put("id", room.getPlayerMap().get(account).getId());
             object.put("gid", room.getGid());
             object.put("roomNo", room.getRoomNo());
-            object.put("type", 3);
+            object.put("type", room.getRoomType());
             object.put("fen", room.getUserPacketMap().get(account).getScore());
             object.put("old", Dto.sub(room.getPlayerMap().get(account).getScore(),room.getUserPacketMap().get(account).getScore()));
             object.put("new", room.getPlayerMap().get(account).getScore());
@@ -301,9 +302,9 @@ public class BDXGameEventDealNew {
             gameLogResult.put("myIndex", room.getPlayerMap().get(account).getMyIndex());
             gameLogResult.put("score", room.getUserPacketMap().get(account).getScore());
             gameLogResult.put("totalScore", room.getPlayerMap().get(account).getScore());
-            gameLogResult.put("win", 1);
+            gameLogResult.put("win", CommonConstant.GLOBAL_YES);
             if (room.getUserPacketMap().get(account).getStatus() < 0) {
-                gameLogResult.put("win", 0);
+                gameLogResult.put("win", CommonConstant.GLOBAL_NO);
             }
             gameLogResults.add(gameLogResult);
             // 用户战绩
@@ -338,6 +339,34 @@ public class BDXGameEventDealNew {
         }
     }
 
+    public static List<Integer> obtainPai(){
+        int pai1 = RandomUtils.nextInt(52)+1;
+        int pai2 = RandomUtils.nextInt(52)+1;
+        int maxNum = 13;
+        if (pai1%maxNum==pai2%maxNum) {
+            return obtainPai();
+        }
+        List<Integer> list = new ArrayList<Integer>();
+        if (pai1%maxNum==0) {
+            list.add(pai1);
+            list.add(pai2);
+            return list;
+        }
+        if (pai2%maxNum==0) {
+            list.add(pai2);
+            list.add(pai1);
+            return list;
+        }
+        if (pai1%maxNum>pai2%maxNum) {
+            list.add(pai1);
+            list.add(pai2);
+            return list;
+        }else{
+            list.add(pai2);
+            list.add(pai1);
+            return list;
+        }
+    }
 
     /**
      * 获取当前房间数据
