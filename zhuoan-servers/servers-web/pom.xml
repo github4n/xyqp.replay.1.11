@@ -131,6 +131,13 @@
             </properties>
         </profile>
 
+        <profile>
+            <id>majiang</id>
+            <properties>
+                <profiles.active>mj</profiles.active>
+            </properties>
+        </profile>
+
         <!-- production使用 mvn xxx -Pproduction  (xxx:install  package)-->
         <profile>
             <!-- 生产环境 -->
