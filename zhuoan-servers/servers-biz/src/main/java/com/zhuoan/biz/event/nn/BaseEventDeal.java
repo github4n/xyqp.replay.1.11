@@ -887,21 +887,12 @@ public class BaseEventDeal {
                 JSONObject obj = new JSONObject();
                 obj.put("room_no", gameRoom.getRoomNo());
                 obj.put("gid", gameId);
-                for (int i = 0; i < gameRoom.getUserIdList().size(); i++) {
-                    obj.put("user_id"+i, gameRoom.getUserIdList().get(i));
-                }
                 obj.put("base_info", gameRoom.getRoomInfo());
                 obj.put("fytype", gameRoom.getWfType());
                 obj.put("iszs", 0);
                 obj.put("player", gameRoom.getPlayerCount());
-                int playerCount = 0;
-                for (long id : gameRoom.getUserIdList()) {
-                    if (id>0) {
-                        playerCount++;
-                    }
-                }
-                obj.put("renshu", playerCount);
-                if (type==0||(type==1&&playerCount<gameRoom.getPlayerCount())) {
+                obj.put("renshu", gameRoom.getPlayerMap().size());
+                if (type==0||(type==1&&gameRoom.getPlayerMap().size()<gameRoom.getPlayerCount())) {
                     allRoom.add(obj);
                 }
             }

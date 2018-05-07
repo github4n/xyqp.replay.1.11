@@ -832,7 +832,7 @@ public class ZJHGameEventDealNew {
                 // 移除数据
                 for (int i = 0; i < room.getUserIdList().size(); i++) {
                     if (room.getUserIdList().get(i) == room.getPlayerMap().get(account).getId()) {
-                        room.getUserIdList().set(i, (long) 0);
+                        room.getUserIdList().set(i, 0L);
                         break;
                     }
                 }
