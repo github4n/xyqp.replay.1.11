@@ -260,6 +260,7 @@ public class SSSGameEventDealNew {
                         room.changePlayerPai(specialPai,account);
                     } else {
                         String[] auto = SSSOrdinaryCards.sort(player.getPai());
+                        auto = checkBestPai(auto);
                         room.getUserPacketMap().get(account).setPai(auto);
                         room.changePlayerPai(auto,account);
                     }
@@ -275,7 +276,9 @@ public class SSSGameEventDealNew {
                     JSONArray actionResult = SSSComputeCards.judge(player.togetMyPai(myPai));
                     if ("倒水".equals(actionResult.get(0))) {
                         String[] best = SSSOrdinaryCards.sort(player.getPai());
+                        best = checkBestPai(best);
                         player.setPai(best);
+                        room.changePlayerPai(best,account);
                     }else{
                         String[] str = new String[13];
                         for (int i = 0; i < myPai.size(); i++) {
@@ -383,6 +386,41 @@ public class SSSGameEventDealNew {
                 CommonConstant.sendMsgEventToAll(room.getAllUUIDList(),result.toString(),"gameActionPush_SSS");
             }
         }
+    }
+
+    /**
+     * 最优牌同花
+     * @param myPai
+     * @return
+     */
+    public String[] checkBestPai(String[] myPai){
+        JSONArray midPai = new JSONArray();
+        for (int i = 3; i < 8; i++) {
+            midPai.add(myPai[i]);
+        }
+        JSONArray footPai = new JSONArray();
+        for (int i = 8; i < 13; i++) {
+            footPai.add(myPai[i]);
+        }
+        int mid = SSSComputeCards.isSameFlower(midPai);
+        int foot = SSSComputeCards.isSameFlower(footPai);
+        if (mid==5&&foot==5) {
+            int result = SSSComputeCards.compareSameFlower(midPai,footPai);
+            if (result==1) {
+                String[] pai = new String[myPai.length];
+                for (int i = 0; i < 3; i++) {
+                    pai[i] = myPai[i];
+                }
+                for (int i = 3; i < 8; i++) {
+                    pai[i] = footPai.getString(i-3);
+                }
+                for (int i = 8; i < 13; i++) {
+                    pai[i] = midPai.getString(i-8);
+                }
+                return pai;
+            }
+        }
+        return myPai;
     }
 
     /**
@@ -684,7 +722,7 @@ public class SSSGameEventDealNew {
             }
             if (room.getGameStatus()==SSSConstant.SSS_GAME_STATUS_COMPARE) {
                 roomData.put("showTimer",CommonConstant.GLOBAL_NO);
-                roomData.put("bipaiTimer",room.getCompareTimer());
+                roomData.put("bipaiTimer",room.getCompareTimer()*100);
             }
             roomData.put("timer",room.getTimeLeft());
             roomData.put("myIndex",room.getPlayerMap().get(account).getMyIndex());

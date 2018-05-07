@@ -340,30 +340,20 @@ public class BDXGameEventDealNew {
     }
 
     public static List<Integer> obtainPai(){
-        int pai1 = RandomUtils.nextInt(52)+1;
-        int pai2 = RandomUtils.nextInt(52)+1;
-        int maxNum = 13;
-        if (pai1%maxNum==pai2%maxNum) {
-            return obtainPai();
-        }
+        int pai1 = RandomUtils.nextInt(13)+1;
+        int pai2 = RandomUtils.nextInt(13)+1;
+        int color1 = RandomUtils.nextInt(4);
+        int color2 = RandomUtils.nextInt(4);
         List<Integer> list = new ArrayList<Integer>();
-        if (pai1%maxNum==0) {
-            list.add(pai1);
-            list.add(pai2);
-            return list;
-        }
-        if (pai2%maxNum==0) {
-            list.add(pai2);
-            list.add(pai1);
-            return list;
-        }
-        if (pai1%maxNum>pai2%maxNum) {
-            list.add(pai1);
-            list.add(pai2);
+        if (pai1==pai2&&color1==color2) {
+            return obtainPai();
+        }else if (pai1>pai2) {
+            list.add(pai1+color1*20);
+            list.add(pai2+color2*20);
             return list;
         }else{
-            list.add(pai2);
-            list.add(pai1);
+            list.add(pai2+color2*20);
+            list.add(pai1+color1*20);
             return list;
         }
     }
