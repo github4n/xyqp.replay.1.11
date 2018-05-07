@@ -248,6 +248,40 @@ public class NNGameEventDealNew {
     }
 
     /**
+     * 明牌抢庄开始游戏
+     * @param room
+     */
+    public void startGameMp(final NNGameRoomNew room) {
+        // 洗牌
+        NiuNiuServer.xiPai(room.getRoomNo());
+        // 发牌
+        NiuNiuServer.faPai(room.getRoomNo());
+        JSONArray gameProcessFP = new JSONArray();
+        // 设置玩家手牌
+        for (String uuid : room.getUserPacketMap().keySet()) {
+            room.getUserPacketMap().get(uuid).saveMingPai();
+            // 存放游戏记录
+            JSONObject userPai = new JSONObject();
+            userPai.put("account", uuid);
+            userPai.put("name", room.getPlayerMap().get(uuid).getName());
+            userPai.put("pai", room.getUserPacketMap().get(uuid).getMyPai());
+            gameProcessFP.add(userPai);
+        }
+        room.getGameProcess().put("faPai", gameProcessFP);
+        // 设置房间状态(抢庄)
+        room.setGameStatus(NNConstant.NN_GAME_STATUS_QZ);
+        // 设置房间倒计时
+        room.setTimeLeft(NNConstant.NN_TIMER_QZ);
+        // 开启抢庄定时器
+        ThreadPoolHelper.executorService.submit(new Runnable() {
+            @Override
+            public void run() {
+                gameTimerNiuNiu.gameOverTime(room.getRoomNo(), NNConstant.NN_GAME_STATUS_QZ,0);
+            }
+        });
+    }
+
+    /**
      * 开始游戏
      *
      * @param room
@@ -259,71 +293,27 @@ public class NNGameEventDealNew {
         }
         // 初始化房间信息
         room.initGame();
-        // 明牌抢庄
         if (room.getBankerType() == NNConstant.NN_BANKER_TYPE_MP) {
-            // 洗牌
-            NiuNiuServer.xiPai(room.getRoomNo());
-            // 发牌
-            NiuNiuServer.faPai(room.getRoomNo());
-            JSONArray gameProcessFP = new JSONArray();
-            // 设置玩家手牌
-            for (String uuid : room.getUserPacketMap().keySet()) {
-                room.getUserPacketMap().get(uuid).saveMingPai();
-                // 存放游戏记录
-                JSONObject userPai = new JSONObject();
-                userPai.put("account", uuid);
-                userPai.put("name", room.getPlayerMap().get(uuid).getName());
-                userPai.put("pai", room.getUserPacketMap().get(uuid).getMyPai());
-                gameProcessFP.add(userPai);
-            }
-            room.getGameProcess().put("faPai", gameProcessFP);
-            // 设置房间状态(抢庄)
-            room.setGameStatus(NNConstant.NN_GAME_STATUS_QZ);
-            room.setTimeLeft(NNConstant.NN_TIMER_QZ);
-            ThreadPoolHelper.executorService.submit(new Runnable() {
-                @Override
-                public void run() {
-                    gameTimerNiuNiu.gameOverTime(room.getRoomNo(), NNConstant.NN_GAME_STATUS_QZ,0);
-                }
-            });
+            // 明牌抢庄开始游戏
+            startGameMp(room);
         } else if (room.getBankerType() == NNConstant.NN_BANKER_TYPE_QZ) {
             // 设置房间状态(抢庄)
             room.setGameStatus(NNConstant.NN_GAME_STATUS_QZ);
         } else if (room.getBankerType() == NNConstant.NN_BANKER_TYPE_TB) {
-            // 洗牌
-            NiuNiuServer.xiPai(room.getRoomNo());
-            // 发牌
-            NiuNiuServer.faPai(room.getRoomNo());
+            // 通比模式开始游戏
+            startGameTb(room);
+        } else if (room.getBankerType()==NNConstant.NN_BANKER_TYPE_FZ){
             // 设置房间状态(下注)
             room.setGameStatus(NNConstant.NN_GAME_STATUS_XZ);
-            changeGameStatus(room);
-            for (String account : room.getUserPacketMap().keySet()) {
-                if (room.getUserPacketMap().get(account).getStatus() > NNConstant.NN_USER_STATUS_INIT) {
-                    room.getUserPacketMap().get(account).setStatus(NNConstant.NN_USER_STATUS_XZ);
-                    // 通比模式默认下一个底注
-                    room.getUserPacketMap().get(account).setXzTimes((int) room.getScore());
-                    // 通知玩家
-                    JSONObject result = new JSONObject();
-                    result.put("index", room.getPlayerMap().get(account).getMyIndex());
-                    result.put(CommonConstant.RESULT_KEY_CODE, CommonConstant.GLOBAL_YES);
-                    result.put("value", room.getUserPacketMap().get(account).getXzTimes());
-                    CommonConstant.sendMsgEventToAll(room.getAllUUIDList(), result.toString(), "gameXiaZhuPush_NN");
-                }
-            }
-            // 设置游戏状态(亮牌)
-            room.setGameStatus(NNConstant.NN_GAME_STATUS_LP);
-            room.setTimeLeft(NNConstant.NN_TIMER_SHOW);
             // 开启亮牌定时器
             ThreadPoolHelper.executorService.submit(new Runnable() {
                 @Override
                 public void run() {
-                    gameTimerNiuNiu.gameOverTime(room.getRoomNo(), NNConstant.NN_GAME_STATUS_LP,0);
+                    gameTimerNiuNiu.gameOverTime(room.getRoomNo(), NNConstant.NN_GAME_STATUS_XZ,0);
                 }
             });
-        } else {
-            // 设置房间状态(下注)
-            room.setGameStatus(NNConstant.NN_GAME_STATUS_XZ);
         }
+        // 是否抽水
         if (room.getFee() > 0) {
             JSONArray array = new JSONArray();
             for (String account : room.getPlayerMap().keySet()) {
@@ -339,7 +329,7 @@ public class NNGameEventDealNew {
                     array.add(playerinfo.getId());
                 }
             }
-            // 抽水  QUEUETAG1
+            // 抽水
             producerService.sendMessage(daoQueueDestination, new PumpDao(DaoTypeConstant.PUMP, room.getJsonObject(array)));
 
         }
@@ -347,7 +337,43 @@ public class NNGameEventDealNew {
         changeGameStatus(room);
     }
 
-
+    /**
+     * 通比模式开始游戏
+     * @param room
+     */
+    public void startGameTb(final NNGameRoomNew room) {
+        // 洗牌
+        NiuNiuServer.xiPai(room.getRoomNo());
+        // 发牌
+        NiuNiuServer.faPai(room.getRoomNo());
+        // 设置房间状态(下注)
+        room.setGameStatus(NNConstant.NN_GAME_STATUS_XZ);
+        changeGameStatus(room);
+        for (String account : room.getUserPacketMap().keySet()) {
+            if (room.getUserPacketMap().get(account).getStatus() > NNConstant.NN_USER_STATUS_INIT) {
+                room.getUserPacketMap().get(account).setStatus(NNConstant.NN_USER_STATUS_XZ);
+                // 通比模式默认下一个底注
+                room.getUserPacketMap().get(account).setXzTimes((int) room.getScore());
+                // 通知玩家
+                JSONObject result = new JSONObject();
+                result.put("index", room.getPlayerMap().get(account).getMyIndex());
+                result.put(CommonConstant.RESULT_KEY_CODE, CommonConstant.GLOBAL_YES);
+                result.put("value", room.getUserPacketMap().get(account).getXzTimes());
+                CommonConstant.sendMsgEventToAll(room.getAllUUIDList(), result.toString(), "gameXiaZhuPush_NN");
+            }
+        }
+        // 设置游戏状态(亮牌)
+        room.setGameStatus(NNConstant.NN_GAME_STATUS_LP);
+        // 设置倒计时
+        room.setTimeLeft(NNConstant.NN_TIMER_SHOW);
+        // 开启亮牌定时器
+        ThreadPoolHelper.executorService.submit(new Runnable() {
+            @Override
+            public void run() {
+                gameTimerNiuNiu.gameOverTime(room.getRoomNo(), NNConstant.NN_GAME_STATUS_LP,0);
+            }
+        });
+    }
 
     /**
      * 抢庄

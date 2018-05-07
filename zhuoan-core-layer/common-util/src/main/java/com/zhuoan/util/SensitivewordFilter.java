@@ -74,7 +74,7 @@ public class SensitivewordFilter {
 	public static Set<String> readSensitiveWordFile() throws Exception{
 		Set<String> set = null;
 		
-		File file = new File("D:\\SensitiveWord.txt");    //��ȡ�ļ�
+		File file = new File("C:\\SensitiveWord.txt");    //��ȡ�ļ�
 		InputStreamReader read = new InputStreamReader(new FileInputStream(file),"GBK");
 		try {
 			if(file.isFile() && file.exists()){      //�ļ����Ƿ����

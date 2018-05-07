@@ -138,4 +138,9 @@ public class UserBizImpl implements UserBiz {
     public JSONObject getSysUser(String adminCode, String adminPass, String memo) {
         return gameDao.getSysUser(adminCode, adminPass, memo);
     }
+
+    @Override
+    public void updateUserPump(String account, String type, double sum) {
+        gameDao.updateUserPump(account,type,sum);
+    }
 }

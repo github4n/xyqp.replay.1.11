@@ -1122,9 +1122,9 @@ public class BaseEventDeal {
             }else if (set.getString("xipaiObj").equals("3")) {
                 result.element("obj",sysSet.getString("yuanbaoname"));
             }
-            JSONArray rec=publicBiz.getAppObjRec(room.getPlayerMap().get(account).getId(),1,gameId,String.valueOf(room.getId()),roomNo);
-
-            int size=rec.size();
+            //JSONArray rec=publicBiz.getAppObjRec(room.getPlayerMap().get(account).getId(),1,gameId,String.valueOf(room.getId()),roomNo);
+            JSONObject userInfo = userBiz.getUserByAccount(account);
+            int size=userInfo.getInt("pumpVal");
             if (size<set.getInt("xipaiLayer")) {
                 String[] count=set.getString("xipaiCount").substring(1, set.getString("xipaiCount").length()-1).split("\\$");
                 if (count.length>size) {
@@ -1176,13 +1176,11 @@ public class BaseEventDeal {
                 double oldScore = room.getPlayerMap().get(account).getScore();
                 room.getPlayerMap().get(account).setScore(Dto.sub(oldScore,sum));
                 // 更新玩家分数
-                JSONArray array = new JSONArray();
                 JSONObject obj = new JSONObject();
-                obj.put("total", room.getPlayerMap().get(account).getScore());
-                obj.put("fen", -sum);
-                obj.put("id", room.getPlayerMap().get(account).getId());
-                array.add(obj);
-                producerService.sendMessage(daoQueueDestination, new PumpDao(DaoTypeConstant.UPDATE_SCORE, room.getPumpObject(array)));
+                obj.put("account", account);
+                obj.put("updateType", room.getUpdateType());
+                obj.put("sum", -sum);
+                producerService.sendMessage(daoQueueDestination, new PumpDao(DaoTypeConstant.UPDATE_USER_INFO, obj));
                 // 插入洗牌数据
                 if (room.getId()==0) {
                     JSONObject roomInfo = roomBiz.getRoomInfoByRno(room.getRoomNo());

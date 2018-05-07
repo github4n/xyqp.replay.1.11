@@ -286,6 +286,15 @@ public class SSSGameRoomNew extends GameRoom{
         getDqArray().clear();
         // 全垒打清零
         swat = 0;
+        // 霸王庄换庄
+        if (getBankerType()==SSSConstant.SSS_BANKER_TYPE_BWZ) {
+            if (!userPacketMap.containsKey(getBanker())||userPacketMap.get(getBanker())==null) {
+                // 换庄
+                for (String newBanker : getUserPacketMap().keySet()) {
+                    setBanker(newBanker);
+                }
+            }
+        }
         // 初始化用户信息
         for (String uuid : getUserPacketMap().keySet()) {
             if(userPacketMap.containsKey(uuid)){

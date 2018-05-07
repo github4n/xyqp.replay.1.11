@@ -44,7 +44,7 @@ public class GameDaoImpl implements GameDao {
 
         String sql="select id,account,name,password,tel,sex,headimg,area,lv,roomcard,coins,score,createtime,ip,"
             + "logintime,openid,unionid,uuid,status,isAuthentication,memo,vip,safe,luck,safeprice,yuanbao,"
-            + "operatorMark,isManag,Losevalue,wholecost,sign,isown,platform from za_users where id=?";
+            + "operatorMark,isManag,Losevalue,wholecost,sign,isown,platform,pumpVal from za_users where id=?";
         return DBUtil.getObjectBySQL(sql, new Object[]{id});
     }
 
@@ -59,7 +59,7 @@ public class GameDaoImpl implements GameDao {
 
         String sql="select id,account,name,password,tel,sex,headimg,area,lv,roomcard,coins,score,createtime,ip,"
             + "logintime,openid,unionid,uuid,status,isAuthentication,memo,vip,safe,luck,safeprice,yuanbao,"
-            + "operatorMark,isManag,Losevalue,wholecost,sign,isown,platform,gulidId from za_users where account=?";
+            + "operatorMark,isManag,Losevalue,wholecost,sign,isown,platform,gulidId,pumpVal from za_users where account=?";
         return DBUtil.getObjectBySQL(sql, new Object[]{account});
     }
 
@@ -556,6 +556,17 @@ public class GameDaoImpl implements GameDao {
         DBUtil.executeUpdateBySQL(sql,new Object[]{object.getLong("userId"),object.getInt("gameId"),object.getString("room_no"),
             1,object.getLong("room_id"),new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date()),object.getDouble("new"),
             object.getDouble("old"),object.getDouble("change"),CommonConstant.SCORE_CHANGE_TYPE_SHUFFLE,"洗牌"});
+    }
+
+    @Override
+    public void updateUserPump(String account, String type, double sum) {
+        StringBuffer sb = new StringBuffer();
+        sb.append("update za_users set pumpVal=pumpVal+1,");
+        sb.append(type);
+        sb.append("=");
+        sb.append(type);
+        sb.append("+? where account=?");
+        DBUtil.executeUpdateBySQL(String.valueOf(sb),new Object[]{sum,account});
     }
 
     /**

@@ -276,4 +276,10 @@ public interface GameDao {
      * @param object
      */
     public void addAppObjRec(JSONObject object);
+
+    /**
+     * 更新玩家洗牌次数
+     * @param account
+     */
+    public void updateUserPump(String account, String type, double sum);
 }

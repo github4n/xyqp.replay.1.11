@@ -78,4 +78,10 @@ public interface UserBiz {
      */
     public JSONObject getSysUser(String adminCode, String adminPass, String memo);
 
+    /**
+     * 更新玩家洗牌次数
+     * @param account
+     */
+    public void updateUserPump(String account, String type, double sum);
+
 }

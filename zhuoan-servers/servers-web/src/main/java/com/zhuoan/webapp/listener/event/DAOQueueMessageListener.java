@@ -79,6 +79,10 @@ public class DAOQueueMessageListener implements MessageListener {
                 logger.info("插入玩家洗牌记录ING");
                 publicBiz.addAppObjRec(o);
                 break;
+            case DaoTypeConstant.UPDATE_USER_INFO:
+                logger.info("更新玩家信息ING");
+                userBiz.updateUserPump(o.getString("account"),o.getString("updateType"),o.getDouble("sum"));
+                break;
             default:
                 break;
         }

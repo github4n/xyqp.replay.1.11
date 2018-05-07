@@ -170,6 +170,15 @@ public class NNGameRoomNew extends GameRoom{
                 userPacketMap.get(uuid).initUserPacket();
             }
         }
+        // 霸王庄庄家退出重置庄家
+        if (bankerType==NNConstant.NN_BANKER_TYPE_FZ) {
+            if (!getUserPacketMap().containsKey(getBanker())||getUserPacketMap().get(getBanker())==null) {
+                for (String account : getUserPacketMap().keySet()) {
+                    setBanker(account);
+                    break;
+                }
+            }
+        }
         getGameProcess().put("bankerType",bankerType);
     }
 

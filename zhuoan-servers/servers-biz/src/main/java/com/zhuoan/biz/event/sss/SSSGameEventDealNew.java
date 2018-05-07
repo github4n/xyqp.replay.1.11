@@ -333,6 +333,7 @@ public class SSSGameEventDealNew {
                         gameSummaryHb(roomNo);
                         break;
                     case SSSConstant.SSS_BANKER_TYPE_BWZ:
+                        gameSummaryBwz(roomNo);
                         break;
                     default:
                         break;
@@ -588,7 +589,7 @@ public class SSSGameEventDealNew {
                     roomInfo.put("status",-1);
                     RoomManage.gameRoomMap.remove(room.getRoomNo());
                 }
-                roomBiz.updateGameRoom(roomInfo);
+                producerService.sendMessage(daoQueueDestination, new PumpDao(DaoTypeConstant.UPDATE_ROOM_INFO, roomInfo));
             }else {
                 // 组织数据，通知玩家
                 JSONObject result = new JSONObject();
@@ -859,12 +860,6 @@ public class SSSGameEventDealNew {
                             // 三道全输被打枪
                             if (winTime==-3) {
                                 sumScoreSingle *= 2;
-                                JSONArray dq = new JSONArray();
-                                dq.add(room.getPlayerMap().get(other).getMyIndex());
-                                dq.add(room.getPlayerMap().get(account).getMyIndex());
-                                if (!room.getDqArray().contains(dq)) {
-                                    room.getDqArray().add(dq);
-                                }
                             }
                             // 全垒打只对全垒打的人翻倍
                             if (isSwat) {
@@ -886,6 +881,141 @@ public class SSSGameEventDealNew {
                 room.getUserPacketMap().get(account).setMidResult(myResult.getJSONObject(1));
                 // 设置尾道输赢情况
                 room.getUserPacketMap().get(account).setFootResult(myResult.getJSONObject(2));
+            }
+        }
+    }
+
+    /**
+     * 霸王庄结算
+     * @param roomNo
+     */
+    public void gameSummaryBwz(String roomNo){
+        SSSGameRoomNew room = (SSSGameRoomNew) RoomManage.gameRoomMap.get(roomNo);
+        if (room!=null) {
+            // 获取所有参与的玩家
+            List<String> gameList = new ArrayList<String>();
+            for (String account : room.getUserPacketMap().keySet()) {
+                if (room.getUserPacketMap().get(account).getStatus()!=SSSConstant.SSS_USER_STATUS_INIT) {
+                    gameList.add(account);
+                }
+            }
+            // 是否全垒打
+            boolean isSwat = true;
+            // 庄家
+            Player player = room.getUserPacketMap().get(room.getBanker());
+            // 庄家输赢
+            double sumScoreBanker = 0;
+            // 庄家是否是特殊牌
+            int special = player.getPaiType();
+            // 单局结果
+            JSONArray bankerResult = new JSONArray();
+            // 头道
+            bankerResult.add(new JSONObject().element("pai",player.getHeadPai()).element("score",0).element("type",0));
+            // 中道
+            bankerResult.add(new JSONObject().element("pai",player.getMidPai()).element("score",0).element("type",0));
+            // 尾道
+            bankerResult.add(new JSONObject().element("pai",player.getFootPai()).element("score",0).element("type",0));
+            for (String account : gameList) {
+                if (!account.equals(room.getBanker())) {
+                    // 闲家
+                    Player otherPlayer = room.getUserPacketMap().get(account);
+                    // 闲家输赢
+                    double sumScoreOther = 0;
+                    // 闲家是否是特殊牌
+                    int otherSpecial = otherPlayer.getPaiType();
+                    // 单局结果
+                    JSONArray otherResult = new JSONArray();
+                    // 头道
+                    otherResult.add(new JSONObject().element("pai",otherPlayer.getHeadPai()).element("score",0).element("type",0));
+                    // 中道
+                    otherResult.add(new JSONObject().element("pai",otherPlayer.getMidPai()).element("score",0).element("type",0));
+                    // 尾道
+                    otherResult.add(new JSONObject().element("pai",otherPlayer.getFootPai()).element("score",0).element("type",0));
+                    if (special>otherSpecial) {
+                        sumScoreBanker += player.getPaiScore();
+                        sumScoreOther -= player.getPaiScore();
+                        isSwat = false;
+                    } else if (special<otherSpecial) {
+                        sumScoreBanker -= otherPlayer.getPaiScore();
+                        sumScoreOther += otherPlayer.getPaiScore();
+                        isSwat = false;
+                    } else if (special==otherSpecial&&special>0) {
+                        // 同为特殊牌
+                        isSwat = false;
+                    } else {
+                        // 比牌结果
+                        JSONObject compareResult = SSSComputeCards.compare(player.getPai(), otherPlayer.getPai());
+                        // 自己的牌型及分数
+                        JSONArray bankerSingleResult = JSONArray.fromObject(compareResult.getJSONArray("result").get(0));
+                        // 其他玩家的牌型及分数
+                        JSONArray otherSingleResult = JSONArray.fromObject(compareResult.getJSONArray("result").get(1));
+                        int winTime = 0;
+                        for (int i = 0; i < otherResult.size(); i++) {
+                            // 增加相应的分数
+                            bankerResult.getJSONObject(i).put("score",bankerResult.getJSONObject(i).getInt("score")+bankerSingleResult.getJSONObject(i).getInt("score"));
+                            otherResult.getJSONObject(i).put("score",otherResult.getJSONObject(i).getInt("score")+otherSingleResult.getJSONObject(i).getInt("score"));
+                            // 设置没道对应的牌型
+                            otherResult.getJSONObject(i).put("type",otherSingleResult.getJSONObject(i).getInt("type"));
+                            bankerResult.getJSONObject(i).put("type",bankerSingleResult.getJSONObject(i).getInt("type"));
+                            if (bankerSingleResult.getJSONObject(i).getInt("score")>otherSingleResult.getJSONObject(i).getInt("score")) {
+                                winTime ++;
+                            } else if (bankerSingleResult.getJSONObject(i).getInt("score")<otherSingleResult.getJSONObject(i).getInt("score")){
+                                winTime --;
+                            }
+                        }
+                        sumScoreOther = compareResult.getInt("B");
+                        // 三道全赢打枪
+                        if (winTime==3) {
+                            sumScoreOther *= 2;
+                            JSONArray dq = new JSONArray();
+                            dq.add(room.getPlayerMap().get(room.getBanker()).getMyIndex());
+                            dq.add(room.getPlayerMap().get(account).getMyIndex());
+                            if (!room.getDqArray().contains(dq)) {
+                                room.getDqArray().add(dq);
+                            }
+                        }else {
+                            isSwat = false;
+                        }
+                        // 三道全输被打枪
+                        if (winTime==-3) {
+                            sumScoreOther *= 2;
+                            JSONArray dq = new JSONArray();
+                            dq.add(room.getPlayerMap().get(account).getMyIndex());
+                            dq.add(room.getPlayerMap().get(room.getBanker()).getMyIndex());
+                            if (!room.getDqArray().contains(dq)) {
+                                room.getDqArray().add(dq);
+                            }
+                        }
+                        sumScoreBanker -= sumScoreOther;
+                    }
+                    // 设置闲家家当局输赢
+                    room.getUserPacketMap().get(account).setScore(sumScoreOther*room.getScore());
+                    // 设置头道输赢情况
+                    room.getUserPacketMap().get(account).setHeadResult(otherResult.getJSONObject(0));
+                    // 设置中道输赢情况
+                    room.getUserPacketMap().get(account).setMidResult(otherResult.getJSONObject(1));
+                    // 设置尾道输赢情况
+                    room.getUserPacketMap().get(account).setFootResult(otherResult.getJSONObject(2));
+                }
+            }
+            // 设置闲家家当局输赢
+            room.getUserPacketMap().get(room.getBanker()).setScore(sumScoreBanker*room.getScore());
+            // 设置头道输赢情况
+            room.getUserPacketMap().get(room.getBanker()).setHeadResult(bankerResult.getJSONObject(0));
+            // 设置中道输赢情况
+            room.getUserPacketMap().get(room.getBanker()).setMidResult(bankerResult.getJSONObject(1));
+            // 设置尾道输赢情况
+            room.getUserPacketMap().get(room.getBanker()).setFootResult(bankerResult.getJSONObject(2));
+            // 全垒打翻倍
+            if (isSwat) {
+                room.setSwat(CommonConstant.GLOBAL_YES);
+                for (String account : room.getUserPacketMap().keySet()) {
+                    double nowScore = room.getUserPacketMap().get(account).getScore();
+                    room.getUserPacketMap().get(account).setScore(nowScore*2);
+                    if (account.equals(room.getBanker())) {
+                        room.getUserPacketMap().get(account).setSwat(CommonConstant.GLOBAL_YES);
+                    }
+                }
             }
         }
     }
