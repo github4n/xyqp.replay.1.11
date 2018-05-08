@@ -2,7 +2,7 @@
 <configuration>
 
     <!--定义日志文件的存储地址 勿在 LogBack 的配置中使用相对路径 /app/sv/logs -->
-    <property name="LOG_HOME" value="C:/by-wuweixiang/data/eventlogs/games.zhuoan.server.ui"/>
+    <property name="LOG_HOME" value="E:/wwx/data/eventlogs/games.zhuoan.server.ui"/>
 
     <!-- ========================== 配置APPENDER(是负责写日志的组件) START==========================-->
 
@@ -26,7 +26,7 @@
             <!-- each file should be at most 100MB, keep 60 days worth of history, but at most 20GB -->
             <maxFileSize>500MB</maxFileSize>
             <maxHistory>60</maxHistory>
-            <totalSizeCap>10GB</totalSizeCap>
+            <totalSizeCap>5GB</totalSizeCap>
         </rollingPolicy>
         <encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
             <!--格式化输出：%d表示日期，%thread表示线程名，%-5level：级别从左显示5个字符宽度%msg：日志消息，%n是换行符 -->
