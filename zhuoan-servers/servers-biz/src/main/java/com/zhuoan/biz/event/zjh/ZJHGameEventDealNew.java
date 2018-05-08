@@ -749,21 +749,25 @@ public class ZJHGameEventDealNew {
                 gameLogResult.put("zhuang", room.getPlayerMap().get(room.getBanker()).getMyIndex());
                 gameLogResult.put("myIndex", room.getPlayerMap().get(account).getMyIndex());
                 gameLogResult.put("myPai", room.getUserPacketMap().get(account).getPai());
-                gameLogResult.put("score", room.getUserPacketMap().get(account).getScore());
                 gameLogResult.put("totalScore", room.getPlayerMap().get(account).getScore());
-                gameLogResult.put("win", CommonConstant.GLOBAL_YES);
-                if (room.getUserPacketMap().get(account).getScore() < 0) {
+                if (room.getUserPacketMap().get(account).getStatus()==ZJHConstant.ZJH_USER_STATUS_WIN) {
+                    gameLogResult.put("win", CommonConstant.GLOBAL_YES);
+                    gameLogResult.put("score", Dto.sub(room.getTotalScore(),room.getUserPacketMap().get(account).getScore()));
+                }else {
+                    gameLogResult.put("score", -room.getUserPacketMap().get(account).getScore());
                     gameLogResult.put("win", CommonConstant.GLOBAL_NO);
                 }
                 gameLogResults.add(gameLogResult);
                 // 用户战绩
                 JSONObject userResult = new JSONObject();
                 userResult.put("zhuang", room.getBanker());
-                userResult.put("isWinner", CommonConstant.GLOBAL_NO);
-                if (room.getUserPacketMap().get(account).getScore() > 0) {
+                if (room.getUserPacketMap().get(account).getStatus()==ZJHConstant.ZJH_USER_STATUS_WIN) {
                     userResult.put("isWinner", CommonConstant.GLOBAL_YES);
+                    userResult.put("score", Dto.sub(room.getTotalScore(),room.getUserPacketMap().get(account).getScore()));
+                }else {
+                    userResult.put("isWinner", CommonConstant.GLOBAL_NO);
+                    userResult.put("score", -room.getUserPacketMap().get(account).getScore());
                 }
-                userResult.put("score", room.getUserPacketMap().get(account).getScore());
                 userResult.put("totalScore", room.getPlayerMap().get(account).getScore());
                 userResult.put("player", room.getPlayerMap().get(account).getName());
                 gameResult.add(userResult);
