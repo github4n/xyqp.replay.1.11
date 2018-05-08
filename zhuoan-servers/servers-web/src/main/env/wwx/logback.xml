@@ -2,7 +2,7 @@
 <configuration>
 
     <!--定义日志文件的存储地址 勿在 LogBack 的配置中使用相对路径 /app/sv/logs -->
-    <property name="LOG_HOME" value="E:/data/eventlogs/games.zhuoan.server.ui"/>
+    <property name="LOG_HOME" value="E:/wwx/data/eventlogs/games.zhuoan.server.ui"/>
 
     <!-- ========================== 配置APPENDER(是负责写日志的组件) START==========================-->
 
@@ -54,6 +54,26 @@
         </filter>
     </appender>
 
+    <!-- 慢方法 start-->
+    <appender name="SLOWMETHOD-APPENDER"
+              class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+            <!--日志文件输出的文件名 -->
+            <FileNamePattern>${LOG_HOME}/slowMethod.%d{yyyy-MM-dd}-%i.log</FileNamePattern>
+            <!-- each file should be at most 100MB, keep 60 days worth of history, but at most 20GB -->
+            <maxFileSize>100MB</maxFileSize>
+            <maxHistory>60</maxHistory>
+            <totalSizeCap>5GB</totalSizeCap>
+        </rollingPolicy>
+        <encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
+            <!--格式化输出：%d表示日期，%thread表示线程名，%-5level：级别从左显示5个字符宽度%msg：日志消息，%n是换行符 -->
+            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} %-5level [%thread] %logger{50} - %msg%n</pattern>
+        </encoder>
+    </appender>
+    <logger name="com.zhuoan.webapp.aspect.EventMethodTimeConsumeHandler" level="INFO" additivity="true">
+        <appender-ref ref="SLOWMETHOD-APPENDER"/>
+    </logger>
+    <!-- 慢方法 end-->
 
     <!-- socketio start-->
     <appender name="SOCKETIO-APPENDER"
@@ -77,7 +97,7 @@
     <!-- socketio end-->
 
     <!-- 比大小 start-->
-    <appender name="SOCKETIO-APPENDER"
+    <appender name="BDX-APPENDER"
               class="ch.qos.logback.core.rolling.RollingFileAppender">
         <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
             <!--日志文件输出的文件名 -->
@@ -93,12 +113,12 @@
         </encoder>
     </appender>
     <logger name="com.zhuoan.biz.event.bdx" level="INFO" additivity="true">
-        <appender-ref ref="SOCKETIO-APPENDER"/>
+        <appender-ref ref="BDX-APPENDER"/>
     </logger>
     <!-- 比大小 end-->
 
     <!-- 牛牛 start-->
-    <appender name="SOCKETIO-APPENDER"
+    <appender name="NN-APPENDER"
               class="ch.qos.logback.core.rolling.RollingFileAppender">
         <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
             <!--日志文件输出的文件名 -->
@@ -114,12 +134,12 @@
         </encoder>
     </appender>
     <logger name="com.zhuoan.biz.event.nn" level="INFO" additivity="true">
-        <appender-ref ref="SOCKETIO-APPENDER"/>
+        <appender-ref ref="NN-APPENDER"/>
     </logger>
     <!-- 牛牛 end-->
 
     <!-- 十三水 start-->
-    <appender name="SOCKETIO-APPENDER"
+    <appender name="SSS-APPENDER"
               class="ch.qos.logback.core.rolling.RollingFileAppender">
         <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
             <!--日志文件输出的文件名 -->
@@ -135,12 +155,12 @@
         </encoder>
     </appender>
     <logger name="com.zhuoan.biz.event.sss" level="INFO" additivity="true">
-        <appender-ref ref="SOCKETIO-APPENDER"/>
+        <appender-ref ref="SSS-APPENDER"/>
     </logger>
     <!-- 十三水 end-->
 
     <!-- 炸金花 start-->
-    <appender name="SOCKETIO-APPENDER"
+    <appender name="ZJH-APPENDER"
               class="ch.qos.logback.core.rolling.RollingFileAppender">
         <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
             <!--日志文件输出的文件名 -->
@@ -156,7 +176,7 @@
         </encoder>
     </appender>
     <logger name="com.zhuoan.biz.event.zjh" level="INFO" additivity="true">
-        <appender-ref ref="SOCKETIO-APPENDER"/>
+        <appender-ref ref="ZJH-APPENDER"/>
     </logger>
     <!-- 炸金花 end-->
 

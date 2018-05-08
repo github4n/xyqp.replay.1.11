@@ -37,7 +37,7 @@ public class EventMethodTimeConsumeHandler {
         call.proceed();
         Long timeConsume = System.currentTimeMillis() - beginTime;
         if (timeConsume > slowMethodMillis) {
-            logger.error("慢方法 = [" + callSignature.getDeclaringTypeName() + "." + callSignature.getName() + "] 耗时 = [" + timeConsume + "] ms");
+            logger.warn("慢方法 = [" + callSignature.getDeclaringTypeName() + "." + callSignature.getName() + "] 耗时 = [" + timeConsume + "] ms");
             // TODO: 2018/5/2/002 慢方法处理
         }
     }
