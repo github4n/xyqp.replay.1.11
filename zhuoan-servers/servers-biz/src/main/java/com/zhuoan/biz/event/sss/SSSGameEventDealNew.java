@@ -207,11 +207,11 @@ public class SSSGameEventDealNew {
                 // 中途加入不抽水
                 if (room.getUserPacketMap().get(account).getStatus()>SSSConstant.SSS_USER_STATUS_INIT) {
                     // 更新实体类数据
-                    Playerinfo playerinfo = room.getPlayerMap().get(account);
-                    room.getPlayerMap().get(account).setScore(Dto.sub(playerinfo.getScore(),room.getFee()));
+                    Playerinfo playerinfo = RoomManage.gameRoomMap.get(room.getRoomNo()).getPlayerMap().get(account);
+                    RoomManage.gameRoomMap.get(room.getRoomNo()).getPlayerMap().get(account).setScore(Dto.sub(playerinfo.getScore(),room.getFee()));
                     // 负数清零
-                    if (room.getPlayerMap().get(account).getScore()<0) {
-                        room.getPlayerMap().get(account).setScore(0);
+                    if (RoomManage.gameRoomMap.get(room.getRoomNo()).getPlayerMap().get(account).getScore()<0) {
+                        RoomManage.gameRoomMap.get(room.getRoomNo()).getPlayerMap().get(account).setScore(0);
                     }
                     array.add(playerinfo.getId());
                 }
@@ -241,7 +241,7 @@ public class SSSGameEventDealNew {
         if (!CommonConstant.checkEvent(postData,SSSConstant.SSS_GAME_STATUS_GAME_EVENT, client)) {
             return;
         }
-        String roomNo = postData.getString(CommonConstant.DATA_KEY_ROOM_NO);
+        final String roomNo = postData.getString(CommonConstant.DATA_KEY_ROOM_NO);
         String account = postData.getString(CommonConstant.DATA_KEY_ACCOUNT);
         final SSSGameRoomNew room = (SSSGameRoomNew) RoomManage.gameRoomMap.get(roomNo);
         Player player = room.getUserPacketMap().get(account);
@@ -357,20 +357,20 @@ public class SSSGameEventDealNew {
                                     for (String account : room.getUserPacketMap().keySet()) {
                                         if (room.getUserPacketMap().get(account).getStatus()!=SSSConstant.SSS_USER_STATUS_INIT) {
                                             double sum = room.getUserPacketMap().get(account).getScore();
-                                            double oldScore = room.getPlayerMap().get(account).getScore();
+                                            double oldScore = RoomManage.gameRoomMap.get(roomNo).getPlayerMap().get(account).getScore();
                                             double newScore = Dto.add(sum,oldScore);
-                                            room.getPlayerMap().get(account).setScore(newScore);
+                                            RoomManage.gameRoomMap.get(roomNo).getPlayerMap().get(account).setScore(newScore);
                                         }
                                     }
                                     room.setGameStatus(SSSConstant.SSS_GAME_STATUS_SUMMARY);
                                     // 初始化倒计时
                                     room.setTimeLeft(SSSConstant.SSS_TIMER_INIT);
-                                    // 改变状态，通知玩家
-                                    changeGameStatus(room);
                                     // 更新数据库
                                     updateUserScore(room);
+                                    // 改变状态，通知玩家
+                                    changeGameStatus(room);
                                 }
-                            } catch (InterruptedException e) {
+                            } catch (Exception e) {
                                 logger.error("",e);
                             }
                         }
@@ -444,6 +444,12 @@ public class SSSGameEventDealNew {
                 userJS.put("sum", room.getUserPacketMap().get(uuid).getScore());
                 userJS.put("pai", room.getUserPacketMap().get(uuid).getMyPai());
                 userJS.put("paiType", room.getUserPacketMap().get(uuid).getPaiType());
+                userJS.put("old", Dto.sub(room.getPlayerMap().get(uuid).getScore(),room.getUserPacketMap().get(uuid).getScore()));
+                if (room.getPlayerMap().get(uuid).getScore()<0) {
+                    userJS.put("new", 0);
+                }else {
+                    userJS.put("new", room.getPlayerMap().get(uuid).getScore());
+                }
                 gameProcessJS.add(userJS);
                 // 元宝输赢情况
                 JSONObject obj = new JSONObject();
@@ -504,6 +510,7 @@ public class SSSGameEventDealNew {
                 room.setId(roomInfo.getLong("id"));
             }
         }
+        logger.info(room.getRoomNo()+"---"+String.valueOf(room.getGameProcess()));
         // 更新玩家分数
         producerService.sendMessage(daoQueueDestination, new PumpDao(DaoTypeConstant.UPDATE_SCORE, room.getPumpObject(array)));
         // 玩家输赢记录
@@ -705,11 +712,11 @@ public class SSSGameEventDealNew {
                 roomData.put("roominfo", roomInfo.toString());
                 StringBuffer roomInfo2 = new StringBuffer();
                 roomInfo2.append("底注:");
-                roomInfo2.append(room.getScore());
+                roomInfo2.append((int) room.getScore());
                 roomInfo2.append("/入场");
-                roomInfo2.append(room.getEnterScore());
+                roomInfo2.append((int) room.getEnterScore());
                 roomInfo2.append("离场/");
-                roomInfo2.append(room.getLeaveScore());
+                roomInfo2.append((int) room.getLeaveScore());
                 roomData.put("roominfo2", roomInfo2.toString());
             }
             roomData.put("zhuang",CommonConstant.NO_BANKER_INDEX);
@@ -820,12 +827,16 @@ public class SSSGameEventDealNew {
                         // 其他玩家
                         Player otherPlayer = room.getUserPacketMap().get(other);
                         int otherSpecial = otherPlayer.getPaiType();
-                        if (special>otherSpecial) {
+                        if (special>0&&otherSpecial>0) {
+                            if (player.getPaiScore()>otherPlayer.getPaiScore()) {
+                                sumScoreSingle += player.getPaiScore();
+                            } else if (player.getPaiScore()<otherPlayer.getPaiScore()) {
+                                sumScoreSingle -= otherPlayer.getPaiScore();
+                            }
+                        } else if (special>0&&otherSpecial==0) {
                             sumScoreSingle += player.getPaiScore();
-                        } else if (special<otherSpecial) {
+                        } else if (special==0&&otherSpecial>0) {
                             sumScoreSingle -= otherPlayer.getPaiScore();
-                        } else if (special==otherSpecial&&special>0) {
-                            // 同为特殊牌
                         } else {
                             // 比牌结果
                             JSONObject compareResult = SSSComputeCards.compare(player.getPai(), otherPlayer.getPai());

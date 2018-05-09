@@ -84,7 +84,7 @@ public class SSSConstant {
     /**
      * 最低打枪人数
      */
-    public static final int SSS_MIN_SWAT_COUNT = 3;
+    public static final int SSS_MIN_SWAT_COUNT = 4;
     /**
      * 初始倒计时
      */
@@ -96,7 +96,7 @@ public class SSSConstant {
     /**
      * 配牌倒计时
      */
-    public static final int SSS_TIMER_GAME_EVENT = 180;
+    public static final int SSS_TIMER_GAME_EVENT = 120;
     /**
      * 配牌类型-自动
      */
@@ -112,7 +112,7 @@ public class SSSConstant {
     /**
      * 比牌动画时间-基础时间
      */
-    public static final int SSS_COMPARE_TIME_BASE = 20;
+    public static final int SSS_COMPARE_TIME_BASE = 15;
     /**
      * 比牌动画时间-翻牌时间
      */

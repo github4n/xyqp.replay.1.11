@@ -9,6 +9,8 @@ import com.zhuoan.queue.Messages;
 import com.zhuoan.service.jms.ProducerService;
 import com.zhuoan.service.socketio.impl.GameMain;
 import net.sf.json.JSONObject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
@@ -24,6 +26,9 @@ import java.util.List;
  **/
 @Component
 public class GameTimerSSS {
+
+    private final static Logger logger = LoggerFactory.getLogger(GameTimerSSS.class);
+
     @Resource
     private Destination sssQueueDestination;
 
@@ -103,7 +108,9 @@ public class GameTimerSSS {
                 }
                 try {
                     Thread.sleep(1000);
-                } catch (Exception e) {}
+                } catch (Exception e) {
+                    logger.error("",e);
+                }
             }else {
                 break;
             }

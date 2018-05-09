@@ -151,7 +151,7 @@ public class NNConstant {
     /**
      * 牛牛游戏倒计时-抢庄
      */
-    public static final int NN_TIMER_QZ = 15;
+    public static final int NN_TIMER_QZ = 10;
     /**
      * 牛牛游戏倒计时-下注
      */

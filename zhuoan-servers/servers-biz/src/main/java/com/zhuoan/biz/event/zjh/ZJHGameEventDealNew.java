@@ -16,6 +16,8 @@ import com.zhuoan.util.Dto;
 import com.zhuoan.util.thread.ThreadPoolHelper;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
@@ -35,6 +37,8 @@ import java.util.UUID;
 public class ZJHGameEventDealNew {
 
     public static int GAME_ZJH = 1;
+
+    private final static Logger logger = LoggerFactory.getLogger(ZJHGameEventDealNew.class);
 
     @Resource
     private GameTimerZJH gameTimerZJH;
@@ -184,11 +188,11 @@ public class ZJHGameEventDealNew {
                 // 中途加入不抽水
                 if (room.getUserPacketMap().get(account).getStatus() > ZJHConstant.ZJH_USER_STATUS_INIT) {
                     // 更新实体类数据
-                    Playerinfo playerinfo = room.getPlayerMap().get(account);
-                    room.getPlayerMap().get(account).setScore(Dto.sub(playerinfo.getScore(), room.getFee()));
+                    Playerinfo playerinfo = RoomManage.gameRoomMap.get(room.getRoomNo()).getPlayerMap().get(account);
+                    RoomManage.gameRoomMap.get(room.getRoomNo()).getPlayerMap().get(account).setScore(Dto.sub(playerinfo.getScore(), room.getFee()));
                     // 负数清零
-                    if (room.getPlayerMap().get(account).getScore() < 0) {
-                        room.getPlayerMap().get(account).setScore(0);
+                    if (RoomManage.gameRoomMap.get(room.getRoomNo()).getPlayerMap().get(account).getScore() < 0) {
+                        RoomManage.gameRoomMap.get(room.getRoomNo()).getPlayerMap().get(account).setScore(0);
                     }
                     array.add(playerinfo.getId());
                 }
@@ -497,8 +501,8 @@ public class ZJHGameEventDealNew {
                     // 休眠4.5秒前端播放动画
                     try {
                         Thread.sleep(4500);
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
+                    } catch (Exception e) {
+                        logger.error("",e);
                     }
                     int nextNum = room.getPlayerIndex(nextPlayer);
                     // 通知玩家比牌结束
@@ -691,12 +695,12 @@ public class ZJHGameEventDealNew {
         room.setTimeLeft(ZJHConstant.ZJH_TIMER_INIT);
         for (String uuid : room.getUserPacketMap().keySet()) {
 
-            Playerinfo player = room.getPlayerMap().get(uuid);
+            Playerinfo player = RoomManage.gameRoomMap.get(room.getRoomNo()).getPlayerMap().get(uuid);
             // 参与游戏的玩家才能参与结算
             if(room.getUserPacketMap().get(uuid).getStatus()>ZJHConstant.ZJH_USER_STATUS_INIT) {
                 if (room.getUserPacketMap().get(uuid).getStatus()==ZJHConstant.ZJH_USER_STATUS_WIN) {
                     double oldScore = player.getScore();
-                    room.getPlayerMap().get(uuid).setScore(Dto.add(oldScore,room.getTotalScore()));
+                    RoomManage.gameRoomMap.get(room.getRoomNo()).getPlayerMap().get(uuid).setScore(Dto.add(oldScore,room.getTotalScore()));
                     room.setBanker(uuid);
                 }
             }
@@ -710,12 +714,20 @@ public class ZJHGameEventDealNew {
         for (String account : room.getUserPacketMap().keySet()) {
             // 有参与的玩家
             if (room.getUserPacketMap().get(account).getStatus() > NNConstant.NN_USER_STATUS_INIT) {
+                // 游戏记录
                 JSONObject userJS = new JSONObject();
                 userJS.put("account", account);
                 userJS.put("name", room.getPlayerMap().get(account).getName());
-                userJS.put("sum", room.getUserPacketMap().get(account).getScore());
                 userJS.put("pai", room.getUserPacketMap().get(account).getPai());
                 userJS.put("paiType", room.getUserPacketMap().get(account).getType());
+                userJS.put("new", room.getPlayerMap().get(account).getScore());
+                if (room.getUserPacketMap().get(account).getStatus()==ZJHConstant.ZJH_USER_STATUS_WIN) {
+                    userJS.put("sum", Dto.sub(room.getTotalScore(),room.getUserPacketMap().get(account).getScore()));
+                    userJS.put("old", Dto.sub(room.getPlayerMap().get(account).getScore(),userJS.getDouble("sum")));
+                }else {
+                    userJS.put("sum", -room.getUserPacketMap().get(account).getScore());
+                    userJS.put("old", Dto.sub(room.getPlayerMap().get(account).getScore(),userJS.getDouble("sum")));
+                }
                 gameProcessJS.add(userJS);
                 // 元宝输赢情况
                 JSONObject obj = new JSONObject();
@@ -733,12 +745,13 @@ public class ZJHGameEventDealNew {
                 object.put("gid", room.getGid());
                 object.put("roomNo", room.getRoomNo());
                 object.put("type", room.getRoomType());
-                object.put("fen", obj.getDouble("fen"));
-                object.put("old", Dto.sub(room.getPlayerMap().get(account).getScore(),obj.getDouble("fen")));
-                if (room.getPlayerMap().get(account).getScore()<0) {
-                    object.put("new", 0);
+                object.put("new", room.getPlayerMap().get(account).getScore());
+                if (room.getUserPacketMap().get(account).getStatus()==ZJHConstant.ZJH_USER_STATUS_WIN) {
+                    object.put("fen", Dto.sub(room.getTotalScore(),room.getUserPacketMap().get(account).getScore()));
+                    object.put("old", Dto.sub(room.getPlayerMap().get(account).getScore(),object.getDouble("fen")));
                 }else {
-                    object.put("new", room.getPlayerMap().get(account).getScore());
+                    object.put("fen", -room.getUserPacketMap().get(account).getScore());
+                    object.put("old", Dto.sub(room.getPlayerMap().get(account).getScore(),object.getDouble("fen")));
                 }
                 userDeductionData.add(object);
                 // 战绩记录
@@ -772,8 +785,8 @@ public class ZJHGameEventDealNew {
                 userResult.put("player", room.getPlayerMap().get(account).getName());
                 gameResult.add(userResult);
                 // 负数清零
-                if (room.getPlayerMap().get(account).getScore()<0) {
-                    room.getPlayerMap().get(account).setScore(0);
+                if (RoomManage.gameRoomMap.get(room.getRoomNo()).getPlayerMap().get(account).getScore()<0) {
+                    RoomManage.gameRoomMap.get(room.getRoomNo()).getPlayerMap().get(account).setScore(0);
                 }
             }
         }
@@ -785,6 +798,7 @@ public class ZJHGameEventDealNew {
                 room.setId(roomInfo.getLong("id"));
             }
         }
+        logger.info(room.getRoomNo()+"---"+String.valueOf(room.getGameProcess()));
         // 更新玩家分数
         producerService.sendMessage(daoQueueDestination, new PumpDao(DaoTypeConstant.UPDATE_SCORE, room.getPumpObject(array)));
         // 玩家输赢记录
@@ -955,19 +969,19 @@ public class ZJHGameEventDealNew {
         if (room.getRoomType() == CommonConstant.ROOM_TYPE_YB) {
             StringBuffer roominfo = new StringBuffer();
             roominfo.append("底注:");
-            roominfo.append(room.getScore());
+            roominfo.append((int) room.getScore());
             roominfo.append("进:");
-            roominfo.append(room.getEnterScore());
+            roominfo.append((int) room.getEnterScore());
             roominfo.append(" 出:");
-            roominfo.append(room.getEnterScore());
+            roominfo.append((int) room.getEnterScore());
             StringBuffer diInfo = new StringBuffer();
             diInfo.append("底注:");
-            diInfo.append(room.getScore());
+            diInfo.append((int)room.getScore());
             StringBuffer roominfo3 = new StringBuffer();
             roominfo3.append("进:");
-            roominfo3.append(room.getEnterScore());
+            roominfo3.append((int) room.getEnterScore());
             roominfo3.append(" 出:");
-            roominfo3.append(room.getEnterScore());
+            roominfo3.append((int) room.getEnterScore());
             obj.put("diInfo", diInfo.toString());
             obj.put("roominfo3", roominfo3.toString());
             obj.put("roominfo", roominfo.toString());

@@ -171,9 +171,13 @@ public class CommonConstant {
     /**
      * 提示消息类型-普通提示
      */
+    public static final int SHOW_MSG_TYPE_NORMAL = 0;
+    /**
+     * 提示消息类型-小弹窗
+     */
     public static final int SHOW_MSG_TYPE_SMALL = 1;
     /**
-     * 提示消息类型-弹窗
+     * 提示消息类型-大弹窗
      */
     public static final int SHOW_MSG_TYPE_BIG = 2;
     /**

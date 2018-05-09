@@ -10,6 +10,8 @@ import com.zhuoan.service.jms.ProducerService;
 import com.zhuoan.service.socketio.impl.GameMain;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
@@ -27,6 +29,8 @@ import java.util.UUID;
 @Component
 public class GameTimerNiuNiu{
 
+    private final static Logger logger = LoggerFactory.getLogger(GameTimerNiuNiu.class);
+
     @Resource
     private Destination nnQueueDestination;
 
@@ -42,8 +46,8 @@ public class GameTimerNiuNiu{
         if (sleepTime>0) {
             try {
                 Thread.sleep(sleepTime);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
+            } catch (Exception e) {
+                logger.error("",e);
             }
         }
         if (gameStatus==NNConstant.NN_GAME_STATUS_DZ) {
@@ -171,7 +175,9 @@ public class GameTimerNiuNiu{
                 }
                 try {
                     Thread.sleep(1000);
-                } catch (Exception e) {}
+                } catch (Exception e) {
+                    logger.error("",e);
+                }
             }else {
                 break;
             }

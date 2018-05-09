@@ -505,8 +505,8 @@ public class BaseEventDeal {
         } else {
             playerinfo.setSignature("");
         }
-        if (userInfo.containsKey("ghName")) {
-            playerinfo.setGhName(userInfo.getString("ghName"));
+        if (userInfo.containsKey("Identification")) {
+            playerinfo.setGhName(userInfo.getString("Identification"));
         }
         if (userInfo.containsKey("area")) {
             playerinfo.setArea(userInfo.getString("area"));
@@ -892,6 +892,9 @@ public class BaseEventDeal {
                 obj.put("iszs", 0);
                 obj.put("player", gameRoom.getPlayerCount());
                 obj.put("renshu", gameRoom.getPlayerMap().size());
+                for (int i = 0; i < gameRoom.getUserIdList().size(); i++) {
+                    obj.put("user_id"+i, gameRoom.getUserIdList().get(i));
+                }
                 if (type==0||(type==1&&gameRoom.getPlayerMap().size()<gameRoom.getPlayerCount())) {
                     allRoom.add(obj);
                 }
@@ -956,9 +959,13 @@ public class BaseEventDeal {
             String memo = postData.getString("memo");
             if (postData.containsKey("room_no")) {
                 String roomNo = postData.getString("room_no");
-                if (RoomManage.gameRoomMap.containsKey(roomNo)) {
+                if (RoomManage.gameRoomMap.containsKey(roomNo)&&RoomManage.gameRoomMap.get(roomNo)!=null) {
                     JSONObject sysUser = userBiz.getSysUser(adminCode,adminPass,memo);
                     if (!Dto.isObjNull(sysUser)) {
+                        JSONObject result = new JSONObject();
+                        result.put("type",CommonConstant.SHOW_MSG_TYPE_BIG);
+                        result.put(CommonConstant.RESULT_KEY_MSG,"房间已解散");
+                        CommonConstant.sendMsgEventToAll(RoomManage.gameRoomMap.get(roomNo).getAllUUIDList(),result.toString(),"tipMsgPush");
                         RoomManage.gameRoomMap.remove(roomNo);
                     }
                 }
@@ -980,23 +987,21 @@ public class BaseEventDeal {
             if (postData.containsKey("game_id")&&postData.containsKey("value")) {
                 JSONObject sysUser = userBiz.getSysUser(adminCode,adminPass,memo);
                 if (!Dto.isObjNull(sysUser)) {
-                    try {
-                        int gameId = postData.getInt("game_id");
-                        int value = postData.getInt("value");
-                        switch (gameId) {
-                            case CommonConstant.GAME_ID_NN:
-                                NNGameEventDealNew.GAME_NN = value;
-                                break;
-                            case CommonConstant.GAME_ID_SSS:
-                                SSSGameEventDealNew.GAME_SSS = value;
-                                break;
-                            case CommonConstant.GAME_ID_ZJH:
-                                ZJHGameEventDealNew.GAME_ZJH = value;
-                                break;
-                            default:
-                                break;
-                        }
-                    } catch (Exception e) {}
+                    int gameId = postData.getInt("game_id");
+                    int value = postData.getInt("value");
+                    switch (gameId) {
+                        case CommonConstant.GAME_ID_NN:
+                            NNGameEventDealNew.GAME_NN = value;
+                            break;
+                        case CommonConstant.GAME_ID_SSS:
+                            SSSGameEventDealNew.GAME_SSS = value;
+                            break;
+                        case CommonConstant.GAME_ID_ZJH:
+                            ZJHGameEventDealNew.GAME_ZJH = value;
+                            break;
+                        default:
+                            break;
+                    }
                 }
             }
         }
@@ -1014,27 +1019,25 @@ public class BaseEventDeal {
             String adminPass = postData.getString("adminPass");
             String memo = postData.getString("memo");
             if (postData.containsKey("content")&&postData.containsKey("type")) {
-                try {
-                    String content = postData.getString("content");
-                    int type = postData.getInt("type");
-                    // 通知所有
-                    JSONObject sysUser = userBiz.getSysUser(adminCode,adminPass,memo);
-                    if (!Dto.isObjNull(sysUser)) {
-                        switch (type) {
-                            case CommonConstant.NOTICE_TYPE_MALL:
-                                BaseEventDeal.noticeContentMall = content;
-                                break;
-                            case CommonConstant.NOTICE_TYPE_GAME:
-                                BaseEventDeal.noticeContentGame = content;
-                                for (String roomNo : RoomManage.gameRoomMap.keySet()) {
-                                    sendNoticeToPlayerByRoomNo(roomNo, content, type);
-                                }
-                                break;
-                            default:
-                                break;
-                        }
+                String content = postData.getString("content");
+                int type = postData.getInt("type");
+                // 通知所有
+                JSONObject sysUser = userBiz.getSysUser(adminCode,adminPass,memo);
+                if (!Dto.isObjNull(sysUser)) {
+                    switch (type) {
+                        case CommonConstant.NOTICE_TYPE_MALL:
+                            BaseEventDeal.noticeContentMall = content;
+                            break;
+                        case CommonConstant.NOTICE_TYPE_GAME:
+                            BaseEventDeal.noticeContentGame = content;
+                            for (String roomNo : RoomManage.gameRoomMap.keySet()) {
+                                sendNoticeToPlayerByRoomNo(roomNo, content, type);
+                            }
+                            break;
+                        default:
+                            break;
                     }
-                } catch (Exception e){}
+                }
             }
         }
     }
