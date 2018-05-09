@@ -170,6 +170,7 @@ public class NNGameRoomNew extends GameRoom{
                 userPacketMap.get(uuid).initUserPacket();
             }
         }
+        setGameIndex(getGameIndex()+1);
         // 霸王庄庄家退出重置庄家
         if (bankerType==NNConstant.NN_BANKER_TYPE_FZ) {
             if (!getUserPacketMap().containsKey(getBanker())||getUserPacketMap().get(getBanker())==null) {
@@ -312,7 +313,7 @@ public class NNGameRoomNew extends GameRoom{
             int val = qzTimes.getInt(i);
             obj.put("name", new StringBuffer().append(String.valueOf(val)).append("倍").toString());
             obj.put("val", val);
-            if(beiShu>=val){
+            if(beiShu>=val||getRoomType()==CommonConstant.ROOM_TYPE_FK){
                 obj.put("isuse",CommonConstant.GLOBAL_YES);
             }else{
                 obj.put("isuse", CommonConstant.GLOBAL_NO);
@@ -349,7 +350,7 @@ public class NNGameRoomNew extends GameRoom{
             JSONObject obj = new JSONObject();
             obj.put("name", new StringBuffer().append(String.valueOf(val)).append("倍").toString());
             obj.put("val", val);
-            if(beiShu>=val){
+            if(beiShu>=val||getRoomType()==CommonConstant.ROOM_TYPE_FK){
                 obj.put("isuse", CommonConstant.GLOBAL_YES);
             }else{
                 obj.put("isuse", CommonConstant.GLOBAL_NO);
@@ -514,6 +515,36 @@ public class NNGameRoomNew extends GameRoom{
     }
 
     /**
+     * 获取总结算数据
+     * @return
+     */
+    public JSONArray getFinalSummary() {
+        JSONArray array = new JSONArray();
+        for (String account : userPacketMap.keySet()) {
+            JSONObject obj = new JSONObject();
+            obj.put("name",getPlayerMap().get(account).getName());
+            obj.put("account",account);
+            obj.put("headimg",getPlayerMap().get(account).getRealHeadimg());
+            obj.put("score",getPlayerMap().get(account).getScore());
+            obj.put("isFangzhu",CommonConstant.GLOBAL_NO);
+            if (account.equals(getOwner())) {
+                obj.put("isFangzhu",CommonConstant.GLOBAL_YES);
+            }
+            obj.put("isWinner",CommonConstant.GLOBAL_NO);
+            if (getPlayerMap().get(account).getScore()>0) {
+                obj.put("isWinner",CommonConstant.GLOBAL_YES);
+            }
+            obj.put("tongShaTimes",userPacketMap.get(account).getTongShaTimes());
+            obj.put("tongPeiTimes",userPacketMap.get(account).getTongPeiTimes());
+            obj.put("niuNiuTimes",userPacketMap.get(account).getNiuNiuTimes());
+            obj.put("wuNiuTimes",userPacketMap.get(account).getWuNiuTimes());
+            obj.put("winTimes",userPacketMap.get(account).getWinTimes());
+            array.add(obj);
+        }
+        return array;
+    }
+
+    /**
      * 获取解散数据
      * @return
      */
@@ -531,6 +562,10 @@ public class NNGameRoomNew extends GameRoom{
         return array;
     }
 
+    /**
+     * 获取实时准备人数
+     * @return
+     */
     public int getNowReadyCount(){
         int readyCount = 0;
         for (String uuid : getUserPacketMap().keySet()) {
@@ -541,6 +576,11 @@ public class NNGameRoomNew extends GameRoom{
         return readyCount;
     }
 
+    /**
+     * 获取下个玩家
+     * @param account
+     * @return
+     */
     public String getNextPlayer(String account){
         return account;
     }

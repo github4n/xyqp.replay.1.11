@@ -240,6 +240,25 @@ public class BaseGameEvent {
             }
         });
 
+        /**
+         *  子游戏接口
+         */
+        server.addEventListener("getRoomGid", Object.class, new DataListener<Object>() {
+            @Override
+            public void onData(SocketIOClient client, Object object, AckRequest ackSender) {
+                producerService.sendMessage(baseQueueDestination, new Messages(client, object, CommonConstant.GAME_BASE, CommonConstant.BASE_GAME_EVENT_SON_GAME));
+            }
+        });
+        /**
+         *  金币场加入房间
+         */
+        server.addEventListener("createRoomCoins", Object.class, new DataListener<Object>() {
+            @Override
+            public void onData(SocketIOClient client, Object object, AckRequest ackSender) {
+                producerService.sendMessage(baseQueueDestination, new Messages(client, object, CommonConstant.GAME_BASE, CommonConstant.BASE_GAME_EVENT_JOIN_COIN_ROOM));
+            }
+        });
+
     }
 
 

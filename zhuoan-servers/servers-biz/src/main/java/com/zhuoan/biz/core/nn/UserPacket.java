@@ -60,12 +60,18 @@ public class UserPacket implements Serializable{
      */
     private int xzTimes;
 
-	// 牌局统计数据
-	private int tongShaTimes;
-	private int tongPeiTimes;
-	private int niuNiuTimes;
-	private int wuNiuTimes;
-	private int winTimes;
+    /**
+     * 牌局统计数据
+     */
+	private int tongShaTimes = 0;
+	private int tongPeiTimes = 0;
+	private int niuNiuTimes = 0;
+	private int wuNiuTimes = 0;
+	private int winTimes = 0;
+    /**
+     * 参与游戏局数
+     */
+	private int playTimes = 0;
 
     public Packer[] getPs() {
         return ps;
@@ -193,6 +199,14 @@ public class UserPacket implements Serializable{
 
     public void setWinTimes(int winTimes) {
         this.winTimes = winTimes;
+    }
+
+    public int getPlayTimes() {
+        return playTimes;
+    }
+
+    public void setPlayTimes(int playTimes) {
+        this.playTimes = playTimes;
     }
 
     /**

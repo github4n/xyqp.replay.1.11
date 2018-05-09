@@ -179,6 +179,12 @@ public class BaseEventDeal {
         gameRoom.setUserIdList(idList);
         if (gameRoom.getRoomType() == CommonConstant.ROOM_TYPE_JB || gameRoom.getRoomType() == CommonConstant.ROOM_TYPE_JB) {
             gameRoom.setGameCount(9999);
+        }else if (gameRoom.getRoomType() == CommonConstant.ROOM_TYPE_FK) {
+            if (baseInfo.containsKey("game_count")) {
+                gameRoom.setGameCount(baseInfo.getInt("game_count"));
+            }else {
+                gameRoom.setGameCount(999);
+            }
         }
         if (baseInfo.containsKey("di")) {
             gameRoom.setScore(baseInfo.getDouble("di"));
@@ -1258,6 +1264,40 @@ public class BaseEventDeal {
             default:
                 break;
         }
+    }
+
+    /**
+     * 子游戏接口
+     * @param client
+     * @param data
+     */
+    public void getRoomGid(SocketIOClient client, Object data){
+        JSONObject postData = JSONObject.fromObject(data);
+        if (!postData.containsKey(CommonConstant.DATA_KEY_ROOM_NO)) {
+            return;
+        }
+        String roomNo = postData.getString(CommonConstant.DATA_KEY_ROOM_NO);
+        JSONObject result = new JSONObject();
+        if (!RoomManage.gameRoomMap.containsKey(roomNo)||RoomManage.gameRoomMap.get(roomNo)==null) {
+            result.put(CommonConstant.RESULT_KEY_CODE,CommonConstant.GLOBAL_NO);
+            result.put(CommonConstant.RESULT_KEY_MSG,"房间不存在");
+            CommonConstant.sendMsgEventToSingle(client,String.valueOf(result),"getRoomGidPush");
+            return;
+        }
+        GameRoom gameRoom = RoomManage.gameRoomMap.get(roomNo);
+        if (gameRoom.getPlayerMap().size()>=gameRoom.getPlayerCount()) {
+            result.put(CommonConstant.RESULT_KEY_CODE,CommonConstant.GLOBAL_NO);
+            result.put(CommonConstant.RESULT_KEY_MSG,"房间已满");
+            CommonConstant.sendMsgEventToSingle(client,String.valueOf(result),"getRoomGidPush");
+            return;
+        }
+        result.put(CommonConstant.RESULT_KEY_CODE,CommonConstant.GLOBAL_YES);
+        CommonConstant.sendMsgEventToSingle(client,String.valueOf(result),"getRoomGidPush");
+        result.put("gid",gameRoom.getGid());
+    }
+
+    public void joinCoinRoom(SocketIOClient client, Object data) {
+        JSONObject postData = JSONObject.fromObject(data);
     }
 
     /**

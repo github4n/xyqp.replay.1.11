@@ -113,6 +113,12 @@ public class GameEventDeal {
                     case CommonConstant.BASE_GAME_EVENT_TEST:
                         baseEventDeal.test(client, data);
                         break;
+                    case CommonConstant.BASE_GAME_EVENT_SON_GAME:
+                        baseEventDeal.getRoomGid(client, data);
+                        break;
+                    case CommonConstant.BASE_GAME_EVENT_JOIN_COIN_ROOM:
+                        baseEventDeal.joinCoinRoom(client, data);
+                        break;
                     default:
                         break;
                 }
