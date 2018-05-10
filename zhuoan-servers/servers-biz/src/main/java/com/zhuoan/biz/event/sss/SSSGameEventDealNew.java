@@ -314,6 +314,7 @@ public class SSSGameEventDealNew {
                     int specialType = SSSSpecialCards.isSpecialCards(player.getPai(),room.getSetting());
                     String[] specialPai = SSSSpecialCardSort.CardSort(player.getPai(), specialType);
                     room.getUserPacketMap().get(account).setPai(specialPai);
+                    room.getUserPacketMap().get(account).setPaiType(specialType);
                     // 设置特殊牌型分数
                     room.getUserPacketMap().get(account).setPaiScore(SSSSpecialCards.score(specialType,room.getSetting()));
                     // 设置玩家头中尾手牌
@@ -772,7 +773,7 @@ public class SSSGameEventDealNew {
                 for (String other : gameList) {
                     if (!other.equals(account)) {
                         Player otherPlayer = room.getUserPacketMap().get(other);
-                        int otherSpecial = player.getPaiType();
+                        int otherSpecial = otherPlayer.getPaiType();
                         if (otherSpecial>0) {
                             break;
                         }else {
