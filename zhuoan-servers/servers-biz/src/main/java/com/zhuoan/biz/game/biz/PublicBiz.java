@@ -54,4 +54,11 @@ public interface PublicBiz {
      * @return
      */
     public JSONObject getNoticeByPlatform(String platform);
+
+    /**
+     * 获取金币场设置
+     * @param obj
+     * @return
+     */
+    public JSONObject getGoldSetting(JSONObject obj);
 }

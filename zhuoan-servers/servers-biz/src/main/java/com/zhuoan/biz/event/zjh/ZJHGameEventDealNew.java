@@ -136,7 +136,12 @@ public class ZJHGameEventDealNew {
             exitRoom(client,postData);
             JSONObject result = new JSONObject();
             result.put("type",CommonConstant.SHOW_MSG_TYPE_BIG);
-            result.put(CommonConstant.RESULT_KEY_MSG,"元宝不足");
+            if (room.getRoomType() == CommonConstant.ROOM_TYPE_YB) {
+                result.put(CommonConstant.RESULT_KEY_MSG,"元宝不足");
+            }
+            if(room.getRoomType() == CommonConstant.ROOM_TYPE_JB) {
+                result.put(CommonConstant.RESULT_KEY_MSG,"金币不足");
+            }
             CommonConstant.sendMsgEventToSingle(client,result.toString(),"tipMsgPush");
             return;
         }

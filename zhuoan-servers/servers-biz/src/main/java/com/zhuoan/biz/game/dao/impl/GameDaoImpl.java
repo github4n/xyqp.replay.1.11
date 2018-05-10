@@ -666,5 +666,11 @@ public class GameDaoImpl implements GameDao {
             "`status`=1 AND type=2 AND platform=? ORDER BY createTime DESC LIMIT 1";
         return DBUtil.getObjectBySQL(sql,new Object[]{platform});
     }
+
+    @Override
+    public JSONObject getGoldSetting(JSONObject obj){
+        String sql = "SELECT * FROM za_gamegoldsetting WHERE game_id=? AND platform=?";
+        return DBUtil.getObjectBySQL(sql,new Object[]{obj.getInt("gameId"),obj.getString("platform")});
+    }
 }
 

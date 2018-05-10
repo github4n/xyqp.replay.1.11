@@ -35,10 +35,7 @@ import org.springframework.stereotype.Component;
 import javax.annotation.Resource;
 import javax.jms.Destination;
 import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 
 import static net.sf.json.JSONObject.fromObject;
 
@@ -115,6 +112,13 @@ public class BaseEventDeal {
             // 元宝不足
             result.element(CommonConstant.RESULT_KEY_CODE, CommonConstant.GLOBAL_NO);
             result.element(CommonConstant.RESULT_KEY_MSG, "元宝不足");
+            CommonConstant.sendMsgEventToSingle(client, result.toString(), "enterRoomPush_NN");
+            return;
+        } else if (baseInfo.getInt("roomType") == CommonConstant.ROOM_TYPE_JB && userInfo.containsKey("coins")
+            && userInfo.getDouble("coins") < baseInfo.getDouble("goldcoins")) {
+            // 元宝不足
+            result.element(CommonConstant.RESULT_KEY_CODE, CommonConstant.GLOBAL_NO);
+            result.element(CommonConstant.RESULT_KEY_MSG, "金币不足");
             CommonConstant.sendMsgEventToSingle(client, result.toString(), "enterRoomPush_NN");
             return;
         }
@@ -206,6 +210,7 @@ public class BaseEventDeal {
         //设置金币场准入金币
         if (baseInfo.containsKey("goldcoins")) {
             gameRoom.setEnterScore(baseInfo.getInt("goldcoins"));
+            gameRoom.setLeaveScore(baseInfo.getInt("goldcoins"));
         }
         if (baseInfo.getInt("open") == 1) {
             gameRoom.setOpen(true);
@@ -374,8 +379,14 @@ public class BaseEventDeal {
             result.element(CommonConstant.RESULT_KEY_MSG, "元宝不足");
             CommonConstant.sendMsgEventToSingle(client, result.toString(), "enterRoomPush_NN");
             return;
+        } else if (RoomManage.gameRoomMap.get(roomNo).getRoomType() == CommonConstant.ROOM_TYPE_JB && userInfo.containsKey("coins")
+            && userInfo.getDouble("coins") < RoomManage.gameRoomMap.get(roomNo).getEnterScore()) {
+            // 元宝不足
+            result.element(CommonConstant.RESULT_KEY_CODE, CommonConstant.GLOBAL_NO);
+            result.element(CommonConstant.RESULT_KEY_MSG, "金币不足");
+            CommonConstant.sendMsgEventToSingle(client, result.toString(), "enterRoomPush_NN");
+            return;
         }
-        // 设置客户端标识
 
         joinRoomBase(client, postData, userInfo);
     }
@@ -1326,8 +1337,36 @@ public class BaseEventDeal {
         result.put("gid",gameRoom.getGid());
     }
 
+    /**
+     * 金币场加入房间
+     * @param client
+     * @param data
+     */
     public void joinCoinRoom(SocketIOClient client, Object data) {
         JSONObject postData = JSONObject.fromObject(data);
+        int gameId = postData.getInt("gid");
+        int account = postData.getInt(CommonConstant.DATA_KEY_ACCOUNT);
+        JSONObject obj = new JSONObject();
+        obj.put("gameId",gameId);
+        // TODO: 2018/5/10 平台号写死 
+        obj.put("platform","SDTQP");
+        JSONObject goldSetting = publicBiz.getGoldSetting(obj);
+        postData.put("base_info",JSONObject.fromObject(goldSetting.getString("option")));
+        List<String> roomNoList = new ArrayList<String>();
+        for (String roomNo : RoomManage.gameRoomMap.keySet()) {
+            GameRoom room = RoomManage.gameRoomMap.get(roomNo);
+            if (room.getRoomType()==CommonConstant.ROOM_TYPE_JB&&room.getGid()==gameId&&
+                !room.getPlayerMap().containsKey(account)&&room.getPlayerMap().size()<room.getPlayerCount()) {
+                roomNoList.add(roomNo);
+            }
+        }
+        if (roomNoList.size()==0) {
+            createRoomBase(client,postData);
+        }else {
+            Collections.sort(roomNoList);
+            postData.put("room_no",roomNoList.get(0));
+            joinRoomBase(client,postData);
+        }
     }
 
     /**

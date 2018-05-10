@@ -48,4 +48,9 @@ public class PublicBizImpl implements PublicBiz{
     public JSONObject getNoticeByPlatform(String platform){
         return gameDao.getNoticeByPlatform(platform);
     }
+
+    @Override
+    public JSONObject getGoldSetting(JSONObject obj){
+        return gameDao.getGoldSetting(obj);
+    }
 }
