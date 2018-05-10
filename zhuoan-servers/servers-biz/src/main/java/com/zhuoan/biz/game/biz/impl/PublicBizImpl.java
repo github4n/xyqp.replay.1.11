@@ -43,4 +43,9 @@ public class PublicBizImpl implements PublicBiz{
     public void addAppObjRec(JSONObject object) {
         gameDao.addAppObjRec(object);
     }
+
+    @Override
+    public JSONObject getNoticeByPlatform(String platform){
+        return gameDao.getNoticeByPlatform(platform);
+    }
 }

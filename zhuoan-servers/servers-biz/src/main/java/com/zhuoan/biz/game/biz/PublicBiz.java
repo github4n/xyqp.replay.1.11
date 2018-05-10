@@ -47,4 +47,11 @@ public interface PublicBiz {
      * @param object
      */
     public void addAppObjRec(JSONObject object);
+
+    /**
+     * 通过平台号获取滚动公告
+     * @param platform
+     * @return
+     */
+    public JSONObject getNoticeByPlatform(String platform);
 }

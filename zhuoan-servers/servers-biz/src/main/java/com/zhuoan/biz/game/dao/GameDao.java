@@ -282,4 +282,11 @@ public interface GameDao {
      * @param account
      */
     public void updateUserPump(String account, String type, double sum);
+
+    /**
+     * 通过平台号获取滚动公告
+     * @param platform
+     * @return
+     */
+    public JSONObject getNoticeByPlatform(String platform);
 }

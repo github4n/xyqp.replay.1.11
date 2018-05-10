@@ -211,7 +211,7 @@ public class NNGameEventDealNew {
             exitRoom(client,postData);
             JSONObject result = new JSONObject();
             result.put("type",CommonConstant.SHOW_MSG_TYPE_BIG);
-            result.put(CommonConstant.RESULT_KEY_MSG,"即将停服进行更新");
+            result.put(CommonConstant.RESULT_KEY_MSG,"即将停服进行更新!");
             CommonConstant.sendMsgEventToSingle(client,result.toString(),"tipMsgPush");
             return;
         }

@@ -51,7 +51,6 @@ import static net.sf.json.JSONObject.fromObject;
 @Component
 public class BaseEventDeal {
 
-    public static String noticeContentMall = "欢迎来到山弹头棋牌，本游戏限制赌博谢谢！";
     public static String noticeContentGame = "";
 
     private final static Logger logger = LoggerFactory.getLogger(BaseEventDeal.class);
@@ -1032,7 +1031,7 @@ public class BaseEventDeal {
                 if (!Dto.isObjNull(sysUser)) {
                     switch (type) {
                         case CommonConstant.NOTICE_TYPE_MALL:
-                            BaseEventDeal.noticeContentMall = content;
+                            // TODO: 2018/5/10 大厅滚动公告设置
                             break;
                         case CommonConstant.NOTICE_TYPE_GAME:
                             BaseEventDeal.noticeContentGame = content;
@@ -1059,9 +1058,21 @@ public class BaseEventDeal {
         JSONObject result = new JSONObject();
         result.put("type",type);
         result.put(CommonConstant.RESULT_KEY_CODE,CommonConstant.GLOBAL_YES);
+        postData.put("platform","SDTQP");
         switch (type) {
             case CommonConstant.NOTICE_TYPE_MALL:
-                result.put("content",BaseEventDeal.noticeContentMall);
+                if (!postData.containsKey("platform")) {
+                    return;
+                }else {
+                    String platform = postData.getString("platform");
+                    JSONObject noticeInfo = getNoticeInfoByPlatform(platform);
+                    if (!Dto.isObjNull(noticeInfo)) {
+                        result.put(CommonConstant.RESULT_KEY_CODE,CommonConstant.GLOBAL_YES);
+                        result.put("content",noticeInfo.getString("con"));
+                    }else {
+                        result.put(CommonConstant.RESULT_KEY_CODE,CommonConstant.GLOBAL_NO);
+                    }
+                }
                 break;
             case CommonConstant.NOTICE_TYPE_GAME:
                 if (Dto.stringIsNULL(BaseEventDeal.noticeContentGame)) {
@@ -1075,7 +1086,26 @@ public class BaseEventDeal {
                 break;
         }
         CommonConstant.sendMsgEventToSingle(client,result.toString(),"getMessagePush");
+    }
 
+    private JSONObject getNoticeInfoByPlatform(String platform) {
+        JSONObject noticeInfo;
+        StringBuffer sb = new StringBuffer();
+        sb.append("notice_");
+        sb.append(platform);
+        try {
+            Object object = redisService.queryValueByKey(String.valueOf(sb));
+            if (object != null) {
+                noticeInfo = JSONObject.fromObject(redisService.queryValueByKey(String.valueOf(sb)));
+            }else {
+                noticeInfo = publicBiz.getNoticeByPlatform(platform);
+                redisService.insertKey(String.valueOf(sb), String.valueOf(noticeInfo), null);
+            }
+        } catch (Exception e) {
+            logger.error("请启动REmote DIctionary Server");
+            noticeInfo = publicBiz.getNoticeByPlatform(platform);
+        }
+        return noticeInfo;
     }
 
     /**

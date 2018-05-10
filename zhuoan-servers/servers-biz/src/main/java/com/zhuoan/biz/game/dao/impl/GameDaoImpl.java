@@ -659,5 +659,12 @@ public class GameDaoImpl implements GameDao {
         JSONArray gameSetting = DBUtil.getObjectListBySQL(sql, new Object[]{gid, platform});
         return gameSetting;
     }
+
+    @Override
+    public JSONObject getNoticeByPlatform(String platform){
+        String sql="SELECT id,title,con,image,strcreateTime,endcreateTime,showType,createTime FROM za_message WHERE " +
+            "`status`=1 AND type=2 AND platform=? ORDER BY createTime DESC LIMIT 1";
+        return DBUtil.getObjectBySQL(sql,new Object[]{platform});
+    }
 }
 
