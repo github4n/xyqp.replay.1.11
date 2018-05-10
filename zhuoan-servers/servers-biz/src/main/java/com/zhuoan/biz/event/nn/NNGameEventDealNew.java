@@ -211,7 +211,7 @@ public class NNGameEventDealNew {
             exitRoom(client,postData);
             JSONObject result = new JSONObject();
             result.put("type",CommonConstant.SHOW_MSG_TYPE_BIG);
-            result.put(CommonConstant.RESULT_KEY_MSG,"游戏已被禁用");
+            result.put(CommonConstant.RESULT_KEY_MSG,"即将停服进行更新");
             CommonConstant.sendMsgEventToSingle(client,result.toString(),"tipMsgPush");
             return;
         }
@@ -585,6 +585,19 @@ public class NNGameEventDealNew {
                     if (room.getUserPacketMap().get(account).getStatus()!=NNConstant.NN_USER_STATUS_QZ) {
                         return;
                     }
+                }
+                // 庄家抢庄倍数
+                int qzTimes = 1;
+                int baseNum = 4;
+                // 抢庄
+                if(room.getBankerType()==NNConstant.NN_BANKER_TYPE_QZ || room.getBankerType()==NNConstant.NN_BANKER_TYPE_MP) {
+                    if (room.getUserPacketMap().get(room.getBankerType())!=null) {
+                        qzTimes = room.getUserPacketMap().get(room.getBanker()).getQzTimes();
+                    }
+                }
+                double myScore = room.getPlayerMap().get(account).getScore();
+                if (myScore<baseNum*room.getScore()) {
+
                 }
                 room.getUserPacketMap().get(account).setStatus(NNConstant.NN_USER_STATUS_XZ);
                 room.getUserPacketMap().get(account).setXzTimes(postData.getInt(NNConstant.DATA_KEY_MONEY));

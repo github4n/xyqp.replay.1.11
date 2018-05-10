@@ -937,31 +937,63 @@ public class SSSSpecialCards {
 	/**
 	 * 特殊牌型的判断:
 	 * 四套三条，4套相同的三张牌+任意一张杂牌
+     * 可能情况：7+6 7+3+3 6+3+4 6+3+3+1 4+3+3+3 3+3+3+3+1
 	 * @param player
 	 * @return 是的话返回true,不是的话返回false
 	 */
 	public static boolean fourThree(ArrayList<String> player){
 		ArrayList<ArrayList<Integer>> set=getListByNum(player);
-		
-		int i=0;//单牌
-		int j=0;//对子
-		int k=0;//三张
-		int l=0;//炸
+        // 单牌
+        int one = 0;
+		// 对子
+        int two = 0;
+        // 三张
+        int three = 0;
+        // 炸
+        int four = 0;
+        // 6张
+        int six = 0;
+        // 7张
+        int seven = 0;
 		for (ArrayList<Integer> list : set) {
 			if(list.size()==1){
-				i++;
-			}else if(list.size()==2){
-				j++;
-			}else if(list.size()==3){
-				k++;
-			}else if(list.size()==4){
-				l++;
-			}
+				one++;
+			}else if(list.size()==2) {
+				two++;
+			}else if(list.size()==3) {
+				three++;
+			}else if(list.size()==4) {
+				four++;
+			}else if (list.size()==6) {
+			    six++;
+            }else if (list.size()==7) {
+			    seven++;
+            }
 		}
-		if((i==1&&j==0&&k==4&&l==0)
-				||(i==0&&j==0&&k==3&&l==1)){
-			return true;
-		}
+		// 7+6
+		if (seven==1&&six==1) {
+		    return true;
+        }
+        // 7+3+3
+        if (seven==1&&three==2) {
+            return true;
+        }
+        // 6+3+4
+        if (six==1&&four==1&&three==1) {
+		    return true;
+        }
+        // 6+3+3+1
+        if (six==1&&three==2&&one==1) {
+		    return true;
+        }
+        // 4+3+3+3
+        if (four==1&&three==3) {
+		    return true;
+        }
+        // 3+3+3+3+1
+        if (three==4&&one==1) {
+            return true;
+        }
 		return false;
 	}
 	
@@ -973,27 +1005,49 @@ public class SSSSpecialCards {
 	 */
 	public static boolean fiveThree(ArrayList<String> player){
 		ArrayList<ArrayList<Integer>> set=getListByNum(player);
-		
-		int i=0;//单牌
-		int j=0;//对子
-		int k=0;//三张
-		int l=0;//炸
+        // 单牌
+        int one = 0;
+        // 对子
+        int two = 0;
+        // 三张
+        int three = 0;
+        // 炸
+        int four = 0;
+        // 5张
+        int five = 0;
 		for (ArrayList<Integer> list : set) {
 			if(list.size()==1){
-				i++;
-			}else if(list.size()==2){
-				j++;
-			}else if(list.size()==3){
-				k++;
-			}else if(list.size()==4){
-				l++;
-			}
+				one++;
+			}else if(list.size()==2) {
+				two++;
+			}else if(list.size()==3) {
+				three++;
+			}else if(list.size()==4) {
+				four++;
+			}else if (list.size()==5) {
+			    five++;
+            }
 		}
-		if(i==0&&j==5&&k==1&&l==0
-				||i==0&&j==3&&k==1&&l==1
-				||i==0&&j==1&&k==1&&l==2){
-			return true;
-		}
+        // 2+2+2+2+2+3
+        if (one==0&&two==5&&three==1&&four==0&&five==0) {
+		    return true;
+        }
+        // 4+2+2+2+3
+        if (one==0&&two==3&&three==1&&four==1&&five==0) {
+		    return true;
+        }
+        // 4+4+2+3
+        if (one==0&&two==1&&three==1&&four==2&&five==0) {
+		    return true;
+        }
+        // 2+2+2+2+5
+        if (one==0&&two==4&&three==0&&four==0&&five==1) {
+		    return true;
+        }
+        // 2+2+4+5
+        if (one==0&&two==2&&three==0&&four==1&&five==1) {
+		    return true;
+        }
 		return false;
 	}
 	
@@ -1005,29 +1059,32 @@ public class SSSSpecialCards {
 	 */
 	public static boolean sixPairs(ArrayList<String> player){
 		ArrayList<ArrayList<Integer>> set=getListByNum(player);
-		
-		int i=0;//单牌
-		int j=0;//对子
-		int k=0;//三张
-		int l=0;//炸
+        // 单牌
+        int one = 0;
+        // 对子
+		int two = 0;
+        // 三张
+        int three=0;
+        // 炸
+        int four = 0;
 		for (ArrayList<Integer> list : set) {
 			if(list.size()==1){
-				i++;
+				one++;
 			}else if(list.size()==2){
-				j++;
+				two++;
 			}else if(list.size()==3){
-				k++;
+				three++;
 			}else if(list.size()==4){
-				l++;
+				four++;
 			}
 		}
-		if((i==1&&j==6&&k==0&&l==0)
-				||(i==0&&j==5&&k==1&&l==0)
-				||(i==1&&j==4&&k==0&&l==1)
-				||(i==0&&j==3&&k==1&&l==1)
-				||(i==0&&j==1&&k==1&&l==2)
-				||(i==1&&j==2&&k==0&&l==2)
-				||(i==1&&j==0&&k==0&&l==3)){
+		if((one==1&&two==6&&three==0&&four==0)
+				||(one==0&&two==5&&three==1&&four==0)
+				||(one==1&&two==4&&three==0&&four==1)
+				||(one==0&&two==3&&three==1&&four==1)
+				||(one==0&&two==1&&three==1&&four==2)
+				||(one==1&&two==2&&three==0&&four==2)
+				||(one==1&&two==0&&three==0&&four==3)){
 			return true;
 		}
 		return false;

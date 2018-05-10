@@ -134,7 +134,7 @@ public class SSSGameEventDealNew {
             if (room.getPlayerMap().get(account).getScore()<room.getLeaveScore()) {
                 postData.put("notSend",CommonConstant.GLOBAL_YES);
                 postData.put("notSendToMe",CommonConstant.GLOBAL_YES);
-                exitRoom(client,data);
+                exitRoom(client,postData);
                 JSONObject result = new JSONObject();
                 result.put("type",CommonConstant.SHOW_MSG_TYPE_BIG);
                 result.put(CommonConstant.RESULT_KEY_MSG,"元宝不足");
