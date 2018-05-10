@@ -827,7 +827,7 @@ public class SSSSpecialCards {
 		int i=0;
 		
 		for(int k=0;k<set.size();k++){
-			if(set.get(k).size()==4){
+			if(set.get(k).size()>=4){
 				i++;
 			}
 		}
