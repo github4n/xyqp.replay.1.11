@@ -550,7 +550,7 @@ public class ZJHGameEventDealNew {
                 room.setGameStatus(ZJHConstant.ZJH_GAME_STATUS_FINAL_SUMMARY);
                 JSONObject result = new JSONObject();
                 result.put(CommonConstant.RESULT_KEY_CODE,CommonConstant.GLOBAL_YES);
-                result.put("type",8);
+                result.put("type",ZJHConstant.GAME_ACTION_TYPE_FINAL_SUMMARY);
                 result.put("jiesuanData",room.obtainFinalSummaryData());
                 CommonConstant.sendMsgEventToAll(room.getAllUUIDList(),result.toString(),"gameActionPush_ZJH");
             }

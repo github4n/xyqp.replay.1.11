@@ -133,6 +133,10 @@ public class ZJHConstant {
      */
     public static final int GAME_ACTION_TYPE_JZ = 6;
     /**
+     * 炸金花游戏事件-总结算
+     */
+    public static final int GAME_ACTION_TYPE_FINAL_SUMMARY = 8;
+    /**
      * 炸金花游戏事件-比牌结束
      */
     public static final int GAME_ACTION_TYPE_COMPARE_FINISH = 9;
