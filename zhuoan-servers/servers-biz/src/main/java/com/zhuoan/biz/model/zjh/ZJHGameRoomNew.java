@@ -20,26 +20,68 @@ import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * @author wqm
- * @DESCRIPTION
+ * @DESCRIPTION 炸金花房间实体类
  * @Date Created in 10:19 2018/4/25
  * @Modified By:
  **/
 @Component
 public class ZJHGameRoomNew extends GameRoom{
 
+    /**
+     * 下注时间
+     */
     private int xzTimer;
+    /**
+     * 筹码
+     */
     private JSONArray baseNum;
+    /**
+     * 牌
+     */
     private int[] pai;
+    /**
+     * 牌下标
+     */
     private int paiIndex;
+    /**
+     * 当前下注分数
+     */
     private double currentScore;
+    /**
+     * 总下注分数
+     */
     private double totalScore;
+    /**
+     * 最大下注分数
+     */
     private double maxScore;
+    /**
+     * 当前操作玩家
+     */
     private String focus;
+    /**
+     * 当前下注轮数
+     */
     private int gameNum;
+    /**
+     * 总下注轮数
+     */
     private int totalGameNum;
+    /**
+     * 玩家牌局信息
+     */
     private Map<String, UserPacket> userPacketMap = new ConcurrentHashMap<String, UserPacket>();
+    /**
+     * 已下注玩家
+     */
     private List<Integer> yiXiaZhu = new ArrayList<Integer>();
+    /**
+     * 下注记录
+     */
     private JSONArray xiaZhuList = new JSONArray();
+    /**
+     * 玩法
+     */
     private int gameType;
 
     public int getGameType() {
@@ -186,7 +228,11 @@ public class ZJHGameRoomNew extends GameRoom{
         return array;
     }
 
+    /**
+     * 初始化
+     */
     public void initGame() {
+        setGameIndex(getGameIndex()+1);
         // 当局总分
         totalScore = 0;
         paiIndex = 0;
@@ -337,6 +383,11 @@ public class ZJHGameRoomNew extends GameRoom{
         }
     }
 
+    /**
+     * 下个操作玩家
+     * @param account
+     * @return
+     */
     public String getNextPlayer(String account){
 
         if(getPlayerMap().get(account)!=null){
@@ -383,6 +434,10 @@ public class ZJHGameRoomNew extends GameRoom{
         return uuid;
     }
 
+    /**
+     * 是否全部准备
+     * @return
+     */
     public boolean isAllReady() {
         for (String account : getUserPacketMap().keySet()) {
             if (getUserPacketMap().get(account).getStatus()!=ZJHConstant.ZJH_USER_STATUS_READY) {
@@ -392,6 +447,10 @@ public class ZJHGameRoomNew extends GameRoom{
         return true;
     }
 
+    /**
+     * 获取当前准备人数
+     * @return
+     */
     public int getNowReadyCount(){
         int readyCount = 0;
         for (String account : getUserPacketMap().keySet()) {
@@ -402,6 +461,10 @@ public class ZJHGameRoomNew extends GameRoom{
         return readyCount;
     }
 
+    /**
+     * 获取每个玩家下注分数
+     * @return
+     */
     public JSONArray getPlayerScore(){
         JSONArray array = new JSONArray();
         for (String account : getUserPacketMap().keySet()) {
@@ -409,6 +472,33 @@ public class ZJHGameRoomNew extends GameRoom{
                 JSONObject obj = new JSONObject();
                 obj.put("index",getPlayerIndex(account));
                 obj.put("myScore",getUserPacketMap().get(account).getScore());
+                array.add(obj);
+            }
+        }
+        return array;
+    }
+
+    /**
+     * 获取总结算数据
+     */
+    public JSONArray obtainFinalSummaryData() {
+        JSONArray array = new JSONArray();
+        for (String account : getUserPacketMap().keySet()) {
+            if (getUserPacketMap().get(account).getStatus()> ZJHConstant.ZJH_USER_STATUS_INIT) {
+                JSONObject obj = new JSONObject();
+                obj.put("name",getPlayerMap().get(account).getName());
+                obj.put("account",account);
+                obj.put("headimg",getPlayerMap().get(account).getRealHeadimg());
+                obj.put("score",getPlayerMap().get(account).getScore());
+                obj.put("isFangzhu",CommonConstant.GLOBAL_NO);
+                if (account.equals(getOwner())) {
+                    obj.put("isFangzhu",CommonConstant.GLOBAL_YES);
+                }
+                obj.put("isWinner",CommonConstant.GLOBAL_NO);
+                if (getPlayerMap().get(account).getScore()>0) {
+                    obj.put("isWinner",CommonConstant.GLOBAL_YES);
+                }
+                obj.put("winTimes",getUserPacketMap().get(account).getWinTimes());
                 array.add(obj);
             }
         }

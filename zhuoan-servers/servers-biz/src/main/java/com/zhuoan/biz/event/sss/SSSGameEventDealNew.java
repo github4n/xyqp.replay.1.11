@@ -345,7 +345,7 @@ public class SSSGameEventDealNew {
                         break;
                 }
                 if (room.getRoomType()==CommonConstant.ROOM_TYPE_FK) {
-                    roomCardSumary(roomNo);
+                    roomCardSummary(roomNo);
                 }
                 // 改变状态通知玩家
                 changeGameStatus(room);
@@ -409,7 +409,7 @@ public class SSSGameEventDealNew {
      * 房卡场结算
      * @param roomNo
      */
-    public void roomCardSumary(String roomNo) {
+    public void roomCardSummary(String roomNo) {
         SSSGameRoomNew room = (SSSGameRoomNew) RoomManage.gameRoomMap.get(roomNo);
         if (room==null) {
             return;
@@ -418,10 +418,7 @@ public class SSSGameEventDealNew {
             // 有参与的玩家
             if (room.getUserPacketMap().get(account).getStatus() == SSSConstant.SSS_USER_STATUS_GAME_EVENT) {
                 Player up = room.getUserPacketMap().get(account);
-                // 胜利次数+1
-                if (up.getScore()>0) {
-                    up.setWinTimes(up.getWinTimes()+1);
-                }
+                up.setPlayTimes(up.getPlayTimes()+1);
                 // 胜利次数+1
                 if (up.getScore()>0) {
                     up.setWinTimes(up.getWinTimes()+1);

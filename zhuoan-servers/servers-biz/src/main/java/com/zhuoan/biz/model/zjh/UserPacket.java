@@ -11,23 +11,55 @@ import java.util.Arrays;
  * 玩家当前牌局
  */
 public class UserPacket {
-	
-	private Integer[] pai;//手里的牌
-	public int type;//牌的类型 
-	private boolean win=false;//是否赢了
-	private boolean isBanker=false;//是否是庄家
-	private int isReady;// 玩家准备状态
-	private int status=0;// 玩家游戏状态
-	private double score;//分数
-	public int isCloseRoom=0;//解散房间申请  0:未确认 1:同意  -1:拒绝
-	public boolean isGenDaoDi=false;//是否跟到底
-	public boolean isShow=false;//是否看牌
-	private JSONArray bipaiList = new JSONArray();//比牌记录
-	private int luck;//幸运值
-	
-	// 牌局统计数据
+
+    /**
+     * 手里的牌
+     */
+    private Integer[] pai;
+    /**
+     * 牌的类型
+     */
+	public int type;
+    /**
+     * 是否赢了
+     */
+	private boolean win=false;
+    /**
+     * 是否是庄家
+     */
+	private boolean isBanker=false;
+    /**
+     * 玩家游戏状态
+     */
+	private int status=0;
+    /**
+     * 分数
+     */
+	private double score;
+    /**
+     * 解散房间申请  0:未确认 1:同意  -1:拒绝
+     */
+	public int isCloseRoom=0;
+    /**
+     * 是否跟到底
+     */
+	public boolean isGenDaoDi=false;
+    /**
+     * 是否看牌
+     */
+	public boolean isShow=false;
+    /**
+     * 比牌记录
+     */
+	private JSONArray bipaiList = new JSONArray();
+    /**
+     * 牌局统计数据
+     */
 	private int winTimes;
-	
+    /**
+     * 参与游戏局数
+     */
+    private int playTimes = 0;
 	
 	public Integer[] getPai() {
 		return pai;
@@ -53,12 +85,6 @@ public class UserPacket {
 	public void setBanker(boolean isBanker) {
 		this.isBanker = isBanker;
 	}
-	public int getIsReady() {
-		return isReady;
-	}
-	public void setIsReady(int isReady) {
-		this.isReady = isReady;
-	}
 	public int getStatus() {
 		return status;
 	}
@@ -83,20 +109,22 @@ public class UserPacket {
 	public void setBipaiList(JSONArray bipaiList) {
 		this.bipaiList = bipaiList;
 	}
-	public int getLuck() {
-		return luck;
-	}
-	public void setLuck(int luck) {
-		this.luck = luck;
-	}
 	public int getWinTimes() {
 		return winTimes;
 	}
 	public void setWinTimes(int winTimes) {
 		this.winTimes = winTimes;
 	}
-	
-	/**
+
+    public int getPlayTimes() {
+        return playTimes;
+    }
+
+    public void setPlayTimes(int playTimes) {
+        this.playTimes = playTimes;
+    }
+
+    /**
 	 * 初始牌局信息
 	 */
 	public void initUserPacket(){
@@ -113,8 +141,6 @@ public class UserPacket {
         //是否看牌
         isShow=false;
 		bipaiList = new JSONArray();
-		//setStatus(ZhaJinHuaCore.USERPACKER_STATUS_CHUSHI);
-		//setIsReady(ZhaJinHuaCore.USERPACKER_STATUS_CHUSHI);
 	}
 	
 

@@ -6,11 +6,9 @@ import com.zhuoan.biz.game.biz.RoomBiz;
 import com.zhuoan.biz.model.Playerinfo;
 import com.zhuoan.biz.model.RoomManage;
 import com.zhuoan.biz.model.dao.PumpDao;
+import com.zhuoan.biz.model.zjh.UserPacket;
 import com.zhuoan.biz.model.zjh.ZJHGameRoomNew;
-import com.zhuoan.constant.CommonConstant;
-import com.zhuoan.constant.DaoTypeConstant;
-import com.zhuoan.constant.NNConstant;
-import com.zhuoan.constant.ZJHConstant;
+import com.zhuoan.constant.*;
 import com.zhuoan.service.jms.ProducerService;
 import com.zhuoan.util.Dto;
 import com.zhuoan.util.thread.ThreadPoolHelper;
@@ -401,6 +399,7 @@ public class ZJHGameEventDealNew {
                 }
                 CommonConstant.sendMsgEventToSingle(room.getPlayerMap().get(uuid).getUuid(),result.toString(),"gameActionPush_ZJH");
             }
+            sendFianlSummaryToPlayer(isGameOver,room);
         }
         // 游戏结束
         if (type==ZJHConstant.GAME_ACTION_TYPE_COMPARE&&isGameOver==1) {
@@ -533,7 +532,27 @@ public class ZJHGameEventDealNew {
                             }
                         });
                     }
+                    sendFianlSummaryToPlayer(isGameOver,room);
                 }
+            }
+        }
+    }
+
+    /**
+     * 总结算通知玩家
+     * @param isGameOver
+     * @param room
+     */
+    public void sendFianlSummaryToPlayer(int isGameOver,ZJHGameRoomNew room) {
+        if (isGameOver==1&&room.getRoomType()==CommonConstant.ROOM_TYPE_FK) {
+            // 局数到了之后触发总结算
+            if (room.getGameIndex()==room.getGameCount()) {
+                room.setGameStatus(ZJHConstant.ZJH_GAME_STATUS_FINAL_SUMMARY);
+                JSONObject result = new JSONObject();
+                result.put(CommonConstant.RESULT_KEY_CODE,CommonConstant.GLOBAL_YES);
+                result.put("type",8);
+                result.put("jiesuanData",room.obtainFinalSummaryData());
+                CommonConstant.sendMsgEventToAll(room.getAllUUIDList(),result.toString(),"gameActionPush_ZJH");
             }
         }
     }
@@ -627,10 +646,16 @@ public class ZJHGameEventDealNew {
             }
             CommonConstant.sendMsgEventToSingle(room.getPlayerMap().get(uid).getUuid(),result.toString(),"gameActionPush_ZJH");
         }
+        sendFianlSummaryToPlayer(isGameOver,room);
     }
 
-    public void compelCompare(ZJHGameRoomNew room, String opuuid) {
 
+    /**
+     * 强制比牌
+     * @param room
+     * @param opuuid
+     */
+    public void compelCompare(ZJHGameRoomNew room, String opuuid) {
         // 获取还在游戏中的玩家
         List<String> uuidList = new ArrayList<String>();
         for (String uuid : room.getUserPacketMap().keySet()) {
@@ -640,10 +665,8 @@ public class ZJHGameEventDealNew {
                 uuidList.add(uuid);
             }
         }
-
         // 比较牌的大小，牌最大者获胜
         if(uuidList.size()>1){
-
             // 添加比牌记录
             for (String uuid : uuidList) {
                 for (String uuid1 : uuidList) {
@@ -651,7 +674,6 @@ public class ZJHGameEventDealNew {
                         room.getUserPacketMap().get(uuid1).getPai());
                 }
             }
-
             // 弃牌玩家可以看到强制结算玩家的牌
             for (String string : room.getUserPacketMap().keySet()) {
                 if (!uuidList.contains(string)) {
@@ -661,16 +683,13 @@ public class ZJHGameEventDealNew {
                     }
                 }
             }
-
+            // 最大牌
             String maxUUID = uuidList.get(0);
             for (int i = 1; i < uuidList.size(); i++) {
-
                 String uuid = uuidList.get(i);
                 Integer[] paiA = room.getUserPacketMap().get(maxUUID).getPai();
                 Integer[] paiB = room.getUserPacketMap().get(uuid).getPai();
-
                 int biPaiResult = ZhaJinHuaCore.compare(Arrays.asList(paiA), Arrays.asList(paiB));
-
                 if(biPaiResult>0){
                     // 失败
                     room.getUserPacketMap().get(uuid).setStatus(ZJHConstant.ZJH_USER_STATUS_LOSE);
@@ -682,13 +701,16 @@ public class ZJHGameEventDealNew {
                     maxUUID = uuid;
                 }
             }
-
             room.getUserPacketMap().get(maxUUID).setStatus(ZJHConstant.ZJH_USER_STATUS_WIN);
             // 结算
             summary(room);
         }
     }
 
+    /**
+     * 结算
+     * @param room
+     */
     public void summary(ZJHGameRoomNew room){
         room.setGameStatus(ZJHConstant.ZJH_GAME_STATUS_SUMMARY);
         // 重置房间倒计时
@@ -711,6 +733,39 @@ public class ZJHGameEventDealNew {
                 }
             }
         }
+        updateUserScore(room.getRoomNo());
+        if (room.getRoomType()==CommonConstant.ROOM_TYPE_FK) {
+            roomCardSummary(room.getRoomNo());
+        }
+    }
+
+    /**
+     * 房卡场结算
+     * @param roomNo
+     */
+    public void roomCardSummary(String roomNo) {
+        ZJHGameRoomNew room = (ZJHGameRoomNew) RoomManage.gameRoomMap.get(roomNo);
+        if (room==null) {
+            return;
+        }
+        for (String account : room.getUserPacketMap().keySet()) {
+            // 有参与的玩家
+            if (room.getUserPacketMap().get(account).getStatus() == SSSConstant.SSS_USER_STATUS_GAME_EVENT) {
+                UserPacket up = room.getUserPacketMap().get(account);
+                if (up.getStatus()==ZJHConstant.ZJH_USER_STATUS_WIN) {
+                    up.setWinTimes(up.getWinTimes()+1);
+                }
+                up.setPlayTimes(up.getPlayTimes()+1);
+            }
+        }
+    }
+
+    /**
+     * 更新数据库
+     * @param roomNo
+     */
+    public void updateUserScore(String roomNo) {
+        ZJHGameRoomNew room = (ZJHGameRoomNew) RoomManage.gameRoomMap.get(roomNo);
         JSONArray array = new JSONArray();
         JSONArray userDeductionData = new JSONArray();
         JSONArray gameLogResults = new JSONArray();
@@ -814,7 +869,11 @@ public class ZJHGameEventDealNew {
         }
     }
 
-
+    /**
+     * 退出房间
+     * @param client
+     * @param data
+     */
     public void exitRoom(SocketIOClient client, Object data) {
         JSONObject postData = JSONObject.fromObject(data);
         if (!CommonConstant.checkEvent(postData, CommonConstant.CHECK_GAME_STATUS_NO, client)) {
@@ -833,6 +892,14 @@ public class ZJHGameEventDealNew {
                 } else if (room.getGameStatus() == ZJHConstant.ZJH_GAME_STATUS_INIT ||
                     room.getGameStatus() == ZJHConstant.ZJH_GAME_STATUS_READY ||
                     room.getGameStatus() == ZJHConstant.ZJH_GAME_STATUS_SUMMARY) {// 初始及准备阶段可以退出
+                    canExit = true;
+                }
+            }else if (room.getRoomType() == CommonConstant.ROOM_TYPE_FK) {
+                // TODO: 2018/5/11 支付方式为房主支付房主不能退出
+                // 房卡场没玩过可以退出
+                if (room.getUserPacketMap().get(account).getPlayTimes()==0) {
+                    canExit = true;
+                }else if (room.getGameStatus() == ZJHConstant.ZJH_GAME_STATUS_FINAL_SUMMARY) {
                     canExit = true;
                 }
             }
