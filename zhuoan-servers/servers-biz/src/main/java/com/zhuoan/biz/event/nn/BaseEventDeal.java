@@ -180,15 +180,29 @@ public class BaseEventDeal {
             }
         }
         gameRoom.setUserIdList(idList);
-        if (gameRoom.getRoomType() == CommonConstant.ROOM_TYPE_JB || gameRoom.getRoomType() == CommonConstant.ROOM_TYPE_JB) {
+        // 支付类型
+        if (baseInfo.containsKey("paytype")) {
+            gameRoom.setPayType(baseInfo.getInt("paytype"));
+        }
+        if (gameRoom.getRoomType() == CommonConstant.ROOM_TYPE_YB || gameRoom.getRoomType() == CommonConstant.ROOM_TYPE_JB) {
             gameRoom.setGameCount(9999);
         }else if (gameRoom.getRoomType() == CommonConstant.ROOM_TYPE_FK) {
-            if (baseInfo.containsKey("game_count")) {
-                gameRoom.setGameCount(baseInfo.getInt("game_count"));
+            if (baseInfo.containsKey("turn")) {
+                JSONObject turn = baseInfo.getJSONObject("turn");
+                if (turn.containsKey("turn")) {
+                    gameRoom.setGameCount(turn.getInt("turn"));
+                }else {
+                    gameRoom.setGameCount(999);
+                }
+                // 单个玩家需要扣除的房卡
+                if (turn.containsKey("AANum")) {
+                    gameRoom.setSinglePayNum(turn.getInt("AANum"));
+                }
             }else {
-                gameRoom.setGameCount(5);
+                gameRoom.setGameCount(999);
             }
         }
+        // 底分
         if (baseInfo.containsKey("di")) {
             gameRoom.setScore(baseInfo.getDouble("di"));
         } else {
@@ -232,7 +246,7 @@ public class BaseEventDeal {
             }
         } else if (baseInfo.getInt("roomType") == CommonConstant.ROOM_TYPE_YB) {
             gameRoom.setReadyOvertime(CommonConstant.READY_OVERTIME_OUT);
-        } else {
+        } else if (baseInfo.getInt("roomType") == CommonConstant.READY_OVERTIME_NOTHING){
             gameRoom.setReadyOvertime(CommonConstant.READY_OVERTIME_NOTHING);
         }
         // 玩家人数
