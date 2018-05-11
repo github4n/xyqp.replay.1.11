@@ -3,6 +3,7 @@ package com.zhuoan.biz.model.zjh;
 import com.zhuoan.biz.core.zjh.ZhaJinHuaCore;
 import com.zhuoan.biz.model.GameRoom;
 import com.zhuoan.biz.model.Playerinfo;
+import com.zhuoan.constant.CommonConstant;
 import com.zhuoan.constant.ZJHConstant;
 import com.zhuoan.util.Dto;
 import net.sf.json.JSONArray;
@@ -299,8 +300,10 @@ public class ZJHGameRoomNew extends GameRoom{
         Playerinfo playerinfo = getPlayerMap().get(account);
         getPlayerMap().get(account).setScore(Dto.sub(playerinfo.getScore(), score));
         // 负数清零
-        if (getPlayerMap().get(account).getScore() < 0) {
-            getPlayerMap().get(account).setScore(0);
+        if (getRoomType()== CommonConstant.ROOM_TYPE_YB||getRoomType()==CommonConstant.ROOM_TYPE_JB) {
+            if (getPlayerMap().get(account).getScore() < 0) {
+                getPlayerMap().get(account).setScore(0);
+            }
         }
     }
 

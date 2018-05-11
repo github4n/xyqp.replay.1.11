@@ -3,6 +3,7 @@ package com.zhuoan.biz.model.sss;
 import com.zhuoan.biz.core.sss.SSSSpecialCards;
 import com.zhuoan.biz.model.GameRoom;
 import com.zhuoan.biz.model.Playerinfo;
+import com.zhuoan.constant.CommonConstant;
 import com.zhuoan.constant.SSSConstant;
 import com.zhuoan.util.Dto;
 import net.sf.json.JSONArray;
@@ -158,10 +159,14 @@ public class SSSGameRoomNew extends GameRoom{
                 obj.put("vip", player.getVip());
                 obj.put("location", player.getLocation());
                 obj.put("area", player.getArea());
-                if (player.getScore()<0) {
-                    obj.put("score", 0);
+                if (getRoomType()!= CommonConstant.ROOM_TYPE_FK) {
+                    if (player.getScore()<0) {
+                        obj.put("score", 0);
+                    }else {
+                        obj.put("score", player.getScore());
+                    }
                 }else {
-                    obj.put("score", player.getScore());
+                    obj.put("score",player.getScore());
                 }
                 obj.put("index", player.getMyIndex());
                 obj.put("userOnlineStatus", player.getStatus());
@@ -207,7 +212,7 @@ public class SSSGameRoomNew extends GameRoom{
                     userData.put("result",userResult);
                     userData.put("sum",getUserPacketMap().get(account).getScore());
                     userData.put("account",account);
-                    if (getGameStatus()==SSSConstant.SSS_GAME_STATUS_COMPARE) {
+                    if (getGameStatus()==SSSConstant.SSS_GAME_STATUS_COMPARE&&getRoomType()!=CommonConstant.ROOM_TYPE_FK) {
                         double scoreLeft = Dto.add(getPlayerMap().get(account).getScore(),getUserPacketMap().get(account).getScore());
                         if (scoreLeft<0) {
                             scoreLeft = 0;
@@ -278,6 +283,7 @@ public class SSSGameRoomNew extends GameRoom{
      * 初始话房间信息
      */
     public void initGame(){
+        setGameIndex(getGameIndex()+1);
         // 清空游戏记录
         getGameProcess().clear();
         // 清空比牌时间
@@ -625,5 +631,38 @@ public class SSSGameRoomNew extends GameRoom{
             p++;
         }
         return dd;
+    }
+
+    /**
+     * 获取总结算数据
+     * @return
+     */
+    public JSONArray obtainFinalSummaryData(){
+        JSONArray array = new JSONArray();
+        for (String account : getUserPacketMap().keySet()) {
+            if (getUserPacketMap().get(account).getStatus()>SSSConstant.SSS_USER_STATUS_INIT) {
+                JSONObject obj = new JSONObject();
+                obj.put("name",getPlayerMap().get(account).getName());
+                obj.put("account",account);
+                obj.put("headimg",getPlayerMap().get(account).getRealHeadimg());
+                obj.put("score",getPlayerMap().get(account).getScore());
+                obj.put("isFangzhu",CommonConstant.GLOBAL_NO);
+                if (account.equals(getOwner())) {
+                    obj.put("isFangzhu",CommonConstant.GLOBAL_YES);
+                }
+                obj.put("isWinner",CommonConstant.GLOBAL_NO);
+                if (getPlayerMap().get(account).getScore()>0) {
+                    obj.put("isWinner",CommonConstant.GLOBAL_YES);
+                }
+                obj.put("winTimes",getUserPacketMap().get(account).getWinTimes());
+                obj.put("dqTimes",getUserPacketMap().get(account).getDqTimes());
+                obj.put("bdqTimes",getUserPacketMap().get(account).getBdqTimes());
+                obj.put("qldTimes",getUserPacketMap().get(account).getSwatTimes());
+                obj.put("specialTimes",getUserPacketMap().get(account).getSpecialTimes());
+                obj.put("ordinaryTimes",getUserPacketMap().get(account).getOrdinaryTimes());
+                array.add(obj);
+            }
+        }
+        return array;
     }
 }

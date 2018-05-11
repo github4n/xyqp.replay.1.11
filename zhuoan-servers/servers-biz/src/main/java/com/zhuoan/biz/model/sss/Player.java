@@ -71,6 +71,34 @@ public class Player implements Serializable{
      * 尾道手牌
      */
     private int[] footPai;
+    /**
+     * 胜利次数
+     */
+    private int winTimes;
+    /**
+     * 打枪次数
+     */
+    private int dqTimes;
+    /**
+     * 被打枪次数
+     */
+    private int bdqTimes;
+    /**
+     * 全垒打次数
+     */
+    private int swatTimes;
+    /**
+     * 特殊牌次数
+     */
+    private int specialTimes;
+    /**
+     * 普通牌次数
+     */
+    private int ordinaryTimes;
+    /**
+     * 参与游戏局数
+     */
+    private int playTimes = 0;
 
     public static long getSerialVersionUID() {
         return serialVersionUID;
@@ -91,6 +119,7 @@ public class Player implements Serializable{
     public void setStatus(int status) {
         this.status = status;
     }
+
     public int getSwat() {
         return swat;
     }
@@ -185,6 +214,62 @@ public class Player implements Serializable{
 
     public void setFootPai(int[] footPai) {
         this.footPai = footPai;
+    }
+
+    public int getWinTimes() {
+        return winTimes;
+    }
+
+    public void setWinTimes(int winTimes) {
+        this.winTimes = winTimes;
+    }
+
+    public int getDqTimes() {
+        return dqTimes;
+    }
+
+    public void setDqTimes(int dqTimes) {
+        this.dqTimes = dqTimes;
+    }
+
+    public int getBdqTimes() {
+        return bdqTimes;
+    }
+
+    public void setBdqTimes(int bdqTimes) {
+        this.bdqTimes = bdqTimes;
+    }
+
+    public int getSwatTimes() {
+        return swatTimes;
+    }
+
+    public void setSwatTimes(int swatTimes) {
+        this.swatTimes = swatTimes;
+    }
+
+    public int getSpecialTimes() {
+        return specialTimes;
+    }
+
+    public void setSpecialTimes(int specialTimes) {
+        this.specialTimes = specialTimes;
+    }
+
+    public int getOrdinaryTimes() {
+        return ordinaryTimes;
+    }
+
+    public void setOrdinaryTimes(int ordinaryTimes) {
+        this.ordinaryTimes = ordinaryTimes;
+    }
+
+    public int getPlayTimes() {
+        return playTimes;
+    }
+
+    public void setPlayTimes(int playTimes) {
+        this.playTimes = playTimes;
     }
 
     /**

@@ -186,7 +186,7 @@ public class BaseEventDeal {
             if (baseInfo.containsKey("game_count")) {
                 gameRoom.setGameCount(baseInfo.getInt("game_count"));
             }else {
-                gameRoom.setGameCount(999);
+                gameRoom.setGameCount(5);
             }
         }
         if (baseInfo.containsKey("di")) {
