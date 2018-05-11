@@ -184,6 +184,9 @@ public class NNGameEventDealNew {
             obj.put("jiesan", CommonConstant.GLOBAL_YES);
             obj.put("jiesanData", room.getJieSanData());
         }
+        if (room.getGameStatus()==NNConstant.NN_GAME_STATUS_ZJS) {
+            obj.put("jiesuanData", room.getFinalSummary());
+        }
         return obj;
     }
 
@@ -724,13 +727,6 @@ public class NNGameEventDealNew {
                 }
                 // 通知玩家
                 changeGameStatus(room);
-                if (room.getRoomType()==CommonConstant.ROOM_TYPE_FK) {
-                    // 局数到了之后触发总结算
-                    if (room.getGameIndex()==room.getGameCount()) {
-                        room.setGameStatus(NNConstant.NN_GAME_STATUS_ZJS);
-                        changeGameStatus(room);
-                    }
-                }
             }
         }
     }
@@ -1119,8 +1115,14 @@ public class NNGameEventDealNew {
             obj.put("baseNum", room.getBaseNumTimes(RoomManage.gameRoomMap.get(room.getRoomNo()).getPlayerMap().get(account).getScore()));
             obj.put("users", room.getAllPlayer());
             obj.put("gameData", room.getGameData(account));
-            if (room.getGameStatus()==NNConstant.NN_GAME_STATUS_ZJS) {
-                obj.put("jiesuanData", room.getFinalSummary());
+            if (room.getRoomType()==CommonConstant.ROOM_TYPE_FK) {
+                if (room.getGameStatus()==NNConstant.NN_GAME_STATUS_ZJS) {
+                    obj.put("jiesuanData", room.getFinalSummary());
+                }
+                if (room.getGameStatus()==NNConstant.NN_GAME_STATUS_JS&&room.getGameIndex()==room.getGameCount()) {
+                    room.setGameStatus(NNConstant.NN_GAME_STATUS_ZJS);
+                    obj.put("jiesuanData", room.getFinalSummary());
+                }
             }
             UUID uuid = room.getPlayerMap().get(account).getUuid();
             if (uuid != null) {
@@ -1163,14 +1165,16 @@ public class NNGameEventDealNew {
                 }
                 // 通知玩家
                 result.put(CommonConstant.RESULT_KEY_CODE, CommonConstant.GLOBAL_NO);
-                result.put("names", room.getPlayerMap().get(account).getName());
+                String[] names = {room.getPlayerMap().get(account).getName()};
+                result.put("names", names);
                 CommonConstant.sendMsgEventToAll(room.getAllUUIDList(), result.toString(), "closeRoomPush_NN");
                 return;
             }
             if (type == CommonConstant.CLOSE_ROOM_AGREE) {
                 // 全部同意解散
                 if (room.isAgreeClose()) {
-                    // TODO: 2018/4/18 强制结算
+                    room.setGameStatus(NNConstant.NN_GAME_STATUS_ZJS);
+                    changeGameStatus(room);
                 } else {// 刷新数据
                     result.put(CommonConstant.RESULT_KEY_CODE, CommonConstant.GLOBAL_YES);
                     result.put("data", room.getJieSanData());

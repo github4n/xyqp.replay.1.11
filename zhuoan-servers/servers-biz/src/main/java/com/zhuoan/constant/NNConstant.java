@@ -33,6 +33,10 @@ public class NNConstant {
      */
     public static final int NN_GAME_EVENT_RECONNECT = 6;
     /**
+     * 牛牛游戏事件-解散房间
+     */
+    public static final int NN_GAME_EVENT_CLOSE_ROOM = 7;
+    /**
      * 抢庄类型-房主坐庄
      */
     public static final int NN_BANKER_TYPE_FZ = 0;

@@ -144,6 +144,9 @@ public class GameEventDeal {
                     case NNConstant.NN_GAME_EVENT_RECONNECT:
                         nnGameEventDealNew.reconnectGame(client, data);
                         break;
+                    case NNConstant.NN_GAME_EVENT_CLOSE_ROOM:
+                        nnGameEventDealNew.closeRoom(client, data);
+                        break;
                     default:
                         break;
                 }

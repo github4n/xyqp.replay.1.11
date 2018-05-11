@@ -226,7 +226,7 @@ public class BaseEventDeal {
             gameRoom.setEnterScore(baseInfo.getInt("goldcoins"));
             gameRoom.setLeaveScore(baseInfo.getInt("goldcoins"));
         }
-        if (baseInfo.getInt("open") == 1) {
+        if (baseInfo.containsKey("open")&&baseInfo.getInt("open") == 1) {
             gameRoom.setOpen(true);
         } else {
             gameRoom.setOpen(false);
@@ -401,7 +401,6 @@ public class BaseEventDeal {
             CommonConstant.sendMsgEventToSingle(client, result.toString(), "enterRoomPush_NN");
             return;
         }
-
         joinRoomBase(client, postData, userInfo);
     }
 
@@ -632,6 +631,10 @@ public class BaseEventDeal {
         // 抢庄是否要加倍
         if (baseInfo.containsKey("qzTimes")) {
             room.qzTimes = baseInfo.getJSONArray("qzTimes");
+        }else {
+            room.qzTimes.add(1);
+            room.qzTimes.add(2);
+            room.qzTimes.add(3);
         }
         // 抢庄是否是随机庄（随机、最高倍数为庄）
         if (baseInfo.containsKey("qzsjzhuang")) {
@@ -1177,7 +1180,6 @@ public class BaseEventDeal {
             }else if (set.getString("xipaiObj").equals("3")) {
                 result.element("obj",sysSet.getString("yuanbaoname"));
             }
-            //JSONArray rec=publicBiz.getAppObjRec(room.getPlayerMap().get(account).getId(),1,gameId,String.valueOf(room.getId()),roomNo);
             JSONObject userInfo = userBiz.getUserByAccount(account);
             int size=userInfo.getInt("pumpVal");
             if (size<set.getInt("xipaiLayer")) {

@@ -36,7 +36,7 @@ public class NNGameRoomNew extends GameRoom{
     /**
      * 抢庄倍数
      */
-    public JSONArray qzTimes;
+    public JSONArray qzTimes = new JSONArray();
     /**
      * 配置特殊牌型（五花牛、葫芦牛、炸弹）
      */
@@ -555,8 +555,7 @@ public class NNGameRoomNew extends GameRoom{
             obj.put("index",getPlayerMap().get(account).getMyIndex());
             obj.put("name",getPlayerMap().get(account).getName());
             obj.put("result",userPacketMap.get(account).getIsCloseRoom());
-            obj.put("showTimer",CommonConstant.GLOBAL_YES);
-            obj.put("timer",getJieSanTime());
+            obj.put("jiesanTimer",getJieSanTime());
             array.add(obj);
         }
         return array;

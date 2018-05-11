@@ -86,5 +86,15 @@ public class NNGameEvent {
                 producerService.sendMessage(nnQueueDestination, new Messages(client, data, CommonConstant.GAME_ID_NN, NNConstant.NN_GAME_EVENT_RECONNECT));
             }
         });
+
+        /**
+         * 断线重连事件
+         */
+        server.addEventListener("closeRoom_NN", Object.class, new DataListener<Object>() {
+            @Override
+            public void onData(SocketIOClient client, Object data, AckRequest ackSender) {
+                producerService.sendMessage(nnQueueDestination, new Messages(client, data, CommonConstant.GAME_ID_NN, NNConstant.NN_GAME_EVENT_CLOSE_ROOM));
+            }
+        });
     }
 }

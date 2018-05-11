@@ -792,14 +792,39 @@ public class ZJHGameEventDealNew {
                 gameProcessJS.add(userJS);
                 // 元宝输赢情况
                 JSONObject obj = new JSONObject();
-                obj.put("total", room.getPlayerMap().get(account).getScore());
-                if (room.getUserPacketMap().get(account).getStatus()==ZJHConstant.ZJH_USER_STATUS_WIN) {
-                    obj.put("fen", Dto.sub(room.getTotalScore(),room.getUserPacketMap().get(account).getScore()));
-                }else {
-                    obj.put("fen", -room.getUserPacketMap().get(account).getScore());
+                if (room.getRoomType()==CommonConstant.ROOM_TYPE_YB||room.getRoomType()==CommonConstant.ROOM_TYPE_JB) {
+                    obj.put("total", room.getPlayerMap().get(account).getScore());
+                    if (room.getUserPacketMap().get(account).getStatus()==ZJHConstant.ZJH_USER_STATUS_WIN) {
+                        obj.put("fen", Dto.sub(room.getTotalScore(),room.getUserPacketMap().get(account).getScore()));
+                    }else {
+                        obj.put("fen", -room.getUserPacketMap().get(account).getScore());
+                    }
+                    obj.put("id", room.getPlayerMap().get(account).getId());
+                    array.add(obj);
+                }else if (room.getRoomType()==CommonConstant.ROOM_TYPE_FK) {
+                    // 房主支付
+                    if (room.getPayType()==CommonConstant.PAY_TYPE_OWNER) {
+                        // 房主参与第一局需要扣房卡
+                        if (account.equals(room.getOwner())&&room.getUserPacketMap().get(account).getPlayTimes()==1) {
+                            // TODO: 2018/5/11 房卡数
+                            obj.put("total", 1);
+                            obj.put("fen", -room.getPlayerCount()*room.getSinglePayNum());
+                            obj.put("id", room.getPlayerMap().get(account).getId());
+                            array.add(obj);
+                        }
+                    }
+                    // 房费AA
+                    if (room.getPayType()==CommonConstant.PAY_TYPE_AA) {
+                        // 参与第一局需要扣房卡
+                        if (room.getUserPacketMap().get(account).getPlayTimes()==1) {
+                            // TODO: 2018/5/11 房卡数
+                            obj.put("total", 1);
+                            obj.put("fen", -room.getSinglePayNum());
+                            obj.put("id", room.getPlayerMap().get(account).getId());
+                            array.add(obj);
+                        }
+                    }
                 }
-                obj.put("id", room.getPlayerMap().get(account).getId());
-                array.add(obj);
                 // 用户游戏记录
                 JSONObject object = new JSONObject();
                 object.put("id", room.getPlayerMap().get(account).getId());
