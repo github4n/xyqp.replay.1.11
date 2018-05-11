@@ -1,7 +1,6 @@
 package com.zhuoan.webapp.controller;
 
 import com.github.miemiedev.mybatis.paginator.domain.PageList;
-import com.zhuoan.enumtype.EnvKeyEnum;
 import com.zhuoan.enumtype.PaginationEnum;
 import com.zhuoan.enumtype.ResCodeEnum;
 import com.zhuoan.model.condition.ZaUsersCondition;
@@ -112,7 +111,7 @@ public class DemoController extends BaseController {
         @RequestMapping("key")
         @ResponseBody
         public void demoObtainValueByKey () {
-            logger.info("获取到配置参数key中的value=[" + env.getProperty(EnvKeyEnum.KEY.getKey()) + "]");
+//            logger.info("获取到配置参数key中的value=[" + env.getProperty(EnvKeyEnum.KEY.getKey()) + "]");
         }
 
         /**

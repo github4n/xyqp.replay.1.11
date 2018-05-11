@@ -7,20 +7,16 @@ package com.zhuoan.enumtype;
  * @date 2018 -04-01 14:13
  */
 public enum EnvKeyEnum {
-    KEY("key"), //just a demo use
 
-
+    /**
+     * 当前环境：本地local=通配  线上=online
+     */
+    RUN_ENVIRONMENT("run_environment"),
 
     LOCAL_NAME("local_name"),
-    LOCAL_IP("local_ip"),
-    LOCAL_REMOTE_IP("local_remote_ip"),
     LOCAL_PORT("local_port"),
-
-
     SERVER_IP("server_ip"),
-    SERVER_REMOTE_IP("server_remote_ip"),
     SERVER_PORT("server_port"),
-    SERVER_DOMAIN("server_domain"),
 
 
     ;
