@@ -224,7 +224,7 @@ public class GameMain implements SocketIoManagerService {
             executor.scheduleWithFixedDelay(new GameTask(), 0, 1, TimeUnit.MINUTES);
 
         } catch (RemoteException | NotBoundException e) {
-            logger.info("尝试重新连接Socket");
+            logger.error("尝试重新连接Socket", e);
             startServer();
         } catch (Exception e) {
             logger.error("RMI异常", e);
