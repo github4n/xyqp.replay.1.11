@@ -146,6 +146,18 @@ public class GameRoom {
      * 房间id
      */
     private long id = 0;
+    /**
+     * 每个玩家支付房卡数量
+     */
+    private int singlePayNum = 0;
+
+    public int getSinglePayNum() {
+        return singlePayNum;
+    }
+
+    public void setSinglePayNum(int singlePayNum) {
+        this.singlePayNum = singlePayNum;
+    }
 
     public String getRoomNo() {
         return roomNo;

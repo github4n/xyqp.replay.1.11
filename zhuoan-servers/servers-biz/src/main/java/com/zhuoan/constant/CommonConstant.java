@@ -140,6 +140,15 @@ public class CommonConstant {
     public static final int GLOBAL_NO = 0;
 
     /**
+     * 支付类型-房主支付
+     */
+    public static final int PAY_TYPE_OWNER = 0;
+    /**
+     * 支付类型-AA
+     */
+    public static final int PAY_TYPE_AA = 1;
+
+    /**
      * 准备超时-不处理
      */
     public static final int READY_OVERTIME_NOTHING = 0;

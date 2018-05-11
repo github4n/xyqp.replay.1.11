@@ -891,10 +891,37 @@ public class NNGameEventDealNew {
                 gameProcessJS.add(userJS);
                 // 元宝输赢情况
                 JSONObject obj = new JSONObject();
-                obj.put("total", RoomManage.gameRoomMap.get(room.getRoomNo()).getPlayerMap().get(account).getScore());
-                obj.put("fen", room.getUserPacketMap().get(account).getScore());
-                obj.put("id", room.getPlayerMap().get(account).getId());
-                array.add(obj);
+                if (room.getRoomType()==CommonConstant.ROOM_TYPE_YB||room.getRoomType()==CommonConstant.ROOM_TYPE_JB) {
+                    obj.put("total", RoomManage.gameRoomMap.get(room.getRoomNo()).getPlayerMap().get(account).getScore());
+                    obj.put("fen", room.getUserPacketMap().get(account).getScore());
+                    obj.put("id", room.getPlayerMap().get(account).getId());
+                    array.add(obj);
+                }else if (room.getRoomType()==CommonConstant.ROOM_TYPE_FK){
+                    // 房主支付
+                    if (room.getPayType()==CommonConstant.PAY_TYPE_OWNER) {
+                        if (account.equals(room.getOwner())) {
+                            // 参与第一局需要扣房卡
+                            if (room.getUserPacketMap().get(account).getPlayTimes()==1) {
+                                // TODO: 2018/5/11 房卡数
+                                obj.put("total", 1);
+                                obj.put("fen", -room.getPlayerCount()*room.getSinglePayNum());
+                                obj.put("id", room.getPlayerMap().get(account).getId());
+                                array.add(obj);
+                            }
+                        }
+                    }
+                    // 房费AA
+                    if (room.getPayType()==CommonConstant.PAY_TYPE_AA) {
+                        // 参与第一局需要扣房卡
+                        if (room.getUserPacketMap().get(account).getPlayTimes()==1) {
+                            // TODO: 2018/5/11 房卡数
+                            obj.put("total", 1);
+                            obj.put("fen", -room.getSinglePayNum());
+                            obj.put("id", room.getPlayerMap().get(account).getId());
+                            array.add(obj);
+                        }
+                    }
+                }
                 // 用户游戏记录
                 JSONObject object = new JSONObject();
                 object.put("id", room.getPlayerMap().get(account).getId());
@@ -947,8 +974,10 @@ public class NNGameEventDealNew {
                 room.setId(roomInfo.getLong("id"));
             }
         }
-        // 更新玩家分数
-        producerService.sendMessage(daoQueueDestination, new PumpDao(DaoTypeConstant.UPDATE_SCORE, room.getPumpObject(array)));
+        if (array.size()>0) {
+            // 更新玩家分数
+            producerService.sendMessage(daoQueueDestination, new PumpDao(DaoTypeConstant.UPDATE_SCORE, room.getPumpObject(array)));
+        }
         // 玩家输赢记录
         producerService.sendMessage(daoQueueDestination, new PumpDao(DaoTypeConstant.USER_DEDUCTION, new JSONObject().element("user", userDeductionData)));
         // 战绩信息
