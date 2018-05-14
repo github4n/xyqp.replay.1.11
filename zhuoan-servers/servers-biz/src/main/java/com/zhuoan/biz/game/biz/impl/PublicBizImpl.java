@@ -50,7 +50,7 @@ public class PublicBizImpl implements PublicBiz{
     }
 
     @Override
-    public JSONObject getGoldSetting(JSONObject obj){
+    public JSONArray getGoldSetting(JSONObject obj){
         return gameDao.getGoldSetting(obj);
     }
 }

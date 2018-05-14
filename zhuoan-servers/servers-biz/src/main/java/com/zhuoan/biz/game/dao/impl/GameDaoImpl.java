@@ -668,9 +668,9 @@ public class GameDaoImpl implements GameDao {
     }
 
     @Override
-    public JSONObject getGoldSetting(JSONObject obj){
-        String sql = "SELECT `option` FROM za_gamegoldsetting WHERE game_id=? AND platform=?";
-        return DBUtil.getObjectBySQL(sql,new Object[]{obj.getInt("gameId"),obj.getString("platform")});
+    public JSONArray getGoldSetting(JSONObject obj){
+        String sql = "SELECT `option`,online,memo,goldcoins FROM za_gamegoldsetting WHERE game_id=? AND platform=?";
+        return DBUtil.getObjectListBySQL(sql,new Object[]{obj.getInt("gameId"),obj.getString("platform")});
     }
 }
 

@@ -154,6 +154,10 @@ public class GameRoom {
      * 总结算数据
      */
     private JSONArray finalSummaryData = new JSONArray();
+    /**
+     * 金币场等级
+     */
+    private int level;
 
     public String getRoomNo() {
         return roomNo;
@@ -433,6 +437,14 @@ public class GameRoom {
 
     public void setFinalSummaryData(JSONArray finalSummaryData) {
         this.finalSummaryData = finalSummaryData;
+    }
+
+    public int getLevel() {
+        return level;
+    }
+
+    public void setLevel(int level) {
+        this.level = level;
     }
 
     /**

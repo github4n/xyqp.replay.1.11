@@ -295,5 +295,5 @@ public interface GameDao {
      * @param obj
      * @return
      */
-    public JSONObject getGoldSetting(JSONObject obj);
+    public JSONArray getGoldSetting(JSONObject obj);
 }

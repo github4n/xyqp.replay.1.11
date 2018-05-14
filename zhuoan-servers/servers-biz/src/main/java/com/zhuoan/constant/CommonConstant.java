@@ -98,6 +98,10 @@ public class CommonConstant {
      */
     public static final int BASE_GAME_EVENT_GET_ROOM_CARD_PAY_INFO  = 20;
     /**
+     * 公共游戏事件-金币场加入房间
+     */
+    public static final int BASE_GAME_EVENT_GET_COIN_SETTING  = 21;
+    /**
      * 游戏公共部分
      */
     public static final int GAME_BASE = 0;

@@ -220,6 +220,11 @@ public class BaseEventDeal {
             gameRoom.setScore(1);
         }
         // 元宝模式
+        if (baseInfo.containsKey("level")) {
+            //底分
+            gameRoom.setLevel(baseInfo.getInt("level"));
+        }
+        // 元宝模式
         if (baseInfo.containsKey("yuanbao") && baseInfo.getDouble("yuanbao") > 0) {
             //底分
             gameRoom.setScore(baseInfo.getDouble("yuanbao"));
@@ -1422,17 +1427,14 @@ public class BaseEventDeal {
     public void joinCoinRoom(SocketIOClient client, Object data) {
         JSONObject postData = JSONObject.fromObject(data);
         int gameId = postData.getInt("gid");
+        int level = postData.getInt("level");
+        JSONObject option = postData.getJSONObject("option");
         int account = postData.getInt(CommonConstant.DATA_KEY_ACCOUNT);
-        JSONObject obj = new JSONObject();
-        obj.put("gameId",gameId);
-        // TODO: 2018/5/10 平台号写死 
-        obj.put("platform","SDTQP");
-        JSONObject goldSetting = publicBiz.getGoldSetting(obj);
-        postData.put("base_info",JSONObject.fromObject(goldSetting.getString("option")));
+        postData.put("base_info",option);
         List<String> roomNoList = new ArrayList<String>();
         for (String roomNo : RoomManage.gameRoomMap.keySet()) {
             GameRoom room = RoomManage.gameRoomMap.get(roomNo);
-            if (room.getRoomType()==CommonConstant.ROOM_TYPE_JB&&room.getGid()==gameId&&
+            if (room.getRoomType()==CommonConstant.ROOM_TYPE_JB&&room.getGid()==gameId&&room.getLevel()==level&&
                 !room.getPlayerMap().containsKey(account)&&room.getPlayerMap().size()<room.getPlayerCount()) {
                 roomNoList.add(roomNo);
             }
@@ -1444,6 +1446,28 @@ public class BaseEventDeal {
             postData.put("room_no",roomNoList.get(0));
             joinRoomBase(client,postData);
         }
+    }
+
+    public void getCoinSetting(SocketIOClient client,Object data) {
+        JSONObject postData = JSONObject.fromObject(data);
+        int gameId = postData.getInt("gid");
+        String platform = postData.getString("platform");
+        JSONObject obj = new JSONObject();
+        obj.put("gameId",gameId);
+        obj.put("platform",platform);
+        JSONArray goldSettings = publicBiz.getGoldSetting(obj);
+        for (int i = 0; i < goldSettings.size(); i++) {
+            JSONObject goldSetting = goldSettings.getJSONObject(i);
+            for (String roomNo : RoomManage.gameRoomMap.keySet()) {
+                if (RoomManage.gameRoomMap.get(roomNo).getRoomInfo().equals(goldSetting.getJSONObject("option"))) {
+                    goldSetting.put("online",goldSetting.getInt("online")+1);
+                }
+            }
+        }
+        JSONObject result = new JSONObject();
+        result.put(CommonConstant.RESULT_KEY_CODE,CommonConstant.GLOBAL_YES);
+        result.put("data",goldSettings);
+        CommonConstant.sendMsgEventToSingle(client,String.valueOf(result),"getGameGoldSettingPush");
     }
 
     /**

@@ -252,19 +252,28 @@ public class BaseGameEvent {
         /**
          *  金币场加入房间
          */
-        server.addEventListener("createRoomCoins", Object.class, new DataListener<Object>() {
+        server.addEventListener("quickJoin", Object.class, new DataListener<Object>() {
             @Override
             public void onData(SocketIOClient client, Object object, AckRequest ackSender) {
                 producerService.sendMessage(baseQueueDestination, new Messages(client, object, CommonConstant.GAME_BASE, CommonConstant.BASE_GAME_EVENT_JOIN_COIN_ROOM));
             }
         });
         /**
-         *  金币场加入房间
+         *  获取房卡支付数据
          */
         server.addEventListener("getRoomCardPayInfo", Object.class, new DataListener<Object>() {
             @Override
             public void onData(SocketIOClient client, Object object, AckRequest ackSender) {
                 producerService.sendMessage(baseQueueDestination, new Messages(client, object, CommonConstant.GAME_BASE, CommonConstant.BASE_GAME_EVENT_GET_ROOM_CARD_PAY_INFO));
+            }
+        });
+        /**
+         *  获取金币场设置
+         */
+        server.addEventListener("getGameGoldSetting", Object.class, new DataListener<Object>() {
+            @Override
+            public void onData(SocketIOClient client, Object object, AckRequest ackSender) {
+                producerService.sendMessage(baseQueueDestination, new Messages(client, object, CommonConstant.GAME_BASE, CommonConstant.BASE_GAME_EVENT_GET_COIN_SETTING));
             }
         });
 

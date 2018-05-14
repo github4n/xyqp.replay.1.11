@@ -122,6 +122,9 @@ public class GameEventDeal {
                     case CommonConstant.BASE_GAME_EVENT_GET_ROOM_CARD_PAY_INFO:
                         baseEventDeal.getRoomCardPayInfo(client, data);
                         break;
+                    case CommonConstant.BASE_GAME_EVENT_GET_COIN_SETTING:
+                        baseEventDeal.getCoinSetting(client, data);
+                        break;
                     default:
                         break;
                 }
