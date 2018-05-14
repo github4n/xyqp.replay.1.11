@@ -803,17 +803,17 @@ public class SSSGameEventDealNew {
                 StringBuffer roomInfo = new StringBuffer();
                 roomInfo.append("房号:");
                 roomInfo.append(room.getRoomNo());
-                roomInfo.append("/最低");
+                roomInfo.append(" 最低");
                 roomInfo.append(room.getMinPlayer());
-                roomInfo.append("人/");
+                roomInfo.append("人 ");
                 roomInfo.append(room.getWfType());
                 roomData.put("roominfo", roomInfo.toString());
                 StringBuffer roomInfo2 = new StringBuffer();
                 roomInfo2.append("底注:");
                 roomInfo2.append((int) room.getScore());
-                roomInfo2.append("/入场");
+                roomInfo2.append(" 进:");
                 roomInfo2.append((int) room.getEnterScore());
-                roomInfo2.append("离场/");
+                roomInfo2.append(" 出:");
                 roomInfo2.append((int) room.getLeaveScore());
                 roomData.put("roominfo2", roomInfo2.toString());
             }

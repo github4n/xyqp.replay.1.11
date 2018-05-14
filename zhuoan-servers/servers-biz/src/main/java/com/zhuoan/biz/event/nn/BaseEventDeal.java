@@ -1086,7 +1086,6 @@ public class BaseEventDeal {
         JSONObject result = new JSONObject();
         result.put("type",type);
         result.put(CommonConstant.RESULT_KEY_CODE,CommonConstant.GLOBAL_YES);
-        postData.put("platform","SDTQP");
         switch (type) {
             case CommonConstant.NOTICE_TYPE_MALL:
                 if (!postData.containsKey("platform")) {
