@@ -235,7 +235,7 @@ public class SSSGameRoomNew extends GameRoom{
      */
     public JSONArray obtainShowIndex(){
         JSONArray showIndex = new JSONArray();
-        if (getGameStatus()>SSSConstant.SSS_GAME_STATUS_GAME_EVENT) {
+        if (getGameStatus()>SSSConstant.SSS_GAME_STATUS_GAME_EVENT&&getGameStatus()!=SSSConstant.SSS_GAME_STATUS_FINAL_SUMMARY) {
             Map<String,Double> headMap = new HashMap<String, Double>();
             Map<String,Double> midMap = new HashMap<String, Double>();
             Map<String,Double> footMap = new HashMap<String, Double>();
@@ -638,6 +638,9 @@ public class SSSGameRoomNew extends GameRoom{
      * @return
      */
     public JSONArray obtainFinalSummaryData(){
+        if (getFinalSummaryData().size()>0) {
+            return getFinalSummaryData();
+        }
         JSONArray array = new JSONArray();
         for (String account : getUserPacketMap().keySet()) {
             if (getUserPacketMap().get(account).getStatus()>SSSConstant.SSS_USER_STATUS_INIT) {
@@ -662,6 +665,37 @@ public class SSSGameRoomNew extends GameRoom{
                 obj.put("ordinaryTimes",getUserPacketMap().get(account).getOrdinaryTimes());
                 array.add(obj);
             }
+        }
+        setFinalSummaryData(array);
+        return array;
+    }
+
+    /**
+     * 是否全部同意解散
+     * @return
+     */
+    public boolean isAgreeClose(){
+        for (String account : userPacketMap.keySet()){
+            if (userPacketMap.get(account).getIsCloseRoom()!= CommonConstant.CLOSE_ROOM_AGREE) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    /**
+     * 获取解散数据
+     * @return
+     */
+    public JSONArray getJieSanData(){
+        JSONArray array = new JSONArray();
+        for (String account : getUserPacketMap().keySet()) {
+            JSONObject obj = new JSONObject();
+            obj.put("index",getPlayerMap().get(account).getMyIndex());
+            obj.put("name",getPlayerMap().get(account).getName());
+            obj.put("result",getUserPacketMap().get(account).getIsCloseRoom());
+            obj.put("jiesanTimer",getJieSanTime());
+            array.add(obj);
         }
         return array;
     }

@@ -24,6 +24,10 @@ public class SSSConstant {
      */
     public static final int SSS_GAME_EVENT_RECONNECT = 4;
     /**
+     * 十三水游戏事件-解散房间
+     */
+    public static final int SSS_GAME_EVENT_CLOSE_ROOM = 5;
+    /**
      * 十三水庄家类型-霸王庄
      */
     public static final int SSS_BANKER_TYPE_BWZ = 1;

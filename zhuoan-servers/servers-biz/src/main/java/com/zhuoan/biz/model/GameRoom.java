@@ -150,14 +150,10 @@ public class GameRoom {
      * 每个玩家支付房卡数量
      */
     private int singlePayNum = 0;
-
-    public int getSinglePayNum() {
-        return singlePayNum;
-    }
-
-    public void setSinglePayNum(int singlePayNum) {
-        this.singlePayNum = singlePayNum;
-    }
+    /**
+     * 总结算数据
+     */
+    private JSONArray finalSummaryData = new JSONArray();
 
     public String getRoomNo() {
         return roomNo;
@@ -421,6 +417,22 @@ public class GameRoom {
 
     public void setId(long id) {
         this.id = id;
+    }
+
+    public int getSinglePayNum() {
+        return singlePayNum;
+    }
+
+    public void setSinglePayNum(int singlePayNum) {
+        this.singlePayNum = singlePayNum;
+    }
+
+    public JSONArray getFinalSummaryData() {
+        return finalSummaryData;
+    }
+
+    public void setFinalSummaryData(JSONArray finalSummaryData) {
+        this.finalSummaryData = finalSummaryData;
     }
 
     /**

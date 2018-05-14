@@ -80,5 +80,16 @@ public class SSSGameEvent {
                 producerService.sendMessage(sssQueueDestination, new Messages(client, data, CommonConstant.GAME_ID_SSS, SSSConstant.SSS_GAME_EVENT_RECONNECT));
             }
         });
+
+        /**
+         * 解散房间事件
+         */
+        server.addEventListener("closeRoom_SSS", Object.class, new DataListener<Object>() {
+
+            @Override
+            public void onData(SocketIOClient client, Object data, AckRequest ackSender) {
+                producerService.sendMessage(sssQueueDestination, new Messages(client, data, CommonConstant.GAME_ID_SSS, SSSConstant.SSS_GAME_EVENT_CLOSE_ROOM));
+            }
+        });
     }
 }

@@ -371,7 +371,9 @@ public class SSSGameEventDealNew {
                                             RoomManage.gameRoomMap.get(roomNo).getPlayerMap().get(account).setScore(newScore);
                                         }
                                     }
-                                    room.setGameStatus(SSSConstant.SSS_GAME_STATUS_SUMMARY);
+                                    if (room.getGameStatus()!=SSSConstant.SSS_GAME_STATUS_FINAL_SUMMARY) {
+                                        room.setGameStatus(SSSConstant.SSS_GAME_STATUS_SUMMARY);
+                                    }
                                     // 初始化倒计时
                                     room.setTimeLeft(SSSConstant.SSS_TIMER_INIT);
                                     // 更新数据库
@@ -379,10 +381,8 @@ public class SSSGameEventDealNew {
                                     // 改变状态，通知玩家
                                     changeGameStatus(room);
                                     if (room.getRoomType()==CommonConstant.ROOM_TYPE_FK) {
-                                        // 局数到了之后触发总结算
-                                        if (room.getGameIndex()==room.getGameCount()) {
+                                        if (room.getGameStatus()==SSSConstant.SSS_GAME_STATUS_SUMMARY&&room.getGameIndex()==room.getGameCount()) {
                                             room.setGameStatus(SSSConstant.SSS_GAME_STATUS_FINAL_SUMMARY);
-                                            changeGameStatus(room);
                                         }
                                     }
                                 }
@@ -418,7 +418,6 @@ public class SSSGameEventDealNew {
             // 有参与的玩家
             if (room.getUserPacketMap().get(account).getStatus() == SSSConstant.SSS_USER_STATUS_GAME_EVENT) {
                 Player up = room.getUserPacketMap().get(account);
-                up.setPlayTimes(up.getPlayTimes()+1);
                 // 胜利次数+1
                 if (up.getScore()>0) {
                     up.setWinTimes(up.getWinTimes()+1);
@@ -525,8 +524,7 @@ public class SSSGameEventDealNew {
                     if (room.getPayType()==CommonConstant.PAY_TYPE_OWNER) {
                         // 房主参与第一局需要扣房卡
                         if (uuid.equals(room.getOwner())&&room.getUserPacketMap().get(uuid).getPlayTimes()==1) {
-                            // TODO: 2018/5/11 房卡数
-                            obj.put("total", 1);
+                            obj.put("total", room.getPlayerMap().get(uuid).getRoomCardNum());
                             obj.put("fen", -room.getPlayerCount()*room.getSinglePayNum());
                             obj.put("id", room.getPlayerMap().get(uuid).getId());
                             array.add(obj);
@@ -536,8 +534,7 @@ public class SSSGameEventDealNew {
                     if (room.getPayType()==CommonConstant.PAY_TYPE_AA) {
                         // 参与第一局需要扣房卡
                         if (room.getUserPacketMap().get(uuid).getPlayTimes()==1) {
-                            // TODO: 2018/5/11 房卡数
-                            obj.put("total", 1);
+                            obj.put("total", room.getPlayerMap().get(uuid).getRoomCardNum());
                             obj.put("fen", -room.getSinglePayNum());
                             obj.put("id", room.getPlayerMap().get(uuid).getId());
                             array.add(obj);
@@ -639,11 +636,13 @@ public class SSSGameEventDealNew {
                     canExit = true;
                 }
             }else if (room.getRoomType() == CommonConstant.ROOM_TYPE_FK) {
-                // TODO: 2018/5/11 支付方式为房主支付房主不能退出
                 // 房卡场没玩过可以退出
                 if (room.getUserPacketMap().get(account).getPlayTimes()==0) {
-                    canExit = true;
-                }else if (room.getGameStatus() == SSSConstant.SSS_GAME_STATUS_FINAL_SUMMARY) {
+                    if (room.getPayType()==CommonConstant.PAY_TYPE_AA||!room.getOwner().equals(account)) {
+                        canExit = true;
+                    }
+                }
+                if (room.getGameStatus() == SSSConstant.SSS_GAME_STATUS_FINAL_SUMMARY) {
                     canExit = true;
                 }
             }
@@ -700,9 +699,78 @@ public class SSSGameEventDealNew {
                 result.put(CommonConstant.RESULT_KEY_CODE,CommonConstant.GLOBAL_NO);
                 result.put(CommonConstant.RESULT_KEY_MSG,"游戏中无法退出");
                 result.put("showTimer",CommonConstant.GLOBAL_YES);
+                if (room.getTimeLeft()==0) {
+                    result.put("showTimer",CommonConstant.GLOBAL_NO);
+                }
                 result.put("timer",room.getTimeLeft());
                 result.put("type",1);
                 CommonConstant.sendMsgEventToSingle(client,result.toString(),"exitRoomPush_SSS");
+            }
+        }
+    }
+
+    /**
+     * 解散房间
+     *
+     * @param client
+     * @param data
+     */
+    public void closeRoom(SocketIOClient client, Object data) {
+        JSONObject postData = JSONObject.fromObject(data);
+        if (!CommonConstant.checkEvent(postData, CommonConstant.CHECK_GAME_STATUS_NO, client)) {
+            return;
+        }
+        String roomNo = postData.getString(CommonConstant.DATA_KEY_ROOM_NO);
+        SSSGameRoomNew room = (SSSGameRoomNew) RoomManage.gameRoomMap.get(roomNo);
+        String account = postData.getString(CommonConstant.DATA_KEY_ACCOUNT);
+        if (postData.containsKey("type")) {
+            JSONObject result = new JSONObject();
+            int type = postData.getInt("type");
+            // 有人发起解散设置解散时间
+            if (type == CommonConstant.CLOSE_ROOM_AGREE && room.getJieSanTime() == 0) {
+                room.setJieSanTime(60);
+                // TODO: 2018/4/18 解散房间定时器
+            }
+            // 设置解散状态
+            room.getUserPacketMap().get(account).setIsCloseRoom(type);
+            // 有人拒绝解散
+            if (type == CommonConstant.CLOSE_ROOM_DISAGREE) {
+                // 重置解散
+                room.setJieSanTime(0);
+                // 设置玩家为未确认状态
+                for (String uuid : room.getUserPacketMap().keySet()) {
+                    room.getUserPacketMap().get(uuid).setIsCloseRoom(CommonConstant.CLOSE_ROOM_UNSURE);
+                }
+                // 通知玩家
+                result.put(CommonConstant.RESULT_KEY_CODE, CommonConstant.GLOBAL_NO);
+                String[] names = {room.getPlayerMap().get(account).getName()};
+                result.put("names", names);
+                CommonConstant.sendMsgEventToAll(room.getAllUUIDList(), result.toString(), "closeRoomPush_SSS");
+                return;
+            }
+            if (type == CommonConstant.CLOSE_ROOM_AGREE) {
+                // 全部同意解散
+                if (room.isAgreeClose()) {
+                    // 未玩完一局不需要强制结算
+                    if (room.getGameIndex()<=1&&room.getGameStatus()< SSSConstant.SSS_GAME_STATUS_FINAL_SUMMARY) {
+                        // 所有玩家
+                        List<UUID> uuidList = room.getAllUUIDList();
+                        // 移除房间
+                        RoomManage.gameRoomMap.remove(roomNo);
+                        // 通知玩家
+                        result.put("type",CommonConstant.SHOW_MSG_TYPE_BIG);
+                        result.put(CommonConstant.RESULT_KEY_MSG,"解散房间成功");
+                        CommonConstant.sendMsgEventToAll(uuidList,result.toString(),"tipMsgPush");
+                        return;
+                    }
+                    room.setGameStatus(SSSConstant.SSS_GAME_STATUS_FINAL_SUMMARY);
+                    changeGameStatus(room);
+                } else {// 刷新数据
+                    room.getUserPacketMap().get(account).setIsCloseRoom(CommonConstant.CLOSE_ROOM_AGREE);
+                    result.put(CommonConstant.RESULT_KEY_CODE, CommonConstant.GLOBAL_YES);
+                    result.put("data", room.getJieSanData());
+                    CommonConstant.sendMsgEventToAll(room.getAllUUIDList(), result.toString(), "closeRoomPush_SSS");
+                }
             }
         }
     }
@@ -772,8 +840,13 @@ public class SSSGameEventDealNew {
             obj.put("myPai",room.getUserPacketMap().get(account).getMyPai());
             obj.put("myPaiType",room.getUserPacketMap().get(account).getPaiType());
             obj.put("gameData",room.obtainGameData());
-            if (room.getGameStatus()== SSSConstant.SSS_GAME_STATUS_FINAL_SUMMARY) {
-                obj.put("jiesuanData",room.obtainFinalSummaryData());
+            if (room.getRoomType()==CommonConstant.ROOM_TYPE_FK) {
+                if (room.getGameStatus()== SSSConstant.SSS_GAME_STATUS_FINAL_SUMMARY) {
+                    obj.put("jiesuanData", room.obtainFinalSummaryData());
+                }
+                if (room.getGameStatus()==SSSConstant.SSS_GAME_STATUS_SUMMARY&&room.getGameIndex()==room.getGameCount()) {
+                    obj.put("jiesuanData", room.obtainFinalSummaryData());
+                }
             }
             UUID uuid = room.getPlayerMap().get(account).getUuid();
             if (uuid!=null) {
@@ -817,6 +890,25 @@ public class SSSGameEventDealNew {
                 roomInfo2.append((int) room.getLeaveScore());
                 roomData.put("roominfo2", roomInfo2.toString());
             }
+            if (room.getRoomType()==CommonConstant.ROOM_TYPE_FK) {
+                StringBuffer roomInfo = new StringBuffer();
+                roomInfo.append(room.getWfType());
+                roomInfo.append(" ");
+                roomInfo.append(room.getPlayerCount());
+                roomInfo.append("人 ");
+                roomInfo.append(room.getGameCount());
+                roomInfo.append("局 ");
+                if (room.getColor()==0) {
+                    roomInfo.append("不加色");
+                }
+                if (room.getColor()==1) {
+                    roomInfo.append("加一色");
+                }
+                if (room.getColor()==2) {
+                    roomInfo.append("加两色");
+                }
+                roomData.put("roominfo", roomInfo.toString());
+            }
             roomData.put("zhuang",CommonConstant.NO_BANKER_INDEX);
             if (room.getRoomType()!=CommonConstant.ROOM_TYPE_YB&&room.getPlayerMap().get(room.getBanker())!=null) {
                 roomData.put("zhuang",room.getPlayerMap().get(room.getBanker()).getMyIndex());
@@ -836,9 +928,13 @@ public class SSSGameEventDealNew {
             roomData.put("myPai",room.getUserPacketMap().get(account).getMyPai());
             roomData.put("myPaiType",room.getUserPacketMap().get(account).getPaiType());
             roomData.put("gameData",room.obtainGameData());
-            roomData.put("jiesan","");
-            roomData.put("jiesanData","");
-
+            if (room.getJieSanTime() > 0) {
+                roomData.put("jiesan", CommonConstant.GLOBAL_YES);
+                roomData.put("jiesanData", room.getJieSanData());
+            }
+            if (room.getGameStatus()== SSSConstant.SSS_GAME_STATUS_FINAL_SUMMARY) {
+                roomData.put("jiesuanData", room.obtainFinalSummaryData());
+            }
         }
         return roomData;
     }

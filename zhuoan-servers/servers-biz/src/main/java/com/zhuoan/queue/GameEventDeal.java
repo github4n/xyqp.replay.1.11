@@ -119,6 +119,9 @@ public class GameEventDeal {
                     case CommonConstant.BASE_GAME_EVENT_JOIN_COIN_ROOM:
                         baseEventDeal.joinCoinRoom(client, data);
                         break;
+                    case CommonConstant.BASE_GAME_EVENT_GET_ROOM_CARD_PAY_INFO:
+                        baseEventDeal.getRoomCardPayInfo(client, data);
+                        break;
                     default:
                         break;
                 }
@@ -169,6 +172,9 @@ public class GameEventDeal {
                     case SSSConstant.SSS_GAME_EVENT_RECONNECT:
                         // 断线重连
                         sssGameEventDealNew.reconnectGame(client, data);
+                    case SSSConstant.SSS_GAME_EVENT_CLOSE_ROOM:
+                        // 断线重连
+                        sssGameEventDealNew.closeRoom(client, data);
                         break;
                     default:
                         break;
@@ -188,6 +194,9 @@ public class GameEventDeal {
                         break;
                     case ZJHConstant.ZJH_GAME_EVENT_RECONNECT:
                         zjhGameEventDealNew.reconnectGame(client, data);
+                        break;
+                    case ZJHConstant.ZJH_GAME_EVENT_CLOSE_ROOM:
+                        zjhGameEventDealNew.closeRoom(client, data);
                         break;
                     default:
                         break;

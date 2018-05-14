@@ -332,6 +332,7 @@ public class Player implements Serializable{
         paiScore = 0;
         paiType = 0;
         swat = 0;
+        playTimes ++;
         headResult.clear();
         midResult.clear();
         footResult.clear();

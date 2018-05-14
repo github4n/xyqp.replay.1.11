@@ -236,6 +236,7 @@ public class UserPacket implements Serializable{
         score = 0;
         xzTimes = 0;
         qzTimes = 0;
+        playTimes ++;
     }
 	
 	public UserPacket() {

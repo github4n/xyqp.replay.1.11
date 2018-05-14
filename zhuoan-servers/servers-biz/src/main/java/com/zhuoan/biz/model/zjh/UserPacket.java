@@ -140,6 +140,8 @@ public class UserPacket {
         isGenDaoDi=false;
         //是否看牌
         isShow=false;
+        // 游戏局数+1
+        playTimes++;
 		bipaiList = new JSONArray();
 	}
 	

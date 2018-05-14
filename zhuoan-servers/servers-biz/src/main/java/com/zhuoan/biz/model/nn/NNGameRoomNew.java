@@ -519,6 +519,9 @@ public class NNGameRoomNew extends GameRoom{
      * @return
      */
     public JSONArray getFinalSummary() {
+        if (getFinalSummaryData().size()>0) {
+            return getFinalSummaryData();
+        }
         JSONArray array = new JSONArray();
         for (String account : userPacketMap.keySet()) {
             JSONObject obj = new JSONObject();
@@ -541,6 +544,7 @@ public class NNGameRoomNew extends GameRoom{
             obj.put("winTimes",userPacketMap.get(account).getWinTimes());
             array.add(obj);
         }
+        setFinalSummaryData(array);
         return array;
     }
 

@@ -258,6 +258,15 @@ public class BaseGameEvent {
                 producerService.sendMessage(baseQueueDestination, new Messages(client, object, CommonConstant.GAME_BASE, CommonConstant.BASE_GAME_EVENT_JOIN_COIN_ROOM));
             }
         });
+        /**
+         *  金币场加入房间
+         */
+        server.addEventListener("getRoomCardPayInfo", Object.class, new DataListener<Object>() {
+            @Override
+            public void onData(SocketIOClient client, Object object, AckRequest ackSender) {
+                producerService.sendMessage(baseQueueDestination, new Messages(client, object, CommonConstant.GAME_BASE, CommonConstant.BASE_GAME_EVENT_GET_ROOM_CARD_PAY_INFO));
+            }
+        });
 
     }
 

@@ -5,13 +5,11 @@ import com.zhuoan.biz.core.nn.NiuNiuServer;
 import com.zhuoan.biz.core.nn.Packer;
 import com.zhuoan.biz.core.nn.UserPacket;
 import com.zhuoan.biz.game.biz.RoomBiz;
-import com.zhuoan.biz.model.GameRoom;
 import com.zhuoan.biz.model.PackerCompare;
 import com.zhuoan.biz.model.Playerinfo;
 import com.zhuoan.biz.model.RoomManage;
 import com.zhuoan.biz.model.dao.PumpDao;
 import com.zhuoan.biz.model.nn.NNGameRoomNew;
-import com.zhuoan.constant.CacheKeyConstant;
 import com.zhuoan.constant.CommonConstant;
 import com.zhuoan.constant.DaoTypeConstant;
 import com.zhuoan.constant.NNConstant;
@@ -168,6 +166,9 @@ public class NNGameEventDealNew {
             obj.put("wanfaType",NNConstant.NN_GAME_TYPE);
         }
         obj.put("game_index", room.getGameIndex());
+        if (room.getGameIndex()==0) {
+            obj.put("game_index", 1);
+        }
         obj.put("showTimer", CommonConstant.GLOBAL_NO);
         if (room.getTimeLeft() > NNConstant.NN_TIMER_INIT) {
             obj.put("showTimer", CommonConstant.GLOBAL_YES);
@@ -727,6 +728,11 @@ public class NNGameEventDealNew {
                 }
                 // 通知玩家
                 changeGameStatus(room);
+                if (room.getRoomType() == CommonConstant.ROOM_TYPE_FK) {
+                    if (room.getGameStatus()==NNConstant.NN_GAME_STATUS_JS&&room.getGameIndex()==room.getGameCount()) {
+                        room.setGameStatus(NNConstant.NN_GAME_STATUS_ZJS);
+                    }
+                }
             }
         }
     }
@@ -848,8 +854,6 @@ public class NNGameEventDealNew {
                         up.setTongPeiTimes(up.getTongPeiTimes()+1);
                     }
                 }
-                // 参与游戏次数+1
-                up.setPlayTimes(up.getPlayTimes()+1);
             }
         }
     }
@@ -898,8 +902,7 @@ public class NNGameEventDealNew {
                         if (account.equals(room.getOwner())) {
                             // 参与第一局需要扣房卡
                             if (room.getUserPacketMap().get(account).getPlayTimes()==1) {
-                                // TODO: 2018/5/11 房卡数
-                                obj.put("total", 1);
+                                obj.put("total", room.getPlayerMap().get(account).getRoomCardNum());
                                 obj.put("fen", -room.getPlayerCount()*room.getSinglePayNum());
                                 obj.put("id", room.getPlayerMap().get(account).getId());
                                 array.add(obj);
@@ -910,8 +913,7 @@ public class NNGameEventDealNew {
                     if (room.getPayType()==CommonConstant.PAY_TYPE_AA) {
                         // 参与第一局需要扣房卡
                         if (room.getUserPacketMap().get(account).getPlayTimes()==1) {
-                            // TODO: 2018/5/11 房卡数
-                            obj.put("total", 1);
+                            obj.put("total", room.getPlayerMap().get(account).getRoomCardNum());
                             obj.put("fen", -room.getSinglePayNum());
                             obj.put("id", room.getPlayerMap().get(account).getId());
                             array.add(obj);
@@ -985,16 +987,6 @@ public class NNGameEventDealNew {
         }
     }
 
-    private JSONObject getRoomInfo(GameRoom room) {
-        JSONObject roomInfo =JSONObject.fromObject(redisService.queryValueByKey(CacheKeyConstant.ROOM_INFO_BY_RNO));
-        if (roomInfo == null) {
-            roomInfo = roomBiz.getRoomInfoByRno(room.getRoomNo());
-            redisService.insertKey(CacheKeyConstant.ROOM_INFO_BY_RNO, String.valueOf(roomInfo),null);
-        }
-        return roomInfo;
-    }
-
-
     /**
      * 退出房间
      *
@@ -1023,8 +1015,11 @@ public class NNGameEventDealNew {
                 }
             }else if (room.getRoomType() == CommonConstant.ROOM_TYPE_FK) {
                 if (room.getUserPacketMap().get(account).getPlayTimes()==0) {
-                    canExit = true;
-                }else if (room.getGameStatus() == NNConstant.NN_GAME_STATUS_ZJS) {
+                    if (room.getPayType()==CommonConstant.PAY_TYPE_AA||!room.getOwner().equals(account)) {
+                        canExit = true;
+                    }
+                }
+                if (room.getGameStatus() == NNConstant.NN_GAME_STATUS_ZJS) {
                     canExit = true;
                 }
             }
@@ -1120,7 +1115,6 @@ public class NNGameEventDealNew {
                     obj.put("jiesuanData", room.getFinalSummary());
                 }
                 if (room.getGameStatus()==NNConstant.NN_GAME_STATUS_JS&&room.getGameIndex()==room.getGameCount()) {
-                    room.setGameStatus(NNConstant.NN_GAME_STATUS_ZJS);
                     obj.put("jiesuanData", room.getFinalSummary());
                 }
             }
@@ -1173,9 +1167,22 @@ public class NNGameEventDealNew {
             if (type == CommonConstant.CLOSE_ROOM_AGREE) {
                 // 全部同意解散
                 if (room.isAgreeClose()) {
+                    // 未玩完一局不需要强制结算
+                    if (room.getGameIndex()<=1&&room.getGameStatus()< NNConstant.NN_GAME_STATUS_JS) {
+                        // 所有玩家
+                        List<UUID> uuidList = room.getAllUUIDList();
+                        // 移除房间
+                        RoomManage.gameRoomMap.remove(roomNo);
+                        // 通知玩家
+                        result.put("type",CommonConstant.SHOW_MSG_TYPE_BIG);
+                        result.put(CommonConstant.RESULT_KEY_MSG,"房间已被解散");
+                        CommonConstant.sendMsgEventToAll(uuidList,result.toString(),"tipMsgPush");
+                        return;
+                    }
                     room.setGameStatus(NNConstant.NN_GAME_STATUS_ZJS);
                     changeGameStatus(room);
                 } else {// 刷新数据
+                    room.getUserPacketMap().get(account).setIsCloseRoom(CommonConstant.CLOSE_ROOM_AGREE);
                     result.put(CommonConstant.RESULT_KEY_CODE, CommonConstant.GLOBAL_YES);
                     result.put("data", room.getJieSanData());
                     CommonConstant.sendMsgEventToAll(room.getAllUUIDList(), result.toString(), "closeRoomPush_NN");

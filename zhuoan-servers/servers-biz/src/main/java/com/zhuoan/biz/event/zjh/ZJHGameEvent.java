@@ -72,5 +72,16 @@ public class ZJHGameEvent {
                 producerService.sendMessage(zjhQueueDestination, new Messages(client, data, CommonConstant.GAME_ID_ZJH, ZJHConstant.ZJH_GAME_EVENT_RECONNECT));
             }
         });
+
+        /**
+         * 解散房间事件
+         */
+        server.addEventListener("closeRoom_ZJH", Object.class, new DataListener<Object>() {
+
+            @Override
+            public void onData(SocketIOClient client, Object data, AckRequest ackSender) {
+                producerService.sendMessage(zjhQueueDestination, new Messages(client, data, CommonConstant.GAME_ID_ZJH, ZJHConstant.ZJH_GAME_EVENT_CLOSE_ROOM));
+            }
+        });
     }
 }

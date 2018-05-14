@@ -12,31 +12,87 @@ public class Playerinfo implements Serializable{
 
 
     private static final long serialVersionUID = -3467565324346126435L;
-    private UUID uuid;//uuid
-    private long id;//用户的userId
-    private String account; //帐号
+    /**
+     * uuid
+     */
+    private UUID uuid;
+    /**
+     * 用户的userId
+     */
+    private long id;
+    /**
+     * 帐号
+     */
+    private String account;
+    /**
+     * 昵称
+     */
     private String name;
+    /**
+     * 头像
+     */
     private String headimg;
-    private String ip;//玩家IP
-    private String location;//玩家坐标
-    private String area;//地区
+    /**
+     * 玩家ip
+     */
+    private String ip;
+    /**
+     * 玩家坐标
+     */
+    private String location;
+    /**
+     * 地区
+     */
+    private String area;
+    /**
+     * 性别
+     */
     private String sex;
-    private int status;//状态
-    private double score;//房卡模式：玩家积分 ； 金币模式：玩家金币
+    /**
+     * 状态
+     */
+    private int status;
+    /**
+     * 房卡模式：玩家积分 ； 金币模式：玩家金币
+     */
+    private double score;
+    /**
+     * 座位号
+     */
     private int myIndex;
-    private String signature;//个性签名
-    private int vip;//VIP等级
-    private int luck=-1;// 幸运值
-    private boolean isTipMsg = true;// 是否提示消息
+    /**
+     * 个性签名
+     */
+    private String signature;
+    /**
+     * VIP等级
+     */
+    private int vip;
+    /**
+     * 幸运值
+     */
+    private int luck=-1;
+    /**
+     * 是否提示消息
+     */
+    private boolean isTipMsg = true;
+    /**
+     * 工会
+     */
     private String ghName = "该玩家未加入工会";
-    private String openid = "";
+    /**
+     * 房卡数
+     */
+    private int roomCardNum = 0;
 
-    public String getOpenid() {
-        return openid;
+    public int getRoomCardNum() {
+        return roomCardNum;
     }
-    public void setOpenid(String openid) {
-        this.openid = openid;
+
+    public void setRoomCardNum(int roomCardNum) {
+        this.roomCardNum = roomCardNum;
     }
+
     public String getGhName() {
         return ghName;
     }

@@ -24,6 +24,10 @@ public class ZJHConstant {
      */
     public static final int ZJH_GAME_EVENT_RECONNECT = 4;
     /**
+     * 炸金花游戏事件-解散房间
+     */
+    public static final int ZJH_GAME_EVENT_CLOSE_ROOM = 5;
+    /**
      * 炸金花游戏状态-初始
      */
     public static final int ZJH_GAME_STATUS_INIT=0;

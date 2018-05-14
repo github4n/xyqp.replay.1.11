@@ -482,6 +482,9 @@ public class ZJHGameRoomNew extends GameRoom{
      * 获取总结算数据
      */
     public JSONArray obtainFinalSummaryData() {
+        if (getFinalSummaryData().size()>0) {
+            return getFinalSummaryData();
+        }
         JSONArray array = new JSONArray();
         for (String account : getUserPacketMap().keySet()) {
             if (getUserPacketMap().get(account).getStatus()> ZJHConstant.ZJH_USER_STATUS_INIT) {
@@ -501,6 +504,37 @@ public class ZJHGameRoomNew extends GameRoom{
                 obj.put("winTimes",getUserPacketMap().get(account).getWinTimes());
                 array.add(obj);
             }
+        }
+        setFinalSummaryData(array);
+        return array;
+    }
+
+    /**
+     * 是否全部同意解散
+     * @return
+     */
+    public boolean isAgreeClose(){
+        for (String account : userPacketMap.keySet()){
+            if (userPacketMap.get(account).getIsCloseRoom()!= CommonConstant.CLOSE_ROOM_AGREE) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    /**
+     * 获取解散数据
+     * @return
+     */
+    public JSONArray getJieSanData(){
+        JSONArray array = new JSONArray();
+        for (String account : getUserPacketMap().keySet()) {
+            JSONObject obj = new JSONObject();
+            obj.put("index",getPlayerMap().get(account).getMyIndex());
+            obj.put("name",getPlayerMap().get(account).getName());
+            obj.put("result",getUserPacketMap().get(account).isCloseRoom);
+            obj.put("jiesanTimer",getJieSanTime());
+            array.add(obj);
         }
         return array;
     }
