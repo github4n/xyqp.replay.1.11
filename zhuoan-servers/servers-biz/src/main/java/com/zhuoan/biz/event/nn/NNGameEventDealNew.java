@@ -1136,8 +1136,8 @@ public class NNGameEventDealNew {
         if (!CommonConstant.checkEvent(postData, CommonConstant.CHECK_GAME_STATUS_NO, client)) {
             return;
         }
-        String roomNo = postData.getString(CommonConstant.DATA_KEY_ROOM_NO);
-        NNGameRoomNew room = (NNGameRoomNew) RoomManage.gameRoomMap.get(roomNo);
+        final String roomNo = postData.getString(CommonConstant.DATA_KEY_ROOM_NO);
+        final NNGameRoomNew room = (NNGameRoomNew) RoomManage.gameRoomMap.get(roomNo);
         String account = postData.getString(CommonConstant.DATA_KEY_ACCOUNT);
         if (postData.containsKey("type")) {
             JSONObject result = new JSONObject();
@@ -1145,7 +1145,12 @@ public class NNGameEventDealNew {
             // 有人发起解散设置解散时间
             if (type == CommonConstant.CLOSE_ROOM_AGREE && room.getJieSanTime() == 0) {
                 room.setJieSanTime(60);
-                // TODO: 2018/4/18 解散房间定时器
+                ThreadPoolHelper.executorService.submit(new Runnable() {
+                    @Override
+                    public void run() {
+                        gameTimerNiuNiu.closeRoomOverTime(roomNo,room.getJieSanTime());
+                    }
+                });
             }
             // 设置解散状态
             room.getUserPacketMap().get(account).setIsCloseRoom(type);

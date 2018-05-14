@@ -183,4 +183,51 @@ public class GameTimerNiuNiu{
             }
         }
     }
+
+    /**
+     * 解散超时
+     * @param roomNo
+     * @param timeLeft
+     */
+    public void closeRoomOverTime(String roomNo,int timeLeft) {
+        for (int i = timeLeft; i >= 0; i--) {
+            // 房间存在
+            if (RoomManage.gameRoomMap.containsKey(roomNo)&&RoomManage.gameRoomMap.get(roomNo)!=null) {
+                NNGameRoomNew room = (NNGameRoomNew)RoomManage.gameRoomMap.get(roomNo);
+                if (room.getJieSanTime()==0) {
+                    break;
+                }
+                // 设置倒计时
+                room.setJieSanTime(i);
+                if (i==0) {
+                    // 当前阶段所有未完成操作的玩家
+                    List<String> autoAccountList = new ArrayList<String>();
+                    for (String account : room.getUserPacketMap().keySet()) {
+                        if (room.getUserPacketMap().get(account).getIsCloseRoom() == CommonConstant.CLOSE_ROOM_UNSURE) {
+                            autoAccountList.add(account);
+                        }
+                    }
+                    for (String account : autoAccountList) {
+                        // 组织数据
+                        JSONObject data = new JSONObject();
+                        // 房间号
+                        data.put(CommonConstant.DATA_KEY_ROOM_NO,room.getRoomNo());
+                        // 账号
+                        data.put(CommonConstant.DATA_KEY_ACCOUNT,account);
+                        // 同意解散
+                        data.put("type",CommonConstant.CLOSE_ROOM_AGREE);
+                        SocketIOClient client = GameMain.server.getClient(room.getPlayerMap().get(account).getUuid());
+                        producerService.sendMessage(nnQueueDestination, new Messages(client, data, CommonConstant.GAME_ID_NN, NNConstant.NN_GAME_EVENT_CLOSE_ROOM));
+                    }
+                }
+                try {
+                    Thread.sleep(1000);
+                } catch (Exception e) {
+                    logger.error("",e);
+                }
+            }else {
+                break;
+            }
+        }
+    }
 }
