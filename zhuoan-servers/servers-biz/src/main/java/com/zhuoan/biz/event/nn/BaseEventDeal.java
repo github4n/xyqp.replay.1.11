@@ -130,6 +130,13 @@ public class BaseEventDeal {
                 return;
             }
         }
+        // 添加工会信息
+        if (!Dto.isObjNull(userInfo)&&userInfo.containsKey("gulidId")) {
+            JSONObject ghInfo = userBiz.getGongHui(userInfo.getLong("gulidId"));
+            if (!Dto.isObjNull(ghInfo)&&ghInfo.containsKey("name")) {
+                userInfo.put("ghName",ghInfo.getString("name"));
+            }
+        }
         // 创建房间
         createRoomBase(client, JSONObject.fromObject(data), userInfo);
     }
@@ -404,6 +411,13 @@ public class BaseEventDeal {
             CommonConstant.sendMsgEventToSingle(client, result.toString(), "enterRoomPush_NN");
             return;
         }
+        // 添加工会信息
+        if (!Dto.isObjNull(userInfo)&&userInfo.containsKey("gulidId")) {
+            JSONObject ghInfo = userBiz.getGongHui(userInfo.getLong("gulidId"));
+            if (!Dto.isObjNull(ghInfo)&&ghInfo.containsKey("name")) {
+                userInfo.put("ghName",ghInfo.getString("name"));
+            }
+        }
         // 重连不需要再次检查玩家积分
         if (!room.getPlayerMap().containsKey(account)||room.getPlayerMap().get(account)==null) {
             if (room.getRoomType() == CommonConstant.ROOM_TYPE_YB && userInfo.containsKey("yuanbao")
@@ -562,8 +576,8 @@ public class BaseEventDeal {
         } else {
             playerinfo.setSignature("");
         }
-        if (userInfo.containsKey("Identification")) {
-            playerinfo.setGhName(userInfo.getString("Identification"));
+        if (userInfo.containsKey("ghName")&&!Dto.stringIsNULL(userInfo.getString("ghName"))) {
+            playerinfo.setGhName(userInfo.getString("ghName"));
         }
         if (userInfo.containsKey("roomcard")) {
             playerinfo.setRoomCardNum(userInfo.getInt("roomcard"));
@@ -1387,6 +1401,11 @@ public class BaseEventDeal {
         result.put("gid",gameRoom.getGid());
     }
 
+    /**
+     * 获取房卡场支付信息
+     * @param client
+     * @param data
+     */
     public void getRoomCardPayInfo(SocketIOClient client, Object data) {
         JSONObject postData = JSONObject.fromObject(data);
         if (postData.containsKey("base_info")) {
@@ -1402,6 +1421,11 @@ public class BaseEventDeal {
         }
     }
 
+    /**
+     * 获取房卡场支付信息
+     * @param baseInfo
+     * @return
+     */
     public int getRoomCardPayInfo(JSONObject baseInfo) {
         int roomCard = 0;
         int player = baseInfo.getInt("player");
@@ -1429,8 +1453,9 @@ public class BaseEventDeal {
         int gameId = postData.getInt("gid");
         int level = postData.getInt("level");
         JSONObject option = postData.getJSONObject("option");
-        int account = postData.getInt(CommonConstant.DATA_KEY_ACCOUNT);
+        option.put("level",level);
         postData.put("base_info",option);
+        String account = postData.getString(CommonConstant.DATA_KEY_ACCOUNT);
         List<String> roomNoList = new ArrayList<String>();
         for (String roomNo : RoomManage.gameRoomMap.keySet()) {
             GameRoom room = RoomManage.gameRoomMap.get(roomNo);
@@ -1448,6 +1473,39 @@ public class BaseEventDeal {
         }
     }
 
+    /**
+     *
+     * 金币场房间设置缓存
+     * @param obj
+     * @return
+     */
+    private JSONArray getGoldSettingByGameIdAndPlatform(JSONObject obj) {
+        JSONArray goldSettings;
+        StringBuffer sb = new StringBuffer();
+        sb.append("gold_setting_");
+        sb.append(obj.getString("platform"));
+        sb.append("_");
+        sb.append(obj.getInt("gameId"));
+        try {
+            Object object = redisService.queryValueByKey(String.valueOf(sb));
+            if (object != null) {
+                goldSettings = JSONArray.fromObject(redisService.queryValueByKey(String.valueOf(sb)));
+            }else {
+                goldSettings = publicBiz.getGoldSetting(obj);
+                redisService.insertKey(String.valueOf(sb), String.valueOf(goldSettings), null);
+            }
+        } catch (Exception e) {
+            goldSettings = publicBiz.getGoldSetting(obj);
+            logger.error("请启动REmote DIctionary Server");
+        }
+        return goldSettings;
+    }
+
+    /**
+     * 获取金币场房间设置
+     * @param client
+     * @param data
+     */
     public void getCoinSetting(SocketIOClient client,Object data) {
         JSONObject postData = JSONObject.fromObject(data);
         int gameId = postData.getInt("gid");
@@ -1455,11 +1513,11 @@ public class BaseEventDeal {
         JSONObject obj = new JSONObject();
         obj.put("gameId",gameId);
         obj.put("platform",platform);
-        JSONArray goldSettings = publicBiz.getGoldSetting(obj);
+        JSONArray goldSettings = getGoldSettingByGameIdAndPlatform(obj);
         for (int i = 0; i < goldSettings.size(); i++) {
             JSONObject goldSetting = goldSettings.getJSONObject(i);
             for (String roomNo : RoomManage.gameRoomMap.keySet()) {
-                if (RoomManage.gameRoomMap.get(roomNo).getRoomInfo().equals(goldSetting.getJSONObject("option"))) {
+                if (RoomManage.gameRoomMap.get(roomNo).getLevel()==goldSetting.getInt("memo")) {
                     goldSetting.put("online",goldSetting.getInt("online")+1);
                 }
             }
