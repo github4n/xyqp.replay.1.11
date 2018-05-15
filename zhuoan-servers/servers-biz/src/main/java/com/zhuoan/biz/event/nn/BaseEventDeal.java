@@ -748,7 +748,7 @@ public class BaseEventDeal {
             room.setColor(baseInfo.getInt("color"));
         }
         /* 获取游戏信息设置,插入缓存 */
-        room.setSetting(getGameInfoById());
+        room.setSetting(getGameInfoById(CommonConstant.GAME_ID_SSS));
         room.getUserPacketMap().put(account, new Player());
     }
 
@@ -825,16 +825,20 @@ public class BaseEventDeal {
         room.getUserPacketMap().put(account, new com.zhuoan.biz.model.zjh.UserPacket());
     }
 
-    private JSONObject getGameInfoById() {
+    private JSONObject getGameInfoById(int gameId) {
         JSONObject gameInfoById;
         try {
-            Object object = redisService.queryValueByKey(CacheKeyConstant.GAME_INFO_BY_ID);
+            StringBuffer key = new StringBuffer();
+            key.append(CacheKeyConstant.GAME_INFO_BY_ID);
+            key.append("_");
+            key.append(gameId);
+            Object object = redisService.queryValueByKey(String.valueOf(key));
             if (object!=null) {
-                gameInfoById = JSONObject.fromObject(redisService.queryValueByKey(CacheKeyConstant.GAME_INFO_BY_ID));
+                gameInfoById = JSONObject.fromObject(redisService.queryValueByKey(String.valueOf(key)));
 
             }else {
                 gameInfoById = roomBiz.getGameInfoByID(CommonConstant.GAME_ID_SSS).getJSONObject("setting");
-                redisService.insertKey(CacheKeyConstant.GAME_INFO_BY_ID, String.valueOf(gameInfoById), null);
+                redisService.insertKey(String.valueOf(key), String.valueOf(gameInfoById), null);
             }
         } catch (Exception e) {
             logger.error("请启动REmote DIctionary Server");

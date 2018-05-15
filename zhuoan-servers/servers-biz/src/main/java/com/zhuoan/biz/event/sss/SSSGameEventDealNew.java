@@ -155,11 +155,17 @@ public class SSSGameEventDealNew {
         }
         // 当前准备人数大于最低开始人数开始游戏
         if (room.getNowReadyCount()==room.getMinPlayer()) {
-            room.setTimeLeft(SSSConstant.SSS_TIMER_READY);
+            final int readyTime;
+            if (!Dto.isObjNull(room.getSetting())&&room.getSetting().containsKey("goldready")) {
+                readyTime = room.getSetting().getInt("goldready");
+            }else {
+                readyTime = SSSConstant.SSS_TIMER_READY;
+            }
+            room.setTimeLeft(readyTime);
             ThreadPoolHelper.executorService.submit(new Runnable() {
                 @Override
                 public void run() {
-                    gameTimerSSS.gameOverTime(roomNo,SSSConstant.SSS_GAME_STATUS_READY);
+                    gameTimerSSS.gameOverTime(roomNo,SSSConstant.SSS_GAME_STATUS_READY,readyTime);
                 }
             });
         }
@@ -225,13 +231,19 @@ public class SSSGameEventDealNew {
             producerService.sendMessage(daoQueueDestination, new PumpDao(DaoTypeConstant.PUMP, room.getJsonObject(array)));
         }
         // 设置倒计时时间
-        room.setTimeLeft(SSSConstant.SSS_TIMER_GAME_EVENT);
+        final int gameEventTime;
+        if (!Dto.isObjNull(room.getSetting())&&room.getSetting().containsKey("goldpeipai")) {
+            gameEventTime = room.getSetting().getInt("goldpeipai");
+        }else {
+            gameEventTime = SSSConstant.SSS_TIMER_READY;
+        }
+        room.setTimeLeft(gameEventTime);
         // 改变状态，通知玩家
         changeGameStatus(room);
         ThreadPoolHelper.executorService.submit(new Runnable() {
             @Override
             public void run() {
-                gameTimerSSS.gameOverTime(room.getRoomNo(),SSSConstant.SSS_GAME_STATUS_GAME_EVENT);
+                gameTimerSSS.gameOverTime(room.getRoomNo(),SSSConstant.SSS_GAME_STATUS_GAME_EVENT,gameEventTime);
             }
         });
     }
@@ -996,7 +1008,11 @@ public class SSSGameEventDealNew {
                         }
                     }
                 }
-                if (gameList.size()>=SSSConstant.SSS_MIN_SWAT_COUNT&&winPlayer==gameList.size()-1) {
+                int minSwatCount = SSSConstant.SSS_MIN_SWAT_COUNT;
+                if (!Dto.isObjNull(room.getSetting())&&room.getSetting().containsKey("qld")) {
+                    minSwatCount = room.getSetting().getInt("qld");
+                }
+                if (gameList.size()>=minSwatCount&&winPlayer==gameList.size()-1) {
                     room.setSwat(CommonConstant.GLOBAL_YES);
                     isSwat = true;
                     room.getUserPacketMap().get(account).setSwat(CommonConstant.GLOBAL_YES);

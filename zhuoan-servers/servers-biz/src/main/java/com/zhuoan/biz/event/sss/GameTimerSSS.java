@@ -40,18 +40,14 @@ public class GameTimerSSS {
      * @param roomNo
      * @param gameStatus
      */
-    public void gameOverTime(String roomNo,int gameStatus){
-        // 倒计时
-        int timeLeft = 0;
+    public void gameOverTime(String roomNo,int gameStatus,int timeLeft){
         // 玩家状态
         int userStatus = SSSConstant.SSS_USER_STATUS_INIT;
         switch (gameStatus) {
             case SSSConstant.SSS_GAME_STATUS_READY:
-                timeLeft = SSSConstant.SSS_TIMER_READY;
                 userStatus = SSSConstant.SSS_USER_STATUS_READY;
                 break;
             case SSSConstant.SSS_GAME_STATUS_GAME_EVENT:
-                timeLeft = SSSConstant.SSS_TIMER_GAME_EVENT;
                 userStatus = SSSConstant.SSS_USER_STATUS_GAME_EVENT;
                 break;
             default:
