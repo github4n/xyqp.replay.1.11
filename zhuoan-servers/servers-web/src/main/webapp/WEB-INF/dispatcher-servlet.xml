@@ -70,7 +70,6 @@
 
     <!-- 统一公共异常处理 -->
     <bean id="exceptionHandler" class="com.zhuoan.webapp.aspect.UnCatchExceptionHandler"/>
-    <!-- SocketIO服务自启动-->
-    <bean id="postStartServerListener" class="com.zhuoan.webapp.listener.socketio.PostStartServerListener"/>
+
 
 </beans>

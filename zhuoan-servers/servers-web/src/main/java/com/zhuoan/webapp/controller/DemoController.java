@@ -90,7 +90,7 @@ public class DemoController extends BaseController {
          */
         @RequestMapping("admin")
         public void demo (HttpServletRequest request){
-            logger.info("用户 " + getIp(request) + "] 访问了admin.html");
+            logger.info("用户 [" + getIp(request) + "] 访问了admin.html");
         }
 
 

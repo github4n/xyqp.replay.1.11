@@ -111,11 +111,14 @@ public class GameMain implements SocketIoManagerService {
         String remotePort = env.getProperty(EnvKeyEnum.SERVER_PORT.getKey());
         //###########################################################################
 
+        logger.info("localOuterNetIp:"+localOuterNetIp+"localPort:"+localPort);
+        logger.info("remoteIp:"+remoteIp+"remotePort:"+remotePort);
+
         /* 调用远程方法：告知 ### 当前主机服务 HOSTNAME IP：PORT ### */
         invokeRemoteMethod(remoteIp, remotePort, localOuterNetIp, localPort);
 
         /* 创建SocketIO服务 */
-        server = new SocketIOServer(serverConfig(localOuterNetIp, localPort));
+        server = new SocketIOServer(serverConfig(IpAddressUtil.getInnerNetIp(), localPort));
 
         /* 添加监听事件 */
         addEventListener(server);
@@ -181,15 +184,15 @@ public class GameMain implements SocketIoManagerService {
     }
 
 
-    private Configuration serverConfig(String localOuterNetIp, int localPort) {
+    private Configuration serverConfig(String innerNetIp, int localPort) {
         Configuration config = new Configuration();
 
         // 服务器主机IP
-        config.setHostname(localOuterNetIp);
+        config.setHostname(innerNetIp);
         // 端口
         config.setPort(localPort);
 
-        logger.info("============================== 其次,SocketIO 启用本地服务 [" + hostname + ":" + localOuterNetIp + "] ==============================");
+        logger.info("============================== 其次,SocketIO 启用本地服务 [" + innerNetIp + "(当前主机内网IP):" + localPort + "(必须开放此端口)] ==============================");
 
         config.setWorkerThreads(SocketConfigConstant.WORKER_THREADS);
         config.setMaxFramePayloadLength(SocketConfigConstant.MAX_FRAME_PAYLOAD_LENGTH);
@@ -216,7 +219,7 @@ public class GameMain implements SocketIoManagerService {
                 hostname
             );
 
-            logger.info("============================== 首先,调用远程方法：告知本地服务 [" + localOuterNetIp + ":" + localPort + "] ==============================");
+            logger.info("============================== 首先,调用RMI成功：告知本地服务 [" + localOuterNetIp + "(当前主机外网IP):" + localPort + "(必须开放此端口)] ==============================");
 
             // 开启定时任务
             ScheduledExecutorService executor = new ScheduledThreadPoolExecutor(1,
@@ -264,7 +267,7 @@ public class GameMain implements SocketIoManagerService {
                 // 心跳请求
                 server.heartBeat(hostname);
 
-                logger.info("I am a RMI-heartbeat");
+                logger.info("RMI调用成功：I am a RMI-heartbeat");
 
             } catch (RemoteException | NotBoundException e) {
                 logger.info("尝试重新连接Socket");
