@@ -28,6 +28,7 @@ import com.zhuoan.util.SensitivewordFilter;
 import com.zhuoan.util.TimeUtil;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
+import org.apache.commons.lang.math.RandomUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
@@ -115,7 +116,7 @@ public class BaseEventDeal {
             CommonConstant.sendMsgEventToSingle(client, result.toString(), "enterRoomPush_NN");
             return;
         } else if (baseInfo.getInt("roomType") == CommonConstant.ROOM_TYPE_JB && userInfo.containsKey("coins")
-            && userInfo.getDouble("coins") < baseInfo.getDouble("goldcoins")) {
+            && userInfo.getDouble("coins") < baseInfo.getDouble("goldCoinEnter")) {
             // 金币不足
             result.element(CommonConstant.RESULT_KEY_CODE, CommonConstant.GLOBAL_NO);
             result.element(CommonConstant.RESULT_KEY_MSG, "金币不足");
@@ -245,9 +246,12 @@ public class BaseEventDeal {
             gameRoom.setLeaveScore(baseInfo.getDouble("leaveYB"));
         }
         //设置金币场准入金币
-        if (baseInfo.containsKey("goldcoins")) {
-            gameRoom.setEnterScore(baseInfo.getInt("goldcoins"));
-            gameRoom.setLeaveScore(baseInfo.getInt("goldcoins"));
+        if (baseInfo.containsKey("goldCoinEnter")) {
+            gameRoom.setEnterScore(baseInfo.getInt("goldCoinEnter"));
+        }
+        //设置金币场准入金币
+        if (baseInfo.containsKey("goldCoinLeave")) {
+            gameRoom.setLeaveScore(baseInfo.getInt("goldCoinLeave"));
         }
         if (baseInfo.containsKey("open")&&baseInfo.getInt("open") == 1) {
             gameRoom.setOpen(true);
@@ -267,15 +271,15 @@ public class BaseEventDeal {
             } else if (baseInfo.getInt("readyovertime") == CommonConstant.READY_OVERTIME_OUT) {
                 gameRoom.setReadyOvertime(CommonConstant.READY_OVERTIME_OUT);
             }
-        } else if (baseInfo.getInt("roomType") == CommonConstant.ROOM_TYPE_YB) {
+        } else if (baseInfo.getInt("roomType") == CommonConstant.ROOM_TYPE_YB||baseInfo.getInt("roomType") == CommonConstant.ROOM_TYPE_JB) {
             gameRoom.setReadyOvertime(CommonConstant.READY_OVERTIME_OUT);
-        } else if (baseInfo.getInt("roomType") == CommonConstant.READY_OVERTIME_NOTHING){
+        } else if (baseInfo.getInt("roomType") == CommonConstant.ROOM_TYPE_FK){
             gameRoom.setReadyOvertime(CommonConstant.READY_OVERTIME_NOTHING);
         }
         // 玩家人数
         gameRoom.setPlayerCount(playerNum);
         // 金币、元宝扣服务费
-        if ((baseInfo.containsKey("fee") && baseInfo.getInt("fee") == 1) || baseInfo.getInt("roomType") == CommonConstant.ROOM_TYPE_YB) {
+        if (baseInfo.getInt("roomType") == CommonConstant.ROOM_TYPE_YB) {
 
             /* 获取房间设置，插入缓存 */
             JSONObject gameSetting = getGameSetting(gameRoom);
@@ -299,6 +303,8 @@ public class BaseEventDeal {
             }
             fee = new BigDecimal(fee).setScale(2, BigDecimal.ROUND_HALF_UP).doubleValue();
             gameRoom.setFee(fee);
+        }else if (baseInfo.containsKey("fee")) {
+            gameRoom.setFee(baseInfo.getDouble("fee"));
         }
         // 获取用户信息
         JSONObject obtainPlayerInfoData = new JSONObject();
@@ -891,12 +897,16 @@ public class BaseEventDeal {
         JSONArray gameSetting = new JSONArray();
         if (!key.equals("")) {
             try {
-                Object object = redisService.queryValueByKey(key);
+                StringBuffer sb = new StringBuffer();
+                sb.append(key);
+                sb.append("_");
+                sb.append(platform);
+                Object object = redisService.queryValueByKey(String.valueOf(sb));
                 if (object!=null) {
                     gameSetting = JSONArray.fromObject(object);
                 }else {
                     gameSetting = publicBiz.getRoomSetting(gid, platform);
-                    redisService.insertKey(key, String.valueOf(gameSetting), null);
+                    redisService.insertKey(String.valueOf(sb), String.valueOf(gameSetting), null);
                 }
             } catch (Exception e) {
                 logger.error("请启动REmote DIctionary Server");
@@ -1455,23 +1465,23 @@ public class BaseEventDeal {
     public void joinCoinRoom(SocketIOClient client, Object data) {
         JSONObject postData = JSONObject.fromObject(data);
         int gameId = postData.getInt("gid");
-        int level = postData.getInt("level");
         JSONObject option = postData.getJSONObject("option");
-        option.put("level",level);
         postData.put("base_info",option);
         String account = postData.getString(CommonConstant.DATA_KEY_ACCOUNT);
         List<String> roomNoList = new ArrayList<String>();
         for (String roomNo : RoomManage.gameRoomMap.keySet()) {
             GameRoom room = RoomManage.gameRoomMap.get(roomNo);
-            if (room.getRoomType()==CommonConstant.ROOM_TYPE_JB&&room.getGid()==gameId&&room.getLevel()==level&&
-                !room.getPlayerMap().containsKey(account)&&room.getPlayerMap().size()<room.getPlayerCount()) {
+            int left = RandomUtils.nextInt(room.getPlayerCount());
+            if (room.getRoomType()==CommonConstant.ROOM_TYPE_JB&&room.getGid()==gameId&&room.getScore()==option.getDouble("di")&&
+                !room.getPlayerMap().containsKey(account)&&room.getPlayerMap().size()<(room.getPlayerCount()-left)) {
                 roomNoList.add(roomNo);
             }
         }
         if (roomNoList.size()==0) {
             createRoomBase(client,postData);
         }else {
-            Collections.sort(roomNoList);
+            // 随机加入
+            Collections.shuffle(roomNoList);
             postData.put("room_no",roomNoList.get(0));
             joinRoomBase(client,postData);
         }
@@ -1520,17 +1530,173 @@ public class BaseEventDeal {
         JSONArray goldSettings = getGoldSettingByGameIdAndPlatform(obj);
         for (int i = 0; i < goldSettings.size(); i++) {
             JSONObject goldSetting = goldSettings.getJSONObject(i);
-            for (String roomNo : RoomManage.gameRoomMap.keySet()) {
-                if (RoomManage.gameRoomMap.get(roomNo).getLevel()==goldSetting.getInt("memo")) {
-                    goldSetting.put("online",goldSetting.getInt("online")+1);
-                }
-            }
+            goldSetting.put("online",goldSetting.getInt("online")+1);
+            goldSetting.put("enter",goldSetting.getJSONObject("option").getInt("goldCoinEnter"));
+            goldSetting.put("leave",goldSetting.getJSONObject("option").getInt("goldCoinLeave"));
         }
         JSONObject result = new JSONObject();
         result.put(CommonConstant.RESULT_KEY_CODE,CommonConstant.GLOBAL_YES);
         result.put("data",goldSettings);
         CommonConstant.sendMsgEventToSingle(client,String.valueOf(result),"getGameGoldSettingPush");
     }
+
+    /**
+     * 用户签到信息
+     * @param client
+     * @param data
+     */
+    public void checkSignIn(SocketIOClient client,Object data) {
+        JSONObject postData = JSONObject.fromObject(data);
+        long userId = postData.getLong("userId");
+        String platform = postData.getString("platform");
+        // 当前日期
+        String nowTime = TimeUtil.getNowDateymd()+" 00:00:00";
+        JSONObject signInfo = publicBiz.getUserSignInfo(platform,userId);
+        JSONObject result = new JSONObject();
+        int minReward = getCoinsSignMinReward(platform);
+        int maxReward = getCoinsSignMaxReward(platform);
+        if (Dto.isObjNull(signInfo)) {
+            result.put(CommonConstant.RESULT_KEY_CODE,CommonConstant.GLOBAL_YES);
+            result.put("reward",minReward);
+            result.put("days",0);
+        }else {
+            if (!TimeUtil.isLatter(signInfo.getString("createtime"),nowTime)) {
+                result.put(CommonConstant.RESULT_KEY_CODE,CommonConstant.GLOBAL_YES);
+                String yesterday = TimeUtil.addDaysBaseOnNowTime(nowTime,-1,"yyyy-MM-dd HH:mm:ss");
+                if (TimeUtil.isLatter(signInfo.getString("createtime"),yesterday)) {
+                    int reward = (signInfo.getInt("singnum")+1)*minReward;
+                    if (reward>maxReward) {
+                        reward = maxReward;
+                    }
+                    result.put("reward",reward);
+                    result.put("days",signInfo.getInt("singnum"));
+                }else {
+                    result.put("reward",minReward);
+                    result.put("days",0);
+                }
+            }else {
+                result.put(CommonConstant.RESULT_KEY_CODE,CommonConstant.GLOBAL_NO);
+            }
+        }
+        CommonConstant.sendMsgEventToSingle(client,String.valueOf(result),"checkSignInPush");
+    }
+
+    /**
+     * 最少签到金币
+     * @return
+     */
+    public int getCoinsSignMinReward(String platform) {
+        int minReward = CommonConstant.COINS_SIGN_MIN;
+        JSONObject signRewardInfo = getCoinsSignRewardInfo(platform);
+        if (!Dto.isObjNull(signRewardInfo)&&signRewardInfo.containsKey("meitmoney")) {
+            return signRewardInfo.getInt("meitmoney");
+        }
+        return minReward;
+    }
+
+    /**
+     * 获取签到奖励缓存
+     * @param platform
+     * @return
+     */
+    private JSONObject getCoinsSignRewardInfo(String platform) {
+        JSONObject signRewardInfo;
+        StringBuffer sb = new StringBuffer();
+        sb.append("sign_reward_info_");
+        sb.append(platform);
+        try {
+            Object object = redisService.queryValueByKey(String.valueOf(sb));
+            if (object != null) {
+                signRewardInfo = JSONObject.fromObject(redisService.queryValueByKey(String.valueOf(sb)));
+            }else {
+                signRewardInfo = publicBiz.getSignRewardInfoByPlatform(platform);
+                redisService.insertKey(String.valueOf(sb), String.valueOf(signRewardInfo), null);
+            }
+        } catch (Exception e) {
+            signRewardInfo = publicBiz.getSignRewardInfoByPlatform(platform);
+            logger.error("请启动REmote DIctionary Server");
+        }
+        return signRewardInfo;
+    }
+
+    /**
+     * 最多签到金币
+     * @return
+     */
+    public int getCoinsSignMaxReward(String platform) {
+        int maxReward = CommonConstant.COINS_SIGN_MAX;
+        JSONObject signRewardInfo = getCoinsSignRewardInfo(platform);
+        if (!Dto.isObjNull(signRewardInfo)&&signRewardInfo.containsKey("monthmoney")) {
+            return signRewardInfo.getInt("monthmoney");
+        }
+        return maxReward;
+    }
+
+    /**
+     * 用户签到
+     * @param client
+     * @param data
+     */
+    public void doUserSignIn(SocketIOClient client,Object data) {
+        JSONObject postData = JSONObject.fromObject(data);
+        long userId = postData.getLong("userId");
+        String platform = postData.getString("platform");
+        String account = postData.getString("account");
+        // 当前日期
+        String nowTime = TimeUtil.getNowDate();
+        // 签到信息
+        JSONObject signInfo = publicBiz.getUserSignInfo(platform,userId);
+        JSONObject object = new JSONObject();
+        JSONObject result = new JSONObject();
+        int reward = getCoinsSignMinReward(platform);
+        if (Dto.isObjNull(signInfo)) {
+            object.put("singnum",1);
+            object.put("createtime",nowTime);
+            object.put("userID",userId);
+            object.put("platform",platform);
+        }else {
+            object.put("id",signInfo.getLong("id"));
+            String today = TimeUtil.getNowDateymd()+" 00:00:00";
+            String yesterday = TimeUtil.addDaysBaseOnNowTime(today,-1,"yyyy-MM-dd HH:mm:ss");
+            // 今日已签到
+            if (TimeUtil.isLatter(signInfo.getString("createtime"),today)) {
+                result.put(CommonConstant.RESULT_KEY_CODE,-1);
+                result.put(CommonConstant.RESULT_KEY_MSG,"今日已签到");
+                CommonConstant.sendMsgEventToSingle(client,String.valueOf(result),"userSignInPush");
+                return;
+            }
+            if (TimeUtil.isLatter(signInfo.getString("createtime"),yesterday)) {
+                object.put("singnum",signInfo.getInt("singnum")+1);
+                reward = (signInfo.getInt("singnum")+1)*getCoinsSignMinReward(platform);
+                int maxReward = getCoinsSignMaxReward(platform);
+                if (reward>maxReward) {
+                    reward = maxReward;
+                }
+            }else {
+                object.put("singnum",1);
+            }
+            object.put("createtime",nowTime);
+        }
+        if (!Dto.isObjNull(object)) {
+            int back = publicBiz.addOrUpdateUserSign(object);
+            if (back>0) {
+                result.put(CommonConstant.RESULT_KEY_CODE,CommonConstant.GLOBAL_YES);
+                result.put("newScore",reward);
+                result.put("days",object.getInt("singnum"));
+                JSONObject obj = new JSONObject();
+                obj.put("account", account);
+                obj.put("updateType", "coins");
+                obj.put("sum", reward);
+                producerService.sendMessage(daoQueueDestination, new PumpDao(DaoTypeConstant.UPDATE_USER_INFO, obj));
+            }else {
+                result.put(CommonConstant.RESULT_KEY_CODE,CommonConstant.GLOBAL_NO);
+            }
+        }else {
+            result.put(CommonConstant.RESULT_KEY_CODE,CommonConstant.GLOBAL_NO);
+        }
+        CommonConstant.sendMsgEventToSingle(client,String.valueOf(result),"userSignInPush");
+    }
+
 
     /**
      * 测试-机器人加入创建房间

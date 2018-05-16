@@ -276,6 +276,24 @@ public class BaseGameEvent {
                 producerService.sendMessage(baseQueueDestination, new Messages(client, object, CommonConstant.GAME_BASE, CommonConstant.BASE_GAME_EVENT_GET_COIN_SETTING));
             }
         });
+        /**
+         *  获取签到信息
+         */
+        server.addEventListener("checkSignIn", Object.class, new DataListener<Object>() {
+            @Override
+            public void onData(SocketIOClient client, Object object, AckRequest ackSender) {
+                producerService.sendMessage(baseQueueDestination, new Messages(client, object, CommonConstant.GAME_BASE, CommonConstant.BASE_GAME_EVENT_GET_USER_SIGN_INFO));
+            }
+        });
+        /**
+         *  签到
+         */
+        server.addEventListener("userSignIn", Object.class, new DataListener<Object>() {
+            @Override
+            public void onData(SocketIOClient client, Object object, AckRequest ackSender) {
+                producerService.sendMessage(baseQueueDestination, new Messages(client, object, CommonConstant.GAME_BASE, CommonConstant.BASE_GAME_EVENT_DO_USER_SIGN));
+            }
+        });
 
     }
 

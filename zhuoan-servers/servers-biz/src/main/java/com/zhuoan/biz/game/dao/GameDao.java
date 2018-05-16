@@ -296,4 +296,23 @@ public interface GameDao {
      * @return
      */
     public JSONArray getGoldSetting(JSONObject obj);
+
+    /**
+     * 获取用户签到信息
+     * @return
+     */
+    public JSONObject getUserSignInfo(String platform,long userId);
+
+    /**
+     * 用户签到记录
+     * @param obj
+     * @return
+     */
+    public int addOrUpdateUserSign(JSONObject obj);
+
+    /**
+     * 根据平台号获取签到奖励
+     * @param platform
+     */
+    public JSONObject getSignRewardInfoByPlatform(String platform);
 }

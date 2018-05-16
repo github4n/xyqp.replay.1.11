@@ -80,25 +80,25 @@ public class SSSOrdinaryCards {
 		for(int i=0;i<2;i++){
 			ArrayList<ArrayList<String>> tiezhi=bomb(playerTemp);
 			if(tiezhi.size()>0){
-				if(five2.size()>0){
-					if("1".equals(tiezhi.get(0).get(0).split("-")[1])){
-						five1.addAll(tiezhi.get(0));
-					}else {
-						five1.addAll(tiezhi.get(tiezhi.size()-1));
-					}
-					for(String temp:five1){
-						playerTemp.remove(temp);
-					}
-				}else {
-					if("1".equals(tiezhi.get(0).get(0).split("-")[1])){
-						five2.addAll(tiezhi.get(0));
-					}else {
-						five2.addAll(tiezhi.get(tiezhi.size()-1));
-					}
-					for(String temp:five2){
-						playerTemp.remove(temp);
-					}
-				}
+                if (five2.size()==0) {
+                    if("1".equals(tiezhi.get(0).get(0).split("-")[1])){
+                        five2.addAll(tiezhi.get(0));
+                    }else {
+                        five2.addAll(tiezhi.get(tiezhi.size()-1));
+                    }
+                    for(String temp:five2){
+                        playerTemp.remove(temp);
+                    }
+                }else if (five1.size()==0) {
+                    if("1".equals(tiezhi.get(0).get(0).split("-")[1])){
+                        five1.addAll(tiezhi.get(0));
+                    }else {
+                        five1.addAll(tiezhi.get(tiezhi.size()-1));
+                    }
+                    for(String temp:five1){
+                        playerTemp.remove(temp);
+                    }
+                }
 			}	
 		}
 		//葫芦
@@ -474,7 +474,7 @@ public class SSSOrdinaryCards {
 					for(String temp:five1){
 						playerTemp.remove(temp);
 					}
-				}else {
+				}else if (three.size()==0) {
 					three.addAll(santiao.get(santiao.size()-1));
 					for(String temp:three){
 						playerTemp.remove(temp);

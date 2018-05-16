@@ -125,6 +125,12 @@ public class GameEventDeal {
                     case CommonConstant.BASE_GAME_EVENT_GET_COIN_SETTING:
                         baseEventDeal.getCoinSetting(client, data);
                         break;
+                    case CommonConstant.BASE_GAME_EVENT_GET_USER_SIGN_INFO:
+                        baseEventDeal.checkSignIn(client, data);
+                        break;
+                    case CommonConstant.BASE_GAME_EVENT_DO_USER_SIGN:
+                        baseEventDeal.doUserSignIn(client, data);
+                        break;
                     default:
                         break;
                 }

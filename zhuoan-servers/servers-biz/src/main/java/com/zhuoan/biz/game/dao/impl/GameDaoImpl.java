@@ -669,8 +669,30 @@ public class GameDaoImpl implements GameDao {
 
     @Override
     public JSONArray getGoldSetting(JSONObject obj){
-        String sql = "SELECT `option`,online,memo,goldcoins FROM za_gamegoldsetting WHERE game_id=? AND platform=?";
+        String sql = "SELECT di,`option`,online,memo FROM za_gamegoldsetting WHERE game_id=? AND platform=?";
         return DBUtil.getObjectListBySQL(sql,new Object[]{obj.getInt("gameId"),obj.getString("platform")});
+    }
+
+    @Override
+    public JSONObject getUserSignInfo(String platform, long userId) {
+        String sql = "SELECT id,userID,singnum,createtime,platform from sys_sign where userID=? AND platform=?";
+        JSONObject signInfo = DBUtil.getObjectBySQL(sql,new Object[]{userId,platform});
+        if (Dto.isObjNull(signInfo)) {
+            return signInfo;
+        }
+        return TimeUtil.transTimeStamp(signInfo, "yyyy-MM-dd HH:mm:ss", "createtime");
+    }
+
+    @Override
+    public int addOrUpdateUserSign(JSONObject obj) {
+        return DBJsonUtil.saveOrUpdate(obj,"sys_sign");
+    }
+
+    @Override
+    public JSONObject getSignRewardInfoByPlatform(String platform) {
+        String sql = "SELECT id,firstnode,firstmoney,firstfangka,secnode,secmoney,secfangk,thnode,thmoney,thmofangk,monthmoney," +
+            "monthfangk,meitmoney,meitfangk,memo FROM za_sign_reward where memo=?";
+        return DBUtil.getObjectBySQL(sql,new Object[]{platform});
     }
 }
 

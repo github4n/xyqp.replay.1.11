@@ -53,4 +53,19 @@ public class PublicBizImpl implements PublicBiz{
     public JSONArray getGoldSetting(JSONObject obj){
         return gameDao.getGoldSetting(obj);
     }
+
+    @Override
+    public JSONObject getUserSignInfo(String platform, long userId) {
+        return gameDao.getUserSignInfo(platform,userId);
+    }
+
+    @Override
+    public int addOrUpdateUserSign(JSONObject obj) {
+        return gameDao.addOrUpdateUserSign(obj);
+    }
+
+    @Override
+    public JSONObject getSignRewardInfoByPlatform(String platform) {
+        return gameDao.getSignRewardInfoByPlatform(platform);
+    }
 }

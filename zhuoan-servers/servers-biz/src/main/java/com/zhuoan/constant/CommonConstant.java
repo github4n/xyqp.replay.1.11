@@ -94,13 +94,21 @@ public class CommonConstant {
      */
     public static final int BASE_GAME_EVENT_JOIN_COIN_ROOM  = 19;
     /**
-     * 公共游戏事件-金币场加入房间
+     * 公共游戏事件-房卡场支付信息
      */
     public static final int BASE_GAME_EVENT_GET_ROOM_CARD_PAY_INFO  = 20;
     /**
-     * 公共游戏事件-金币场加入房间
+     * 公共游戏事件-获取金币场设置
      */
     public static final int BASE_GAME_EVENT_GET_COIN_SETTING  = 21;
+    /**
+     * 公共游戏事件-获取用户签到信息
+     */
+    public static final int BASE_GAME_EVENT_GET_USER_SIGN_INFO = 22;
+    /**
+     * 公共游戏事件-用户签到
+     */
+    public static final int BASE_GAME_EVENT_DO_USER_SIGN = 23;
     /**
      * 游戏公共部分
      */
@@ -221,6 +229,14 @@ public class CommonConstant {
      * 无庄家
      */
     public static final int NO_BANKER_INDEX = -1;
+    /**
+     * 签到金币-最小
+     */
+    public static final int COINS_SIGN_MIN = 100;
+    /**
+     * 签到金币-最大
+     */
+    public static final int COINS_SIGN_MAX = 1000;
 
     public static final String DATA_KEY_ROOM_NO = "room_no";
     public static final String DATA_KEY_ACCOUNT = "account";
