@@ -77,7 +77,7 @@ public class SocketIoController extends BaseController {
      * @param request the request
      * @throws Exception the com.zhuoan.exception
      */
-    @RequestMapping(value = "stopServer", method = RequestMethod.POST)
+    @RequestMapping(value = "stopServer9579249", method = RequestMethod.GET)
     @ResponseBody
     public String stopServer(HttpServletRequest request) {
         logger.info(" [" + getIp(request) + "] 手动停止 SocketIO服务");
