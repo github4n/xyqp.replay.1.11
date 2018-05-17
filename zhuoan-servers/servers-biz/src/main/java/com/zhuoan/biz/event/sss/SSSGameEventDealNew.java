@@ -927,7 +927,7 @@ public class SSSGameEventDealNew {
                 roomData.put("roominfo", roomInfo.toString());
             }
             roomData.put("zhuang",CommonConstant.NO_BANKER_INDEX);
-            if (room.getRoomType()!=CommonConstant.ROOM_TYPE_YB&&room.getPlayerMap().get(room.getBanker())!=null) {
+            if (room.getBankerType()!=SSSConstant.SSS_BANKER_TYPE_HB&&room.getPlayerMap().get(room.getBanker())!=null) {
                 roomData.put("zhuang",room.getPlayerMap().get(room.getBanker()).getMyIndex());
             }
             roomData.put("game_index",room.getGameIndex());
@@ -1127,6 +1127,13 @@ public class SSSGameEventDealNew {
             }
             // 是否全垒打
             boolean isSwat = true;
+            int minSwatCount = SSSConstant.SSS_MIN_SWAT_COUNT;
+            if (!Dto.isObjNull(room.getSetting())&&room.getSetting().containsKey("qld")) {
+                minSwatCount = room.getSetting().getInt("qld");
+            }
+            if (gameList.size()<minSwatCount) {
+                isSwat = false;
+            }
             // 庄家
             Player player = room.getUserPacketMap().get(room.getBanker());
             // 庄家输赢
@@ -1157,16 +1164,22 @@ public class SSSGameEventDealNew {
                     otherResult.add(new JSONObject().element("pai",otherPlayer.getMidPai()).element("score",0).element("type",0));
                     // 尾道
                     otherResult.add(new JSONObject().element("pai",otherPlayer.getFootPai()).element("score",0).element("type",0));
-                    if (special>otherSpecial) {
+                    if (special>0&&otherSpecial>0) {
+                        if (player.getPaiScore()>otherPlayer.getPaiScore()) {
+                            sumScoreBanker += player.getPaiScore();
+                            sumScoreOther -= player.getPaiScore();
+                        }else if (player.getPaiScore()<otherPlayer.getPaiScore()) {
+                            sumScoreBanker -= otherPlayer.getPaiScore();
+                            sumScoreOther += otherPlayer.getPaiScore();
+                        }
+                        isSwat = false;
+                    } else if (special>0&&otherSpecial==0) {
                         sumScoreBanker += player.getPaiScore();
                         sumScoreOther -= player.getPaiScore();
                         isSwat = false;
-                    } else if (special<otherSpecial) {
+                    } else if (special==0&&otherSpecial>0) {
                         sumScoreBanker -= otherPlayer.getPaiScore();
                         sumScoreOther += otherPlayer.getPaiScore();
-                        isSwat = false;
-                    } else if (special==otherSpecial&&special>0) {
-                        // 同为特殊牌
                         isSwat = false;
                     } else {
                         // 比牌结果
