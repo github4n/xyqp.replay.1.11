@@ -88,7 +88,6 @@ public class BaseEventDeal {
 
     /**
      * 创建房间判断是否满足条件
-     *
      * @param client
      * @param data
      */
@@ -108,13 +107,15 @@ public class BaseEventDeal {
             result.put(CommonConstant.RESULT_KEY_MSG, "用户不存在");
             CommonConstant.sendMsgEventToSingle(client, result.toString(), "enterRoomPush_NN");
             return;
-        } else if (baseInfo.getInt("roomType") == CommonConstant.ROOM_TYPE_YB && userInfo.containsKey("yuanbao")
-            && userInfo.getDouble("yuanbao") < baseInfo.getDouble("enterYB")) {
-            // 元宝不足
-            result.element(CommonConstant.RESULT_KEY_CODE, CommonConstant.GLOBAL_NO);
-            result.element(CommonConstant.RESULT_KEY_MSG, "元宝不足");
-            CommonConstant.sendMsgEventToSingle(client, result.toString(), "enterRoomPush_NN");
-            return;
+        } else if (baseInfo.getInt("roomType") == CommonConstant.ROOM_TYPE_YB && userInfo.containsKey("yuanbao")) {
+            double minScore = obtainBankMinScore(postData);
+            if (userInfo.getDouble("yuanbao") < minScore) {
+                // 元宝不足
+                result.element(CommonConstant.RESULT_KEY_CODE, CommonConstant.GLOBAL_NO);
+                result.element(CommonConstant.RESULT_KEY_MSG, "元宝不足");
+                CommonConstant.sendMsgEventToSingle(client, result.toString(), "enterRoomPush_NN");
+                return;
+            }
         } else if (baseInfo.getInt("roomType") == CommonConstant.ROOM_TYPE_JB && userInfo.containsKey("coins")
             && userInfo.getDouble("coins") < baseInfo.getDouble("goldCoinEnter")) {
             // 金币不足
@@ -139,12 +140,11 @@ public class BaseEventDeal {
             }
         }
         // 创建房间
-        createRoomBase(client, JSONObject.fromObject(data), userInfo);
+        createRoomBase(client, postData, userInfo);
     }
 
     /**
      * 创建房间创建实体对象
-     *
      * @param client
      * @param postData
      * @param userInfo
@@ -183,6 +183,8 @@ public class BaseEventDeal {
         gameRoom.setRoomNo(roomNo);
         gameRoom.setRoomInfo(baseInfo);
         gameRoom.setCreateTime(new Date().toString());
+        // 坐庄最小分数
+        gameRoom.setMinBankerScore(obtainBankMinScore(postData));
         int playerNum = baseInfo.getInt("player");
         if (postData.getInt("gid") == CommonConstant.GAME_ID_SSS&&baseInfo.containsKey("maxPlayer")) {
             playerNum = baseInfo.getInt("maxPlayer");
@@ -362,6 +364,10 @@ public class BaseEventDeal {
 
     }
 
+    /**
+     * 生成随机房间号
+     * @return
+     */
     public static String randomRoomNo(){
         String roomNo = MathDelUtil.getRandomStr(6);
         if (RoomManage.gameRoomMap.containsKey(roomNo)) {
@@ -370,6 +376,11 @@ public class BaseEventDeal {
         return roomNo;
     }
 
+    /**
+     * 获取游戏设置
+     * @param gameRoom
+     * @return
+     */
     private JSONObject getGameSetting(GameRoom gameRoom) {
         JSONObject gameSetting;
         try {
@@ -389,7 +400,6 @@ public class BaseEventDeal {
 
     /**
      * 加入房间判断是否满足条件
-     *
      * @param client
      * @param data
      */
@@ -454,7 +464,6 @@ public class BaseEventDeal {
 
     /**
      * 加入房间创建实体对象
-     *
      * @param client
      * @param postData
      * @param userInfo
@@ -549,7 +558,6 @@ public class BaseEventDeal {
 
     /**
      * 获取玩家信息
-     *
      * @param data
      * @return
      */
@@ -613,7 +621,6 @@ public class BaseEventDeal {
 
     /**
      * 设置牛牛房间特殊参数
-     *
      * @param room
      * @param baseInfo
      * @param account
@@ -640,6 +647,9 @@ public class BaseEventDeal {
                 break;
             case NNConstant.NN_BANKER_TYPE_TB:
                 wanFa = "通比牛牛";
+                break;
+            case NNConstant.NN_BANKER_TYPE_ZZ:
+                wanFa = "坐庄模式";
                 break;
             default:
                 break;
@@ -719,7 +729,6 @@ public class BaseEventDeal {
 
     /**
      * 设置十三水房间特殊参数
-     *
      * @param room
      * @param baseInfo
      * @param account
@@ -734,6 +743,9 @@ public class BaseEventDeal {
                 break;
             case SSSConstant.SSS_BANKER_TYPE_HB:
                 wanFa = "互比";
+                break;
+            case SSSConstant.SSS_BANKER_TYPE_ZZ:
+                wanFa = "坐庄模式";
                 break;
             default:
                 break;
@@ -760,7 +772,6 @@ public class BaseEventDeal {
 
     /**
      * 设置十三水房间特殊参数
-     *
      * @param room
      * @param baseInfo
      * @param account
@@ -831,6 +842,11 @@ public class BaseEventDeal {
         room.getUserPacketMap().put(account, new com.zhuoan.biz.model.zjh.UserPacket());
     }
 
+    /**
+     * 根据游戏id获取游戏配置
+     * @param gameId
+     * @return
+     */
     private JSONObject getGameInfoById(int gameId) {
         JSONObject gameInfoById;
         try {
@@ -855,7 +871,6 @@ public class BaseEventDeal {
 
     /**
      * 获取房间设置
-     *
      * @param client
      * @param data
      */
@@ -879,6 +894,12 @@ public class BaseEventDeal {
         }
     }
 
+    /**
+     * 根据平台号获取游戏设置缓存
+     * @param gid
+     * @param platform
+     * @return
+     */
     private JSONArray getGameSetting(int gid, String platform) {
         String key = "";
         switch (gid) {
@@ -1178,6 +1199,11 @@ public class BaseEventDeal {
         CommonConstant.sendMsgEventToSingle(client,result.toString(),"getMessagePush");
     }
 
+    /**
+     * 根据平台号获取滚动公告缓存
+     * @param platform
+     * @return
+     */
     private JSONObject getNoticeInfoByPlatform(String platform) {
         JSONObject noticeInfo;
         StringBuffer sb = new StringBuffer();
@@ -1679,9 +1705,10 @@ public class BaseEventDeal {
         }
         if (!Dto.isObjNull(object)) {
             int back = publicBiz.addOrUpdateUserSign(object);
-            if (back>0) {
+            JSONObject userInfo = userBiz.getUserByAccount(account);
+            if (back>0&&!Dto.isObjNull(userInfo)) {
                 result.put(CommonConstant.RESULT_KEY_CODE,CommonConstant.GLOBAL_YES);
-                result.put("newScore",reward);
+                result.put("newScore",userInfo.getInt("coins")+reward);
                 result.put("days",object.getInt("singnum"));
                 JSONObject obj = new JSONObject();
                 obj.put("account", account);
@@ -1695,6 +1722,39 @@ public class BaseEventDeal {
             result.put(CommonConstant.RESULT_KEY_CODE,CommonConstant.GLOBAL_NO);
         }
         CommonConstant.sendMsgEventToSingle(client,String.valueOf(result),"userSignInPush");
+    }
+
+
+    public double obtainBankMinScore(JSONObject postData) {
+        if (!postData.containsKey("gid")||!postData.containsKey("base_info")) {
+            return -1;
+        }
+        JSONObject baseInfo = postData.getJSONObject("base_info");
+        if (!baseInfo.containsKey("enterYB")||!baseInfo.containsKey("player")||!baseInfo.containsKey("yuanbao")) {
+            return -1;
+        }
+        int gameId = postData.getInt("gid");
+        double minScore = baseInfo.getDouble("enterYB");
+        int noBankerNum = baseInfo.getInt("player")-1;
+        int maxNum = 1;
+        if (baseInfo.containsKey("baseNum")) {
+            JSONArray baseNum = baseInfo.getJSONArray("baseNum");
+            for (int i = 0; i < baseNum.size(); i++) {
+                if (baseNum.getJSONObject(i).getInt("val")>maxNum) {
+                    maxNum = baseNum.getJSONObject(i).getInt("val");
+                }
+            }
+        }
+        if (gameId==CommonConstant.GAME_ID_NN&&baseInfo.getInt("type")==NNConstant.NN_BANKER_TYPE_ZZ) {
+            minScore = noBankerNum*maxNum*baseInfo.getDouble("yuanbao")*5;
+        }
+        if (gameId==CommonConstant.GAME_ID_SSS&&baseInfo.getInt("type")==SSSConstant.SSS_BANKER_TYPE_ZZ) {
+            if (baseInfo.containsKey("maxPlayer")) {
+                noBankerNum = baseInfo.getInt("maxPlayer")-1;
+            }
+            minScore = noBankerNum*maxNum*baseInfo.getDouble("yuanbao")*75;
+        }
+        return minScore;
     }
 
 

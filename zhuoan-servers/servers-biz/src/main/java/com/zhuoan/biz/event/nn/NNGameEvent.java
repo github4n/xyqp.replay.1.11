@@ -88,12 +88,22 @@ public class NNGameEvent {
         });
 
         /**
-         * 断线重连事件
+         * 解散房间事件
          */
         server.addEventListener("closeRoom_NN", Object.class, new DataListener<Object>() {
             @Override
             public void onData(SocketIOClient client, Object data, AckRequest ackSender) {
                 producerService.sendMessage(nnQueueDestination, new Messages(client, data, CommonConstant.GAME_ID_NN, NNConstant.NN_GAME_EVENT_CLOSE_ROOM));
+            }
+        });
+
+        /**
+         * 上庄事件
+         */
+        server.addEventListener("gameBeBanker_NN", Object.class, new DataListener<Object>() {
+            @Override
+            public void onData(SocketIOClient client, Object data, AckRequest ackSender) {
+                producerService.sendMessage(nnQueueDestination, new Messages(client, data, CommonConstant.GAME_ID_NN, NNConstant.NN_GAME_EVENT_BE_BANKER));
             }
         });
     }

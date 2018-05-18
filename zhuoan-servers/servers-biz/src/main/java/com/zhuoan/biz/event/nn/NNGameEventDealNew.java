@@ -146,18 +146,13 @@ public class NNGameEventDealNew {
             roomInfo.append(room.getWfType());
             obj.put("roominfo",String.valueOf(roomInfo));
         }
-        // 通比模式没有庄家，其他模式除了准备、抢庄阶段庄家已经确定
-        if (room.getGameStatus() > NNConstant.NN_GAME_STATUS_DZ && room.getBankerType() != NNConstant.NN_BANKER_TYPE_TB) {
-            if (room.getUserPacketMap().containsKey(room.getBanker()) && room.getUserPacketMap().get(room.getBanker()) != null) {
-                obj.put("zhuang", room.getPlayerMap().get(room.getBanker()).getMyIndex());
-                obj.put("qzScore", room.getUserPacketMap().get(room.getBanker()).getQzTimes());
-            } else {
-                obj.put("zhuang", CommonConstant.NO_BANKER_INDEX);
-                obj.put("qzScore", 0);
-            }
-        } else {
+        if (Dto.stringIsNULL(room.getBanker())||(room.getGameStatus()<=NNConstant.NN_GAME_STATUS_DZ&&room.getBankerType()!=NNConstant.NN_BANKER_TYPE_ZZ)||
+            room.getBankerType()==NNConstant.NN_BANKER_TYPE_TB||room.getUserPacketMap().get(room.getBanker())==null) {
             obj.put("zhuang", CommonConstant.NO_BANKER_INDEX);
             obj.put("qzScore", 0);
+        }else {
+            obj.put("zhuang", room.getPlayerMap().get(room.getBanker()).getMyIndex());
+            obj.put("qzScore", room.getUserPacketMap().get(room.getBanker()).getQzTimes());
         }
         if (room.getBankerType() == NNConstant.NN_BANKER_TYPE_MP) {
             obj.put("qzType", NNConstant.NN_QZ_TYPE);
@@ -188,7 +183,47 @@ public class NNGameEventDealNew {
         if (room.getGameStatus()==NNConstant.NN_GAME_STATUS_ZJS) {
             obj.put("jiesuanData", room.getFinalSummary());
         }
+        if (room.getBankerType()==NNConstant.NN_BANKER_TYPE_ZZ&&room.getGameStatus()==NNConstant.NN_GAME_STATUS_TO_BE_BANKER) {
+            obj.put("bankerMinScore",room.getMinBankerScore());
+            obj.put("bankerIsUse",CommonConstant.GLOBAL_NO);
+            if (room.getPlayerMap().get(account).getScore()>=room.getMinBankerScore()) {
+                obj.put("bankerIsUse",CommonConstant.GLOBAL_YES);
+            }
+        }
         return obj;
+    }
+
+    /**
+     * 上庄
+     * @param client
+     * @param data
+     */
+    public void gameBeBanker(SocketIOClient client, Object data){
+        JSONObject postData = JSONObject.fromObject(data);
+        // 不满足准备条件直接忽略
+        if (!CommonConstant.checkEvent(postData, NNConstant.NN_GAME_STATUS_TO_BE_BANKER, client)) {
+            return;
+        }
+        // 房间号
+        String roomNo = postData.getString(CommonConstant.DATA_KEY_ROOM_NO);
+        NNGameRoomNew room = (NNGameRoomNew) RoomManage.gameRoomMap.get(roomNo);
+        // 玩家账号
+        String account = postData.getString(CommonConstant.DATA_KEY_ACCOUNT);
+        // 庄家已经确定
+        if (!Dto.stringIsNULL(room.getBanker())) {
+            return;
+        }
+        // 元宝不足无法上庄
+        if (room.getRoomType()==CommonConstant.ROOM_TYPE_YB||room.getRoomType()==CommonConstant.ROOM_TYPE_JB) {
+            if (room.getPlayerMap().get(account).getScore() < room.getMinBankerScore()) {
+                return;
+            }
+        }
+        // 设置庄家
+        room.setBanker(account);
+        // 设置游戏状态
+        room.setGameStatus(NNConstant.NN_GAME_STATUS_READY);
+        changeGameStatus(room);
     }
 
     /**
@@ -324,7 +359,7 @@ public class NNGameEventDealNew {
         } else if (room.getBankerType() == NNConstant.NN_BANKER_TYPE_TB) {
             // 通比模式开始游戏
             startGameTb(room);
-        } else if (room.getBankerType()==NNConstant.NN_BANKER_TYPE_FZ){
+        } else if (room.getBankerType()==NNConstant.NN_BANKER_TYPE_FZ||room.getBankerType()==NNConstant.NN_BANKER_TYPE_ZZ){
             // 设置房间状态(下注)
             room.setGameStatus(NNConstant.NN_GAME_STATUS_XZ);
             // 开启亮牌定时器
@@ -733,6 +768,20 @@ public class NNGameEventDealNew {
                         room.setGameStatus(NNConstant.NN_GAME_STATUS_ZJS);
                     }
                 }
+                if (room.getBankerType()==NNConstant.NN_BANKER_TYPE_ZZ) {
+                    if (room.getPlayerMap().get(room.getBanker()).getScore()<room.getMinBankerScore()) {
+                        // 庄家设为空
+                        room.setBanker(null);
+                        // 设置游戏状态
+                        room.setGameStatus(NNConstant.NN_GAME_STATUS_TO_BE_BANKER);
+                        // 初始化倒计时
+                        room.setTimeLeft(NNConstant.NN_TIMER_INIT);
+                        // 重置玩家状态
+                        for (String uuid : room.getUserPacketMap().keySet()) {
+                            room.getUserPacketMap().get(uuid).setStatus(NNConstant.NN_USER_STATUS_INIT);
+                        }
+                    }
+                }
             }
         }
     }
@@ -1063,6 +1112,24 @@ public class NNGameEventDealNew {
                 if (postData.containsKey("notSendToMe")) {
                     CommonConstant.sendMsgEventToAll(room.getAllUUIDList(), result.toString(), "exitRoomPush_NN");
                 }
+                // 坐庄模式
+                if (room.getBankerType() == NNConstant.NN_BANKER_TYPE_ZZ) {
+                    // 房主退出且房间内有其他玩家
+                    if (account.equals(room.getBanker())&&room.getUserPacketMap().size()>0) {
+                        // 庄家设为空
+                        room.setBanker(null);
+                        // 设置游戏状态
+                        room.setGameStatus(NNConstant.NN_GAME_STATUS_TO_BE_BANKER);
+                        // 初始化倒计时
+                        room.setTimeLeft(NNConstant.NN_TIMER_INIT);
+                        // 重置玩家状态
+                        for (String uuid : room.getUserPacketMap().keySet()) {
+                            room.getUserPacketMap().get(uuid).setStatus(NNConstant.NN_USER_STATUS_INIT);
+                        }
+                        changeGameStatus(room);
+                        return;
+                    }
+                }
                 // 房间内所有玩家都已经完成准备且人数大于两人通知开始游戏
                 if (room.isAllReady() && room.getPlayerMap().size() >= NNConstant.NN_MIN_START_COUNT) {
                     startGame(room);
@@ -1096,12 +1163,13 @@ public class NNGameEventDealNew {
         for (String account : room.getPlayerMap().keySet()) {
             JSONObject obj = new JSONObject();
             obj.put("gameStatus", room.getGameStatus());
-            if (room.getGameStatus() > NNConstant.NN_GAME_STATUS_DZ && room.getBankerType() != NNConstant.NN_BANKER_TYPE_TB) {
-                obj.put("zhuang", room.getPlayerMap().get(room.getBanker()).getMyIndex());
-                obj.put("qzScore", room.getUserPacketMap().get(room.getBanker()).getQzTimes());
-            } else {
+            if (Dto.stringIsNULL(room.getBanker())||(room.getGameStatus()<=NNConstant.NN_GAME_STATUS_DZ&&room.getBankerType()!=NNConstant.NN_BANKER_TYPE_ZZ)||
+                room.getBankerType()==NNConstant.NN_BANKER_TYPE_TB||room.getPlayerMap().get(room.getBanker())==null) {
                 obj.put("zhuang", CommonConstant.NO_BANKER_INDEX);
                 obj.put("qzScore", 0);
+            }else {
+                obj.put("zhuang", room.getPlayerMap().get(room.getBanker()).getMyIndex());
+                obj.put("qzScore", room.getUserPacketMap().get(room.getBanker()).getQzTimes());
             }
             obj.put("game_index", room.getGameIndex());
             obj.put("showTimer", CommonConstant.GLOBAL_YES);
@@ -1119,6 +1187,21 @@ public class NNGameEventDealNew {
                 }
                 if (room.getGameStatus()==NNConstant.NN_GAME_STATUS_JS&&room.getGameIndex()==room.getGameCount()) {
                     obj.put("jiesuanData", room.getFinalSummary());
+                }
+            }
+            /**
+             * 20180518 房主坐庄模式 wqm
+             */
+            obj.put("isBanker",CommonConstant.GLOBAL_NO);
+            if (room.getBankerType()==NNConstant.NN_BANKER_TYPE_ZZ) {
+                if (room.getGameStatus()==NNConstant.NN_GAME_STATUS_TO_BE_BANKER||
+                    (room.getGameStatus()==NNConstant.NN_GAME_STATUS_JS&&room.getPlayerMap().get(room.getBanker()).getScore()<room.getMinBankerScore())) {
+                    obj.put("isBanker",CommonConstant.GLOBAL_YES);
+                    obj.put("bankerMinScore",room.getMinBankerScore());
+                    obj.put("bankerIsUse",CommonConstant.GLOBAL_YES);
+                    if (room.getPlayerMap().get(account).getScore()<room.getMinBankerScore()) {
+                        obj.put("bankerIsUse",CommonConstant.GLOBAL_NO);
+                    }
                 }
             }
             UUID uuid = room.getPlayerMap().get(account).getUuid();

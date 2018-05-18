@@ -158,6 +158,10 @@ public class GameRoom {
      * 金币场等级
      */
     private int level;
+    /**
+     * 最小坐庄分数
+     */
+    private double minBankerScore;
 
     public String getRoomNo() {
         return roomNo;
@@ -445,6 +449,14 @@ public class GameRoom {
 
     public void setLevel(int level) {
         this.level = level;
+    }
+
+    public double getMinBankerScore() {
+        return minBankerScore;
+    }
+
+    public void setMinBankerScore(double minBankerScore) {
+        this.minBankerScore = minBankerScore;
     }
 
     /**

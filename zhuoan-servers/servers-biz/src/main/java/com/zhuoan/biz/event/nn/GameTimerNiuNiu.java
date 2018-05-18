@@ -133,6 +133,11 @@ public class GameTimerNiuNiu{
                                 autoAccountList.add(account);
                             }
                         }
+                        if (room.getBankerType()==NNConstant.NN_BANKER_TYPE_ZZ&&gameStatus==NNConstant.NN_GAME_STATUS_READY) {
+                            if (autoAccountList.contains(account)&&account.equals(room.getBanker())) {
+                                autoAccountList.remove(account);
+                            }
+                        }
                     }
                     // 投递消息类型
                     int messageSort = 0;

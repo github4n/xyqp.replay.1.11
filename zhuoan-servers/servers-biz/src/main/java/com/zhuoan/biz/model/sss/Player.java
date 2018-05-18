@@ -99,6 +99,11 @@ public class Player implements Serializable{
      * 参与游戏局数
      */
     private int playTimes = 0;
+    /**
+     * 下注倍数
+     */
+    private int xzTimes = 1;
+
 
     public static long getSerialVersionUID() {
         return serialVersionUID;
@@ -270,6 +275,14 @@ public class Player implements Serializable{
 
     public void setPlayTimes(int playTimes) {
         this.playTimes = playTimes;
+    }
+
+    public int getXzTimes() {
+        return xzTimes;
+    }
+
+    public void setXzTimes(int xzTimes) {
+        this.xzTimes = xzTimes;
     }
 
     /**

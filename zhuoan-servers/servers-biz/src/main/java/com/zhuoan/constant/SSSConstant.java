@@ -28,13 +28,25 @@ public class SSSConstant {
      */
     public static final int SSS_GAME_EVENT_CLOSE_ROOM = 5;
     /**
-     * 十三水庄家类型-霸王庄
+     * 十三水游戏事件-上庄
      */
-    public static final int SSS_BANKER_TYPE_BWZ = 1;
+    public static final int SSS_GAME_EVENT_BE_BANKER = 6;
+    /**
+     * 十三水游戏事件-下注
+     */
+    public static final int SSS_GAME_EVENT_XZ = 7;
     /**
      * 十三水庄家类型-互比
      */
     public static final int SSS_BANKER_TYPE_HB = 0;
+    /**
+     * 十三水庄家类型-霸王庄
+     */
+    public static final int SSS_BANKER_TYPE_BWZ = 1;
+    /**
+     * 十三水庄家类型-坐庄
+     */
+    public static final int SSS_BANKER_TYPE_ZZ = 2;
 
     /**
      * 十三水游戏状态-初始
@@ -60,6 +72,14 @@ public class SSSConstant {
      * 十三水游戏状态-总结算
      */
     public static final int SSS_GAME_STATUS_FINAL_SUMMARY = 5;
+    /**
+     * 十三水游戏状态-下注
+     */
+    public static final int SSS_GAME_STATUS_XZ = 6;
+    /**
+     * 十三水游戏状态-上庄
+     */
+    public static final int SSS_GAME_STATUS_TO_BE_BANKER = 8;
 
     /**
      * 十三水玩家状态-初始

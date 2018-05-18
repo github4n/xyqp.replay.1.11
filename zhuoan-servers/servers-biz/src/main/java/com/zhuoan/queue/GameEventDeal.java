@@ -159,6 +159,9 @@ public class GameEventDeal {
                     case NNConstant.NN_GAME_EVENT_CLOSE_ROOM:
                         nnGameEventDealNew.closeRoom(client, data);
                         break;
+                    case NNConstant.NN_GAME_EVENT_BE_BANKER:
+                        nnGameEventDealNew.gameBeBanker(client, data);
+                        break;
                     default:
                         break;
                 }
@@ -184,6 +187,13 @@ public class GameEventDeal {
                     case SSSConstant.SSS_GAME_EVENT_CLOSE_ROOM:
                         // 断线重连
                         sssGameEventDealNew.closeRoom(client, data);
+                        break;
+                    case SSSConstant.SSS_GAME_EVENT_BE_BANKER:
+                        // 上庄
+                        sssGameEventDealNew.gameBeBanker(client, data);
+                        break;
+                    case SSSConstant.SSS_GAME_EVENT_XZ:
+                        // 下注
                         break;
                     default:
                         break;

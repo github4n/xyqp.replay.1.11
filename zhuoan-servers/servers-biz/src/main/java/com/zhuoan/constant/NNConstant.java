@@ -37,29 +37,37 @@ public class NNConstant {
      */
     public static final int NN_GAME_EVENT_CLOSE_ROOM = 7;
     /**
-     * 抢庄类型-房主坐庄
+     * 牛牛游戏事件-上庄
+     */
+    public static final int NN_GAME_EVENT_BE_BANKER = 8;
+    /**
+     * 庄家类型-房主坐庄
      */
     public static final int NN_BANKER_TYPE_FZ = 0;
     /**
-     * 抢庄类型-轮庄
+     * 庄家类型-轮庄
      */
     public static final int NN_BANKER_TYPE_LZ = 1;
     /**
-     * 抢庄类型-抢庄
+     * 庄家类型-抢庄
      */
     public static final int NN_BANKER_TYPE_QZ = 2;
     /**
-     * 抢庄类型-明牌抢庄
+     * 庄家类型-明牌抢庄
      */
     public static final int NN_BANKER_TYPE_MP = 3;
     /**
-     * 抢庄类型-牛牛坐庄
+     * 庄家类型-牛牛坐庄
      */
     public static final int NN_BANKER_TYPE_NN = 4;
     /**
-     * 抢庄类型-通比
+     * 庄家类型-通比
      */
     public static final int NN_BANKER_TYPE_TB = 5;
+    /**
+     * 庄家类型-坐庄模式
+     */
+    public static final int NN_BANKER_TYPE_ZZ = 6;
 
     /**
      * 无人抢庄-随机庄家
@@ -106,6 +114,10 @@ public class NNConstant {
      * 牛牛游戏状态-总结算
      */
     public static final int NN_GAME_STATUS_ZJS=7;
+    /**
+     * 牛牛游戏状态-上庄
+     */
+    public static final int NN_GAME_STATUS_TO_BE_BANKER=8;
 
     /**
      * 玩家状态-初始

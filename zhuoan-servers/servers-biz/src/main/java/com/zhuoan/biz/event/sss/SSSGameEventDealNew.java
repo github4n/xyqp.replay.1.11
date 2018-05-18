@@ -249,6 +249,48 @@ public class SSSGameEventDealNew {
     }
 
     /**
+     * 下注
+     * @param client
+     * @param data
+     */
+    public void gameXiaZhu(SocketIOClient client, Object data) {
+
+    }
+
+    /**
+     * 上庄
+     * @param client
+     * @param data
+     */
+    public void gameBeBanker(SocketIOClient client, Object data){
+        JSONObject postData = JSONObject.fromObject(data);
+        // 不满足准备条件直接忽略
+        if (!CommonConstant.checkEvent(postData, SSSConstant.SSS_GAME_STATUS_TO_BE_BANKER, client)) {
+            return;
+        }
+        // 房间号
+        String roomNo = postData.getString(CommonConstant.DATA_KEY_ROOM_NO);
+        SSSGameRoomNew room = (SSSGameRoomNew) RoomManage.gameRoomMap.get(roomNo);
+        // 玩家账号
+        String account = postData.getString(CommonConstant.DATA_KEY_ACCOUNT);
+        // 庄家已经确定
+        if (!Dto.stringIsNULL(room.getBanker())) {
+            return;
+        }
+        // 元宝不足无法上庄
+        if (room.getRoomType()==CommonConstant.ROOM_TYPE_YB||room.getRoomType()==CommonConstant.ROOM_TYPE_JB) {
+            if (room.getPlayerMap().get(account).getScore() < room.getMinBankerScore()) {
+                return;
+            }
+        }
+        // 设置庄家
+        room.setBanker(account);
+        // 设置游戏状态
+        room.setGameStatus(SSSConstant.SSS_GAME_STATUS_READY);
+        changeGameStatus(room);
+    }
+
+    /**
      * 游戏事件
      * @param client
      * @param data
@@ -351,7 +393,10 @@ public class SSSGameEventDealNew {
                         gameSummaryHb(roomNo);
                         break;
                     case SSSConstant.SSS_BANKER_TYPE_BWZ:
-                        gameSummaryBwz(roomNo);
+                        gameSummaryBwzOrZZ(roomNo);
+                        break;
+                    case SSSConstant.SSS_BANKER_TYPE_ZZ:
+                        gameSummaryBwzOrZZ(roomNo);
                         break;
                     default:
                         break;
@@ -395,6 +440,21 @@ public class SSSGameEventDealNew {
                                     if (room.getRoomType()==CommonConstant.ROOM_TYPE_FK) {
                                         if (room.getGameStatus()==SSSConstant.SSS_GAME_STATUS_SUMMARY&&room.getGameIndex()==room.getGameCount()) {
                                             room.setGameStatus(SSSConstant.SSS_GAME_STATUS_FINAL_SUMMARY);
+                                        }
+                                    }
+                                    // 坐庄模式元宝不足
+                                    if (room.getBankerType()== SSSConstant.SSS_BANKER_TYPE_ZZ) {
+                                        if (room.getPlayerMap().get(room.getBanker()).getScore()<room.getMinBankerScore()) {
+                                            // 庄家设为空
+                                            room.setBanker(null);
+                                            // 设置游戏状态
+                                            room.setGameStatus(SSSConstant.SSS_GAME_STATUS_TO_BE_BANKER);
+                                            // 初始化倒计时
+                                            room.setTimeLeft(SSSConstant.SSS_TIMER_INIT);
+                                            // 重置玩家状态
+                                            for (String uuid : room.getUserPacketMap().keySet()) {
+                                                room.getUserPacketMap().get(uuid).setStatus(SSSConstant.SSS_TIMER_INIT);
+                                            }
                                         }
                                     }
                                 }
@@ -695,6 +755,24 @@ public class SSSGameEventDealNew {
                 if (postData.containsKey("notSendToMe")) {
                     CommonConstant.sendMsgEventToAll(room.getAllUUIDList(), result.toString(), "exitRoomPush_SSS");
                 }
+                // 坐庄模式
+                if (room.getBankerType() == SSSConstant.SSS_BANKER_TYPE_ZZ) {
+                    // 房主退出且房间内有其他玩家
+                    if (account.equals(room.getBanker())&&room.getUserPacketMap().size()>0) {
+                        // 庄家设为空
+                        room.setBanker(null);
+                        // 设置游戏状态
+                        room.setGameStatus(SSSConstant.SSS_GAME_STATUS_TO_BE_BANKER);
+                        // 初始化倒计时
+                        room.setTimeLeft(SSSConstant.SSS_TIMER_INIT);
+                        // 重置玩家状态
+                        for (String uuid : room.getUserPacketMap().keySet()) {
+                            room.getUserPacketMap().get(uuid).setStatus(SSSConstant.SSS_USER_STATUS_INIT);
+                        }
+                        changeGameStatus(room);
+                        return;
+                    }
+                }
                 // 房间内所有玩家都已经完成准备且人数大于最低开始人数通知开始游戏
                 if (room.isAllReady()&&room.getPlayerMap().size()>=room.getMinPlayer()) {
                     startGame(room);
@@ -836,8 +914,12 @@ public class SSSGameEventDealNew {
             JSONObject obj = new JSONObject();
             obj.put("gameStatus",room.getGameStatus());
             obj.put("users",room.getAllPlayer());
-            if (room.getBankerType()==SSSConstant.SSS_BANKER_TYPE_BWZ) {
-                obj.put("zhuang",room.getPlayerMap().get(room.getBanker()).getMyIndex());
+            if (room.getBankerType()==SSSConstant.SSS_BANKER_TYPE_BWZ||room.getBankerType()==SSSConstant.SSS_BANKER_TYPE_ZZ) {
+                if (!Dto.stringIsNULL(room.getBanker())&&room.getPlayerMap().get(room.getBanker())!=null) {
+                    obj.put("zhuang",room.getPlayerMap().get(room.getBanker()).getMyIndex());
+                }else {
+                    obj.put("zhuang",CommonConstant.NO_BANKER_INDEX);
+                }
             }else if (room.getBankerType()==SSSConstant.SSS_BANKER_TYPE_HB) {
                 obj.put("zhuang",CommonConstant.NO_BANKER_INDEX);
             }
@@ -863,6 +945,20 @@ public class SSSGameEventDealNew {
                 }
                 if (room.getGameStatus()==SSSConstant.SSS_GAME_STATUS_SUMMARY&&room.getGameIndex()==room.getGameCount()) {
                     obj.put("jiesuanData", room.obtainFinalSummaryData());
+                }
+            }
+            // 坐庄模式
+            obj.put("isBanker",CommonConstant.GLOBAL_NO);
+            if (room.getBankerType()== SSSConstant.SSS_BANKER_TYPE_ZZ) {
+                // 上庄阶段或结算阶段庄家分数不足
+                if (room.getGameStatus()==SSSConstant.SSS_GAME_STATUS_TO_BE_BANKER||
+                    (room.getGameStatus()==SSSConstant.SSS_GAME_STATUS_SUMMARY&&room.getPlayerMap().get(room.getBanker()).getScore()<room.getMinBankerScore())) {
+                    obj.put("isBanker",CommonConstant.GLOBAL_YES);
+                    obj.put("bankerMinScore",room.getMinBankerScore());
+                    obj.put("bankerIsUse",CommonConstant.GLOBAL_YES);
+                    if (room.getPlayerMap().get(account).getScore()<room.getMinBankerScore()) {
+                        obj.put("bankerIsUse",CommonConstant.GLOBAL_NO);
+                    }
                 }
             }
             UUID uuid = room.getPlayerMap().get(account).getUuid();
@@ -949,8 +1045,15 @@ public class SSSGameEventDealNew {
                 roomData.put("jiesan", CommonConstant.GLOBAL_YES);
                 roomData.put("jiesanData", room.getJieSanData());
             }
-            if (room.getGameStatus()== SSSConstant.SSS_GAME_STATUS_FINAL_SUMMARY) {
+            if (room.getGameStatus() == SSSConstant.SSS_GAME_STATUS_FINAL_SUMMARY) {
                 roomData.put("jiesuanData", room.obtainFinalSummaryData());
+            }
+            if (room.getBankerType()== SSSConstant.SSS_BANKER_TYPE_ZZ&&room.getGameStatus()==SSSConstant.SSS_GAME_STATUS_TO_BE_BANKER) {
+                roomData.put("bankerMinScore",room.getMinBankerScore());
+                roomData.put("bankerIsUse",CommonConstant.GLOBAL_NO);
+                if (room.getPlayerMap().get(account).getScore()>=room.getMinBankerScore()) {
+                    roomData.put("bankerIsUse",CommonConstant.GLOBAL_YES);
+                }
             }
         }
         return roomData;
@@ -1112,10 +1215,11 @@ public class SSSGameEventDealNew {
     }
 
     /**
-     * 霸王庄结算
+     * 霸王庄、坐庄结算
+     * 区别：坐庄模式没有全垒打
      * @param roomNo
      */
-    public void gameSummaryBwz(String roomNo){
+    public void gameSummaryBwzOrZZ(String roomNo){
         SSSGameRoomNew room = (SSSGameRoomNew) RoomManage.gameRoomMap.get(roomNo);
         if (room!=null) {
             // 获取所有参与的玩家
@@ -1131,7 +1235,7 @@ public class SSSGameEventDealNew {
             if (!Dto.isObjNull(room.getSetting())&&room.getSetting().containsKey("qld")) {
                 minSwatCount = room.getSetting().getInt("qld");
             }
-            if (gameList.size()<minSwatCount) {
+            if (gameList.size()<minSwatCount||room.getBankerType()==SSSConstant.SSS_BANKER_TYPE_ZZ) {
                 isSwat = false;
             }
             // 庄家
@@ -1202,7 +1306,7 @@ public class SSSGameEventDealNew {
                                 winTime --;
                             }
                         }
-                        sumScoreOther = compareResult.getInt("B");
+                        sumScoreOther = compareResult.getInt("B")*room.getUserPacketMap().get(account).getXzTimes();
                         // 三道全赢打枪
                         if (winTime==3) {
                             sumScoreOther *= 2;
