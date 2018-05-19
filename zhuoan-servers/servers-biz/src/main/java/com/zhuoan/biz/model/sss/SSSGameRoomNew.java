@@ -249,6 +249,9 @@ public class SSSGameRoomNew extends GameRoom{
      */
     public JSONArray obtainShowIndex(){
         JSONArray showIndex = new JSONArray();
+        if (getGameStatus()==SSSConstant.SSS_GAME_STATUS_XZ) {
+            return showIndex;
+        }
         if (getGameStatus()>SSSConstant.SSS_GAME_STATUS_GAME_EVENT&&getGameStatus()!=SSSConstant.SSS_GAME_STATUS_FINAL_SUMMARY) {
             Map<String,Double> headMap = new HashMap<String, Double>();
             Map<String,Double> midMap = new HashMap<String, Double>();
@@ -739,5 +742,39 @@ public class SSSGameRoomNew extends GameRoom{
         }
 
         return JSONArray.fromObject(baseNums);
+    }
+
+    /**
+     * 检查是否全部完成下注
+     * @return
+     */
+    public boolean isAllXiaZhu(){
+        for (String account : userPacketMap.keySet()){
+            if (!account.equals(getBanker())) {
+                if (userPacketMap.get(account).getStatus()!= SSSConstant.SSS_USER_STATUS_INIT&&
+                    userPacketMap.get(account).getStatus()!= SSSConstant.SSS_USER_STATUS_XZ) {
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
+
+    /**
+     * 获取下注结果
+     * @return
+     */
+    public JSONArray obtainXzResult() {
+        JSONArray array = new JSONArray();
+        for (String account : userPacketMap.keySet()) {
+            if(userPacketMap.get(account).getXzTimes()>0){
+                JSONObject obj = new JSONObject();
+                obj.put("index", getPlayerMap().get(account).getMyIndex());
+                obj.put("value", userPacketMap.get(account).getXzTimes());
+                obj.put("result", CommonConstant.GLOBAL_YES);
+                array.add(obj);
+            }
+        }
+        return array;
     }
 }

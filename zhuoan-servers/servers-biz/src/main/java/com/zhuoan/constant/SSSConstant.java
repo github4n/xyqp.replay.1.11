@@ -126,6 +126,10 @@ public class SSSConstant {
      */
     public static final int SSS_TIMER_GAME_EVENT = 120;
     /**
+     * 下注倒计时
+     */
+    public static final int SSS_TIMER_GAME_XZ = 10;
+    /**
      * 配牌类型-自动
      */
     public static final int SSS_GAME_ACTION_TYPE_AUTO = 1;

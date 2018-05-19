@@ -50,6 +50,9 @@ public class GameTimerSSS {
             case SSSConstant.SSS_GAME_STATUS_GAME_EVENT:
                 userStatus = SSSConstant.SSS_USER_STATUS_GAME_EVENT;
                 break;
+            case SSSConstant.SSS_GAME_STATUS_XZ:
+                userStatus = SSSConstant.SSS_USER_STATUS_XZ;
+                break;
             default:
                 break;
         }
@@ -77,7 +80,7 @@ public class GameTimerSSS {
                                 autoAccountList.add(account);
                             }
                         }
-                        if (room.getBankerType()== SSSConstant.SSS_BANKER_TYPE_ZZ&&gameStatus==SSSConstant.SSS_GAME_STATUS_READY) {
+                        if (room.getBankerType() == SSSConstant.SSS_BANKER_TYPE_ZZ&&gameStatus==SSSConstant.SSS_GAME_STATUS_READY) {
                             if (autoAccountList.contains(account)&&account.equals(room.getBanker())) {
                                 autoAccountList.remove(account);
                             }
@@ -100,6 +103,11 @@ public class GameTimerSSS {
                             messageSort = SSSConstant.SSS_GAME_EVENT_EVENT;
                             // 自动配牌
                             data.put("type",1);
+                        }
+                        if (gameStatus==SSSConstant.SSS_GAME_STATUS_XZ) {
+                            messageSort = SSSConstant.SSS_GAME_EVENT_XZ;
+                            // 自动下注
+                            data.put("money",1);
                         }
                         if (messageSort>0) {
                             SocketIOClient client = GameMain.server.getClient(room.getPlayerMap().get(account).getUuid());

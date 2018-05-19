@@ -107,6 +107,11 @@ public class SSSGameEventDealNew {
         }
     }
 
+    /**
+     * 准备
+     * @param client
+     * @param data
+     */
     public void gameReady(SocketIOClient client, Object data){
         JSONObject postData = JSONObject.fromObject(data);
         // 不满足准备条件直接忽略
@@ -195,23 +200,30 @@ public class SSSGameEventDealNew {
         }
         // 初始化房间信息
         room.initGame();
-        // 洗牌
-        room.shufflePai(room.getUserPacketMap().size(), room.getColor());
-        // 发牌
-        room.faPai();
-        // 设置房间状态(配牌)
-        room.setGameStatus(SSSConstant.SSS_GAME_STATUS_GAME_EVENT);
-        // 设置玩家手牌
-        JSONArray gameProcessFP = new JSONArray();
-        for (String uuid : room.getUserPacketMap().keySet()) {
-            // 存放游戏记录
-            JSONObject userPai = new JSONObject();
-            userPai.put("account", uuid);
-            userPai.put("name", room.getPlayerMap().get(uuid).getName());
-            userPai.put("pai", room.getUserPacketMap().get(uuid).getMyPai());
-            gameProcessFP.add(userPai);
+        if (room.getBankerType()==SSSConstant.SSS_BANKER_TYPE_BWZ||room.getBankerType()==SSSConstant.SSS_BANKER_TYPE_HB) {
+            startGameCommon(room.getRoomNo());
+        }else if (room.getBankerType()==SSSConstant.SSS_BANKER_TYPE_ZZ) {
+            // 设置房间状态
+            room.setGameStatus(SSSConstant.SSS_GAME_STATUS_XZ);
+            // 听通知玩家
+            changeGameStatus(room);
+            // 设置倒计时时间
+            final int gameEventTime;
+            if (!Dto.isObjNull(room.getSetting())&&room.getSetting().containsKey("XZTime")) {
+                gameEventTime = room.getSetting().getInt("XZTime");
+            }else {
+                gameEventTime = SSSConstant.SSS_TIMER_GAME_XZ;
+            }
+            room.setTimeLeft(gameEventTime);
+            // 改变状态，通知玩家
+            changeGameStatus(room);
+            ThreadPoolHelper.executorService.submit(new Runnable() {
+                @Override
+                public void run() {
+                    gameTimerSSS.gameOverTime(room.getRoomNo(),SSSConstant.SSS_GAME_STATUS_XZ,gameEventTime);
+                }
+            });
         }
-        room.getGameProcess().put("faPai", gameProcessFP);
         if (room.getFee()>0) {
             JSONArray array = new JSONArray();
             for (String account : room.getPlayerMap().keySet()) {
@@ -230,12 +242,33 @@ public class SSSGameEventDealNew {
             // 抽水
             producerService.sendMessage(daoQueueDestination, new PumpDao(DaoTypeConstant.PUMP, room.getJsonObject(array)));
         }
+    }
+
+    public void startGameCommon(String roomNo) {
+        final SSSGameRoomNew room = (SSSGameRoomNew) RoomManage.gameRoomMap.get(roomNo);
+        // 洗牌
+        room.shufflePai(room.getUserPacketMap().size(), room.getColor());
+        // 发牌
+        room.faPai();
+        // 设置房间状态(配牌)
+        room.setGameStatus(SSSConstant.SSS_GAME_STATUS_GAME_EVENT);
+        // 设置玩家手牌
+        JSONArray gameProcessFP = new JSONArray();
+        for (String uuid : room.getUserPacketMap().keySet()) {
+            // 存放游戏记录
+            JSONObject userPai = new JSONObject();
+            userPai.put("account", uuid);
+            userPai.put("name", room.getPlayerMap().get(uuid).getName());
+            userPai.put("pai", room.getUserPacketMap().get(uuid).getMyPai());
+            gameProcessFP.add(userPai);
+        }
+        room.getGameProcess().put("faPai", gameProcessFP);
         // 设置倒计时时间
         final int gameEventTime;
         if (!Dto.isObjNull(room.getSetting())&&room.getSetting().containsKey("goldpeipai")) {
             gameEventTime = room.getSetting().getInt("goldpeipai");
         }else {
-            gameEventTime = SSSConstant.SSS_TIMER_READY;
+            gameEventTime = SSSConstant.SSS_TIMER_GAME_EVENT;
         }
         room.setTimeLeft(gameEventTime);
         // 改变状态，通知玩家
@@ -246,7 +279,9 @@ public class SSSGameEventDealNew {
                 gameTimerSSS.gameOverTime(room.getRoomNo(),SSSConstant.SSS_GAME_STATUS_GAME_EVENT,gameEventTime);
             }
         });
+
     }
+
 
     /**
      * 下注
@@ -267,11 +302,21 @@ public class SSSGameEventDealNew {
         if (room.getUserPacketMap().get(account).getStatus()!=SSSConstant.SSS_USER_STATUS_READY) {
             return;
         }
-
+        // 庄家不能下注
+        if (account.equals(room.getBanker())) {
+            return;
+        }
         // 设置玩家下注状态
         room.getUserPacketMap().get(account).setStatus(SSSConstant.SSS_USER_STATUS_XZ);
         // 下注分数
         room.getUserPacketMap().get(account).setXzTimes(postData.getInt("money"));
+        JSONObject result = new JSONObject();
+        result.put("index",room.getPlayerMap().get(account).getMyIndex());
+        result.put("value",room.getUserPacketMap().get(account).getXzTimes());
+        CommonConstant.sendMsgEventToAll(room.getAllUUIDList(),String.valueOf(result),"gameXiaZhuPush_SSS");
+        if (room.isAllXiaZhu()) {
+            startGameCommon(roomNo);
+        }
     }
 
     /**
@@ -402,85 +447,7 @@ public class SSSGameEventDealNew {
             room.getUserPacketMap().get(account).setStatus(SSSConstant.SSS_USER_STATUS_GAME_EVENT);
             // 所有人都完成操作切换游戏阶段
             if (room.isAllFinish()) {
-                // 设置为比牌状态
-                room.setGameStatus(SSSConstant.SSS_GAME_STATUS_COMPARE);
-                // 根据庄家类型进行结算
-                switch (room.getBankerType()) {
-                    case SSSConstant.SSS_BANKER_TYPE_HB:
-                        gameSummaryHb(roomNo);
-                        break;
-                    case SSSConstant.SSS_BANKER_TYPE_BWZ:
-                        gameSummaryBwzOrZZ(roomNo);
-                        break;
-                    case SSSConstant.SSS_BANKER_TYPE_ZZ:
-                        gameSummaryBwzOrZZ(roomNo);
-                        break;
-                    default:
-                        break;
-                }
-                if (room.getRoomType()==CommonConstant.ROOM_TYPE_FK) {
-                    roomCardSummary(roomNo);
-                }
-                // 改变状态通知玩家
-                changeGameStatus(room);
-                ThreadPoolHelper.executorService.submit(new Runnable() {
-                    @Override
-                    public void run() {
-                        int  compareTime = SSSConstant.SSS_COMPARE_TIME_BASE;
-                        compareTime += room.obtainNotSpecialCount()*3*SSSConstant.SSS_COMPARE_TIME_SHOW;
-                        compareTime += room.getDqArray().size()*SSSConstant.SSS_COMPARE_TIME_DQ;
-                        compareTime += room.getSwat()*SSSConstant.SSS_COMPARE_TIME_SWAT;
-                        room.setCompareTimer(compareTime);
-                        for (int i = 1; i <= compareTime; i++) {
-                            try {
-                                room.setCompareTimer(i);
-                                Thread.sleep(100);
-                                if (i==compareTime) {
-                                    // 更新玩家余额
-                                    for (String account : room.getUserPacketMap().keySet()) {
-                                        if (room.getUserPacketMap().get(account).getStatus()!=SSSConstant.SSS_USER_STATUS_INIT) {
-                                            double sum = room.getUserPacketMap().get(account).getScore();
-                                            double oldScore = RoomManage.gameRoomMap.get(roomNo).getPlayerMap().get(account).getScore();
-                                            double newScore = Dto.add(sum,oldScore);
-                                            RoomManage.gameRoomMap.get(roomNo).getPlayerMap().get(account).setScore(newScore);
-                                        }
-                                    }
-                                    if (room.getGameStatus()!=SSSConstant.SSS_GAME_STATUS_FINAL_SUMMARY) {
-                                        room.setGameStatus(SSSConstant.SSS_GAME_STATUS_SUMMARY);
-                                    }
-                                    // 初始化倒计时
-                                    room.setTimeLeft(SSSConstant.SSS_TIMER_INIT);
-                                    // 更新数据库
-                                    updateUserScore(room);
-                                    // 改变状态，通知玩家
-                                    changeGameStatus(room);
-                                    if (room.getRoomType()==CommonConstant.ROOM_TYPE_FK) {
-                                        if (room.getGameStatus()==SSSConstant.SSS_GAME_STATUS_SUMMARY&&room.getGameIndex()==room.getGameCount()) {
-                                            room.setGameStatus(SSSConstant.SSS_GAME_STATUS_FINAL_SUMMARY);
-                                        }
-                                    }
-                                    // 坐庄模式元宝不足
-                                    if (room.getBankerType()== SSSConstant.SSS_BANKER_TYPE_ZZ) {
-                                        if (room.getPlayerMap().get(room.getBanker()).getScore()<room.getMinBankerScore()) {
-                                            // 庄家设为空
-                                            room.setBanker(null);
-                                            // 设置游戏状态
-                                            room.setGameStatus(SSSConstant.SSS_GAME_STATUS_TO_BE_BANKER);
-                                            // 初始化倒计时
-                                            room.setTimeLeft(SSSConstant.SSS_TIMER_INIT);
-                                            // 重置玩家状态
-                                            for (String uuid : room.getUserPacketMap().keySet()) {
-                                                room.getUserPacketMap().get(uuid).setStatus(SSSConstant.SSS_TIMER_INIT);
-                                            }
-                                        }
-                                    }
-                                }
-                            } catch (Exception e) {
-                                logger.error("",e);
-                            }
-                        }
-                    }
-                });
+                allFinishDeal(roomNo);
             }else {
                 JSONObject result = new JSONObject();
                 result.put("index",room.getPlayerMap().get(account).getMyIndex());
@@ -493,6 +460,94 @@ public class SSSGameEventDealNew {
             }
         }
     }
+
+    /**
+     * 所有人完成操作进入比牌阶段
+     * @param roomNo
+     */
+    public void allFinishDeal(final String roomNo) {
+        final SSSGameRoomNew room = (SSSGameRoomNew) RoomManage.gameRoomMap.get(roomNo);
+        // 设置为比牌状态
+        room.setGameStatus(SSSConstant.SSS_GAME_STATUS_COMPARE);
+        // 根据庄家类型进行结算
+        switch (room.getBankerType()) {
+            case SSSConstant.SSS_BANKER_TYPE_HB:
+                gameSummaryHb(roomNo);
+                break;
+            case SSSConstant.SSS_BANKER_TYPE_BWZ:
+                gameSummaryBwzOrZZ(roomNo);
+                break;
+            case SSSConstant.SSS_BANKER_TYPE_ZZ:
+                gameSummaryBwzOrZZ(roomNo);
+                break;
+            default:
+                break;
+        }
+        if (room.getRoomType()==CommonConstant.ROOM_TYPE_FK) {
+            roomCardSummary(roomNo);
+        }
+        // 改变状态通知玩家
+        changeGameStatus(room);
+        ThreadPoolHelper.executorService.submit(new Runnable() {
+            @Override
+            public void run() {
+                int  compareTime = SSSConstant.SSS_COMPARE_TIME_BASE;
+                compareTime += room.obtainNotSpecialCount()*3*SSSConstant.SSS_COMPARE_TIME_SHOW;
+                compareTime += room.getDqArray().size()*SSSConstant.SSS_COMPARE_TIME_DQ;
+                compareTime += room.getSwat()*SSSConstant.SSS_COMPARE_TIME_SWAT;
+                room.setCompareTimer(compareTime);
+                for (int i = 1; i <= compareTime; i++) {
+                    try {
+                        room.setCompareTimer(i);
+                        Thread.sleep(100);
+                        if (i==compareTime) {
+                            // 更新玩家余额
+                            for (String account : room.getUserPacketMap().keySet()) {
+                                if (room.getUserPacketMap().get(account).getStatus()!=SSSConstant.SSS_USER_STATUS_INIT) {
+                                    double sum = room.getUserPacketMap().get(account).getScore();
+                                    double oldScore = RoomManage.gameRoomMap.get(roomNo).getPlayerMap().get(account).getScore();
+                                    double newScore = Dto.add(sum,oldScore);
+                                    RoomManage.gameRoomMap.get(roomNo).getPlayerMap().get(account).setScore(newScore);
+                                }
+                            }
+                            if (room.getGameStatus()!=SSSConstant.SSS_GAME_STATUS_FINAL_SUMMARY) {
+                                room.setGameStatus(SSSConstant.SSS_GAME_STATUS_SUMMARY);
+                            }
+                            // 初始化倒计时
+                            room.setTimeLeft(SSSConstant.SSS_TIMER_INIT);
+                            // 更新数据库
+                            updateUserScore(room);
+                            // 改变状态，通知玩家
+                            changeGameStatus(room);
+                            if (room.getRoomType()==CommonConstant.ROOM_TYPE_FK) {
+                                if (room.getGameStatus()==SSSConstant.SSS_GAME_STATUS_SUMMARY&&room.getGameIndex()==room.getGameCount()) {
+                                    room.setGameStatus(SSSConstant.SSS_GAME_STATUS_FINAL_SUMMARY);
+                                }
+                            }
+                            // 坐庄模式元宝不足
+                            if (room.getBankerType()== SSSConstant.SSS_BANKER_TYPE_ZZ) {
+                                if (room.getPlayerMap().get(room.getBanker()).getScore()<room.getMinBankerScore()) {
+                                    // 庄家设为空
+                                    room.setBanker(null);
+                                    // 设置游戏状态
+                                    room.setGameStatus(SSSConstant.SSS_GAME_STATUS_TO_BE_BANKER);
+                                    // 初始化倒计时
+                                    room.setTimeLeft(SSSConstant.SSS_TIMER_INIT);
+                                    // 重置玩家状态
+                                    for (String uuid : room.getUserPacketMap().keySet()) {
+                                        room.getUserPacketMap().get(uuid).setStatus(SSSConstant.SSS_TIMER_INIT);
+                                    }
+                                }
+                            }
+                        }
+                    } catch (Exception e) {
+                        logger.error("",e);
+                    }
+                }
+            }
+        });
+    }
+
 
     /**
      * 房卡场结算
@@ -977,6 +1032,9 @@ public class SSSGameEventDealNew {
                         obj.put("bankerIsUse",CommonConstant.GLOBAL_NO);
                     }
                 }
+                if (room.getGameStatus()==SSSConstant.SSS_GAME_STATUS_XZ) {
+                    obj.put("baseNum",room.getBaseNumTimes(room.getPlayerMap().get(account).getScore()));
+                }
             }
             UUID uuid = room.getPlayerMap().get(account).getUuid();
             if (uuid!=null) {
@@ -1065,12 +1123,16 @@ public class SSSGameEventDealNew {
             if (room.getGameStatus() == SSSConstant.SSS_GAME_STATUS_FINAL_SUMMARY) {
                 roomData.put("jiesuanData", room.obtainFinalSummaryData());
             }
-            if (room.getBankerType()== SSSConstant.SSS_BANKER_TYPE_ZZ&&room.getGameStatus()==SSSConstant.SSS_GAME_STATUS_TO_BE_BANKER) {
-                roomData.put("bankerMinScore",room.getMinBankerScore());
-                roomData.put("bankerIsUse",CommonConstant.GLOBAL_NO);
-                if (room.getPlayerMap().get(account).getScore()>=room.getMinBankerScore()) {
-                    roomData.put("bankerIsUse",CommonConstant.GLOBAL_YES);
+            if (room.getBankerType()== SSSConstant.SSS_BANKER_TYPE_ZZ) {
+                if (room.getGameStatus()==SSSConstant.SSS_GAME_STATUS_TO_BE_BANKER) {
+                    roomData.put("bankerMinScore",room.getMinBankerScore());
+                    roomData.put("bankerIsUse",CommonConstant.GLOBAL_NO);
+                    if (room.getPlayerMap().get(account).getScore()>=room.getMinBankerScore()) {
+                        roomData.put("bankerIsUse",CommonConstant.GLOBAL_YES);
+                    }
                 }
+                roomData.put("baseNum",room.getBaseNumTimes(room.getPlayerMap().get(account).getScore()));
+                roomData.put("xiazhu",room.obtainXzResult());
             }
         }
         return roomData;
@@ -1323,7 +1385,10 @@ public class SSSGameEventDealNew {
                                 winTime --;
                             }
                         }
-                        sumScoreOther = compareResult.getInt("B")*room.getUserPacketMap().get(account).getXzTimes();
+                        sumScoreOther = compareResult.getInt("B");
+                        if (room.getBankerType()==SSSConstant.SSS_BANKER_TYPE_ZZ) {
+                            sumScoreOther = compareResult.getInt("B")*room.getUserPacketMap().get(account).getXzTimes();
+                        }
                         // 三道全赢打枪
                         if (winTime==3) {
                             sumScoreOther *= 2;

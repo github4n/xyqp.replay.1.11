@@ -101,5 +101,15 @@ public class SSSGameEvent {
                 producerService.sendMessage(sssQueueDestination, new Messages(client, data, CommonConstant.GAME_ID_SSS, SSSConstant.SSS_GAME_EVENT_BE_BANKER));
             }
         });
+
+        /**
+         * 上庄事件
+         */
+        server.addEventListener("gameXiaZhu_SSS", Object.class, new DataListener<Object>() {
+            @Override
+            public void onData(SocketIOClient client, Object data, AckRequest ackSender) {
+                producerService.sendMessage(sssQueueDestination, new Messages(client, data, CommonConstant.GAME_ID_SSS, SSSConstant.SSS_GAME_EVENT_XZ));
+            }
+        });
     }
 }

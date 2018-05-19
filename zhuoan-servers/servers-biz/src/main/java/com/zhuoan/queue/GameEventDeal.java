@@ -194,6 +194,7 @@ public class GameEventDeal {
                         break;
                     case SSSConstant.SSS_GAME_EVENT_XZ:
                         // 下注
+                        sssGameEventDealNew.gameXiaZhu(client, data);
                         break;
                     default:
                         break;
