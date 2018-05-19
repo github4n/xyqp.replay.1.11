@@ -765,6 +765,10 @@ public class BaseEventDeal {
         if (baseInfo.containsKey("color")) {
             room.setColor(baseInfo.getInt("color"));
         }
+        if (baseInfo.containsKey("baseNum")) {
+            // 设置基础倍率
+            room.setBaseNum(baseInfo.getJSONArray("baseNum").toString());
+        }
         /* 获取游戏信息设置,插入缓存 */
         room.setSetting(getGameInfoById(CommonConstant.GAME_ID_SSS));
         room.getUserPacketMap().put(account, new Player());
@@ -1752,7 +1756,7 @@ public class BaseEventDeal {
             if (baseInfo.containsKey("maxPlayer")) {
                 noBankerNum = baseInfo.getInt("maxPlayer")-1;
             }
-            minScore = noBankerNum*maxNum*baseInfo.getDouble("yuanbao")*75;
+            minScore = noBankerNum*maxNum*baseInfo.getDouble("yuanbao")*SSSConstant.SSS_XZ_BASE_NUM;
         }
         return minScore;
     }

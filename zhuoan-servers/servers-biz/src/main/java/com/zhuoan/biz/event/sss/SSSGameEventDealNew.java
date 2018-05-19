@@ -254,7 +254,24 @@ public class SSSGameEventDealNew {
      * @param data
      */
     public void gameXiaZhu(SocketIOClient client, Object data) {
+        JSONObject postData = JSONObject.fromObject(data);
+        // 不满足准备条件直接忽略
+        if (!CommonConstant.checkEvent(postData, SSSConstant.SSS_GAME_STATUS_XZ, client)) {
+            return;
+        }
+        // 房间号
+        String roomNo = postData.getString(CommonConstant.DATA_KEY_ROOM_NO);
+        SSSGameRoomNew room = (SSSGameRoomNew) RoomManage.gameRoomMap.get(roomNo);
+        // 玩家账号
+        String account = postData.getString(CommonConstant.DATA_KEY_ACCOUNT);
+        if (room.getUserPacketMap().get(account).getStatus()!=SSSConstant.SSS_USER_STATUS_READY) {
+            return;
+        }
 
+        // 设置玩家下注状态
+        room.getUserPacketMap().get(account).setStatus(SSSConstant.SSS_USER_STATUS_XZ);
+        // 下注分数
+        room.getUserPacketMap().get(account).setXzTimes(postData.getInt("money"));
     }
 
     /**

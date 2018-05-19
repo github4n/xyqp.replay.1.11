@@ -106,6 +106,10 @@ public class SSSConstant {
      */
     public static final int SSS_USER_STATUS_FINAL_SUMMARY = 5;
     /**
+     * 十三水玩家状态-下注
+     */
+    public static final int SSS_USER_STATUS_XZ = 6;
+    /**
      * 最低打枪人数
      */
     public static final int SSS_MIN_SWAT_COUNT = 4;
@@ -149,6 +153,10 @@ public class SSSConstant {
      * 比牌动画时间-全垒打时间
      */
     public static final int SSS_COMPARE_TIME_SWAT = 38;
+    /**
+     * 下注基数
+     */
+    public static final int SSS_XZ_BASE_NUM = 75;
 
     public static final String SSS_DATA_KET_TYPE = "type";
     public static final String SSS_DATA_KET_MY_PAI = "myPai";

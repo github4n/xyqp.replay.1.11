@@ -8,9 +8,9 @@ import com.zhuoan.constant.SSSConstant;
 import com.zhuoan.util.Dto;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
-import java.util.Map.Entry;
 
 import java.util.*;
+import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -56,8 +56,14 @@ public class SSSGameRoomNew extends GameRoom{
      * 比牌时间
      */
     private int compareTimer = 0;
-
+    /**
+     * 打枪
+     */
     private JSONArray dqArray = new JSONArray();
+    /**
+     * 游戏筹码
+     */
+    private String baseNum;
 
     public JSONArray getDqArray() {
         return dqArray;
@@ -137,6 +143,14 @@ public class SSSGameRoomNew extends GameRoom{
 
     public void setMaPaiType(int maPaiType) {
         this.maPaiType = maPaiType;
+    }
+
+    public String getBaseNum() {
+        return baseNum;
+    }
+
+    public void setBaseNum(String baseNum) {
+        this.baseNum = baseNum;
     }
 
     /**
@@ -698,5 +712,32 @@ public class SSSGameRoomNew extends GameRoom{
             array.add(obj);
         }
         return array;
+    }
+
+    /**
+     * 获取可选玩家下注倍数
+     * @param yuanbao
+     * @return
+     */
+    public JSONArray getBaseNumTimes(double yuanbao){
+        // 底注
+        double di = getScore();
+        // 最大下注倍数
+        JSONArray baseNums = new JSONArray();
+        JSONArray array = JSONArray.fromObject(getBaseNum());
+        for (int i = 0; i < array.size(); i++) {
+            int val = array.getJSONObject(i).getInt("val");
+            JSONObject obj = new JSONObject();
+            obj.put("name", new StringBuffer().append(String.valueOf(val)).append("倍").toString());
+            obj.put("val", val);
+            if(yuanbao>=val*SSSConstant.SSS_XZ_BASE_NUM||getRoomType()==CommonConstant.ROOM_TYPE_FK){
+                obj.put("isuse", CommonConstant.GLOBAL_YES);
+            }else{
+                obj.put("isuse", CommonConstant.GLOBAL_NO);
+            }
+            baseNums.add(obj);
+        }
+
+        return JSONArray.fromObject(baseNums);
     }
 }
