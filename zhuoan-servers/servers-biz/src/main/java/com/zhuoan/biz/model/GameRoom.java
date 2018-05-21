@@ -6,6 +6,7 @@ import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * @author wqm
@@ -93,7 +94,7 @@ public class GameRoom {
     /**
      * 玩家个人信息
      */
-	private Map<String,Playerinfo> playerMap = new HashMap<String, Playerinfo>();
+	private ConcurrentHashMap<String,Playerinfo> playerMap = new ConcurrentHashMap<String, Playerinfo>();
     /**
      * 游戏全局设置
      */
@@ -315,11 +316,11 @@ public class GameRoom {
         this.payType = payType;
     }
 
-    public Map<String, Playerinfo> getPlayerMap() {
+    public ConcurrentHashMap<String, Playerinfo> getPlayerMap() {
         return playerMap;
     }
 
-    public void setPlayerMap(Map<String, Playerinfo> playerMap) {
+    public void setPlayerMap(ConcurrentHashMap<String, Playerinfo> playerMap) {
         this.playerMap = playerMap;
     }
 

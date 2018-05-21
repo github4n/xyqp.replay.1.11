@@ -425,15 +425,17 @@ public class SSSGameRoomNew extends GameRoom{
     public void faPai() {
         int paiIndex = 0;
         for (String account : getUserPacketMap().keySet()) {
-            String[] userPai = new String[13];
-            for (int i = 0; i < userPai.length; i++) {
-                userPai[i] = getPai().get(paiIndex);
-                paiIndex++;
+            if (getUserPacketMap().get(account).getStatus()>SSSConstant.SSS_USER_STATUS_INIT) {
+                String[] userPai = new String[13];
+                for (int i = 0; i < userPai.length; i++) {
+                    userPai[i] = getPai().get(paiIndex);
+                    paiIndex++;
+                }
+                // 设置玩家手牌
+                getUserPacketMap().get(account).setPai(sortPaiDesc(userPai));
+                // 设置玩家牌型
+                getUserPacketMap().get(account).setPaiType(SSSSpecialCards.isSpecialCards(userPai,getSetting()));
             }
-            // 设置玩家手牌
-            getUserPacketMap().get(account).setPai(sortPaiDesc(userPai));
-            // 设置玩家牌型
-            getUserPacketMap().get(account).setPaiType(SSSSpecialCards.isSpecialCards(userPai,getSetting()));
         }
     }
 

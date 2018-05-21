@@ -366,6 +366,10 @@ public class SSSGameEventDealNew {
         String account = postData.getString(CommonConstant.DATA_KEY_ACCOUNT);
         final SSSGameRoomNew room = (SSSGameRoomNew) RoomManage.gameRoomMap.get(roomNo);
         Player player = room.getUserPacketMap().get(account);
+        // 牌为空或已经亮过牌不作处理
+        if (player.getPai()==null||player.getStatus()==SSSConstant.SSS_USER_STATUS_GAME_EVENT) {
+            return;
+        }
         if (postData.containsKey(SSSConstant.SSS_DATA_KET_TYPE)) {
             // 配牌类型
             int type = postData.getInt(SSSConstant.SSS_DATA_KET_TYPE);
