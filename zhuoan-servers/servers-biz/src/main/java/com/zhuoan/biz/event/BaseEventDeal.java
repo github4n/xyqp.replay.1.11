@@ -1,8 +1,9 @@
-package com.zhuoan.biz.event.nn;
+package com.zhuoan.biz.event;
 
 import com.corundumstudio.socketio.SocketIOClient;
 import com.zhuoan.biz.core.nn.UserPacket;
 import com.zhuoan.biz.event.bdx.BDXGameEventDealNew;
+import com.zhuoan.biz.event.nn.NNGameEventDealNew;
 import com.zhuoan.biz.event.sss.SSSGameEventDealNew;
 import com.zhuoan.biz.event.zjh.ZJHGameEventDealNew;
 import com.zhuoan.biz.game.biz.GameLogBiz;
