@@ -988,7 +988,11 @@ public class NNGameEventDealNew {
                 gameLogResult.put("account", account);
                 gameLogResult.put("name", room.getPlayerMap().get(account).getName());
                 gameLogResult.put("headimg", room.getPlayerMap().get(account).getHeadimg());
-                gameLogResult.put("zhuang", room.getPlayerMap().get(room.getBanker()).getMyIndex());
+                if (room.getPlayerMap().containsKey(room.getBanker())&&room.getPlayerMap().get(room.getBanker())!=null) {
+                    gameLogResult.put("zhuang", room.getPlayerMap().get(room.getBanker()).getMyIndex());
+                }else {
+                    gameLogResult.put("zhuang", CommonConstant.NO_BANKER_INDEX);
+                }
                 gameLogResult.put("myIndex", room.getPlayerMap().get(account).getMyIndex());
                 gameLogResult.put("myPai", room.getUserPacketMap().get(account).getMyPai());
                 gameLogResult.put("mingPai", room.getUserPacketMap().get(account).getSortPai());
