@@ -83,6 +83,18 @@ public class ZJHGameRoomNew extends GameRoom{
      * 玩法
      */
     private int gameType;
+    /**
+     * 退出玩家数据
+     */
+    private List<JSONObject> outUserData = new ArrayList<JSONObject>();
+
+    public List<JSONObject> getOutUserData() {
+        return outUserData;
+    }
+
+    public void setOutUserData(List<JSONObject> outUserData) {
+        this.outUserData = outUserData;
+    }
 
     public int getGameType() {
         return gameType;
@@ -244,6 +256,7 @@ public class ZJHGameRoomNew extends GameRoom{
         setTimeLeft(ZJHConstant.ZJH_TIMER_INIT);
         yiXiaZhu.clear();
         xiaZhuList.clear();
+        outUserData.clear();
         for (String account : getUserPacketMap().keySet()) {
             getUserPacketMap().get(account).initUserPacket();
         }

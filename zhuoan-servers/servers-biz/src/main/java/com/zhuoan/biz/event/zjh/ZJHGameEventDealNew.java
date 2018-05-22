@@ -771,23 +771,19 @@ public class ZJHGameEventDealNew {
         JSONArray gameResult = new JSONArray();
         // 存放游戏记录
         JSONArray gameProcessJS = new JSONArray();
+        if (room.getOutUserData().size()>0) {
+            for (JSONObject outUserData : room.getOutUserData()) {
+                gameProcessJS.add(outUserData.getJSONObject("userSummary"));
+                gameLogResults.add(outUserData.getJSONObject("gameLog"));
+                userDeductionData.add(outUserData.getJSONObject("userDeduction"));
+                gameResult.add(outUserData.getJSONObject("userGameLog"));
+            }
+        }
         for (String account : room.getUserPacketMap().keySet()) {
             // 有参与的玩家
             if (room.getUserPacketMap().get(account).getStatus() > ZJHConstant.ZJH_USER_STATUS_INIT) {
                 // 游戏记录
-                JSONObject userJS = new JSONObject();
-                userJS.put("account", account);
-                userJS.put("name", room.getPlayerMap().get(account).getName());
-                userJS.put("pai", room.getUserPacketMap().get(account).getPai());
-                userJS.put("paiType", room.getUserPacketMap().get(account).getType());
-                userJS.put("new", room.getPlayerMap().get(account).getScore());
-                if (room.getUserPacketMap().get(account).getStatus()==ZJHConstant.ZJH_USER_STATUS_WIN) {
-                    userJS.put("sum", Dto.sub(room.getTotalScore(),room.getUserPacketMap().get(account).getScore()));
-                    userJS.put("old", Dto.sub(room.getPlayerMap().get(account).getScore(),userJS.getDouble("sum")));
-                }else {
-                    userJS.put("sum", -room.getUserPacketMap().get(account).getScore());
-                    userJS.put("old", Dto.sub(room.getPlayerMap().get(account).getScore(),userJS.getDouble("sum")));
-                }
+                JSONObject userJS = obtainUserSummaryData(account,room);
                 gameProcessJS.add(userJS);
                 // 元宝输赢情况
                 JSONObject obj = new JSONObject();
@@ -806,8 +802,8 @@ public class ZJHGameEventDealNew {
                         // 房主参与第一局需要扣房卡
                         if (account.equals(room.getOwner())&&room.getUserPacketMap().get(account).getPlayTimes()==1) {
                             obj.put("total", room.getPlayerMap().get(account).getRoomCardNum());
-                            obj.put("fen", -room.getPlayerCount()*room.getSinglePayNum());
                             obj.put("id", room.getPlayerMap().get(account).getId());
+                            obj.put("fen", -room.getPlayerCount()*room.getSinglePayNum());
                             array.add(obj);
                         }
                     }
@@ -816,56 +812,20 @@ public class ZJHGameEventDealNew {
                         // 参与第一局需要扣房卡
                         if (room.getUserPacketMap().get(account).getPlayTimes()==1) {
                             obj.put("total", room.getPlayerMap().get(account).getRoomCardNum());
-                            obj.put("fen", -room.getSinglePayNum());
                             obj.put("id", room.getPlayerMap().get(account).getId());
+                            obj.put("fen", -room.getSinglePayNum());
                             array.add(obj);
                         }
                     }
                 }
                 // 用户游戏记录
-                JSONObject object = new JSONObject();
-                object.put("id", room.getPlayerMap().get(account).getId());
-                object.put("gid", room.getGid());
-                object.put("roomNo", room.getRoomNo());
-                object.put("type", room.getRoomType());
-                object.put("new", room.getPlayerMap().get(account).getScore());
-                if (room.getUserPacketMap().get(account).getStatus()==ZJHConstant.ZJH_USER_STATUS_WIN) {
-                    object.put("fen", Dto.sub(room.getTotalScore(),room.getUserPacketMap().get(account).getScore()));
-                    object.put("old", Dto.sub(room.getPlayerMap().get(account).getScore(),object.getDouble("fen")));
-                }else {
-                    object.put("fen", -room.getUserPacketMap().get(account).getScore());
-                    object.put("old", Dto.sub(room.getPlayerMap().get(account).getScore(),object.getDouble("fen")));
-                }
+                JSONObject object = obtainUserDeductionData(account,room);
                 userDeductionData.add(object);
                 // 战绩记录
-                JSONObject gameLogResult = new JSONObject();
-                gameLogResult.put("account", account);
-                gameLogResult.put("name", room.getPlayerMap().get(account).getName());
-                gameLogResult.put("headimg", room.getPlayerMap().get(account).getHeadimg());
-                gameLogResult.put("zhuang", room.getPlayerMap().get(room.getBanker()).getMyIndex());
-                gameLogResult.put("myIndex", room.getPlayerMap().get(account).getMyIndex());
-                gameLogResult.put("myPai", room.getUserPacketMap().get(account).getPai());
-                gameLogResult.put("totalScore", room.getPlayerMap().get(account).getScore());
-                if (room.getUserPacketMap().get(account).getStatus()==ZJHConstant.ZJH_USER_STATUS_WIN) {
-                    gameLogResult.put("win", CommonConstant.GLOBAL_YES);
-                    gameLogResult.put("score", Dto.sub(room.getTotalScore(),room.getUserPacketMap().get(account).getScore()));
-                }else {
-                    gameLogResult.put("score", -room.getUserPacketMap().get(account).getScore());
-                    gameLogResult.put("win", CommonConstant.GLOBAL_NO);
-                }
+                JSONObject gameLogResult = obtainGameLogData(account,room);
                 gameLogResults.add(gameLogResult);
                 // 用户战绩
-                JSONObject userResult = new JSONObject();
-                userResult.put("zhuang", room.getBanker());
-                if (room.getUserPacketMap().get(account).getStatus()==ZJHConstant.ZJH_USER_STATUS_WIN) {
-                    userResult.put("isWinner", CommonConstant.GLOBAL_YES);
-                    userResult.put("score", Dto.sub(room.getTotalScore(),room.getUserPacketMap().get(account).getScore()));
-                }else {
-                    userResult.put("isWinner", CommonConstant.GLOBAL_NO);
-                    userResult.put("score", -room.getUserPacketMap().get(account).getScore());
-                }
-                userResult.put("totalScore", room.getPlayerMap().get(account).getScore());
-                userResult.put("player", room.getPlayerMap().get(account).getName());
+                JSONObject userResult = obtainUserResult(account,room);
                 gameResult.add(userResult);
             }
         }
@@ -885,10 +845,107 @@ public class ZJHGameEventDealNew {
         // 战绩信息
         JSONObject gameLogObj = room.obtainGameLog(gameLogResults.toString(), room.getGameProcess().toString());
         producerService.sendMessage(daoQueueDestination, new PumpDao(DaoTypeConstant.INSERT_GAME_LOG, gameLogObj));
+        if (room.getOutUserData().size()>0) {
+            for (JSONObject outUserData : room.getOutUserData()) {
+                array.add(outUserData.getJSONObject("obj"));
+            }
+        }
         JSONArray userGameLogs = room.obtainUserGameLog(gameLogObj.getLong("id"), array, gameResult.toString());
         for (int i = 0; i < userGameLogs.size(); i++) {
             producerService.sendMessage(daoQueueDestination, new PumpDao(DaoTypeConstant.INSERT_USER_GAME_LOG, userGameLogs.getJSONObject(i)));
         }
+    }
+
+    /**
+     * 获取玩家战绩数据
+     * @param account
+     * @param room
+     * @return
+     */
+    public JSONObject obtainUserResult(String account,ZJHGameRoomNew room) {
+        JSONObject userResult = new JSONObject();
+        userResult.put("zhuang", room.getBanker());
+        if (room.getUserPacketMap().get(account).getStatus()==ZJHConstant.ZJH_USER_STATUS_WIN) {
+            userResult.put("isWinner", CommonConstant.GLOBAL_YES);
+            userResult.put("score", Dto.sub(room.getTotalScore(),room.getUserPacketMap().get(account).getScore()));
+        }else {
+            userResult.put("isWinner", CommonConstant.GLOBAL_NO);
+            userResult.put("score", -room.getUserPacketMap().get(account).getScore());
+        }
+        userResult.put("totalScore", room.getPlayerMap().get(account).getScore());
+        userResult.put("player", room.getPlayerMap().get(account).getName());
+        return userResult;
+    }
+
+    /**
+     * 获取战绩数据
+     * @param account
+     * @param room
+     * @return
+     */
+    public JSONObject obtainGameLogData(String account,ZJHGameRoomNew room) {
+        JSONObject gameLogResult = new JSONObject();
+        gameLogResult.put("account", account);
+        gameLogResult.put("name", room.getPlayerMap().get(account).getName());
+        gameLogResult.put("headimg", room.getPlayerMap().get(account).getHeadimg());
+        gameLogResult.put("zhuang", room.getPlayerMap().get(room.getBanker()).getMyIndex());
+        gameLogResult.put("myIndex", room.getPlayerMap().get(account).getMyIndex());
+        gameLogResult.put("myPai", room.getUserPacketMap().get(account).getPai());
+        gameLogResult.put("totalScore", room.getPlayerMap().get(account).getScore());
+        if (room.getUserPacketMap().get(account).getStatus()==ZJHConstant.ZJH_USER_STATUS_WIN) {
+            gameLogResult.put("win", CommonConstant.GLOBAL_YES);
+            gameLogResult.put("score", Dto.sub(room.getTotalScore(),room.getUserPacketMap().get(account).getScore()));
+        }else {
+            gameLogResult.put("score", -room.getUserPacketMap().get(account).getScore());
+            gameLogResult.put("win", CommonConstant.GLOBAL_NO);
+        }
+        return gameLogResult;
+    }
+
+    /**
+     * 获取游戏记录数据
+     * @param account
+     * @param room
+     * @return
+     */
+    public JSONObject obtainUserDeductionData(String account,ZJHGameRoomNew room) {
+        JSONObject object = new JSONObject();
+        object.put("id", room.getPlayerMap().get(account).getId());
+        object.put("gid", room.getGid());
+        object.put("roomNo", room.getRoomNo());
+        object.put("type", room.getRoomType());
+        object.put("new", room.getPlayerMap().get(account).getScore());
+        if (room.getUserPacketMap().get(account).getStatus()==ZJHConstant.ZJH_USER_STATUS_WIN) {
+            object.put("fen", Dto.sub(room.getTotalScore(),room.getUserPacketMap().get(account).getScore()));
+            object.put("old", Dto.sub(room.getPlayerMap().get(account).getScore(),object.getDouble("fen")));
+        }else {
+            object.put("fen", -room.getUserPacketMap().get(account).getScore());
+            object.put("old", Dto.sub(room.getPlayerMap().get(account).getScore(),object.getDouble("fen")));
+        }
+        return object;
+    }
+
+    /**
+     * 获取结算数据
+     * @param account
+     * @param room
+     * @return
+     */
+    public JSONObject obtainUserSummaryData(String account,ZJHGameRoomNew room) {
+        JSONObject userJS = new JSONObject();
+        userJS.put("account", account);
+        userJS.put("name", room.getPlayerMap().get(account).getName());
+        userJS.put("pai", room.getUserPacketMap().get(account).getPai());
+        userJS.put("paiType", room.getUserPacketMap().get(account).getType());
+        userJS.put("new", room.getPlayerMap().get(account).getScore());
+        if (room.getUserPacketMap().get(account).getStatus()==ZJHConstant.ZJH_USER_STATUS_WIN) {
+            userJS.put("sum", Dto.sub(room.getTotalScore(),room.getUserPacketMap().get(account).getScore()));
+            userJS.put("old", Dto.sub(room.getPlayerMap().get(account).getScore(),userJS.getDouble("sum")));
+        }else {
+            userJS.put("sum", -room.getUserPacketMap().get(account).getScore());
+            userJS.put("old", Dto.sub(room.getPlayerMap().get(account).getScore(),userJS.getDouble("sum")));
+        }
+        return userJS;
     }
 
     /**
@@ -915,6 +972,27 @@ public class ZJHGameEventDealNew {
                     room.getGameStatus() == ZJHConstant.ZJH_GAME_STATUS_READY ||
                     room.getGameStatus() == ZJHConstant.ZJH_GAME_STATUS_SUMMARY) {// 初始及准备阶段可以退出
                     canExit = true;
+                } else if (room.getUserPacketMap().get(account).getStatus() == ZJHConstant.ZJH_USER_STATUS_QP) {
+                    canExit = true;
+                    JSONArray array = new JSONArray();
+                    JSONObject obj = new JSONObject();
+                    obj.put("total", room.getPlayerMap().get(account).getScore());
+                    if (room.getUserPacketMap().get(account).getStatus()==ZJHConstant.ZJH_USER_STATUS_WIN) {
+                        obj.put("fen", Dto.sub(room.getTotalScore(),room.getUserPacketMap().get(account).getScore()));
+                    }else {
+                        obj.put("fen", -room.getUserPacketMap().get(account).getScore());
+                    }
+                    obj.put("id", room.getPlayerMap().get(account).getId());
+                    array.add(obj);
+                    // 更新玩家分数
+                    producerService.sendMessage(daoQueueDestination, new PumpDao(DaoTypeConstant.UPDATE_SCORE, room.getPumpObject(array)));
+                    JSONObject outUserData = new JSONObject();
+                    outUserData.put("userSummary",obtainUserSummaryData(account,room));
+                    outUserData.put("gameLog",obtainGameLogData(account,room));
+                    outUserData.put("userDeduction",obtainUserDeductionData(account,room));
+                    outUserData.put("userGameLog",obtainUserResult(account,room));
+                    outUserData.put("obj",obj);
+                    room.getOutUserData().add(outUserData);
                 }
             }else if (room.getRoomType() == CommonConstant.ROOM_TYPE_FK) {
                 // 房卡场没玩过可以退出
