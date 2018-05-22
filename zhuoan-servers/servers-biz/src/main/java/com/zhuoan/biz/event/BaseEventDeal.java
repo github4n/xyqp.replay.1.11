@@ -771,7 +771,11 @@ public class BaseEventDeal {
             room.setBaseNum(baseInfo.getJSONArray("baseNum").toString());
         }
         /* 获取游戏信息设置,插入缓存 */
-        room.setSetting(getGameInfoById(CommonConstant.GAME_ID_SSS));
+        JSONObject setting = getGameInfoById(CommonConstant.GAME_ID_SSS);
+        if (baseInfo.containsKey("peiPaiTime")) {
+            setting.put("goldpeipai",baseInfo.getInt("peiPaiTime"));
+        }
+        room.setSetting(setting);
         room.getUserPacketMap().put(account, new Player());
     }
 
