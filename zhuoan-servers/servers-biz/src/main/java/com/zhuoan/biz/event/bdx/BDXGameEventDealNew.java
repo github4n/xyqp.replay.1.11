@@ -230,7 +230,7 @@ public class BDXGameEventDealNew {
         }
         BDXGameRoomNew room = (BDXGameRoomNew) RoomManage.gameRoomMap.get(roomNo);
         // 不在当前房间内
-        if (!room.getPlayerMap().containsKey(account) || room.getPlayerMap().get(account) == null) {
+        if (Dto.stringIsNULL(account) || !room.getPlayerMap().containsKey(account) || room.getPlayerMap().get(account) == null) {
             result.put("type", 0);
             CommonConstant.sendMsgEventToSingle(client, result.toString(), "reconnectGamePush_BDX");
             return;

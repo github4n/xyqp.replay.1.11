@@ -449,7 +449,7 @@ public class NNGameEventDealNew {
         String account = postData.getString(CommonConstant.DATA_KEY_ACCOUNT);
         if (postData.containsKey(NNConstant.DATA_KEY_VALUE)) {
             // 设置玩家抢庄状态及抢庄倍数
-            if (room.getUserPacketMap().containsKey(account) && room.getUserPacketMap().get(account) != null) {
+            if (!Dto.stringIsNULL(account) && room.getUserPacketMap().containsKey(account) && room.getUserPacketMap().get(account) != null) {
                 // 非抢庄、明牌抢庄抢庄消息不做处理
                 if (room.getBankerType() != NNConstant.NN_BANKER_TYPE_MP && room.getBankerType() != NNConstant.NN_BANKER_TYPE_QZ) {
                     return;
@@ -620,7 +620,7 @@ public class NNGameEventDealNew {
         final NNGameRoomNew room = (NNGameRoomNew) RoomManage.gameRoomMap.get(roomNo);
         if (postData.containsKey(NNConstant.DATA_KEY_MONEY)) {
             // 设置玩家下注状态及下注倍数
-            if (room.getUserPacketMap().containsKey(account) && room.getUserPacketMap().get(account) != null) {
+            if (!Dto.stringIsNULL(account) && room.getUserPacketMap().containsKey(account) && room.getUserPacketMap().get(account) != null) {
                 // 庄家下注消息不作处理
                 if (room.getBanker().equals(account)) {
                     return;
@@ -705,7 +705,7 @@ public class NNGameEventDealNew {
         NNGameRoomNew room = (NNGameRoomNew) RoomManage.gameRoomMap.get(roomNo);
         String account = postData.getString(CommonConstant.DATA_KEY_ACCOUNT);
         // 设置玩家亮牌状态
-        if (room.getUserPacketMap().containsKey(account) && room.getUserPacketMap().get(account) != null) {
+        if (!Dto.stringIsNULL(account) && room.getUserPacketMap().containsKey(account) && room.getUserPacketMap().get(account) != null) {
             // 是否是庄家(不是庄家且不是下注状态的不做处理)
             if (!account.equals(room.getBanker())) {
                 if (room.getUserPacketMap().get(account).getStatus() != NNConstant.NN_USER_STATUS_XZ) {
@@ -988,7 +988,7 @@ public class NNGameEventDealNew {
                 gameLogResult.put("account", account);
                 gameLogResult.put("name", room.getPlayerMap().get(account).getName());
                 gameLogResult.put("headimg", room.getPlayerMap().get(account).getHeadimg());
-                if (room.getPlayerMap().containsKey(room.getBanker())&&room.getPlayerMap().get(room.getBanker())!=null) {
+                if (!Dto.stringIsNULL(room.getBanker())&&room.getPlayerMap().containsKey(room.getBanker())&&room.getPlayerMap().get(room.getBanker())!=null) {
                     gameLogResult.put("zhuang", room.getPlayerMap().get(room.getBanker()).getMyIndex());
                 }else {
                     gameLogResult.put("zhuang", CommonConstant.NO_BANKER_INDEX);
@@ -1057,7 +1057,7 @@ public class NNGameEventDealNew {
         String roomNo = postData.getString(CommonConstant.DATA_KEY_ROOM_NO);
         NNGameRoomNew room = (NNGameRoomNew) RoomManage.gameRoomMap.get(roomNo);
         String account = postData.getString(CommonConstant.DATA_KEY_ACCOUNT);
-        if (room.getUserPacketMap().containsKey(account) && room.getUserPacketMap().get(account) != null) {
+        if (!Dto.stringIsNULL(account) && room.getUserPacketMap().containsKey(account) && room.getUserPacketMap().get(account) != null) {
             boolean canExit = false;
             // 金币场、元宝场
             if (room.getRoomType() == CommonConstant.ROOM_TYPE_JB || room.getRoomType() == CommonConstant.ROOM_TYPE_YB) {
@@ -1308,7 +1308,7 @@ public class NNGameEventDealNew {
         }
         NNGameRoomNew room = (NNGameRoomNew) RoomManage.gameRoomMap.get(roomNo);
         // 不在当前房间内
-        if (!room.getPlayerMap().containsKey(account) || room.getPlayerMap().get(account) == null) {
+        if (Dto.stringIsNULL(account) || !room.getPlayerMap().containsKey(account) || room.getPlayerMap().get(account) == null) {
             result.put("type", 0);
             CommonConstant.sendMsgEventToSingle(client, result.toString(), "reconnectGamePush_NN");
             return;

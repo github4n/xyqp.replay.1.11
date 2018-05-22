@@ -4,6 +4,7 @@ import com.corundumstudio.socketio.SocketIOClient;
 import com.zhuoan.biz.model.GameRoom;
 import com.zhuoan.biz.model.RoomManage;
 import com.zhuoan.service.socketio.impl.GameMain;
+import com.zhuoan.util.Dto;
 import net.sf.json.JSONObject;
 
 import java.util.List;
@@ -259,12 +260,12 @@ public class CommonConstant {
         // 账号
         String account = postData.getString(DATA_KEY_ACCOUNT);
         // 房间不存在或房间为空
-        if (!RoomManage.gameRoomMap.containsKey(roomNo)||RoomManage.gameRoomMap.get(roomNo)==null) {
+        if (Dto.stringIsNULL(roomNo)||!RoomManage.gameRoomMap.containsKey(roomNo)||RoomManage.gameRoomMap.get(roomNo)==null) {
             return false;
         }
         GameRoom gameRoom = RoomManage.gameRoomMap.get(roomNo);
         // 玩家不在房间内
-        if (!gameRoom.getPlayerMap().containsKey(account)||gameRoom.getPlayerMap().get(account)==null) {
+        if (Dto.stringIsNULL(account)||!gameRoom.getPlayerMap().containsKey(account)||gameRoom.getPlayerMap().get(account)==null) {
             return false;
         }
         // client对象不为空验证是否为该玩家发的消息

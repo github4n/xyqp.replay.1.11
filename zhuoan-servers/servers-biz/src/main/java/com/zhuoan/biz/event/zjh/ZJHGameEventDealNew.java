@@ -904,7 +904,7 @@ public class ZJHGameEventDealNew {
         String roomNo = postData.getString(CommonConstant.DATA_KEY_ROOM_NO);
         ZJHGameRoomNew room = (ZJHGameRoomNew) RoomManage.gameRoomMap.get(roomNo);
         String account = postData.getString(CommonConstant.DATA_KEY_ACCOUNT);
-        if (room.getUserPacketMap().containsKey(account) && room.getUserPacketMap().get(account) != null) {
+        if (!Dto.stringIsNULL(account) && room.getUserPacketMap().containsKey(account) && room.getUserPacketMap().get(account) != null) {
             boolean canExit = false;
             // 金币场、元宝场
             if (room.getRoomType() == CommonConstant.ROOM_TYPE_JB || room.getRoomType() == CommonConstant.ROOM_TYPE_YB) {
@@ -1089,7 +1089,7 @@ public class ZJHGameEventDealNew {
         }
         ZJHGameRoomNew room = (ZJHGameRoomNew) RoomManage.gameRoomMap.get(roomNo);
         // 不在当前房间内
-        if (!room.getPlayerMap().containsKey(account)||room.getPlayerMap().get(account)==null) {
+        if (Dto.stringIsNULL(account) || !room.getPlayerMap().containsKey(account) || room.getPlayerMap().get(account)==null) {
             result.put("type",CommonConstant.GLOBAL_NO);
             CommonConstant.sendMsgEventToSingle(client,result.toString(),"reconnectGamePush_ZJH");
             return;
@@ -1170,7 +1170,7 @@ public class ZJHGameEventDealNew {
         obj.put("dizhu", room.getScore());
         obj.put("wanfa", room.getGameType());
         obj.put("gameStatus", room.getGameStatus());
-        if (room.getUserPacketMap().containsKey(room.getBanker()) && room.getUserPacketMap().get(room.getBanker()) != null) {
+        if (!Dto.stringIsNULL(room.getBanker()) && room.getUserPacketMap().containsKey(room.getBanker()) && room.getUserPacketMap().get(room.getBanker()) != null) {
             obj.put("zhuang", room.getPlayerMap().get(room.getBanker()).getMyIndex());
         } else {
             obj.put("zhuang", CommonConstant.NO_BANKER_INDEX);

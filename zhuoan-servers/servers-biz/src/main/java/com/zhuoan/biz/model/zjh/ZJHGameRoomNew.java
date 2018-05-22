@@ -314,7 +314,7 @@ public class ZJHGameRoomNew extends GameRoom{
      * @return
      */
     public int getPlayerIndex(String account) {
-        if (getPlayerMap().containsKey(account)&&getPlayerMap().get(account)!=null) {
+        if (account!=null&&getPlayerMap().containsKey(account)&&getPlayerMap().get(account)!=null) {
             return getPlayerMap().get(account).getMyIndex();
         }
         return -1;

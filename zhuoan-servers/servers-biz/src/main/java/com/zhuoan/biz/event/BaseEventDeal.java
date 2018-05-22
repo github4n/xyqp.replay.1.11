@@ -954,7 +954,7 @@ public class BaseEventDeal {
             // 遍历房间列表
             for (String roomNo : RoomManage.gameRoomMap.keySet()) {
                 GameRoom gameRoom = RoomManage.gameRoomMap.get(roomNo);
-                if (gameRoom.getPlayerMap().containsKey(account) && gameRoom.getPlayerMap().get(account) != null) {
+                if (!Dto.stringIsNULL(account) && gameRoom.getPlayerMap().containsKey(account) && gameRoom.getPlayerMap().get(account) != null) {
                     postData.put(CommonConstant.DATA_KEY_ROOM_NO, gameRoom.getRoomNo());
                     postData.put("myIndex", gameRoom.getPlayerMap().get(account).getMyIndex());
                     joinRoomBase(client, postData);
@@ -1499,6 +1499,9 @@ public class BaseEventDeal {
         JSONObject option = postData.getJSONObject("option");
         postData.put("base_info",option);
         String account = postData.getString(CommonConstant.DATA_KEY_ACCOUNT);
+        if (Dto.stringIsNULL(account)) {
+            return;
+        }
         List<String> roomNoList = new ArrayList<String>();
         for (String roomNo : RoomManage.gameRoomMap.keySet()) {
             GameRoom room = RoomManage.gameRoomMap.get(roomNo);

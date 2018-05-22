@@ -68,10 +68,12 @@ public class RoomBizImpl implements RoomBiz{
     public boolean updateGameRoom(JSONObject room) {
 
         JSONObject roomInfo = gameDao.getRoomInfoByRno(room.getString("room_no"));
-        room.put("id", roomInfo.getLong("id"));
-        int i = gameDao.updateRoomInfoByRid(room);
-        if(i>0){
-            return true;
+        if (!Dto.isObjNull(roomInfo)) {
+            room.put("id", roomInfo.getLong("id"));
+            int i = gameDao.updateRoomInfoByRid(room);
+            if(i>0){
+                return true;
+            }
         }
         return false;
     }

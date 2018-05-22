@@ -771,7 +771,7 @@ public class SSSGameEventDealNew {
         String roomNo = postData.getString(CommonConstant.DATA_KEY_ROOM_NO);
         SSSGameRoomNew room = (SSSGameRoomNew) RoomManage.gameRoomMap.get(roomNo);
         String account = postData.getString(CommonConstant.DATA_KEY_ACCOUNT);
-        if (room.getUserPacketMap().containsKey(account)&&room.getUserPacketMap().get(account)!=null) {
+        if (!Dto.stringIsNULL(account)&&room.getUserPacketMap().containsKey(account)&&room.getUserPacketMap().get(account)!=null) {
             boolean canExit = false;
             // 金币场、元宝场
             if (room.getRoomType()==CommonConstant.ROOM_TYPE_JB||room.getRoomType()==CommonConstant.ROOM_TYPE_YB) {
@@ -967,7 +967,7 @@ public class SSSGameEventDealNew {
         }
         SSSGameRoomNew room = (SSSGameRoomNew) RoomManage.gameRoomMap.get(roomNo);
         // 不在当前房间内
-        if (!room.getPlayerMap().containsKey(account)||room.getPlayerMap().get(account)==null) {
+        if (Dto.stringIsNULL(account)||!room.getPlayerMap().containsKey(account)||room.getPlayerMap().get(account)==null) {
             result.put("type",CommonConstant.GLOBAL_NO);
             CommonConstant.sendMsgEventToSingle(client,result.toString(),"reconnectGamePush_SSS");
             return;
