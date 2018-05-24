@@ -138,6 +138,13 @@
             </properties>
         </profile>
 
+        <profile>
+            <id>QP-DEMO</id>
+            <properties>
+                <profiles.active>qp-demo</profiles.active>
+            </properties>
+        </profile>
+
         <!-- production使用 mvn xxx -Pproduction  (xxx:install  package)-->
         <profile>
             <!-- 生产环境 -->
