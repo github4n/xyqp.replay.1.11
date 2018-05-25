@@ -17,7 +17,7 @@ public interface PublicBiz {
      * @param platform
      * @return
      */
-    public JSONArray getRoomSetting(int gid, String platform);
+    public JSONArray getRoomSetting(int gid, String platform, int flag);
 
     /**
      * 获取系统配置

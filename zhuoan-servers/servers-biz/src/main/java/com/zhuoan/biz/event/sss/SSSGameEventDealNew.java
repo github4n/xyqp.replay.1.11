@@ -521,6 +521,10 @@ public class SSSGameEventDealNew {
                             room.setTimeLeft(SSSConstant.SSS_TIMER_INIT);
                             // 更新数据库
                             updateUserScore(room);
+                            saveUserDeduction(room);
+                            if (room.getRoomType()!=CommonConstant.ROOM_TYPE_JB) {
+                                saveGameLog(room);
+                            }
                             // 改变状态，通知玩家
                             changeGameStatus(room);
                             if (room.getRoomType()==CommonConstant.ROOM_TYPE_FK) {
@@ -639,27 +643,10 @@ public class SSSGameEventDealNew {
      */
     public void updateUserScore(SSSGameRoomNew room){
         JSONArray array = new JSONArray();
-        JSONArray userDeductionData = new JSONArray();
-        JSONArray gameLogResults = new JSONArray();
-        JSONArray gameResult = new JSONArray();
         // 存放游戏记录
-        JSONArray gameProcessJS = new JSONArray();
         for (String uuid : room.getUserPacketMap().keySet()) {
             // 有参与的玩家
             if (room.getUserPacketMap().get(uuid).getStatus() > SSSConstant.SSS_USER_STATUS_INIT) {
-                JSONObject userJS = new JSONObject();
-                userJS.put("account", uuid);
-                userJS.put("name", room.getPlayerMap().get(uuid).getName());
-                userJS.put("sum", room.getUserPacketMap().get(uuid).getScore());
-                userJS.put("pai", room.getUserPacketMap().get(uuid).getMyPai());
-                userJS.put("paiType", room.getUserPacketMap().get(uuid).getPaiType());
-                userJS.put("old", Dto.sub(room.getPlayerMap().get(uuid).getScore(),room.getUserPacketMap().get(uuid).getScore()));
-                if (room.getPlayerMap().get(uuid).getScore()<0) {
-                    userJS.put("new", 0);
-                }else {
-                    userJS.put("new", room.getPlayerMap().get(uuid).getScore());
-                }
-                gameProcessJS.add(userJS);
                 // 元宝输赢情况
                 JSONObject obj = new JSONObject();
                 if (room.getRoomType()==CommonConstant.ROOM_TYPE_YB||room.getRoomType()==CommonConstant.ROOM_TYPE_JB) {
@@ -689,6 +676,19 @@ public class SSSGameEventDealNew {
                         }
                     }
                 }
+            }
+        }
+        // 更新玩家分数
+        if (array.size()>0) {
+            producerService.sendMessage(daoQueueDestination, new PumpDao(DaoTypeConstant.UPDATE_SCORE, room.getPumpObject(array)));
+        }
+    }
+
+    public void saveUserDeduction(SSSGameRoomNew room) {
+        JSONArray userDeductionData = new JSONArray();
+        for (String uuid : room.getUserPacketMap().keySet()) {
+            // 有参与的玩家
+            if (room.getUserPacketMap().get(uuid).getStatus() > SSSConstant.SSS_USER_STATUS_INIT) {
                 // 用户游戏记录
                 JSONObject object = new JSONObject();
                 object.put("id", room.getPlayerMap().get(uuid).getId());
@@ -703,6 +703,39 @@ public class SSSGameEventDealNew {
                     object.put("new", room.getPlayerMap().get(uuid).getScore());
                 }
                 userDeductionData.add(object);
+            }
+        }
+        // 玩家输赢记录
+        producerService.sendMessage(daoQueueDestination, new PumpDao(DaoTypeConstant.USER_DEDUCTION, new JSONObject().element("user", userDeductionData)));
+    }
+
+    public void saveGameLog(SSSGameRoomNew room) {
+        JSONArray array = new JSONArray();
+        JSONArray gameLogResults = new JSONArray();
+        JSONArray gameResult = new JSONArray();
+        // 存放游戏记录
+        JSONArray gameProcessJS = new JSONArray();
+        for (String uuid : room.getUserPacketMap().keySet()) {
+            // 有参与的玩家
+            if (room.getUserPacketMap().get(uuid).getStatus() > SSSConstant.SSS_USER_STATUS_INIT) {
+                JSONObject userJS = new JSONObject();
+                userJS.put("account", uuid);
+                userJS.put("name", room.getPlayerMap().get(uuid).getName());
+                userJS.put("sum", room.getUserPacketMap().get(uuid).getScore());
+                userJS.put("pai", room.getUserPacketMap().get(uuid).getMyPai());
+                userJS.put("paiType", room.getUserPacketMap().get(uuid).getPaiType());
+                userJS.put("old", Dto.sub(room.getPlayerMap().get(uuid).getScore(),room.getUserPacketMap().get(uuid).getScore()));
+                if (room.getPlayerMap().get(uuid).getScore()<0) {
+                    userJS.put("new", 0);
+                }else {
+                    userJS.put("new", room.getPlayerMap().get(uuid).getScore());
+                }
+                gameProcessJS.add(userJS);
+
+                JSONObject obj = new JSONObject();
+                obj.put("fen",room.getUserPacketMap().get(uuid).getScore());
+                obj.put("id",room.getPlayerMap().get(uuid).getId());
+                array.add(obj);
                 // 战绩记录
                 JSONObject gameLogResult = new JSONObject();
                 gameLogResult.put("account", uuid);
@@ -743,13 +776,6 @@ public class SSSGameEventDealNew {
             }
         }
         logger.info(room.getRoomNo()+"---"+String.valueOf(room.getGameProcess()));
-        // 更新玩家分数
-        if (array.size()>0) {
-            producerService.sendMessage(daoQueueDestination, new PumpDao(DaoTypeConstant.UPDATE_SCORE, room.getPumpObject(array)));
-        }
-        // 玩家输赢记录
-        producerService.sendMessage(daoQueueDestination, new PumpDao(DaoTypeConstant.USER_DEDUCTION, new JSONObject().element("user", userDeductionData)));
-        // 战绩信息
         JSONObject gameLogObj = room.obtainGameLog(gameLogResults.toString(), room.getGameProcess().toString());
         producerService.sendMessage(daoQueueDestination, new PumpDao(DaoTypeConstant.INSERT_GAME_LOG, gameLogObj));
         JSONArray userGameLogs = room.obtainUserGameLog(gameLogObj.getLong("id"), array, gameResult.toString());
@@ -757,6 +783,7 @@ public class SSSGameEventDealNew {
             producerService.sendMessage(daoQueueDestination, new PumpDao(DaoTypeConstant.INSERT_USER_GAME_LOG, userGameLogs.getJSONObject(j)));
         }
     }
+
 
     /**
      * 退出房间

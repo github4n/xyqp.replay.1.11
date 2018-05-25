@@ -958,12 +958,15 @@ public class BaseEventDeal {
      * @param data
      */
     public void getGameSetting(SocketIOClient client, Object data) {
-        JSONObject fromObject = JSONObject.fromObject(data);
-        int gid = fromObject.getInt("gid");
-        String platform = fromObject.getString("platform");
-
+        JSONObject postData = JSONObject.fromObject(data);
+        int gid = postData.getInt("gid");
+        String platform = postData.getString("platform");
+        int flag = 1;
+        if (postData.containsKey("flag")) {
+            flag = postData.getInt("flag");
+        }
         /* 查询房间设置,插入缓存*/
-        JSONArray gameSetting = getGameSetting(gid, platform);
+        JSONArray gameSetting = getGameSetting(gid, platform, flag);
 
         if (!Dto.isNull(gameSetting)) {
             JSONArray array = new JSONArray();
@@ -983,7 +986,7 @@ public class BaseEventDeal {
      * @param platform
      * @return
      */
-    private JSONArray getGameSetting(int gid, String platform) {
+    private JSONArray getGameSetting(int gid, String platform, int flag) {
         String key = "";
         switch (gid) {
             case CommonConstant.GAME_ID_NN:
@@ -1012,12 +1015,12 @@ public class BaseEventDeal {
                 if (object!=null) {
                     gameSetting = JSONArray.fromObject(object);
                 }else {
-                    gameSetting = publicBiz.getRoomSetting(gid, platform);
+                    gameSetting = publicBiz.getRoomSetting(gid, platform, flag);
                     redisService.insertKey(String.valueOf(sb), String.valueOf(gameSetting), null);
                 }
             } catch (Exception e) {
                 logger.error("请启动REmote DIctionary Server");
-                gameSetting = publicBiz.getRoomSetting(gid, platform);
+                gameSetting = publicBiz.getRoomSetting(gid, platform, flag);
             }
         }
         return gameSetting;

@@ -225,7 +225,7 @@ public interface GameDao {
      * @param platform
      * @return
      */
-    public JSONArray getRoomSetting(int gid, String platform);
+    public JSONArray getRoomSetting(int gid, String platform, int flag);
 
     /**
      * 获取管理员用户信息

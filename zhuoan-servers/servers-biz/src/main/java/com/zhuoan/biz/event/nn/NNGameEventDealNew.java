@@ -862,17 +862,22 @@ public class NNGameEventDealNew {
         }
         // 房卡场结算
         if (room.getRoomType()==CommonConstant.ROOM_TYPE_FK) {
-            roomCardSumary(room.getRoomNo());
+            roomCardSummary(room.getRoomNo());
         }
         // 更新数据库
-        updateScore(room.getRoomNo());
+        updateUserScore(room.getRoomNo());
+        saveUserDeduction(room.getRoomNo());
+        // 金币场不插入战绩
+        if (room.getRoomType()!=CommonConstant.ROOM_TYPE_JB) {
+            saveGameLog(room.getRoomNo());
+        }
     }
 
     /**
      * 房卡场结算
      * @param roomNo
      */
-    public void roomCardSumary(String roomNo) {
+    public void roomCardSummary(String roomNo) {
         NNGameRoomNew room = (NNGameRoomNew) RoomManage.gameRoomMap.get(roomNo);
         if (room==null) {
             return;
@@ -911,15 +916,111 @@ public class NNGameEventDealNew {
      * 更新数据库
      * @param roomNo
      */
-    public void updateScore(String roomNo) {
+    public void updateUserScore(String roomNo) {
         NNGameRoomNew room = (NNGameRoomNew) RoomManage.gameRoomMap.get(roomNo);
         if (room==null) {
             return;
         }
         JSONArray array = new JSONArray();
+        for (String account : room.getUserPacketMap().keySet()) {
+            // 有参与的玩家
+            if (room.getUserPacketMap().get(account).getStatus()==NNConstant.NN_USER_STATUS_LP) {
+                // 元宝输赢情况
+                JSONObject obj = new JSONObject();
+                if (room.getRoomType()==CommonConstant.ROOM_TYPE_YB||room.getRoomType()==CommonConstant.ROOM_TYPE_JB) {
+                    double total = RoomManage.gameRoomMap.get(room.getRoomNo()).getPlayerMap().get(account).getScore();
+                    long userId = room.getPlayerMap().get(account).getId();
+                    double sum = room.getUserPacketMap().get(account).getScore();
+                    array.add(obtainUserScoreData(total,sum,userId));
+                }else if (room.getRoomType()==CommonConstant.ROOM_TYPE_FK){
+                    // 房主支付
+                    if (room.getPayType()==CommonConstant.PAY_TYPE_OWNER) {
+                        if (account.equals(room.getOwner())) {
+                            // 参与第一局需要扣房卡
+                            if (room.getUserPacketMap().get(account).getPlayTimes()==1) {
+                                double total = room.getPlayerMap().get(account).getRoomCardNum();
+                                long userId = room.getPlayerMap().get(account).getId();
+                                double sum = -room.getPlayerCount()*room.getSinglePayNum();
+                                array.add(obtainUserScoreData(total,sum,userId));
+                            }
+                        }
+                    }
+                    // 房费AA
+                    if (room.getPayType()==CommonConstant.PAY_TYPE_AA) {
+                        // 参与第一局需要扣房卡
+                        if (room.getUserPacketMap().get(account).getPlayTimes()==1) {
+                            double total = room.getPlayerMap().get(account).getRoomCardNum();
+                            long userId = room.getPlayerMap().get(account).getId();
+                            double sum = -room.getSinglePayNum();
+                            array.add(obtainUserScoreData(total,sum,userId));
+                        }
+                    }
+                }
+            }
+        }
+        if (room.getId()==0) {
+            JSONObject roomInfo = roomBiz.getRoomInfoByRno(room.getRoomNo());
+            if (!Dto.isObjNull(roomInfo)) {
+                room.setId(roomInfo.getLong("id"));
+            }
+        }
+        if (array.size()>0) {
+            // 更新玩家分数
+            producerService.sendMessage(daoQueueDestination, new PumpDao(DaoTypeConstant.UPDATE_SCORE, room.getPumpObject(array)));
+        }
+    }
+
+    public void saveUserDeduction(String roomNo) {
+        NNGameRoomNew room = (NNGameRoomNew) RoomManage.gameRoomMap.get(roomNo);
+        if (room==null) {
+            return;
+        }
         JSONArray userDeductionData = new JSONArray();
+        for (String account : room.getUserPacketMap().keySet()) {
+            if (room.getUserPacketMap().get(account).getStatus()==NNConstant.NN_USER_STATUS_LP) {
+                // 用户游戏记录
+                JSONObject object = new JSONObject();
+                object.put("id", room.getPlayerMap().get(account).getId());
+                object.put("gid", room.getGid());
+                object.put("roomNo", room.getRoomNo());
+                object.put("type", room.getRoomType());
+                object.put("fen", room.getUserPacketMap().get(account).getScore());
+                object.put("old", Dto.sub(RoomManage.gameRoomMap.get(room.getRoomNo()).getPlayerMap().get(account).getScore(),room.getUserPacketMap().get(account).getScore()));
+                if (RoomManage.gameRoomMap.get(room.getRoomNo()).getPlayerMap().get(account).getScore()<0) {
+                    object.put("new", 0);
+                }else {
+                    object.put("new", RoomManage.gameRoomMap.get(room.getRoomNo()).getPlayerMap().get(account).getScore());
+                }
+                userDeductionData.add(object);
+            }
+        }
+        // 玩家输赢记录
+        producerService.sendMessage(daoQueueDestination, new PumpDao(DaoTypeConstant.USER_DEDUCTION, new JSONObject().element("user", userDeductionData)));
+    }
+
+    /**
+     * 获取需要更新的数据
+     * @param total
+     * @param sum
+     * @param id
+     * @return
+     */
+    public JSONObject obtainUserScoreData(double total,double sum,long id) {
+        JSONObject obj = new JSONObject();
+        obj.put("id", id);
+        obj.put("total", total);
+        obj.put("fen", sum);
+        return obj;
+    }
+
+    public void saveGameLog(String roomNo) {
+        NNGameRoomNew room = (NNGameRoomNew) RoomManage.gameRoomMap.get(roomNo);
+        if (room==null) {
+            return;
+        }
         JSONArray gameLogResults = new JSONArray();
         JSONArray gameResult = new JSONArray();
+        JSONArray array = new JSONArray();
         // 存放游戏记录
         JSONArray gameProcessJS = new JSONArray();
         for (String account : room.getUserPacketMap().keySet()) {
@@ -938,51 +1039,10 @@ public class NNGameEventDealNew {
                     userJS.put("new", RoomManage.gameRoomMap.get(room.getRoomNo()).getPlayerMap().get(account).getScore());
                 }
                 gameProcessJS.add(userJS);
-                // 元宝输赢情况
-                JSONObject obj = new JSONObject();
-                if (room.getRoomType()==CommonConstant.ROOM_TYPE_YB||room.getRoomType()==CommonConstant.ROOM_TYPE_JB) {
-                    obj.put("total", RoomManage.gameRoomMap.get(room.getRoomNo()).getPlayerMap().get(account).getScore());
-                    obj.put("fen", room.getUserPacketMap().get(account).getScore());
-                    obj.put("id", room.getPlayerMap().get(account).getId());
-                    array.add(obj);
-                }else if (room.getRoomType()==CommonConstant.ROOM_TYPE_FK){
-                    // 房主支付
-                    if (room.getPayType()==CommonConstant.PAY_TYPE_OWNER) {
-                        if (account.equals(room.getOwner())) {
-                            // 参与第一局需要扣房卡
-                            if (room.getUserPacketMap().get(account).getPlayTimes()==1) {
-                                obj.put("total", room.getPlayerMap().get(account).getRoomCardNum());
-                                obj.put("fen", -room.getPlayerCount()*room.getSinglePayNum());
-                                obj.put("id", room.getPlayerMap().get(account).getId());
-                                array.add(obj);
-                            }
-                        }
-                    }
-                    // 房费AA
-                    if (room.getPayType()==CommonConstant.PAY_TYPE_AA) {
-                        // 参与第一局需要扣房卡
-                        if (room.getUserPacketMap().get(account).getPlayTimes()==1) {
-                            obj.put("total", room.getPlayerMap().get(account).getRoomCardNum());
-                            obj.put("fen", -room.getSinglePayNum());
-                            obj.put("id", room.getPlayerMap().get(account).getId());
-                            array.add(obj);
-                        }
-                    }
-                }
-                // 用户游戏记录
-                JSONObject object = new JSONObject();
-                object.put("id", room.getPlayerMap().get(account).getId());
-                object.put("gid", room.getGid());
-                object.put("roomNo", room.getRoomNo());
-                object.put("type", room.getRoomType());
-                object.put("fen", room.getUserPacketMap().get(account).getScore());
-                object.put("old", Dto.sub(RoomManage.gameRoomMap.get(room.getRoomNo()).getPlayerMap().get(account).getScore(),room.getUserPacketMap().get(account).getScore()));
-                if (RoomManage.gameRoomMap.get(room.getRoomNo()).getPlayerMap().get(account).getScore()<0) {
-                    object.put("new", 0);
-                }else {
-                    object.put("new", RoomManage.gameRoomMap.get(room.getRoomNo()).getPlayerMap().get(account).getScore());
-                }
-                userDeductionData.add(object);
+                double total = RoomManage.gameRoomMap.get(room.getRoomNo()).getPlayerMap().get(account).getScore();
+                double sum = room.getUserPacketMap().get(account).getScore();
+                long userId = room.getPlayerMap().get(account).getId();
+                array.add(obtainUserScoreData(total, sum, userId));
                 // 战绩记录
                 JSONObject gameLogResult = new JSONObject();
                 gameLogResult.put("account", account);
@@ -1019,27 +1079,12 @@ public class NNGameEventDealNew {
         }
         room.getGameProcess().put("JieSuan", gameProcessJS);
         logger.info(room.getRoomNo()+"---"+String.valueOf(room.getGameProcess()));
-        if (room.getId()==0) {
-            JSONObject roomInfo = roomBiz.getRoomInfoByRno(room.getRoomNo());
-            if (!Dto.isObjNull(roomInfo)) {
-                room.setId(roomInfo.getLong("id"));
-            }
-        }
-        if (array.size()>0) {
-            // 更新玩家分数
-            producerService.sendMessage(daoQueueDestination, new PumpDao(DaoTypeConstant.UPDATE_SCORE, room.getPumpObject(array)));
-        }
-        // 玩家输赢记录
-        producerService.sendMessage(daoQueueDestination, new PumpDao(DaoTypeConstant.USER_DEDUCTION, new JSONObject().element("user", userDeductionData)));
-        // 金币场不计战绩
-        if (room.getRoomType()!=CommonConstant.ROOM_TYPE_JB) {
-            // 战绩信息
-            JSONObject gameLogObj = room.obtainGameLog(gameLogResults.toString(), room.getGameProcess().toString());
-            producerService.sendMessage(daoQueueDestination, new PumpDao(DaoTypeConstant.INSERT_GAME_LOG, gameLogObj));
-            JSONArray userGameLogs = room.obtainUserGameLog(gameLogObj.getLong("id"), array, gameResult.toString());
-            for (int i = 0; i < userGameLogs.size(); i++) {
-                producerService.sendMessage(daoQueueDestination, new PumpDao(DaoTypeConstant.INSERT_USER_GAME_LOG, userGameLogs.getJSONObject(i)));
-            }
+        // 战绩信息
+        JSONObject gameLogObj = room.obtainGameLog(gameLogResults.toString(), room.getGameProcess().toString());
+        producerService.sendMessage(daoQueueDestination, new PumpDao(DaoTypeConstant.INSERT_GAME_LOG, gameLogObj));
+        JSONArray userGameLogs = room.obtainUserGameLog(gameLogObj.getLong("id"), array, gameResult.toString());
+        for (int i = 0; i < userGameLogs.size(); i++) {
+            producerService.sendMessage(daoQueueDestination, new PumpDao(DaoTypeConstant.INSERT_USER_GAME_LOG, userGameLogs.getJSONObject(i)));
         }
     }
 

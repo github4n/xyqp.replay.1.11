@@ -657,10 +657,10 @@ public class GameDaoImpl implements GameDao {
     }
 
     @Override
-    public JSONArray getRoomSetting(int gid, String platform) {
+    public JSONArray getRoomSetting(int gid, String platform, int flag) {
         String sql = "select id,game_id,opt_key,opt_name,opt_val,is_mul,is_use,createTime,memo,sort,is_open" +
-            " from za_gamesetting where is_use=1 and is_open=0 and game_id=? and memo=?";
-        JSONArray gameSetting = DBUtil.getObjectListBySQL(sql, new Object[]{gid, platform});
+            " from za_gamesetting where is_use=? and is_open=0 and game_id=? and memo=?";
+        JSONArray gameSetting = DBUtil.getObjectListBySQL(sql, new Object[]{flag, gid, platform});
         return gameSetting;
     }
 

@@ -21,8 +21,8 @@ public class PublicBizImpl implements PublicBiz{
     GameDao gameDao;
 
     @Override
-    public JSONArray getRoomSetting(int gid, String platform) {
-        return gameDao.getRoomSetting(gid,platform);
+    public JSONArray getRoomSetting(int gid, String platform, int flag) {
+        return gameDao.getRoomSetting(gid,platform,flag);
     }
 
     @Override
