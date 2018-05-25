@@ -163,6 +163,18 @@ public class GameRoom {
      * 最小坐庄分数
      */
     private double minBankerScore;
+    /**
+     *  结算数据
+     */
+    private JSONObject summaryData = new JSONObject();
+
+    public JSONObject getSummaryData() {
+        return summaryData;
+    }
+
+    public void setSummaryData(JSONObject summaryData) {
+        this.summaryData = summaryData;
+    }
 
     public String getRoomNo() {
         return roomNo;
@@ -538,6 +550,7 @@ public class GameRoom {
             userGameLog.put("gid", getGid());
             userGameLog.put("room_id", getId());
             userGameLog.put("room_no", getRoomNo());
+            userGameLog.put("game_index", getGameIndex());
             userGameLog.put("user_id", userId);
             userGameLog.put("gamelog_id", gameLogId);
             userGameLog.put("result", gameResult);

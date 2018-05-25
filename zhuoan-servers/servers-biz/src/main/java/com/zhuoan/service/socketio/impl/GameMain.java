@@ -7,6 +7,7 @@ import com.za.game.remote.iservice.IService;
 import com.zhuoan.biz.event.BaseGameEvent;
 import com.zhuoan.biz.event.bdx.BDXGameEvent;
 import com.zhuoan.biz.event.nn.NNGameEvent;
+import com.zhuoan.biz.event.qzmj.QZMJGameEvent;
 import com.zhuoan.biz.event.sss.SSSGameEvent;
 import com.zhuoan.biz.event.zjh.ZJHGameEvent;
 import com.zhuoan.biz.model.RoomManage;
@@ -87,6 +88,9 @@ public class GameMain implements SocketIoManagerService {
 
     @Resource
     private BDXGameEvent bdxGameEvent;
+
+    @Resource
+    private QZMJGameEvent qzmjGameEvent;
 
 
     @Override
@@ -298,6 +302,8 @@ public class GameMain implements SocketIoManagerService {
         /* 炸金花 */
         zjhGameEvent.listenerZJHGameEvent(server);
 
+        /* 泉州麻将 */
+        qzmjGameEvent.listenerQZMJGameEvent(server);
 
     }
 }

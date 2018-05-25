@@ -4,6 +4,7 @@ import com.corundumstudio.socketio.SocketIOClient;
 import com.zhuoan.biz.event.bdx.BDXGameEventDealNew;
 import com.zhuoan.biz.event.BaseEventDeal;
 import com.zhuoan.biz.event.nn.NNGameEventDealNew;
+import com.zhuoan.biz.event.qzmj.QZMJGameEventDeal;
 import com.zhuoan.biz.event.sss.SSSGameEventDealNew;
 import com.zhuoan.biz.event.zjh.ZJHGameEventDealNew;
 import com.zhuoan.constant.*;
@@ -43,6 +44,8 @@ public class GameEventDeal {
     private ZJHGameEventDealNew zjhGameEventDealNew;
     @Resource
     private BDXGameEventDealNew bdxGameEventDealNew;
+    @Resource
+    private QZMJGameEventDeal qzmjGameEventDeal;
     @Resource
     private SocketIoManagerService socketIoManagerService;
 
@@ -242,6 +245,33 @@ public class GameEventDeal {
                         break;
                 }
                 break;
+            case CommonConstant.GAME_ID_QZMJ:
+                // 泉州麻将
+                switch (sorts) {
+                    case QZMJConstant.QZMJ_GAME_EVENT_READY:
+                        qzmjGameEventDeal.loadFinish(client,data);
+                        break;
+                    case QZMJConstant.QZMJ_GAME_EVENT_CP:
+                        qzmjGameEventDeal.gameChuPai(client,data);
+                        break;
+                    case QZMJConstant.QZMJ_GAME_EVENT_IN:
+                        qzmjGameEventDeal.gameEvent(client,data);
+                        break;
+                    case QZMJConstant.QZMJ_GAME_EVENT_GANG_CP:
+                        qzmjGameEventDeal.gangChupaiEvent(client,data);
+                        break;
+                    case QZMJConstant.QZMJ_GAME_EVENT_CLOSE_ROOM:
+                        qzmjGameEventDeal.closeRoom(client,data);
+                        break;
+                    case QZMJConstant.QZMJ_GAME_EVENT_EXIT_ROOM:
+                        qzmjGameEventDeal.exitRoom(client,data);
+                        break;
+                    case QZMJConstant.QZMJ_GAME_EVENT_RECONNECT:
+                        qzmjGameEventDeal.reconnectGame(client,data);
+                        break;
+                    default:
+                        break;
+                }
             default:
                 break;
         }

@@ -1102,7 +1102,7 @@ public class SSSGameEventDealNew {
                 roomData.put("roominfo", roomInfo.toString());
             }
             roomData.put("zhuang",CommonConstant.NO_BANKER_INDEX);
-            if (room.getBankerType()!=SSSConstant.SSS_BANKER_TYPE_HB&&room.getPlayerMap().get(room.getBanker())!=null) {
+            if (!Dto.stringIsNULL(room.getBanker())&&room.getBankerType()!=SSSConstant.SSS_BANKER_TYPE_HB&&room.getPlayerMap().get(room.getBanker())!=null) {
                 roomData.put("zhuang",room.getPlayerMap().get(room.getBanker()).getMyIndex());
             }
             roomData.put("game_index",room.getGameIndex());

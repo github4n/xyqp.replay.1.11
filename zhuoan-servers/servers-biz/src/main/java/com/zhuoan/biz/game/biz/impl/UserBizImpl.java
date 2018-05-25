@@ -124,14 +124,15 @@ public class UserBizImpl implements UserBiz {
     /**
      * 获取工会信息
      *
-     * @param id@return JSONObject
+     * @param userInfo
+     * @return JSONObject
      * @throws
      * @date 2018年4月10日
      */
     @Override
-    public JSONObject getGongHui(long id) {
+    public JSONObject getGongHui(JSONObject userInfo) {
 
-        return gameDao.getGongHui(id);
+        return gameDao.getGongHui(userInfo);
     }
 
     @Override

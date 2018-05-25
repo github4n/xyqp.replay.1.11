@@ -61,13 +61,13 @@ public interface UserBiz {
 
     /**
      * 获取工会信息
-     * @param id
+     * @param userInfo
      * @param
      * @return JSONObject
      * @throws
      * @date 2018年4月10日
      */
-    public JSONObject getGongHui(long id);
+    public JSONObject getGongHui(JSONObject userInfo);
 
     /**
      * 获取系统管理员信息

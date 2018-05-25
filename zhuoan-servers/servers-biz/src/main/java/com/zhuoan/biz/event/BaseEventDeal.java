@@ -4,6 +4,7 @@ import com.corundumstudio.socketio.SocketIOClient;
 import com.zhuoan.biz.core.nn.UserPacket;
 import com.zhuoan.biz.event.bdx.BDXGameEventDealNew;
 import com.zhuoan.biz.event.nn.NNGameEventDealNew;
+import com.zhuoan.biz.event.qzmj.QZMJGameEventDeal;
 import com.zhuoan.biz.event.sss.SSSGameEventDealNew;
 import com.zhuoan.biz.event.zjh.ZJHGameEventDealNew;
 import com.zhuoan.biz.game.biz.GameLogBiz;
@@ -17,6 +18,8 @@ import com.zhuoan.biz.model.bdx.BDXGameRoomNew;
 import com.zhuoan.biz.model.bdx.UserPackerBDX;
 import com.zhuoan.biz.model.dao.PumpDao;
 import com.zhuoan.biz.model.nn.NNGameRoomNew;
+import com.zhuoan.biz.model.qzmj.QZMJGameRoom;
+import com.zhuoan.biz.model.qzmj.UserPacketQZMJ;
 import com.zhuoan.biz.model.sss.Player;
 import com.zhuoan.biz.model.sss.SSSGameRoomNew;
 import com.zhuoan.biz.model.zjh.ZJHGameRoomNew;
@@ -79,6 +82,9 @@ public class BaseEventDeal {
     private BDXGameEventDealNew bdxGameEventDealNew;
 
     @Resource
+    private QZMJGameEventDeal qzmjGameEventDeal;
+
+    @Resource
     private Destination daoQueueDestination;
 
     @Resource
@@ -135,7 +141,7 @@ public class BaseEventDeal {
         }
         // 添加工会信息
         if (!Dto.isObjNull(userInfo)&&userInfo.containsKey("gulidId")) {
-            JSONObject ghInfo = userBiz.getGongHui(userInfo.getLong("gulidId"));
+            JSONObject ghInfo = userBiz.getGongHui(userInfo);
             if (!Dto.isObjNull(ghInfo)&&ghInfo.containsKey("name")) {
                 userInfo.put("ghName",ghInfo.getString("name"));
             }
@@ -172,6 +178,11 @@ public class BaseEventDeal {
                 gameRoom = new BDXGameRoomNew();
                 ((BDXGameRoomNew)gameRoom).getUserPacketMap().put(userInfo.getString("account"), new UserPackerBDX());
                 break;
+            case CommonConstant.GAME_ID_QZMJ:
+                gameRoom = new QZMJGameRoom();
+                ((QZMJGameRoom)gameRoom).getUserPacketMap().put(userInfo.getString("account"), new UserPacketQZMJ());
+                createRoomQZMJ((QZMJGameRoom)gameRoom, baseInfo, userInfo.getString("account"));
+                break;
             default:
                 gameRoom = new GameRoom();
                 break;
@@ -194,8 +205,12 @@ public class BaseEventDeal {
         for (int i = 0; i < playerNum; i++) {
             if (i == 0) {
                 idList.add(userInfo.getLong("id"));
-            } else {
-                idList.add((long) 0);
+            }else if (gameRoom.getGid()==CommonConstant.GAME_ID_QZMJ&&playerNum==2&&i==1){
+                // 麻将差异化，两人场坐对面
+                idList.add(-1L);
+                idList.add(0L);
+            }else {
+                idList.add(0L);
             }
         }
         gameRoom.setUserIdList(idList);
@@ -227,6 +242,8 @@ public class BaseEventDeal {
         // 底分
         if (baseInfo.containsKey("di")) {
             gameRoom.setScore(baseInfo.getDouble("di"));
+        } else if (gameRoom.getGid()==CommonConstant.GAME_ID_QZMJ){
+            gameRoom.setScore(5);
         } else {
             gameRoom.setScore(1);
         }
@@ -319,6 +336,9 @@ public class BaseEventDeal {
             obtainPlayerInfoData.put("location", postData.getString("location"));
         }
         Playerinfo playerinfo = obtainPlayerInfo(obtainPlayerInfoData);
+        if (gameRoom.getRoomType() == CommonConstant.ROOM_TYPE_FK&&gameRoom.getGameCount()==999) {
+            playerinfo.setScore(100);
+        }
         gameRoom.getPlayerMap().put(playerinfo.getAccount(), playerinfo);
         RoomManage.gameRoomMap.put(roomNo, gameRoom);
         // 通知玩家
@@ -337,6 +357,9 @@ public class BaseEventDeal {
                 break;
             case CommonConstant.GAME_ID_BDX:
                 bdxGameEventDealNew.createRoom(client, object);
+                break;
+            case CommonConstant.GAME_ID_QZMJ:
+                qzmjGameEventDeal.createRoom(client, object);
                 break;
             default:
                 break;
@@ -430,7 +453,7 @@ public class BaseEventDeal {
         }
         // 添加工会信息
         if (!Dto.isObjNull(userInfo)&&userInfo.containsKey("gulidId")) {
-            JSONObject ghInfo = userBiz.getGongHui(userInfo.getLong("gulidId"));
+            JSONObject ghInfo = userBiz.getGongHui(userInfo);
             if (!Dto.isObjNull(ghInfo)&&ghInfo.containsKey("name")) {
                 userInfo.put("ghName",ghInfo.getString("name"));
             }
@@ -504,9 +527,17 @@ public class BaseEventDeal {
             obtainPlayerInfoData.put("location", postData.getString("location"));
         }
         Playerinfo playerinfo = obtainPlayerInfo(obtainPlayerInfoData);
+        // 麻将一刻设置底分
+        if (gameRoom.getRoomType() == CommonConstant.ROOM_TYPE_FK&&gameRoom.getGameCount()==999) {
+            playerinfo.setScore(100);
+        }
         JSONObject joinData = new JSONObject();
         // 是否重连
         if (gameRoom.getPlayerMap().containsKey(playerinfo.getAccount())) {
+            // 房卡场不需要重新刷新分数
+            if (gameRoom.getRoomType() == CommonConstant.ROOM_TYPE_FK) {
+                playerinfo.setScore(gameRoom.getPlayerMap().get(playerinfo.getAccount()).getScore());
+            }
             joinData.put("isReconnect", CommonConstant.GLOBAL_YES);
         } else {
             // 更新数据库
@@ -551,6 +582,13 @@ public class BaseEventDeal {
                     ((BDXGameRoomNew) gameRoom).getUserPacketMap().put(userInfo.getString("account"), new UserPackerBDX());
                 }
                 bdxGameEventDealNew.joinRoom(client, joinData);
+                break;
+            case CommonConstant.GAME_ID_QZMJ:
+                // 重连不需要重新设置用户牌局信息
+                if (!((QZMJGameRoom) gameRoom).getUserPacketMap().containsKey(userInfo.getString("account"))) {
+                    ((QZMJGameRoom) gameRoom).getUserPacketMap().put(userInfo.getString("account"), new UserPacketQZMJ());
+                }
+                qzmjGameEventDeal.joinRoom(client, joinData);
                 break;
             default:
                 break;
@@ -779,6 +817,42 @@ public class BaseEventDeal {
         room.getUserPacketMap().put(account, new Player());
     }
 
+    public void createRoomQZMJ(QZMJGameRoom room, JSONObject baseInfo, String account) {
+        if (baseInfo.containsKey("type")) {
+            room.setYouJinScore(baseInfo.getInt("type"));
+        }
+        room.setPaiCount(QZMJConstant.HAND_PAI_COUNT);
+        // 光游
+        if(baseInfo.getJSONObject("turn").containsKey("guangyou")){
+            room.isGuangYou = true;
+        }else{
+            room.isGuangYou = false;
+        }
+        // 有金不平胡
+        if(baseInfo.containsKey("hasjinnopinghu")&&baseInfo.getInt("hasjinnopinghu")==1){
+            room.hasJinNoPingHu = true;
+        }else{
+            room.hasJinNoPingHu = false;
+        }
+        // 是否没有吃、胡
+        if(baseInfo.containsKey("isNotChiHu")&&baseInfo.getInt("isNotChiHu")==1){
+            room.isNotChiHu = true;
+        }else{
+            room.isNotChiHu = false;
+        }
+        // 一课牌局积分是否可以超出（负数）
+        if(baseInfo.getJSONObject("turn").containsKey("isOver")&&baseInfo.getJSONObject("turn").getInt("isOver")==1){
+            room.isCanOver = true;
+        }else{
+            room.isCanOver = false;
+        }
+        // 庄家
+        room.setBanker(account);
+        // 房主
+        room.setOwner(account);
+        room.getUserPacketMap().put(account,new UserPacketQZMJ());
+    }
+
     /**
      * 设置十三水房间特殊参数
      * @param room
@@ -920,6 +994,9 @@ public class BaseEventDeal {
                 break;
             case CommonConstant.GAME_ID_ZJH:
                 key = CacheKeyConstant.GAME_SETTING_ZJH;
+                break;
+            case CommonConstant.GAME_ID_QZMJ:
+                key = CacheKeyConstant.GAME_SETTING_QZMJ;
                 break;
             default:
                 break;

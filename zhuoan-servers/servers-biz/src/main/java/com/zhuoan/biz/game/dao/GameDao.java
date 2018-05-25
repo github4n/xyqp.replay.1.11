@@ -67,13 +67,10 @@ public interface GameDao {
 
     /**
      * 获取工会信息
-     * @param @param id
-     * @param @return
-     * @return JSONObject
-     * @throws
-     * @date 2018年4月10日
+     * @param userInfo
+     * @return
      */
-    public JSONObject getGongHui(long id);
+    public JSONObject getGongHui(JSONObject userInfo);
 
 
     /**

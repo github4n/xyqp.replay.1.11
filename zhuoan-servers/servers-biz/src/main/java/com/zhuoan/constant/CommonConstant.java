@@ -119,6 +119,10 @@ public class CommonConstant {
      */
     public static final int GAME_ID_NN = 1;
     /**
+     * 游戏id-泉州麻将
+     */
+    public static final int GAME_ID_QZMJ = 3;
+    /**
      * 游戏id-十三水
      */
     public static final int GAME_ID_SSS = 4;

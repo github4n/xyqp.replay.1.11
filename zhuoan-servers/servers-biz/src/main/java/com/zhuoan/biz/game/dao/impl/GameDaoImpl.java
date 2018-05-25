@@ -148,16 +148,20 @@ public class GameDaoImpl implements GameDao {
     /**
      * 获取工会信息
      *
-     * @param id
+     * @param userInfo
      * @return JSONObject
      * @throws
      * @date 2018年4月10日
      */
     @Override
-    public JSONObject getGongHui(long id) {
-
-        String sql = "select id,code,name,isUse,platform from guild where id=?";
-        return DBUtil.getObjectBySQL(sql, new Object[]{id});
+    public JSONObject getGongHui(JSONObject userInfo) {
+        String sql = "SELECT guildId FROM base_users WHERE unionID=? and platform=?";
+        JSONObject baseUserInfo = DBUtil.getObjectBySQL(sql,new Object[]{userInfo.getString("unionid"),userInfo.getString("platform")});
+        if (!Dto.isObjNull(baseUserInfo)&&baseUserInfo.containsKey("guildId")) {
+            sql = "select id,code,name,isUse,platform from guild where id=?";
+            return DBUtil.getObjectBySQL(sql, new Object[]{baseUserInfo.getLong("guildId")});
+        }
+        return null;
     }
 
     /**
