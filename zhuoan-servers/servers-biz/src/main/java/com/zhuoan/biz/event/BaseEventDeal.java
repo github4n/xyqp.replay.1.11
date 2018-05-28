@@ -1557,16 +1557,18 @@ public class BaseEventDeal {
      */
     public int getRoomCardPayInfo(JSONObject baseInfo) {
         int roomCard = 0;
-        int player = baseInfo.getInt("player");
-        int payType = baseInfo.getInt("paytype");
-        JSONObject turn = baseInfo.getJSONObject("turn");
-        if (turn.containsKey("AANum")) {
-            int single = turn.getInt("AANum");
-            if (payType==CommonConstant.PAY_TYPE_AA) {
-                roomCard = single;
-            }
-            if (payType==CommonConstant.PAY_TYPE_OWNER) {
-                roomCard = single*player;
+        if (baseInfo.containsKey("player")&&baseInfo.containsKey("paytype")) {
+            int player = baseInfo.getInt("player");
+            int payType = baseInfo.getInt("paytype");
+            JSONObject turn = baseInfo.getJSONObject("turn");
+            if (turn.containsKey("AANum")) {
+                int single = turn.getInt("AANum");
+                if (payType==CommonConstant.PAY_TYPE_AA) {
+                    roomCard = single;
+                }
+                if (payType==CommonConstant.PAY_TYPE_OWNER) {
+                    roomCard = single*player;
+                }
             }
         }
         return roomCard;

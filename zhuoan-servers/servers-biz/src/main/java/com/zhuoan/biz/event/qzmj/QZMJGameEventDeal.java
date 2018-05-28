@@ -36,7 +36,9 @@ public class QZMJGameEventDeal {
 
     public static int GAME_QZMJ = 1;
 
-    // 出牌结果
+    /**
+     * 出牌结果
+     */
     private Map<String, Object[]> chuPaiJieGuo = new HashMap<String, Object[]>();
 
     @Resource
@@ -119,6 +121,9 @@ public class QZMJGameEventDeal {
         // 房间号
         String roomNo = postData.getString(CommonConstant.DATA_KEY_ROOM_NO);
         QZMJGameRoom room = (QZMJGameRoom) RoomManage.gameRoomMap.get(roomNo);
+        if (!postData.containsKey("type")) {
+            return;
+        }
         int type = postData.getInt("type");
         if (type == QZMJConstant.GAME_READY_TYPE_RECONNECT) {
             if (room.getGameStatus()==QZMJConstant.QZ_GAME_STATUS_INIT||room.getGameStatus()==QZMJConstant.QZ_GAME_STATUS_READY) {
@@ -139,7 +144,9 @@ public class QZMJGameEventDeal {
     public void gameReady(SocketIOClient client,Object data) {
         JSONObject postData = JSONObject.fromObject(data);
         // 不满足准备条件直接忽略
-        if (!CommonConstant.checkEvent(postData, CommonConstant.CHECK_GAME_STATUS_NO, client)) {
+        if (!CommonConstant.checkEvent(postData, QZMJConstant.QZ_GAME_STATUS_INIT, client)&&
+            !CommonConstant.checkEvent(postData, QZMJConstant.QZ_GAME_STATUS_READY, client)&&
+            !CommonConstant.checkEvent(postData, QZMJConstant.QZ_GAME_STATUS_SUMMARY, client)) {
             return;
         }
         // 房间号
@@ -192,7 +199,7 @@ public class QZMJGameEventDeal {
     public void gameChuPai(SocketIOClient client, Object data) {
         JSONObject postData = JSONObject.fromObject(data);
         // 不满足准备条件直接忽略
-        if (!CommonConstant.checkEvent(postData, CommonConstant.CHECK_GAME_STATUS_NO, client)) {
+        if (!CommonConstant.checkEvent(postData, QZMJConstant.QZ_GAME_STATUS_ING, client)) {
             return;
         }
         // 房间号
@@ -200,6 +207,11 @@ public class QZMJGameEventDeal {
         QZMJGameRoom room = (QZMJGameRoom) RoomManage.gameRoomMap.get(roomNo);
         // 玩家账号
         String account = postData.getString(CommonConstant.DATA_KEY_ACCOUNT);
+        int paiSize = 3;
+        int paiLeft = 2;
+        if (room.getUserPacketMap().get(account).getMyPai().size()%paiSize != paiLeft) {
+            return;
+        }
         if (postData.containsKey("pai")) {
             //获取要出的牌
             int pai = postData.getInt("pai");
@@ -209,7 +221,7 @@ public class QZMJGameEventDeal {
             //出牌返回
             detailDataByChuPai(outResult, roomNo);
             chuPaiJieGuo.put(roomNo, outResult);
-            if(chuPaiJieGuo.containsKey(roomNo)&&chuPaiJieGuo.get(roomNo)[0]!=null){
+            if(chuPaiJieGuo.containsKey(roomNo)&&!Dto.isNull(chuPaiJieGuo.get(roomNo))&&chuPaiJieGuo.get(roomNo)[0]!=null){
                 String thisAskAccount = String.valueOf(chuPaiJieGuo.get(roomNo)[0]);
                 if(!Dto.stringIsNULL(thisAskAccount)&&room.getPlayerMap().containsKey(thisAskAccount)&&room.getPlayerMap().get(thisAskAccount)!=null){
                     chuPaiJieGuo.get(roomNo)[0] = room.getPlayerMap().get(thisAskAccount).getAccount();
@@ -267,18 +279,22 @@ public class QZMJGameEventDeal {
                     break;
                 case -4:
                     // 吃
-                    JSONArray array=postData.getJSONArray("chivalue");
-                    int[] chiValue=new int[array.size()];
-                    for(int i=0;i<array.size();i++){
-                        chiValue[i]=array.getInt(i);
+                    if (postData.containsKey("chivalue")) {
+                        JSONArray array = postData.getJSONArray("chivalue");
+                        int[] chiValue = new int[array.size()];
+                        for(int i = 0;i < array.size();i++){
+                            chiValue[i] = array.getInt(i);
+                        }
+                        if (chi(roomNo, chiValue, account)) {
+                            detailDataByChiGangPengHu(roomNo, -4, account, chiValue);
+                        }
                     }
-                    chi(roomNo, chiValue, account);
-                    detailDataByChiGangPengHu(roomNo, -4, account, chiValue);
                     break;
                 case -5:
                     // 碰
-                    peng(roomNo, account);
-                    detailDataByChiGangPengHu(roomNo, -5, account, null);
+                    if (peng(roomNo, account)) {
+                        detailDataByChiGangPengHu(roomNo, -5, account, null);
+                    }
                     break;
                 case -6:
                     //明杠
@@ -342,11 +358,13 @@ public class QZMJGameEventDeal {
                     break;
                 case -11:
                     //自摸
-                    int zimo=hu(roomNo, account, 3);
-                    if(zimo>0){
-                        detailDataByChiGangPengHu(roomNo, -3, account, null);
+                    if (room.getGameStatus()==QZMJConstant.QZ_GAME_STATUS_ING) {
+                        int zimo=hu(roomNo, account, 3);
+                        if(zimo>0){
+                            detailDataByChiGangPengHu(roomNo, -3, account, null);
+                        }
+                        break;
                     }
-                    break;
                 default:
                     break;
             }
@@ -908,7 +926,7 @@ public class QZMJGameEventDeal {
             result.put("users",room.getAllPlayer());
             result.put(CommonConstant.RESULT_KEY_CODE, CommonConstant.GLOBAL_YES);
         }
-        if (room.getJieSanTime() > 0) {
+        if (room.getJieSanTime() > 0 && room.getGameStatus()!=QZMJConstant.QZ_GAME_STATUS_FINAL_SUMMARY) {
             result.put("jiesan", CommonConstant.GLOBAL_YES);
             result.put("jiesanData", room.getCloseRoomData());
         }
@@ -1773,8 +1791,8 @@ public class QZMJGameEventDeal {
             // 用户游戏记录
             JSONObject object = new JSONObject();
             object.put("id", room.getPlayerMap().get(account).getId());
-            object.put("gid", room.getGid());
             object.put("roomNo", room.getRoomNo());
+            object.put("gid", room.getGid());
             object.put("type", room.getRoomType());
             object.put("fen", room.getUserPacketMap().get(account).getScore());
             object.put("old", Dto.sub(RoomManage.gameRoomMap.get(room.getRoomNo()).getPlayerMap().get(account).getScore(),room.getUserPacketMap().get(account).getScore()));
@@ -1802,7 +1820,6 @@ public class QZMJGameEventDeal {
         if(RoomManage.gameRoomMap.containsKey(roomNo) && RoomManage.gameRoomMap.get(roomNo)!=null){
 
             QZMJGameRoom gamePlay = (QZMJGameRoom) RoomManage.gameRoomMap.get(roomNo);
-            Playerinfo player = gamePlay.getPlayerMap().get(account);
             UserPacketQZMJ userPacketQZMJ = gamePlay.getUserPacketMap().get(account);
             //获取上次出的牌
             int pai=0;
@@ -2668,8 +2685,6 @@ public class QZMJGameEventDeal {
             /// 通知前台展示玩家出的牌
             //总牌数
             int zpaishu = room.getPai().length-room.getIndex();
-            //状态
-            int[] status = new int[]{1,1,1,1};
             //获取之前事件
             int foucs = room.getPlayerIndex(room.getLastAccount());
             // 出牌玩家当前游金状态
@@ -2677,7 +2692,6 @@ public class QZMJGameEventDeal {
             for (String uuid : room.getPlayerMap().keySet()) {
                 JSONObject backObj=new JSONObject();
                 backObj.put(QZMJConstant.zpaishu, zpaishu);
-                backObj.put(QZMJConstant.status,status);
                 backObj.put(QZMJConstant.foucs,foucs);
                 backObj.put(QZMJConstant.foucsIndex, room.getFocusIndex());
                 backObj.put(QZMJConstant.nowPoint, room.getNowPoint());
@@ -3106,7 +3120,9 @@ public class QZMJGameEventDeal {
      * @return
      */
     public boolean detailDataByChuPai(Object[] jieguo,String roomNo){
-
+        if (Dto.isNull(jieguo)) {
+            return false;
+        }
         QZMJGameRoom room = (QZMJGameRoom) RoomManage.gameRoomMap.get(roomNo);
         String thisask = (String) jieguo[0];
         int type= Integer.valueOf(String.valueOf(jieguo[1]));
