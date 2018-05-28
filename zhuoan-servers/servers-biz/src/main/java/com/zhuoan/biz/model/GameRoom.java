@@ -1,11 +1,15 @@
 package com.zhuoan.biz.model;
 
+import com.zhuoan.biz.model.qzmj.QZMJGameRoom;
 import com.zhuoan.constant.CommonConstant;
+import com.zhuoan.util.Dto;
 import com.zhuoan.util.TimeUtil;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -576,10 +580,21 @@ public class GameRoom {
         gamelog.put("gid", getGid());
         gamelog.put("room_no", getRoomNo());
         gamelog.put("game_index", getGameIndex());
-        gamelog.put("base_info", getRoomInfo());
+        JSONObject baseInfo = getRoomInfo();
+        gamelog.put("base_info", baseInfo);
         gamelog.put("result", result);
+        if (getGid()==CommonConstant.GAME_ID_QZMJ) {
+            baseInfo.put("game_count", getGameCount());
+            baseInfo.put("zhuang", ((QZMJGameRoom)this).getPlayerIndex(getBanker()));
+            baseInfo.put("jin", ((QZMJGameRoom)this).getJin());
+            baseInfo.put("users", ((QZMJGameRoom)this).getAllPlayer());
+            gamelog.put("base_info",baseInfo);
+            gamelog.put("result",((QZMJGameRoom)this).getSummaryData());
+        }
         gamelog.put("action_records", gameProcess);
         String nowTime = TimeUtil.getNowDate();
+        String visitCode = Dto.getEntNumCode(8);
+        gamelog.put("visitcode", visitCode);
         gamelog.put("finishtime", nowTime);
         gamelog.put("createtime", nowTime);
         gamelog.put("status", 1);

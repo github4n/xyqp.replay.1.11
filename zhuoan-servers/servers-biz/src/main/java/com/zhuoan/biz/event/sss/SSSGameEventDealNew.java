@@ -827,7 +827,9 @@ public class SSSGameEventDealNew {
                 // 更新数据库
                 JSONObject roomInfo = new JSONObject();
                 roomInfo.put("room_no",room.getRoomNo());
-                roomInfo.put("user_id"+room.getPlayerMap().get(account).getMyIndex(),0);
+                if (room.getRoomType()!=CommonConstant.ROOM_TYPE_FK) {
+                     roomInfo.put("user_id"+room.getPlayerMap().get(account).getMyIndex(),0);
+                }
                 // 移除数据
                 for (int i = 0; i < room.getUserIdList().size(); i++) {
                     if (room.getUserIdList().get(i)==room.getPlayerMap().get(account).getId()) {

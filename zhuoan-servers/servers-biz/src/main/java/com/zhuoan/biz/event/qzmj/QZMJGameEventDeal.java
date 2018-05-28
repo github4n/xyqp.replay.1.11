@@ -414,7 +414,9 @@ public class QZMJGameEventDeal {
                 // 更新数据库
                 JSONObject roomInfo = new JSONObject();
                 roomInfo.put("room_no", room.getRoomNo());
-                roomInfo.put("user_id" + room.getPlayerMap().get(account).getMyIndex(), 0);
+                if (room.getRoomType()!=CommonConstant.ROOM_TYPE_FK) {
+                    roomInfo.put("user_id" + room.getPlayerMap().get(account).getMyIndex(), 0);
+                }
                 // 移除数据
                 for (int i = 0; i < room.getUserIdList().size(); i++) {
                     if (room.getUserIdList().get(i) == room.getPlayerMap().get(account).getId()) {
@@ -1213,9 +1215,6 @@ public class QZMJGameEventDeal {
             if(gamePlay.getGameStatus() == QZMJConstant.QZ_GAME_STATUS_SUMMARY){
                 JSONObject backObj = obtainSummaryObject(roomNo);
                 CommonConstant.sendMsgEventToAll(gamePlay.getAllUUIDList(),String.valueOf(backObj),"gameJieSuanPush");
-                updateUserScore(roomNo);
-                saveGameLog(roomNo);
-                saveUserDeduction(roomNo);
                 String winner = gamePlay.getWinner();
                 // 判断是否连庄
                 if(winner.equals(gamePlay.getBanker())){
@@ -1227,6 +1226,9 @@ public class QZMJGameEventDeal {
                 }
                 // 保存结算记录
                 gamePlay.addKaijuList(-1, 8, new int[]{});
+                updateUserScore(roomNo);
+                saveGameLog(roomNo);
+                saveUserDeduction(roomNo);
             }
         }
     }
@@ -2843,7 +2845,6 @@ public class QZMJGameEventDeal {
         if(RoomManage.gameRoomMap.containsKey(roomNo) && RoomManage.gameRoomMap.get(roomNo)!=null){
             QZMJGameRoom room = (QZMJGameRoom) RoomManage.gameRoomMap.get(roomNo);
             boolean back = room.getUserPacketMap().get(chupaiId).removeMyPai(oldPai);
-            Playerinfo player = room.getPlayerMap().get(chupaiId);
             if(back){
                 //下次需要判断的人
                 String nextAsk = room.getNextPlayer(chupaiId);
@@ -3463,6 +3464,9 @@ public class QZMJGameEventDeal {
                 }
                 room.setSummaryData(result);
                 CommonConstant.sendMsgEventToAll(room.getAllUUIDList(),String.valueOf(result),"gameLiuJuPush");
+                updateUserScore(roomNo);
+                saveGameLog(roomNo);
+                saveUserDeduction(roomNo);
             }
         }
     }
@@ -3671,16 +3675,18 @@ public class QZMJGameEventDeal {
     public Object[] checkIsChi(String roomNo,int oldPai, String nextAccount){
         if(RoomManage.gameRoomMap.containsKey(roomNo) && RoomManage.gameRoomMap.get(roomNo)!=null){
             QZMJGameRoom room = (QZMJGameRoom) RoomManage.gameRoomMap.get(roomNo);
-            String nextAsk = room.getNextAskAccount();
-            // 只有出牌玩家的下家才可以吃
-            if(nextAsk.equals(nextAccount)){
-                //获取我的手牌
-                List<Integer> myPai = room.getUserPacketMap().get(nextAsk).getMyPai();
-                //设置下一次询问 完成
-                room.setNextAskType(QZMJConstant.ASK_TYPE_FINISH);
-                List<int[]> back=MaJiangCore.isChi(myPai, oldPai, room.getJin());
-                if(back!=null&&back.size()>0){
-                    return new Object[]{nextAsk,back};
+            if (!room.isNotChiHu) {
+                String nextAsk = room.getNextAskAccount();
+                // 只有出牌玩家的下家才可以吃
+                if(nextAsk.equals(nextAccount)){
+                    //获取我的手牌
+                    List<Integer> myPai = room.getUserPacketMap().get(nextAsk).getMyPai();
+                    //设置下一次询问 完成
+                    room.setNextAskType(QZMJConstant.ASK_TYPE_FINISH);
+                    List<int[]> back=MaJiangCore.isChi(myPai, oldPai, room.getJin());
+                    if(back!=null&&back.size()>0){
+                        return new Object[]{nextAsk,back};
+                    }
                 }
             }
         }
