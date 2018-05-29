@@ -130,6 +130,7 @@ public class RedisServiceImpl implements RedisService {
      * @param delta the delta
      * @return long
      */
+    @Override
     public long incr(String key, long delta) {
         if (delta < 0) {
             throw new RuntimeException("递增因子必须大于0");

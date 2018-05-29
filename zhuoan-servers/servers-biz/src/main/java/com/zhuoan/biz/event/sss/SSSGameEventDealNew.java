@@ -14,6 +14,7 @@ import com.zhuoan.biz.model.sss.SSSGameRoomNew;
 import com.zhuoan.constant.CommonConstant;
 import com.zhuoan.constant.DaoTypeConstant;
 import com.zhuoan.constant.SSSConstant;
+import com.zhuoan.service.cache.RedisService;
 import com.zhuoan.service.jms.ProducerService;
 import com.zhuoan.util.Dto;
 import com.zhuoan.util.thread.ThreadPoolHelper;
@@ -53,6 +54,9 @@ public class SSSGameEventDealNew {
 
     @Resource
     private ProducerService producerService;
+
+    @Resource
+    private RedisService redisService;
 
     /**
      * 创建房间通知自己
@@ -198,6 +202,7 @@ public class SSSGameEventDealNew {
         if (room.getGameStatus()!= SSSConstant.SSS_GAME_STATUS_READY) {
             return;
         }
+        redisService.insertKey("summaryTimes_sss"+room.getRoomNo(),"0",null);
         // 初始化房间信息
         room.initGame();
         if (room.getBankerType()==SSSConstant.SSS_BANKER_TYPE_BWZ||room.getBankerType()==SSSConstant.SSS_BANKER_TYPE_HB) {
@@ -470,6 +475,11 @@ public class SSSGameEventDealNew {
      * @param roomNo
      */
     public void allFinishDeal(final String roomNo) {
+        String summaryTimesKey = "summaryTimes_sss"+roomNo;
+        long summaryTimes = redisService.incr(summaryTimesKey,1);
+        if (summaryTimes>1) {
+            return;
+        }
         final SSSGameRoomNew room = (SSSGameRoomNew) RoomManage.gameRoomMap.get(roomNo);
         // 设置为比牌状态
         room.setGameStatus(SSSConstant.SSS_GAME_STATUS_COMPARE);
@@ -884,6 +894,7 @@ public class SSSGameEventDealNew {
                 }
                 // 所有人都退出清除房间数据
                 if (room.getPlayerMap().size()==0) {
+                    redisService.deleteByKey("summaryTimes_sss"+room.getRoomNo());
                     roomInfo.put("status",-1);
                     RoomManage.gameRoomMap.remove(room.getRoomNo());
                 }

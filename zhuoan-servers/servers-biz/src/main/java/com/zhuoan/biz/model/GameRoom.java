@@ -532,6 +532,16 @@ public class GameRoom {
         return objectDao;
     }
 
+    public JSONObject getRoomCardChangeObject(JSONArray array,int roomCardCount) {
+        JSONObject obj = new JSONObject();
+        obj.put("array",array);
+        obj.put("roomNo",getRoomNo());
+        obj.put("gId",getGid());
+        obj.put("fee",roomCardCount);
+        obj.put("updateType",getUpdateType());
+        return obj;
+    }
+
     public JSONObject getPumpObject(JSONArray array) {
         JSONObject jsonObject = new JSONObject();
         jsonObject.put("array",array);

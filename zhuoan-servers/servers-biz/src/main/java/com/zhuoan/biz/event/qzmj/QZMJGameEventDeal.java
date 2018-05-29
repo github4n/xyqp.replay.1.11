@@ -1247,6 +1247,9 @@ public class QZMJGameEventDeal {
                 updateUserScore(roomNo);
                 saveGameLog(roomNo);
                 saveUserDeduction(roomNo);
+                if (gamePlay.getRoomType()==CommonConstant.ROOM_TYPE_FK) {
+                    updateRoomCard(roomNo);
+                }
             }
         }
     }
@@ -1668,7 +1671,7 @@ public class QZMJGameEventDeal {
                 array.add(obtainUserScoreData(total, sum, userId));
             }else if (room.getRoomType()==CommonConstant.ROOM_TYPE_FK){
                 // 房主支付
-                if (room.getPayType()==CommonConstant.PAY_TYPE_OWNER) {
+                /*if (room.getPayType()==CommonConstant.PAY_TYPE_OWNER) {
                     if (account.equals(room.getOwner())) {
                         // 参与第一局需要扣房卡
                         if (room.getUserPacketMap().get(account).getPlayTimes()==1) {
@@ -1688,7 +1691,7 @@ public class QZMJGameEventDeal {
                         long userId = room.getPlayerMap().get(account).getId();
                         array.add(obtainUserScoreData(total, sum, userId));
                     }
-                }
+                }*/
             }
         }
         if (room.getId()==0) {
@@ -1776,6 +1779,36 @@ public class QZMJGameEventDeal {
             }
         }
     }
+
+    public void updateRoomCard(String roomNo) {
+        QZMJGameRoom room = (QZMJGameRoom) RoomManage.gameRoomMap.get(roomNo);
+        JSONArray array = new JSONArray();
+        int roomCardCount = 0;
+        for (String account : room.getUserPacketMap().keySet()) {
+            // 房主支付
+            if (room.getPayType()==CommonConstant.PAY_TYPE_OWNER) {
+                if (account.equals(room.getOwner())) {
+                    // 参与第一局需要扣房卡
+                    if (room.getUserPacketMap().get(account).getPlayTimes()==1) {
+                        array.add(room.getPlayerMap().get(account).getId());
+                        roomCardCount = room.getPlayerCount()*room.getSinglePayNum();
+                    }
+                }
+            }
+            // 房费AA
+            if (room.getPayType()==CommonConstant.PAY_TYPE_AA) {
+                // 参与第一局需要扣房卡
+                if (room.getUserPacketMap().get(account).getPlayTimes()==1) {
+                    array.add(room.getPlayerMap().get(account).getId());
+                    roomCardCount = room.getSinglePayNum();
+                }
+            }
+        }
+        if (array.size()>0) {
+            producerService.sendMessage(daoQueueDestination, new PumpDao(DaoTypeConstant.PUMP, room.getRoomCardChangeObject(array,roomCardCount)));
+        }
+    }
+
 
     /**
      * 保存游戏记录
@@ -3483,6 +3516,9 @@ public class QZMJGameEventDeal {
                 updateUserScore(roomNo);
                 saveGameLog(roomNo);
                 saveUserDeduction(roomNo);
+                if (room.getRoomType()==CommonConstant.ROOM_TYPE_FK) {
+                    updateRoomCard(roomNo);
+                }
             }
         }
     }

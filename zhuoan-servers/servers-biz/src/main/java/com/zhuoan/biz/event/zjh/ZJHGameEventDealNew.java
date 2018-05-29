@@ -8,7 +8,10 @@ import com.zhuoan.biz.model.RoomManage;
 import com.zhuoan.biz.model.dao.PumpDao;
 import com.zhuoan.biz.model.zjh.UserPacket;
 import com.zhuoan.biz.model.zjh.ZJHGameRoomNew;
-import com.zhuoan.constant.*;
+import com.zhuoan.constant.CommonConstant;
+import com.zhuoan.constant.DaoTypeConstant;
+import com.zhuoan.constant.ZJHConstant;
+import com.zhuoan.service.cache.RedisService;
 import com.zhuoan.service.jms.ProducerService;
 import com.zhuoan.util.Dto;
 import com.zhuoan.util.thread.ThreadPoolHelper;
@@ -49,6 +52,10 @@ public class ZJHGameEventDealNew {
 
     @Resource
     private ProducerService producerService;
+
+    @Resource
+    private RedisService redisService;
+
     /**
      * 创建房间通知自己
      *
@@ -181,6 +188,7 @@ public class ZJHGameEventDealNew {
         if (room.getGameStatus() != ZJHConstant.ZJH_GAME_STATUS_READY && room.getGameStatus() != ZJHConstant.ZJH_GAME_STATUS_INIT) {
             return;
         }
+        redisService.insertKey("summaryTimes_zjh"+room.getRoomNo(),"0",null);
         // 初始化房间信息
         room.initGame();
         // 洗牌
@@ -712,6 +720,11 @@ public class ZJHGameEventDealNew {
      * @param room
      */
     public void summary(ZJHGameRoomNew room){
+        String summaryTimesKey = "summaryTimes_zjh"+room.getRoomNo();
+        long summaryTimes = redisService.incr(summaryTimesKey,1);
+        if (summaryTimes>1) {
+            return;
+        }
         room.setGameStatus(ZJHConstant.ZJH_GAME_STATUS_SUMMARY);
         // 重置房间倒计时
         room.setTimeLeft(ZJHConstant.ZJH_TIMER_INIT);
@@ -1089,6 +1102,7 @@ public class ZJHGameEventDealNew {
                 }
                 // 所有人都退出清除房间数据
                 if (room.getPlayerMap().size() == 0) {
+                    redisService.deleteByKey("summaryTimes_zjh"+room.getRoomNo());
                     roomInfo.put("status", -1);
                     RoomManage.gameRoomMap.remove(room.getRoomNo());
                 }

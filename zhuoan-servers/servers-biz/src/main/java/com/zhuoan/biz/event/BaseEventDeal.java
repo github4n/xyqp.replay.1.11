@@ -1495,6 +1495,9 @@ public class BaseEventDeal {
             case CommonConstant.GAME_ID_ZJH:
                 CommonConstant.sendMsgEventToAll(room.getAllUUIDList(),postData.toString(),"voiceCallGamePush_ZJH");
                 break;
+            case CommonConstant.GAME_ID_QZMJ:
+                CommonConstant.sendMsgEventToAll(room.getAllUUIDList(),postData.toString(),"voiceCallGamePush");
+                break;
             default:
                 break;
         }

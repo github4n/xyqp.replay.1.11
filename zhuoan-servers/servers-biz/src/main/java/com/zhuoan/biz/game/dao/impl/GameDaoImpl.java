@@ -425,7 +425,7 @@ public class GameDaoImpl implements GameDao {
                 pocketOld = user.getDouble("yuanbao");
                 pocketNew = Dto.sub(pocketOld,fee);
             }else if (type.equals("roomcard")) {
-                if (user.getInt(type)<Integer.parseInt(String.valueOf(fee))) {
+                if (user.getInt(type)<Double.parseDouble(String.valueOf(fee))) {
                     fee=user.getInt("roomcard");
                 }
                 pocketOld = user.getDouble("roomcard");

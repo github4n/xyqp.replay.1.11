@@ -41,5 +41,6 @@ public interface RedisService {
     boolean expire(String key, long seconds);
 
 
+    long incr(String key, long delta);
 
 }
