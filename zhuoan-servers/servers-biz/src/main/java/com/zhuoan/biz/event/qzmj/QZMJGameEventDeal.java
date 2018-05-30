@@ -1245,8 +1245,12 @@ public class QZMJGameEventDeal {
                 // 保存结算记录
                 gamePlay.addKaijuList(-1, 8, new int[]{});
                 updateUserScore(roomNo);
-                saveGameLog(roomNo);
-                saveUserDeduction(roomNo);
+                if (gamePlay.getRoomType()!=CommonConstant.ROOM_TYPE_JB) {
+                    saveGameLog(roomNo);
+                }
+                if (gamePlay.getRoomType()==CommonConstant.ROOM_TYPE_YB) {
+                    saveUserDeduction(roomNo);
+                }
                 if (gamePlay.getRoomType()==CommonConstant.ROOM_TYPE_FK) {
                     updateRoomCard(roomNo);
                 }
