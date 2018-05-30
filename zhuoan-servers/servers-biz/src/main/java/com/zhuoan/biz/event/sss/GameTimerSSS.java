@@ -97,7 +97,9 @@ public class GameTimerSSS {
                         data.put(CommonConstant.DATA_KEY_ACCOUNT,account);
                         if (gameStatus==SSSConstant.SSS_GAME_STATUS_READY) {
                             // 准备阶段超时踢出
-                            messageSort = SSSConstant.SSS_GAME_EVENT_EXIT;
+                            if (room.getReadyOvertime()==CommonConstant.READY_OVERTIME_OUT) {
+                                messageSort = SSSConstant.SSS_GAME_EVENT_EXIT;
+                            }
                         }
                         if (gameStatus==SSSConstant.SSS_USER_STATUS_GAME_EVENT) {
                             messageSort = SSSConstant.SSS_GAME_EVENT_EVENT;

@@ -899,10 +899,15 @@ public class NNGameEventDealNew {
         }
         // 更新数据库
         updateUserScore(room.getRoomNo());
-        saveUserDeduction(room.getRoomNo());
+        if (room.getRoomType()==CommonConstant.ROOM_TYPE_YB) {
+            saveUserDeduction(room.getRoomNo());
+        }
         // 金币场不插入战绩
         if (room.getRoomType()!=CommonConstant.ROOM_TYPE_JB) {
             saveGameLog(room.getRoomNo());
+        }
+        if (room.getRoomType()==CommonConstant.ROOM_TYPE_FK) {
+            updateRoomCard(room.getRoomNo());
         }
     }
 
@@ -965,29 +970,6 @@ public class NNGameEventDealNew {
                     long userId = room.getPlayerMap().get(account).getId();
                     double sum = room.getUserPacketMap().get(account).getScore();
                     array.add(obtainUserScoreData(total,sum,userId));
-                }else if (room.getRoomType()==CommonConstant.ROOM_TYPE_FK){
-                    // 房主支付
-                    if (room.getPayType()==CommonConstant.PAY_TYPE_OWNER) {
-                        if (account.equals(room.getOwner())) {
-                            // 参与第一局需要扣房卡
-                            if (room.getUserPacketMap().get(account).getPlayTimes()==1) {
-                                double total = room.getPlayerMap().get(account).getRoomCardNum();
-                                long userId = room.getPlayerMap().get(account).getId();
-                                double sum = -room.getPlayerCount()*room.getSinglePayNum();
-                                array.add(obtainUserScoreData(total,sum,userId));
-                            }
-                        }
-                    }
-                    // 房费AA
-                    if (room.getPayType()==CommonConstant.PAY_TYPE_AA) {
-                        // 参与第一局需要扣房卡
-                        if (room.getUserPacketMap().get(account).getPlayTimes()==1) {
-                            double total = room.getPlayerMap().get(account).getRoomCardNum();
-                            long userId = room.getPlayerMap().get(account).getId();
-                            double sum = -room.getSinglePayNum();
-                            array.add(obtainUserScoreData(total,sum,userId));
-                        }
-                    }
                 }
             }
         }
@@ -1000,6 +982,35 @@ public class NNGameEventDealNew {
         if (array.size()>0) {
             // 更新玩家分数
             producerService.sendMessage(daoQueueDestination, new PumpDao(DaoTypeConstant.UPDATE_SCORE, room.getPumpObject(array)));
+        }
+    }
+
+    public void updateRoomCard(String roomNo) {
+        NNGameRoomNew room = (NNGameRoomNew) RoomManage.gameRoomMap.get(roomNo);
+        JSONArray array = new JSONArray();
+        int roomCardCount = 0;
+        for (String account : room.getUserPacketMap().keySet()) {
+            // 房主支付
+            if (room.getPayType()==CommonConstant.PAY_TYPE_OWNER) {
+                if (account.equals(room.getOwner())) {
+                    // 参与第一局需要扣房卡
+                    if (room.getUserPacketMap().get(account).getPlayTimes()==1) {
+                        roomCardCount = room.getPlayerCount()*room.getSinglePayNum();
+                        array.add(room.getPlayerMap().get(account).getId());
+                    }
+                }
+            }
+            // 房费AA
+            if (room.getPayType()==CommonConstant.PAY_TYPE_AA) {
+                // 参与第一局需要扣房卡
+                if (room.getUserPacketMap().get(account).getPlayTimes()==1) {
+                    array.add(room.getPlayerMap().get(account).getId());
+                    roomCardCount = room.getSinglePayNum();
+                }
+            }
+        }
+        if (array.size()>0) {
+            producerService.sendMessage(daoQueueDestination, new PumpDao(DaoTypeConstant.PUMP, room.getRoomCardChangeObject(array,roomCardCount)));
         }
     }
 

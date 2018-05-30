@@ -1669,29 +1669,6 @@ public class QZMJGameEventDeal {
                 double sum = room.getUserPacketMap().get(account).getScore();
                 long userId = room.getPlayerMap().get(account).getId();
                 array.add(obtainUserScoreData(total, sum, userId));
-            }else if (room.getRoomType()==CommonConstant.ROOM_TYPE_FK){
-                // 房主支付
-                /*if (room.getPayType()==CommonConstant.PAY_TYPE_OWNER) {
-                    if (account.equals(room.getOwner())) {
-                        // 参与第一局需要扣房卡
-                        if (room.getUserPacketMap().get(account).getPlayTimes()==1) {
-                            double total = room.getPlayerMap().get(account).getRoomCardNum();
-                            double sum = -room.getPlayerCount()*room.getSinglePayNum();
-                            long userId = room.getPlayerMap().get(account).getId();
-                            array.add(obtainUserScoreData(total, sum, userId));
-                        }
-                    }
-                }
-                // 房费AA
-                if (room.getPayType()==CommonConstant.PAY_TYPE_AA) {
-                    // 参与第一局需要扣房卡
-                    if (room.getUserPacketMap().get(account).getPlayTimes()==1) {
-                        double total = room.getPlayerMap().get(account).getRoomCardNum();
-                        double sum = -room.getSinglePayNum();
-                        long userId = room.getPlayerMap().get(account).getId();
-                        array.add(obtainUserScoreData(total, sum, userId));
-                    }
-                }*/
             }
         }
         if (room.getId()==0) {
@@ -3514,8 +3491,12 @@ public class QZMJGameEventDeal {
                 room.setSummaryData(result);
                 CommonConstant.sendMsgEventToAll(room.getAllUUIDList(),String.valueOf(result),"gameLiuJuPush");
                 updateUserScore(roomNo);
-                saveGameLog(roomNo);
-                saveUserDeduction(roomNo);
+                if (room.getRoomType()!=CommonConstant.ROOM_TYPE_JB) {
+                    saveGameLog(roomNo);
+                }
+                if (room.getRoomType()==CommonConstant.ROOM_TYPE_YB) {
+                    saveUserDeduction(roomNo);
+                }
                 if (room.getRoomType()==CommonConstant.ROOM_TYPE_FK) {
                     updateRoomCard(roomNo);
                 }

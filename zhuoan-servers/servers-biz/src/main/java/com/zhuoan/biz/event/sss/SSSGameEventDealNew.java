@@ -536,7 +536,12 @@ public class SSSGameEventDealNew {
                             room.setTimeLeft(SSSConstant.SSS_TIMER_INIT);
                             // 更新数据库
                             updateUserScore(room);
-                            saveUserDeduction(room);
+                            if (room.getRoomType()==CommonConstant.ROOM_TYPE_YB) {
+                                saveUserDeduction(room);
+                            }
+                            if (room.getRoomType()==CommonConstant.ROOM_TYPE_FK) {
+                                updateRoomCard(room.getRoomNo());
+                            }
                             if (room.getRoomType()!=CommonConstant.ROOM_TYPE_JB) {
                                 saveGameLog(room);
                             }
@@ -669,27 +674,6 @@ public class SSSGameEventDealNew {
                     obj.put("fen", room.getUserPacketMap().get(uuid).getScore());
                     obj.put("id", room.getPlayerMap().get(uuid).getId());
                     array.add(obj);
-                }else if (room.getRoomType()==CommonConstant.ROOM_TYPE_FK) {
-                    // 房主支付
-                    if (room.getPayType()==CommonConstant.PAY_TYPE_OWNER) {
-                        // 房主参与第一局需要扣房卡
-                        if (uuid.equals(room.getOwner())&&room.getUserPacketMap().get(uuid).getPlayTimes()==1) {
-                            obj.put("total", room.getPlayerMap().get(uuid).getRoomCardNum());
-                            obj.put("fen", -room.getPlayerCount()*room.getSinglePayNum());
-                            obj.put("id", room.getPlayerMap().get(uuid).getId());
-                            array.add(obj);
-                        }
-                    }
-                    // 房费AA
-                    if (room.getPayType()==CommonConstant.PAY_TYPE_AA) {
-                        // 参与第一局需要扣房卡
-                        if (room.getUserPacketMap().get(uuid).getPlayTimes()==1) {
-                            obj.put("total", room.getPlayerMap().get(uuid).getRoomCardNum());
-                            obj.put("fen", -room.getSinglePayNum());
-                            obj.put("id", room.getPlayerMap().get(uuid).getId());
-                            array.add(obj);
-                        }
-                    }
                 }
             }
         }
@@ -698,6 +682,36 @@ public class SSSGameEventDealNew {
             producerService.sendMessage(daoQueueDestination, new PumpDao(DaoTypeConstant.UPDATE_SCORE, room.getPumpObject(array)));
         }
     }
+
+    public void updateRoomCard(String roomNo) {
+        SSSGameRoomNew room = (SSSGameRoomNew) RoomManage.gameRoomMap.get(roomNo);
+        JSONArray array = new JSONArray();
+        int roomCardCount = 0;
+        for (String account : room.getUserPacketMap().keySet()) {
+            // 房主支付
+            if (room.getPayType()==CommonConstant.PAY_TYPE_OWNER) {
+                if (account.equals(room.getOwner())) {
+                    // 参与第一局需要扣房卡
+                    if (room.getUserPacketMap().get(account).getPlayTimes()==1) {
+                        array.add(room.getPlayerMap().get(account).getId());
+                        roomCardCount = room.getPlayerCount()*room.getSinglePayNum();
+                    }
+                }
+            }
+            // 房费AA
+            if (room.getPayType()==CommonConstant.PAY_TYPE_AA) {
+                // 参与第一局需要扣房卡
+                if (room.getUserPacketMap().get(account).getPlayTimes()==1) {
+                    array.add(room.getPlayerMap().get(account).getId());
+                    roomCardCount = room.getSinglePayNum();
+                }
+            }
+        }
+        if (array.size()>0) {
+            producerService.sendMessage(daoQueueDestination, new PumpDao(DaoTypeConstant.PUMP, room.getRoomCardChangeObject(array,roomCardCount)));
+        }
+    }
+
 
     public void saveUserDeduction(SSSGameRoomNew room) {
         JSONArray userDeductionData = new JSONArray();

@@ -66,15 +66,18 @@ public class GameTimerZJH {
                             }
                         }
                     }
-                    for (String account : autoAccountList) {
-                        // 组织数据
-                        JSONObject data = new JSONObject();
-                        // 房间号
-                        data.put(CommonConstant.DATA_KEY_ROOM_NO,room.getRoomNo());
-                        // 账号
-                        data.put(CommonConstant.DATA_KEY_ACCOUNT,account);
-                        SocketIOClient client = GameMain.server.getClient(room.getPlayerMap().get(account).getUuid());
-                        producerService.sendMessage(zjhQueueDestination, new Messages(client, data, CommonConstant.GAME_ID_ZJH, ZJHConstant.ZJH_GAME_EVENT_EXIT));
+                    // 准备阶段超时踢出
+                    if (room.getReadyOvertime()==CommonConstant.READY_OVERTIME_OUT) {
+                        for (String account : autoAccountList) {
+                            // 组织数据
+                            JSONObject data = new JSONObject();
+                            // 房间号
+                            data.put(CommonConstant.DATA_KEY_ROOM_NO,room.getRoomNo());
+                            // 账号
+                            data.put(CommonConstant.DATA_KEY_ACCOUNT,account);
+                            SocketIOClient client = GameMain.server.getClient(room.getPlayerMap().get(account).getUuid());
+                            producerService.sendMessage(zjhQueueDestination, new Messages(client, data, CommonConstant.GAME_ID_ZJH, ZJHConstant.ZJH_GAME_EVENT_EXIT));
+                        }
                     }
                 }
                 try {
