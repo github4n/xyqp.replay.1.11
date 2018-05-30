@@ -11,6 +11,7 @@ import com.zhuoan.biz.model.RoomManage;
 import com.zhuoan.biz.model.dao.PumpDao;
 import com.zhuoan.biz.model.sss.Player;
 import com.zhuoan.biz.model.sss.SSSGameRoomNew;
+import com.zhuoan.biz.robot.RobotEventDeal;
 import com.zhuoan.constant.CommonConstant;
 import com.zhuoan.constant.DaoTypeConstant;
 import com.zhuoan.constant.SSSConstant;
@@ -20,6 +21,7 @@ import com.zhuoan.util.Dto;
 import com.zhuoan.util.thread.ThreadPoolHelper;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
+import org.apache.commons.lang.math.RandomUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
@@ -57,6 +59,9 @@ public class SSSGameEventDealNew {
 
     @Resource
     private RedisService redisService;
+
+    @Resource
+    private RobotEventDeal robotEventDeal;
 
     /**
      * 创建房间通知自己
@@ -899,6 +904,10 @@ public class SSSGameEventDealNew {
                     RoomManage.gameRoomMap.remove(room.getRoomNo());
                 }
                 producerService.sendMessage(daoQueueDestination, new PumpDao(DaoTypeConstant.UPDATE_ROOM_INFO, roomInfo));
+                // 机器人退出
+                if (room.isRobot()&&room.getRobotList().contains(account)) {
+                    robotEventDeal.robotExit(account);
+                }
             }else {
                 // 组织数据，通知玩家
                 JSONObject result = new JSONObject();
@@ -1083,6 +1092,17 @@ public class SSSGameEventDealNew {
             UUID uuid = room.getPlayerMap().get(account).getUuid();
             if (uuid!=null) {
                 CommonConstant.sendMsgEventToSingle(uuid,obj.toString(),"changeGameStatusPush_SSS");
+            }
+        }
+        if (room.isRobot()) {
+            for (String robotAccount : room.getRobotList()) {
+                int delayTime = RandomUtils.nextInt(3)+2;
+                if (room.getGameStatus() == SSSConstant.SSS_GAME_STATUS_SUMMARY) {
+                    robotEventDeal.changeRobotActionDetail(robotAccount,SSSConstant.SSS_GAME_EVENT_READY,delayTime);
+                }
+                if (room.getGameStatus() == SSSConstant.SSS_GAME_STATUS_GAME_EVENT) {
+                    robotEventDeal.changeRobotActionDetail(robotAccount,SSSConstant.SSS_GAME_EVENT_EVENT,delayTime);
+                }
             }
         }
     }

@@ -76,6 +76,10 @@ public class GameRoom {
      */
     private boolean robot;
     /**
+     * 房间机器人列表
+     */
+    private List<String> robotList = new ArrayList<String>();
+    /**
      * 是否观战模式
      */
     private boolean visit;
@@ -290,6 +294,14 @@ public class GameRoom {
 
     public void setRobot(boolean robot) {
         this.robot = robot;
+    }
+
+    public List<String> getRobotList() {
+        return robotList;
+    }
+
+    public void setRobotList(List<String> robotList) {
+        this.robotList = robotList;
     }
 
     public boolean isVisit() {

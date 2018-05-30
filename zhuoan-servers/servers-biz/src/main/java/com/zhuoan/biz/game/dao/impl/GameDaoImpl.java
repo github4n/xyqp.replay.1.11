@@ -18,7 +18,6 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
-import java.util.Random;
 
 /**
  * @author huaping.li
@@ -333,16 +332,16 @@ public class GameDaoImpl implements GameDao {
      * @return
      */
     @Override
-    public List<String> getRobotList(int count) {
+    public List<String> getRobotList(int count,double minScore) {
 
         List<String> list = new ArrayList<String>();
         for (int i = 0; i < count; i++) {
-            String sql = "select account from za_users where openid='0' and status=0 limit ?,1";
-            JSONObject jsonObject = DBUtil.getObjectBySQL(sql, new Object[]{i});
+            String sql = "select account from za_users where openid='0' and status=0 and coins>? limit ?,1";
+            JSONObject jsonObject = DBUtil.getObjectBySQL(sql, new Object[]{minScore,i});
             if (jsonObject!=null) {
                 list.add(jsonObject.getString("account"));
-                sql = "update za_users set status=1,yuanbao=? where account=?";
-                DBUtil.executeUpdateBySQL(sql, new Object[]{25000+new Random().nextInt(50000),jsonObject.getString("account")});
+                sql = "update za_users set status=1 where account=?";
+                DBUtil.executeUpdateBySQL(sql, new Object[]{jsonObject.getString("account")});
             }
         }
         return list;
@@ -697,6 +696,12 @@ public class GameDaoImpl implements GameDao {
         String sql = "SELECT id,firstnode,firstmoney,firstfangka,secnode,secmoney,secfangk,thnode,thmoney,thmofangk,monthmoney," +
             "monthfangk,meitmoney,meitfangk,memo FROM za_sign_reward where memo=?";
         return DBUtil.getObjectBySQL(sql,new Object[]{platform});
+    }
+
+    @Override
+    public void updateRobotStatus(String robotAccount,int status) {
+        String sql = "update za_users set status=? where account=?";
+        DBUtil.executeUpdateBySQL(sql,new Object[]{status,robotAccount});
     }
 }
 

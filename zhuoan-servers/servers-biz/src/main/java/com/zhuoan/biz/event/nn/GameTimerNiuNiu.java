@@ -3,6 +3,7 @@ package com.zhuoan.biz.event.nn;
 import com.corundumstudio.socketio.SocketIOClient;
 import com.zhuoan.biz.model.RoomManage;
 import com.zhuoan.biz.model.nn.NNGameRoomNew;
+import com.zhuoan.biz.robot.RobotEventDeal;
 import com.zhuoan.constant.CommonConstant;
 import com.zhuoan.constant.NNConstant;
 import com.zhuoan.queue.Messages;
@@ -10,6 +11,7 @@ import com.zhuoan.service.jms.ProducerService;
 import com.zhuoan.service.socketio.impl.GameMain;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
+import org.apache.commons.lang.math.RandomUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
@@ -36,6 +38,9 @@ public class GameTimerNiuNiu{
 
     @Resource
     private ProducerService producerService;
+
+    @Resource
+    private RobotEventDeal robotEventDeal;
 
     /**
      * 游戏超时事件
@@ -81,6 +86,14 @@ public class GameTimerNiuNiu{
                     UUID uuid = room.getPlayerMap().get(account).getUuid();
                     if (uuid != null) {
                         CommonConstant.sendMsgEventToSingle(uuid, obj.toString(), "changeGameStatusPush_NN");
+                    }
+                }
+                if (room.isRobot()) {
+                    for (String robotAccount : room.getRobotList()) {
+                        int delayTime = RandomUtils.nextInt(3)+2;
+                        if (room.getGameStatus()==NNConstant.NN_GAME_STATUS_XZ) {
+                            robotEventDeal.changeRobotActionDetail(robotAccount,NNConstant.NN_GAME_EVENT_XZ,delayTime);
+                        }
                     }
                 }
             }

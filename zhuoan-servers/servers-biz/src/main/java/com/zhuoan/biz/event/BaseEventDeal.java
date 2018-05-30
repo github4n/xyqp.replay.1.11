@@ -23,6 +23,7 @@ import com.zhuoan.biz.model.qzmj.UserPacketQZMJ;
 import com.zhuoan.biz.model.sss.Player;
 import com.zhuoan.biz.model.sss.SSSGameRoomNew;
 import com.zhuoan.biz.model.zjh.ZJHGameRoomNew;
+import com.zhuoan.biz.robot.RobotEventDeal;
 import com.zhuoan.constant.*;
 import com.zhuoan.service.cache.RedisService;
 import com.zhuoan.service.jms.ProducerService;
@@ -32,7 +33,6 @@ import com.zhuoan.util.SensitivewordFilter;
 import com.zhuoan.util.TimeUtil;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
-import org.apache.commons.lang.math.RandomUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
@@ -92,6 +92,9 @@ public class BaseEventDeal {
 
     @Resource
     private RedisService redisService;
+
+    @Resource
+    private RobotEventDeal robotEventDeal;
 
     /**
      * 创建房间判断是否满足条件
@@ -248,9 +251,11 @@ public class BaseEventDeal {
             gameRoom.setScore(1);
         }
         // 元宝模式
-        if (baseInfo.containsKey("level")) {
+        if (baseInfo.containsKey("robot")&&baseInfo.getInt("robot")==CommonConstant.GLOBAL_YES) {
             //底分
-            gameRoom.setLevel(baseInfo.getInt("level"));
+            gameRoom.setRobot(true);
+        }else {
+            gameRoom.setRobot(false);
         }
         // 元宝模式
         if (baseInfo.containsKey("yuanbao") && baseInfo.getDouble("yuanbao") > 0) {
@@ -385,7 +390,9 @@ public class BaseEventDeal {
         }
 
         producerService.sendMessage(daoQueueDestination, new PumpDao(DaoTypeConstant.INSERT_GAME_ROOM, obj));
-
+        if (gameRoom.isRobot()) {
+            robotEventDeal.robotJoin(roomNo);
+        }
     }
 
     /**
@@ -521,7 +528,11 @@ public class BaseEventDeal {
         JSONObject obtainPlayerInfoData = new JSONObject();
         obtainPlayerInfoData.put("userInfo", userInfo);
         obtainPlayerInfoData.put("myIndex", myIndex);
-        obtainPlayerInfoData.put("uuid", client.getSessionId().toString());
+        if (client!=null) {
+            obtainPlayerInfoData.put("uuid", String.valueOf(client.getSessionId()));
+        }else {
+            obtainPlayerInfoData.put("uuid", String.valueOf(UUID.randomUUID()));
+        }
         obtainPlayerInfoData.put("room_type", gameRoom.getRoomType());
         if (postData.containsKey("location")) {
             obtainPlayerInfoData.put("location", postData.getString("location"));
@@ -1594,9 +1605,8 @@ public class BaseEventDeal {
         List<String> roomNoList = new ArrayList<String>();
         for (String roomNo : RoomManage.gameRoomMap.keySet()) {
             GameRoom room = RoomManage.gameRoomMap.get(roomNo);
-            int left = RandomUtils.nextInt(room.getPlayerCount());
             if (room.getRoomType()==CommonConstant.ROOM_TYPE_JB&&room.getGid()==gameId&&room.getScore()==option.getDouble("di")&&
-                !room.getPlayerMap().containsKey(account)&&room.getPlayerMap().size()<(room.getPlayerCount()-left)) {
+                !room.getPlayerMap().containsKey(account)&&room.getPlayerMap().size()<room.getPlayerCount()) {
                 roomNoList.add(roomNo);
             }
         }

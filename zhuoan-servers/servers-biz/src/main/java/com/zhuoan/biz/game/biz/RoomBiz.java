@@ -89,9 +89,11 @@ public interface RoomBiz {
 
     /**
      * 获取机器人列表
+     * @param count
+     * @param minScore
      * @return
      */
-    public List<String> getRobotList(int count);
+    public List<String> getRobotList(int count,double minScore);
 
     /**
      * 金币场玩家抽水
@@ -113,5 +115,11 @@ public interface RoomBiz {
      */
     public void settlementRoomNo(String roomNo);
 
+    /**
+     * 更改机器人状态
+     * @param robotAccount
+     * @param status
+     */
+    public void updateRobotStatus(String robotAccount,int status);
 
 }

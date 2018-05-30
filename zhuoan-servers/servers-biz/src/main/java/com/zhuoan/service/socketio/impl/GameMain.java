@@ -11,6 +11,7 @@ import com.zhuoan.biz.event.qzmj.QZMJGameEvent;
 import com.zhuoan.biz.event.sss.SSSGameEvent;
 import com.zhuoan.biz.event.zjh.ZJHGameEvent;
 import com.zhuoan.biz.model.RoomManage;
+import com.zhuoan.biz.robot.RobotEventDeal;
 import com.zhuoan.constant.SocketConfigConstant;
 import com.zhuoan.dao.DBUtil;
 import com.zhuoan.enumtype.EnvKeyEnum;
@@ -92,6 +93,8 @@ public class GameMain implements SocketIoManagerService {
     @Resource
     private QZMJGameEvent qzmjGameEvent;
 
+    @Resource
+    private RobotEventDeal robotEventDeal;
 
     @Override
     public void startServer() {
@@ -243,6 +246,8 @@ public class GameMain implements SocketIoManagerService {
         sqlQueue = sqlQueue1;
         /* 获取房间设置放入Json数组里面*/
         preSelectRoomSetting();
+
+        robotEventDeal.startRobot();
     }
 
     private void preSelectRoomSetting() {

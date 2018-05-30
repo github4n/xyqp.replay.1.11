@@ -10,6 +10,7 @@ import com.zhuoan.biz.model.Playerinfo;
 import com.zhuoan.biz.model.RoomManage;
 import com.zhuoan.biz.model.dao.PumpDao;
 import com.zhuoan.biz.model.nn.NNGameRoomNew;
+import com.zhuoan.biz.robot.RobotEventDeal;
 import com.zhuoan.constant.CommonConstant;
 import com.zhuoan.constant.DaoTypeConstant;
 import com.zhuoan.constant.NNConstant;
@@ -57,6 +58,9 @@ public class NNGameEventDealNew {
 
     @Resource
     private RedisService redisService;
+
+    @Resource
+    private RobotEventDeal robotEventDeal;
 
     /**
      * 创建房间通知自己
@@ -1221,6 +1225,10 @@ public class NNGameEventDealNew {
                     RoomManage.gameRoomMap.remove(room.getRoomNo());
                 }
                 producerService.sendMessage(daoQueueDestination, new PumpDao(DaoTypeConstant.UPDATE_ROOM_INFO, roomInfo));
+                // 机器人退出
+                if (room.isRobot()&&room.getRobotList().contains(account)) {
+                    robotEventDeal.robotExit(account);
+                }
             } else {
                 // 组织数据，通知玩家
                 JSONObject result = new JSONObject();
@@ -1288,6 +1296,23 @@ public class NNGameEventDealNew {
             UUID uuid = room.getPlayerMap().get(account).getUuid();
             if (uuid != null) {
                 CommonConstant.sendMsgEventToSingle(uuid, obj.toString(), "changeGameStatusPush_NN");
+            }
+        }
+        if (room.isRobot()) {
+            for (String robotAccount : room.getRobotList()) {
+                int delayTime = RandomUtils.nextInt(3)+2;
+                if (room.getGameStatus()==NNConstant.NN_GAME_STATUS_JS||room.getGameStatus()==NNConstant.NN_GAME_STATUS_READY) {
+                    robotEventDeal.changeRobotActionDetail(robotAccount,NNConstant.NN_GAME_EVENT_READY,delayTime);
+                }
+                if (room.getGameStatus()==NNConstant.NN_GAME_STATUS_QZ) {
+                    robotEventDeal.changeRobotActionDetail(robotAccount,NNConstant.NN_GAME_EVENT_QZ,delayTime);
+                }
+                if (room.getGameStatus()==NNConstant.NN_GAME_STATUS_XZ) {
+                    robotEventDeal.changeRobotActionDetail(robotAccount,NNConstant.NN_GAME_EVENT_XZ,delayTime);
+                }
+                if (room.getGameStatus()==NNConstant.NN_GAME_STATUS_LP) {
+                    robotEventDeal.changeRobotActionDetail(robotAccount,NNConstant.NN_GAME_EVENT_LP,delayTime);
+                }
             }
         }
     }

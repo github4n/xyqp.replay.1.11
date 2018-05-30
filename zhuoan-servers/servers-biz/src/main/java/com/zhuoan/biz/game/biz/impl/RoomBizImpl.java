@@ -167,9 +167,9 @@ public class RoomBizImpl implements RoomBiz{
      * @return
      */
     @Override
-    public List<String> getRobotList(int count) {
+    public List<String> getRobotList(int count,double minScore) {
 
-        return gameDao.getRobotList(count);
+        return gameDao.getRobotList(count,minScore);
     }
 
     /**
@@ -275,4 +275,11 @@ public class RoomBizImpl implements RoomBiz{
             }
         }
     }
+
+    @Override
+    public void updateRobotStatus(String robotAccount,int status) {
+        gameDao.updateRobotStatus(robotAccount, status);
+    }
+
+
 }

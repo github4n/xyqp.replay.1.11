@@ -1548,7 +1548,7 @@ public class QZMJGameEventDeal {
                     }
                 }
                 summary(roomNo, account);
-                gamePlay.getUserPacketMap().get(account).addHuTimes(huType);
+                gamePlay.getUserPacketMap().get(account).addHuTimes(gamePlay.getHuType());
             }
         }
         return huType;
