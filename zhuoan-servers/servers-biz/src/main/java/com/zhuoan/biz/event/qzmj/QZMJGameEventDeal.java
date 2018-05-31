@@ -866,18 +866,20 @@ public class QZMJGameEventDeal {
         backObj.put("type", 0);
         backObj.put("data", array);
         backObj.put("isLiuju", CommonConstant.GLOBAL_NO);
-        if(gamePlay.getGameCount()==gamePlay.getGameIndex() || isFinish){
-            // 保存结算汇总数据
-            JSONArray jiesuanArray = obtainFinalSummaryArray(gamePlay);
-            backObj.put("type", 1);
-            backObj.put("data1", jiesuanArray);
-            gamePlay.setGameStatus(QZMJConstant.QZ_GAME_STATUS_FINAL_SUMMARY);
-        }else if (gamePlay.getGameStatus()==QZMJConstant.QZ_GAME_STATUS_FINAL_SUMMARY) {
-            // 保存结算汇总数据
-            JSONArray jiesuanArray = obtainFinalSummaryArray(gamePlay);
-            backObj.clear();
-            backObj.put("type", 2);
-            backObj.put("data1", jiesuanArray);
+        if (gamePlay.getRoomType()==CommonConstant.ROOM_TYPE_FK) {
+            if(gamePlay.getGameCount()==gamePlay.getGameIndex() || isFinish){
+                // 保存结算汇总数据
+                JSONArray jiesuanArray = obtainFinalSummaryArray(gamePlay);
+                backObj.put("type", 1);
+                backObj.put("data1", jiesuanArray);
+                gamePlay.setGameStatus(QZMJConstant.QZ_GAME_STATUS_FINAL_SUMMARY);
+            }else if (gamePlay.getGameStatus()==QZMJConstant.QZ_GAME_STATUS_FINAL_SUMMARY) {
+                // 保存结算汇总数据
+                JSONArray jiesuanArray = obtainFinalSummaryArray(gamePlay);
+                backObj.clear();
+                backObj.put("type", 2);
+                backObj.put("data1", jiesuanArray);
+            }
         }
         gamePlay.setSummaryData(backObj);
         return backObj;
