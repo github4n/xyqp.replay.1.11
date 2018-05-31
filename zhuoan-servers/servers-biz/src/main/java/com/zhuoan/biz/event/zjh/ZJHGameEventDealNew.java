@@ -1251,7 +1251,7 @@ public class ZJHGameEventDealNew {
     public JSONObject obtainStartData(ZJHGameRoomNew room,String player){
         JSONObject object = new JSONObject();
         object.put("gameStatus",room.getGameStatus());
-        object.put("zhuang",room.getBanker());
+        object.put("zhuang",room.getPlayerIndex(room.getBanker()));
         object.put("game_index",room.getGameIndex());
         object.put("nextNum",room.getPlayerIndex(player));
         object.put("gameNum",room.getGameNum());

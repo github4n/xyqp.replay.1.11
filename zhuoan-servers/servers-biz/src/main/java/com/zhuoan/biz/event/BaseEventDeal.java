@@ -143,7 +143,8 @@ public class BaseEventDeal {
             }
         }
         // 添加工会信息
-        if (!Dto.isObjNull(userInfo)&&userInfo.containsKey("gulidId")) {
+        if (!Dto.isObjNull(userInfo)&&userInfo.containsKey("gulidId")&&userInfo.getInt("gulidId")>0&&
+            userInfo.containsKey("unionid")&&userInfo.containsKey("platform")) {
             JSONObject ghInfo = userBiz.getGongHui(userInfo);
             if (!Dto.isObjNull(ghInfo)&&ghInfo.containsKey("name")) {
                 userInfo.put("ghName",ghInfo.getString("name"));
@@ -459,7 +460,8 @@ public class BaseEventDeal {
             return;
         }
         // 添加工会信息
-        if (!Dto.isObjNull(userInfo)&&userInfo.containsKey("gulidId")) {
+        if (!Dto.isObjNull(userInfo)&&userInfo.containsKey("gulidId")&&userInfo.getInt("gulidId")>0&&
+            userInfo.containsKey("unionid")&&userInfo.containsKey("platform")) {
             JSONObject ghInfo = userBiz.getGongHui(userInfo);
             if (!Dto.isObjNull(ghInfo)&&ghInfo.containsKey("name")) {
                 userInfo.put("ghName",ghInfo.getString("name"));
