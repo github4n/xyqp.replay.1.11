@@ -895,6 +895,7 @@ public class NNGameEventDealNew {
         }
         // 房卡场结算
         if (room.getRoomType()==CommonConstant.ROOM_TYPE_FK) {
+            room.setNeedFinalSummary(true);
             roomCardSummary(room.getRoomNo());
         }
         // 更新数据库
@@ -1376,7 +1377,7 @@ public class NNGameEventDealNew {
                 // 全部同意解散
                 if (room.isAgreeClose()) {
                     // 未玩完一局不需要强制结算
-                    if (room.getGameIndex()<=1&&room.getGameStatus()< NNConstant.NN_GAME_STATUS_JS) {
+                    if (!room.isNeedFinalSummary()) {
                         // 所有玩家
                         List<UUID> uuidList = room.getAllUUIDList();
                         // 移除房间

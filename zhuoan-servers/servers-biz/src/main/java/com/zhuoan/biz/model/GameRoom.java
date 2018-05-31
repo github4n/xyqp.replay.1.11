@@ -175,6 +175,18 @@ public class GameRoom {
      *  结算数据
      */
     private JSONObject summaryData = new JSONObject();
+    /**
+     * 是否需要总结算
+     */
+    private boolean needFinalSummary = false;
+
+    public boolean isNeedFinalSummary() {
+        return needFinalSummary;
+    }
+
+    public void setNeedFinalSummary(boolean needFinalSummary) {
+        this.needFinalSummary = needFinalSummary;
+    }
 
     public JSONObject getSummaryData() {
         return summaryData;
