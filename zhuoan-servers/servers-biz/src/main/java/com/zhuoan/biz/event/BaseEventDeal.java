@@ -188,6 +188,11 @@ public class BaseEventDeal {
                 ((QZMJGameRoom)gameRoom).getUserPacketMap().put(userInfo.getString("account"), new UserPacketQZMJ());
                 createRoomQZMJ((QZMJGameRoom)gameRoom, baseInfo, userInfo.getString("account"));
                 break;
+            case CommonConstant.GAME_ID_NAMJ:
+                gameRoom = new QZMJGameRoom();
+                ((QZMJGameRoom)gameRoom).getUserPacketMap().put(userInfo.getString("account"), new UserPacketQZMJ());
+                createRoomQZMJ((QZMJGameRoom)gameRoom, baseInfo, userInfo.getString("account"));
+                break;
             default:
                 gameRoom = new GameRoom();
                 break;
@@ -366,6 +371,9 @@ public class BaseEventDeal {
                 bdxGameEventDealNew.createRoom(client, object);
                 break;
             case CommonConstant.GAME_ID_QZMJ:
+                qzmjGameEventDeal.createRoom(client, object);
+                break;
+            case CommonConstant.GAME_ID_NAMJ:
                 qzmjGameEventDeal.createRoom(client, object);
                 break;
             default:
@@ -598,6 +606,13 @@ public class BaseEventDeal {
                 bdxGameEventDealNew.joinRoom(client, joinData);
                 break;
             case CommonConstant.GAME_ID_QZMJ:
+                // 重连不需要重新设置用户牌局信息
+                if (!((QZMJGameRoom) gameRoom).getUserPacketMap().containsKey(userInfo.getString("account"))) {
+                    ((QZMJGameRoom) gameRoom).getUserPacketMap().put(userInfo.getString("account"), new UserPacketQZMJ());
+                }
+                qzmjGameEventDeal.joinRoom(client, joinData);
+                break;
+            case CommonConstant.GAME_ID_NAMJ:
                 // 重连不需要重新设置用户牌局信息
                 if (!((QZMJGameRoom) gameRoom).getUserPacketMap().containsKey(userInfo.getString("account"))) {
                     ((QZMJGameRoom) gameRoom).getUserPacketMap().put(userInfo.getString("account"), new UserPacketQZMJ());
@@ -1039,6 +1054,9 @@ public class BaseEventDeal {
                 break;
             case CommonConstant.GAME_ID_QZMJ:
                 key = CacheKeyConstant.GAME_SETTING_QZMJ;
+                break;
+            case CommonConstant.GAME_ID_NAMJ:
+                key = CacheKeyConstant.GAME_SETTING_NAMJ;
                 break;
             default:
                 break;
@@ -1535,6 +1553,9 @@ public class BaseEventDeal {
                 CommonConstant.sendMsgEventToAll(room.getAllUUIDList(),postData.toString(),"voiceCallGamePush_ZJH");
                 break;
             case CommonConstant.GAME_ID_QZMJ:
+                CommonConstant.sendMsgEventToAll(room.getAllUUIDList(),postData.toString(),"voiceCallGamePush");
+                break;
+            case CommonConstant.GAME_ID_NAMJ:
                 CommonConstant.sendMsgEventToAll(room.getAllUUIDList(),postData.toString(),"voiceCallGamePush");
                 break;
             default:

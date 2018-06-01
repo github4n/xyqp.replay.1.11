@@ -1492,6 +1492,7 @@ public class QZMJGameEventDeal {
         obj.put("youjin",room.getYouJinScore());
         obj.put("users",room.getAllPlayer());
         obj.put("myIndex",room.getPlayerMap().get(account).getMyIndex());
+        obj.put("gid",room.getGid());
         StringBuffer roomInfo = new StringBuffer();
         roomInfo.append(room.getPlayerCount());
         roomInfo.append("人 ");

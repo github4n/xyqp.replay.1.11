@@ -9,21 +9,25 @@ package com.zhuoan.constant;
 public class CacheKeyConstant {
 
     /**
-     * The constant GAME_SETTING_BY_GID_AND_PLATFORM.房间设置
+     * The constant GAME_SETTING_NN.房间设置
      */
     public static final String GAME_SETTING_NN = "game_setting_nn";
     /**
-     * The constant GAME_SETTING_BY_GID_AND_PLATFORM.房间设置
+     * The constant GAME_SETTING_SSS.房间设置
      */
     public static final String GAME_SETTING_SSS = "game_setting_sss";
     /**
-     * The constant GAME_SETTING_BY_GID_AND_PLATFORM.房间设置
+     * The constant GAME_SETTING_ZJH.房间设置
      */
     public static final String GAME_SETTING_ZJH = "game_setting_zjh";
     /**
-     * The constant GAME_SETTING_BY_GID_AND_PLATFORM.房间设置
+     * The constant GAME_SETTING_QZMJ.房间设置
      */
     public static final String GAME_SETTING_QZMJ = "game_setting_qzmj";
+    /**
+     * The constant GAME_SETTING_NAMJ.房间设置
+     */
+    public static final String GAME_SETTING_NAMJ = "game_setting_namj";
     /**
      * The constant GAME_INFO_BY_ID.
      */

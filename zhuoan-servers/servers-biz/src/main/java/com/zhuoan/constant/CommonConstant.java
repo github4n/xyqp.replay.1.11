@@ -135,6 +135,10 @@ public class CommonConstant {
      */
     public static final int GAME_ID_BDX = 10;
     /**
+     * 游戏id-南安麻将
+     */
+    public static final int GAME_ID_NAMJ = 12;
+    /**
      * 房间类型-房卡
      */
     public static final int ROOM_TYPE_FK = 0;
