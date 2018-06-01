@@ -161,6 +161,26 @@ public class SSSConstant {
      * 下注基数
      */
     public static final int SSS_XZ_BASE_NUM = 75;
+    /**
+     * 马牌类型-黑桃随机
+     */
+    public static final int SSS_MP_TYPE_ALL_HT = 1;
+    /**
+     * 马牌类型-黑桃A
+     */
+    public static final int SSS_MP_TYPE_HT_A = 2;
+    /**
+     * 马牌类型-黑桃3
+     */
+    public static final int SSS_MP_TYPE_HT_3 = 3;
+    /**
+     * 马牌类型-黑桃5
+     */
+    public static final int SSS_MP_TYPE_HT_5 = 4;
+    /**
+     * 马牌类型-全部随机
+     */
+    public static final int SSS_MP_TYPE_ALL = 5;
 
     public static final String SSS_DATA_KET_TYPE = "type";
     public static final String SSS_DATA_KET_MY_PAI = "myPai";

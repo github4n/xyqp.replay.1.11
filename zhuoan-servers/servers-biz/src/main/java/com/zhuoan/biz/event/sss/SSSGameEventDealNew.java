@@ -29,6 +29,7 @@ import org.springframework.stereotype.Component;
 import javax.annotation.Resource;
 import javax.jms.Destination;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
 
@@ -1073,9 +1074,12 @@ public class SSSGameEventDealNew {
                 obj.put("showTimer",CommonConstant.GLOBAL_NO);
             }
             obj.put("timer",room.getTimeLeft());
-            // TODO: 2018/4/22 马牌
-            obj.put("mapai",0);
-            obj.put("isma",0);
+            if (room.getMaPaiType()>0 && !Dto.stringIsNULL(room.getMaPai())) {
+                String[] ma = room.getMaPai().split("-");
+                obj.put("mapai",Integer.valueOf(ma[1])+20*(Integer.valueOf(ma[0])-1));
+            }else {
+                obj.put("mapai",0);
+            }
             obj.put("myPai",room.getUserPacketMap().get(account).getMyPai());
             obj.put("myPaiType",room.getUserPacketMap().get(account).getPaiType());
             obj.put("gameData",room.obtainGameData());
@@ -1137,8 +1141,12 @@ public class SSSGameEventDealNew {
             roomData.put("roomType",room.getRoomType());
             roomData.put("game_count",room.getGameCount());
             roomData.put("di",room.getScore());
-            roomData.put("isma",room.getMaPaiType());
-            roomData.put("mapai",room.getMaPai());
+            if (room.getMaPaiType()>0 && !Dto.stringIsNULL(room.getMaPai())) {
+                String[] ma = room.getMaPai().split("-");
+                roomData.put("mapai",Integer.valueOf(ma[1])+20*(Integer.valueOf(ma[0])-1));
+            }else {
+                roomData.put("mapai",0);
+            }
             if(room.getRoomType()== CommonConstant.ROOM_TYPE_YB){
                 StringBuffer roomInfo = new StringBuffer();
                 roomInfo.append("房号:");
@@ -1333,6 +1341,14 @@ public class SSSGameEventDealNew {
                                 }
                             }
                             sumScoreSingle = compareResult.getInt("A");
+                            if (room.getMaPaiType()>0) {
+                                if (Arrays.asList(player.getPai()).contains(room.getMaPai())) {
+                                    sumScoreSingle *= 2;
+                                }
+                                if (Arrays.asList(otherPlayer.getPai()).contains(room.getMaPai())) {
+                                    sumScoreSingle *= 2;
+                                }
+                            }
                             // 三道全赢打枪
                             if (winTime==3) {
                                 sumScoreSingle *= 2;
@@ -1467,6 +1483,12 @@ public class SSSGameEventDealNew {
                         sumScoreOther = compareResult.getInt("B");
                         if (room.getBankerType()==SSSConstant.SSS_BANKER_TYPE_ZZ) {
                             sumScoreOther = compareResult.getInt("B")*room.getUserPacketMap().get(account).getXzTimes();
+                        }
+                        if (room.getMaPaiType()>0 && Arrays.asList(player.getPai()).contains(room.getMaPai())) {
+                            sumScoreOther *= 2;
+                        }
+                        if (room.getMaPaiType()>0 && Arrays.asList(otherPlayer.getPai()).contains(room.getMaPai())) {
+                            sumScoreOther *= 2;
                         }
                         // 三道全赢打枪
                         if (winTime==3) {

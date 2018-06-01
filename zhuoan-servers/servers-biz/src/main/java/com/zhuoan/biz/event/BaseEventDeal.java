@@ -33,6 +33,7 @@ import com.zhuoan.util.SensitivewordFilter;
 import com.zhuoan.util.TimeUtil;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
+import org.apache.commons.lang.math.RandomUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
@@ -816,6 +817,31 @@ public class BaseEventDeal {
         // 加色
         if (baseInfo.containsKey("color")) {
             room.setColor(baseInfo.getInt("color"));
+        }
+        // 马牌
+        if (baseInfo.containsKey("jiama")) {
+            room.setMaPaiType(baseInfo.getInt("jiama"));
+            switch (room.getMaPaiType()) {
+                case SSSConstant.SSS_MP_TYPE_ALL_HT:
+                    room.setMaPai("1-"+(RandomUtils.nextInt(13)+1));
+                    break;
+                case SSSConstant.SSS_MP_TYPE_HT_A:
+                    room.setMaPai("1-1");
+                    break;
+                case SSSConstant.SSS_MP_TYPE_HT_3:
+                    room.setMaPai("1-3");
+                    break;
+                case SSSConstant.SSS_MP_TYPE_HT_5:
+                    room.setMaPai("1-5");
+                    break;
+                case SSSConstant.SSS_MP_TYPE_ALL:
+                    int num = RandomUtils.nextInt(13)+1;
+                    int color = RandomUtils.nextInt(4)+1;
+                    room.setMaPai(color+"-"+num);
+                    break;
+                default:
+                    break;
+            }
         }
         if (baseInfo.containsKey("baseNum")) {
             // 设置基础倍率
