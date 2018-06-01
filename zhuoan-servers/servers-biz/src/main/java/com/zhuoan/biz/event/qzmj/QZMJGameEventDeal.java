@@ -492,6 +492,9 @@ public class QZMJGameEventDeal {
         }
         final String roomNo = postData.getString(CommonConstant.DATA_KEY_ROOM_NO);
         QZMJGameRoom room = (QZMJGameRoom) RoomManage.gameRoomMap.get(roomNo);
+        if (room.getRoomType()!=CommonConstant.ROOM_TYPE_FK) {
+            return;
+        }
         String account = postData.getString(CommonConstant.DATA_KEY_ACCOUNT);
         if (postData.containsKey("type")) {
             JSONObject result = new JSONObject();
@@ -786,7 +789,11 @@ public class QZMJGameEventDeal {
             data.put("myPai", paiList.toArray());
             data.put("fan", userPacketQZMJ.getFan());
             data.put("fanDetail", userPacketQZMJ.getFanDetail(userPacketQZMJ.getMyPai(), gamePlay,winner));
-            data.put("score", player.getScore());
+            if (gamePlay.getRoomType()==CommonConstant.ROOM_TYPE_FK) {
+                data.put("score", player.getScore());
+            }else {
+                data.put("score",userPacketQZMJ.getScore());
+            }
             data.put("player", player.getName());
             data.put("headimg", player.getRealHeadimg());
             data.put("hua", userPacketQZMJ.getHuaList().size());
@@ -841,7 +848,11 @@ public class QZMJGameEventDeal {
                 data.put("myPai", paiList.toArray());
                 data.put("fan", userPacketQZMJ.getFan());
                 data.put("fanDetail", userPacketQZMJ.getFanDetail(userPacketQZMJ.getMyPai(), gamePlay,uuid));
-                data.put("score", player.getScore());
+                if (gamePlay.getRoomType()==CommonConstant.ROOM_TYPE_FK) {
+                    data.put("score", player.getScore());
+                }else {
+                    data.put("score",userPacketQZMJ.getScore());
+                }
                 data.put("player", player.getName());
                 data.put("headimg", player.getRealHeadimg());
                 data.put("hua", userPacketQZMJ.getHuaList().size());
@@ -1309,7 +1320,7 @@ public class QZMJGameEventDeal {
                 CommonConstant.sendMsgEventToSingle(room.getPlayerMap().get(account).getUuid(),String.valueOf(result),"gameStartPush");
             }
             final int startStatus;
-            if (room.getGameIndex()>1) {
+            if (room.getGameIndex()>1||room.getRoomType()!=CommonConstant.ROOM_TYPE_FK) {
                 startStatus = 2;
             }else {
                 startStatus = 1;
@@ -1320,6 +1331,24 @@ public class QZMJGameEventDeal {
                     gameTimerQZMJ.gameStart(roomNo,startStatus);
                 }
             });
+            if (room.getFee() > 0 && room.getRoomType()!=CommonConstant.ROOM_TYPE_FK) {
+                JSONArray array = new JSONArray();
+                for (String account : room.getPlayerMap().keySet()) {
+                    // 中途加入不抽水
+                    if (room.getUserPacketMap().get(account).getStatus() > QZMJConstant.QZ_USER_STATUS_INIT) {
+                        // 更新实体类数据
+                        Playerinfo playerinfo = RoomManage.gameRoomMap.get(room.getRoomNo()).getPlayerMap().get(account);
+                        RoomManage.gameRoomMap.get(room.getRoomNo()).getPlayerMap().get(account).setScore(Dto.sub(playerinfo.getScore(), room.getFee()));
+                        // 负数清零
+                        if (RoomManage.gameRoomMap.get(room.getRoomNo()).getPlayerMap().get(account).getScore() < 0) {
+                            RoomManage.gameRoomMap.get(room.getRoomNo()).getPlayerMap().get(account).setScore(0);
+                        }
+                        array.add(playerinfo.getId());
+                    }
+                }
+                // 抽水
+                producerService.sendMessage(daoQueueDestination, new PumpDao(DaoTypeConstant.PUMP, room.getJsonObject(array)));
+            }
         }
     }
 
