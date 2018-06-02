@@ -617,7 +617,7 @@ public class GameRoom {
         JSONObject baseInfo = getRoomInfo();
         gamelog.put("base_info", baseInfo);
         gamelog.put("result", result);
-        if (getGid()==CommonConstant.GAME_ID_QZMJ) {
+        if (getGid()==CommonConstant.GAME_ID_QZMJ||getGid()==CommonConstant.GAME_ID_NAMJ) {
             baseInfo.put("game_count", getGameCount());
             baseInfo.put("zhuang", ((QZMJGameRoom)this).getPlayerIndex(getBanker()));
             baseInfo.put("jin", ((QZMJGameRoom)this).getJin());

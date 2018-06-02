@@ -176,7 +176,11 @@ public class GameTimerQZMJ {
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
-        buHua(roomNo);
+        if (RoomManage.gameRoomMap.get(roomNo).getGid()==CommonConstant.GAME_ID_QZMJ) {
+            buHua(roomNo);
+        }else if (RoomManage.gameRoomMap.get(roomNo).getGid()==CommonConstant.GAME_ID_NAMJ) {
+            dingJin(roomNo);
+        }
     }
 
     private void buHua(String roomNo) {
@@ -186,17 +190,25 @@ public class GameTimerQZMJ {
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
-        dingJin(roomNo);
+        if (RoomManage.gameRoomMap.get(roomNo).getGid()==CommonConstant.GAME_ID_QZMJ) {
+            dingJin(roomNo);
+        }else if (RoomManage.gameRoomMap.get(roomNo).getGid()==CommonConstant.GAME_ID_NAMJ) {
+            moPai(roomNo);
+        }
     }
 
     private void dingJin(String roomNo) {
         changeStartStatus(roomNo,QZMJConstant.QZ_START_STATUS_KJ);
         try {
-            Thread.sleep(1000);
+            Thread.sleep(1250);
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
-        moPai(roomNo);
+        if (RoomManage.gameRoomMap.get(roomNo).getGid()==CommonConstant.GAME_ID_QZMJ) {
+            moPai(roomNo);
+        }else if (RoomManage.gameRoomMap.get(roomNo).getGid()==CommonConstant.GAME_ID_NAMJ) {
+            buHua(roomNo);
+        }
     }
 
     private void moPai(String roomNo) {

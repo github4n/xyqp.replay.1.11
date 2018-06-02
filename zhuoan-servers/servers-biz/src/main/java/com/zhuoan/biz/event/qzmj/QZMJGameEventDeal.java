@@ -789,11 +789,7 @@ public class QZMJGameEventDeal {
             data.put("myPai", paiList.toArray());
             data.put("fan", userPacketQZMJ.getFan());
             data.put("fanDetail", userPacketQZMJ.getFanDetail(userPacketQZMJ.getMyPai(), gamePlay,winner));
-            if (gamePlay.getRoomType()==CommonConstant.ROOM_TYPE_FK) {
-                data.put("score", player.getScore());
-            }else {
-                data.put("score",userPacketQZMJ.getScore());
-            }
+            data.put("score",userPacketQZMJ.getScore());
             data.put("player", player.getName());
             data.put("headimg", player.getRealHeadimg());
             data.put("hua", userPacketQZMJ.getHuaList().size());
@@ -848,11 +844,7 @@ public class QZMJGameEventDeal {
                 data.put("myPai", paiList.toArray());
                 data.put("fan", userPacketQZMJ.getFan());
                 data.put("fanDetail", userPacketQZMJ.getFanDetail(userPacketQZMJ.getMyPai(), gamePlay,uuid));
-                if (gamePlay.getRoomType()==CommonConstant.ROOM_TYPE_FK) {
-                    data.put("score", player.getScore());
-                }else {
-                    data.put("score",userPacketQZMJ.getScore());
-                }
+                data.put("score",userPacketQZMJ.getScore());
                 data.put("player", player.getName());
                 data.put("headimg", player.getRealHeadimg());
                 data.put("hua", userPacketQZMJ.getHuaList().size());
@@ -1614,7 +1606,7 @@ public class QZMJGameEventDeal {
                 for (String uid : room.getPlayerMap().keySet()) {
                     if(!uid.equals(account)&&!uid.equals(uuid)){
                         Playerinfo p1 = room.getPlayerMap().get(uid);
-                        UserPacketQZMJ userPacketQZMJ1 = room.getUserPacketMap().get(uuid);
+                        UserPacketQZMJ userPacketQZMJ1 = room.getUserPacketMap().get(uid);
                         int score = userPacketQZMJ.getFan();
 
                         if(!room.isCanOver){

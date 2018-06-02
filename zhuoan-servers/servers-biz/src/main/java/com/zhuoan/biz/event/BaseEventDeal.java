@@ -191,7 +191,7 @@ public class BaseEventDeal {
             case CommonConstant.GAME_ID_NAMJ:
                 gameRoom = new QZMJGameRoom();
                 ((QZMJGameRoom)gameRoom).getUserPacketMap().put(userInfo.getString("account"), new UserPacketQZMJ());
-                createRoomQZMJ((QZMJGameRoom)gameRoom, baseInfo, userInfo.getString("account"));
+                createRoomNAMJ((QZMJGameRoom)gameRoom, baseInfo, userInfo.getString("account"));
                 break;
             default:
                 gameRoom = new GameRoom();
@@ -215,7 +215,7 @@ public class BaseEventDeal {
         for (int i = 0; i < playerNum; i++) {
             if (i == 0) {
                 idList.add(userInfo.getLong("id"));
-            }else if (gameRoom.getGid()==CommonConstant.GAME_ID_QZMJ&&playerNum==2&&i==1){
+            }else if ((gameRoom.getGid()==CommonConstant.GAME_ID_QZMJ||gameRoom.getGid()==CommonConstant.GAME_ID_NAMJ)&&playerNum==2&&i==1){
                 // 麻将差异化，两人场坐对面
                 idList.add(-1L);
                 idList.add(0L);
@@ -252,7 +252,7 @@ public class BaseEventDeal {
         // 底分
         if (baseInfo.containsKey("di")) {
             gameRoom.setScore(baseInfo.getDouble("di"));
-        } else if (gameRoom.getGid()==CommonConstant.GAME_ID_QZMJ){
+        } else if (gameRoom.getGid()==CommonConstant.GAME_ID_QZMJ||gameRoom.getGid()==CommonConstant.GAME_ID_NAMJ){
             gameRoom.setScore(5);
         } else {
             gameRoom.setScore(1);
@@ -350,6 +350,9 @@ public class BaseEventDeal {
         Playerinfo playerinfo = obtainPlayerInfo(obtainPlayerInfoData);
         if (gameRoom.getRoomType() == CommonConstant.ROOM_TYPE_FK&&gameRoom.getGameCount()==999) {
             playerinfo.setScore(100);
+            if (gameRoom.getGid()==CommonConstant.GAME_ID_NAMJ) {
+                playerinfo.setScore(15);
+            }
         }
         gameRoom.getPlayerMap().put(playerinfo.getAccount(), playerinfo);
         RoomManage.gameRoomMap.put(roomNo, gameRoom);
@@ -552,6 +555,9 @@ public class BaseEventDeal {
         // 麻将一刻设置底分
         if (gameRoom.getRoomType() == CommonConstant.ROOM_TYPE_FK&&gameRoom.getGameCount()==999) {
             playerinfo.setScore(100);
+            if (gameRoom.getGid()==CommonConstant.GAME_ID_NAMJ) {
+                playerinfo.setScore(15);
+            }
         }
         JSONObject joinData = new JSONObject();
         // 是否重连
@@ -894,6 +900,30 @@ public class BaseEventDeal {
         }else{
             room.isNotChiHu = false;
         }
+        // 一课牌局积分是否可以超出（负数）
+        if(baseInfo.getJSONObject("turn").containsKey("isOver")&&baseInfo.getJSONObject("turn").getInt("isOver")==1){
+            room.isCanOver = true;
+        }else{
+            room.isCanOver = false;
+        }
+        // 庄家
+        room.setBanker(account);
+        // 房主
+        room.setOwner(account);
+        room.getUserPacketMap().put(account,new UserPacketQZMJ());
+    }
+
+    public void createRoomNAMJ(QZMJGameRoom room, JSONObject baseInfo, String account) {
+        if (baseInfo.containsKey("type")) {
+            room.setYouJinScore(baseInfo.getInt("type"));
+        }
+        room.setPaiCount(QZMJConstant.HAND_PAI_COUNT);
+        // 光游
+        room.isGuangYou = false;
+        // 有金不平胡
+        room.hasJinNoPingHu = false;
+        // 没有吃，平胡
+        room.isNotChiHu = true;
         // 一课牌局积分是否可以超出（负数）
         if(baseInfo.getJSONObject("turn").containsKey("isOver")&&baseInfo.getJSONObject("turn").getInt("isOver")==1){
             room.isCanOver = true;
