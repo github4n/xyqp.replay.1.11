@@ -165,6 +165,20 @@ public class QZMJGameEventDeal {
             CommonConstant.sendMsgEventToSingle(client,result.toString(),"tipMsgPush");
             return;
         }
+        // 元宝不足无法准备
+        if (room.getRoomType()==CommonConstant.ROOM_TYPE_YB||room.getRoomType()==CommonConstant.ROOM_TYPE_JB) {
+            if (room.getPlayerMap().get(account).getScore() < room.getLeaveScore()) {
+                // 清出房间
+                postData.put("notSendToMe",CommonConstant.GLOBAL_YES);
+                postData.put("notSend",CommonConstant.GLOBAL_YES);
+                exitRoom(client,postData);
+                JSONObject result = new JSONObject();
+                result.put("type",CommonConstant.SHOW_MSG_TYPE_BIG);
+                result.put(CommonConstant.RESULT_KEY_MSG,"余额不足");
+                CommonConstant.sendMsgEventToSingle(client,result.toString(),"tipMsgPush");
+                return;
+            }
+        }
         // 设置玩家准备状态
         room.getUserPacketMap().get(account).setStatus(QZMJConstant.QZ_USER_STATUS_READY);
         // 设置房间准备状态
@@ -1484,7 +1498,6 @@ public class QZMJGameEventDeal {
         obj.put("game_count",room.getGameCount());
         obj.put("game_index",room.getGameIndex());
         obj.put("gameStatus",room.getGameStatus());
-        obj.put("roominfo",roomNo);
         obj.put("youjin",room.getYouJinScore());
         obj.put("users",room.getAllPlayer());
         obj.put("myIndex",room.getPlayerMap().get(account).getMyIndex());
@@ -1495,13 +1508,21 @@ public class QZMJGameEventDeal {
         roomInfo.append("人 ");
         if (room.getGameCount()==999) {
             roomInfo.append("1课");
-        }else {
+        }else if (room.getRoomType()==CommonConstant.ROOM_TYPE_FK){
             roomInfo.append(room.getGameCount());
             roomInfo.append("局");
         }
-        if (room.getRoomType()!=CommonConstant.ROOM_TYPE_JB) {
-            obj.put("roominfo",String.valueOf(roomInfo));
+        if (room.getRoomType()==CommonConstant.ROOM_TYPE_JB||room.getRoomType()==CommonConstant.ROOM_TYPE_YB) {
+            roomInfo.append("    底:");
+            roomInfo.append((int) room.getScore());
+            StringBuffer roomInfo2 = new StringBuffer();
+            roomInfo2.append("入场:");
+            roomInfo2.append((int) room.getEnterScore());
+            roomInfo2.append("  离场:");
+            roomInfo2.append((int) room.getLeaveScore());
+            obj.put("roominfo2",String.valueOf(roomInfo2));
         }
+        obj.put("roominfo",String.valueOf(roomInfo));
         return obj;
     }
 

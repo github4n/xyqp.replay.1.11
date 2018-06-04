@@ -878,6 +878,7 @@ public class BaseEventDeal {
     }
 
     public void createRoomQZMJ(QZMJGameRoom room, JSONObject baseInfo, String account) {
+        room.setWfType("泉州麻将");
         if (baseInfo.containsKey("type")) {
             room.setYouJinScore(baseInfo.getInt("type"));
         }
