@@ -1,5 +1,6 @@
 package com.zhuoan.biz.model.qzmj;
 
+import com.zhuoan.constant.CommonConstant;
 import com.zhuoan.constant.QZMJConstant;
 
 import java.util.ArrayList;
@@ -432,6 +433,10 @@ public class UserPacketQZMJ {
      */
     public String getFanDetail(List<Integer> pais, QZMJGameRoom room, String account) {
 
+        if (room.getGid()== CommonConstant.GAME_ID_NAMJ) {
+            return getFanDetailNA();
+        }
+
         StringBuffer fanDetail = new StringBuffer();
 
         // 计算金牌番数
@@ -502,6 +507,23 @@ public class UserPacketQZMJ {
         }
 
         return fanDetail.toString();
+    }
+
+    public String getFanDetailNA() {
+        StringBuffer fanDetail = new StringBuffer();
+        int gang = getNanAnFanShuOnGang();
+        if (gang>0) {
+            fanDetail.append("杠 ");
+            fanDetail.append(gang);
+            fanDetail.append("番   ");
+        }
+        int hua = getNanAnFanShuOnHuaPai();
+        if (hua>0) {
+            fanDetail.append("花牌 ");
+            fanDetail.append(hua);
+            fanDetail.append("番   ");
+        }
+        return String.valueOf(fanDetail);
     }
 
     /**
@@ -667,6 +689,49 @@ public class UserPacketQZMJ {
                 break;
             default:
                 break;
+        }
+    }
+
+    /**
+     * 获取南安麻将总番数
+     * @param @param pais
+     * @param @param game
+     * @param @return
+     * @return int
+     * @throws
+     * @date 2018年3月7日
+     */
+    public int getNanAnTotalFanShu(){
+        return getNanAnFanShuOnGang()+getNanAnFanShuOnHuaPai();
+    }
+
+    /**
+     * 获取南安麻将杠积分
+     * @return
+     */
+    private int getNanAnFanShuOnGang(){
+        //暗杠
+        List<DontMovePai> anGList = getGangAnList();
+        //明杠
+        List<DontMovePai> mGList = getGangMingList();
+        //补杠
+        List<DontMovePai> bGList = getGangBuList();
+        return anGList.size() * QZMJConstant.SCORE_TYPE_NA_GANG_AN
+            + mGList.size() * QZMJConstant.SCORE_TYPE_NA_GANG_MING
+            + bGList.size() * QZMJConstant.SCORE_TYPE_NA_GANG_BU;
+    }
+
+    /**
+     * 获取南安麻将花的番数
+     * @return
+     */
+    private int getNanAnFanShuOnHuaPai(){
+        if (getHuaList().size()==8) {
+            return 2;
+        }else if (getHuaList().size()>=4&&getHuaList().size()<8) {
+            return 1;
+        }else {
+            return 0;
         }
     }
 

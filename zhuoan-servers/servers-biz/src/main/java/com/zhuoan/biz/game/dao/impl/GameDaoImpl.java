@@ -450,7 +450,10 @@ public class GameDaoImpl implements GameDao {
         sql += sqlString2.replace("$", "id");
         Object[] objects = new Object[]{};
         DBUtil.executeUpdateBySQL(sql, objects);
-        DBUtil.executeUpdateBySQL(addSql, objects);
+        if (RoomManage.gameRoomMap.containsKey(roomNo)&&RoomManage.gameRoomMap.get(roomNo)!=null&&
+            RoomManage.gameRoomMap.get(roomNo).getRoomType()!=CommonConstant.ROOM_TYPE_JB) {
+            DBUtil.executeUpdateBySQL(addSql, objects);
+        }
         return false;
     }
 

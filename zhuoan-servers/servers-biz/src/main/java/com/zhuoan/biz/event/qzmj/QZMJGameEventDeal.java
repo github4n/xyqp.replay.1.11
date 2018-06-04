@@ -126,7 +126,9 @@ public class QZMJGameEventDeal {
         }
         int type = postData.getInt("type");
         if (type == QZMJConstant.GAME_READY_TYPE_RECONNECT) {
-            if (room.getGameStatus()==QZMJConstant.QZ_GAME_STATUS_INIT||room.getGameStatus()==QZMJConstant.QZ_GAME_STATUS_READY) {
+            if (room.getRoomType()!=CommonConstant.ROOM_TYPE_FK) {
+                reconnectGame(client,data);
+            }else if (room.getGameStatus()==QZMJConstant.QZ_GAME_STATUS_INIT||room.getGameStatus()==QZMJConstant.QZ_GAME_STATUS_READY) {
                 gameReady(client,data);
             }else {
                 reconnectGame(client,data);
@@ -1281,6 +1283,24 @@ public class QZMJGameEventDeal {
             room.faPai();
             // 开金
             room.choiceJin();
+            if (room.getFee() > 0 && room.getRoomType()!=CommonConstant.ROOM_TYPE_FK) {
+                JSONArray array = new JSONArray();
+                for (String account : room.getPlayerMap().keySet()) {
+                    // 中途加入不抽水
+                    if (room.getUserPacketMap().get(account).getStatus() > QZMJConstant.QZ_USER_STATUS_INIT) {
+                        // 更新实体类数据
+                        Playerinfo playerinfo = RoomManage.gameRoomMap.get(room.getRoomNo()).getPlayerMap().get(account);
+                        RoomManage.gameRoomMap.get(room.getRoomNo()).getPlayerMap().get(account).setScore(Dto.sub(playerinfo.getScore(), room.getFee()));
+                        // 负数清零
+                        if (RoomManage.gameRoomMap.get(room.getRoomNo()).getPlayerMap().get(account).getScore() < 0) {
+                            RoomManage.gameRoomMap.get(room.getRoomNo()).getPlayerMap().get(account).setScore(0);
+                        }
+                        array.add(playerinfo.getId());
+                    }
+                }
+                // 抽水
+                producerService.sendMessage(daoQueueDestination, new PumpDao(DaoTypeConstant.PUMP, room.getJsonObject(array)));
+            }
             // 通知玩家
             for (String account : room.getPlayerMap().keySet()) {
                 room.getUserPacketMap().get(account).setStatus(QZMJConstant.QZ_USER_STATUS_GAME);
@@ -1309,6 +1329,7 @@ public class QZMJGameEventDeal {
                 //返回发给我的位置
                 result.put(QZMJConstant.myIndex, room.getPlayerMap().get(account).getMyIndex());
                 result.put("game_index", room.getGameIndex());
+                result.put("users", room.getAllPlayer());
                 CommonConstant.sendMsgEventToSingle(room.getPlayerMap().get(account).getUuid(),String.valueOf(result),"gameStartPush");
             }
             final int startStatus;
@@ -1323,24 +1344,6 @@ public class QZMJGameEventDeal {
                     gameTimerQZMJ.gameStart(roomNo,startStatus);
                 }
             });
-            if (room.getFee() > 0 && room.getRoomType()!=CommonConstant.ROOM_TYPE_FK) {
-                JSONArray array = new JSONArray();
-                for (String account : room.getPlayerMap().keySet()) {
-                    // 中途加入不抽水
-                    if (room.getUserPacketMap().get(account).getStatus() > QZMJConstant.QZ_USER_STATUS_INIT) {
-                        // 更新实体类数据
-                        Playerinfo playerinfo = RoomManage.gameRoomMap.get(room.getRoomNo()).getPlayerMap().get(account);
-                        RoomManage.gameRoomMap.get(room.getRoomNo()).getPlayerMap().get(account).setScore(Dto.sub(playerinfo.getScore(), room.getFee()));
-                        // 负数清零
-                        if (RoomManage.gameRoomMap.get(room.getRoomNo()).getPlayerMap().get(account).getScore() < 0) {
-                            RoomManage.gameRoomMap.get(room.getRoomNo()).getPlayerMap().get(account).setScore(0);
-                        }
-                        array.add(playerinfo.getId());
-                    }
-                }
-                // 抽水
-                producerService.sendMessage(daoQueueDestination, new PumpDao(DaoTypeConstant.PUMP, room.getJsonObject(array)));
-            }
         }
     }
 
@@ -1480,11 +1483,13 @@ public class QZMJGameEventDeal {
         obj.put("room_no",roomNo);
         obj.put("game_count",room.getGameCount());
         obj.put("game_index",room.getGameIndex());
+        obj.put("gameStatus",room.getGameStatus());
         obj.put("roominfo",roomNo);
         obj.put("youjin",room.getYouJinScore());
         obj.put("users",room.getAllPlayer());
         obj.put("myIndex",room.getPlayerMap().get(account).getMyIndex());
         obj.put("gid",room.getGid());
+        obj.put("roomType",room.getRoomType());
         StringBuffer roomInfo = new StringBuffer();
         roomInfo.append(room.getPlayerCount());
         roomInfo.append("人 ");
@@ -1494,7 +1499,9 @@ public class QZMJGameEventDeal {
             roomInfo.append(room.getGameCount());
             roomInfo.append("局");
         }
-        obj.put("roominfo",String.valueOf(roomInfo));
+        if (room.getRoomType()!=CommonConstant.ROOM_TYPE_JB) {
+            obj.put("roominfo",String.valueOf(roomInfo));
+        }
         return obj;
     }
 
@@ -1575,7 +1582,11 @@ public class QZMJGameEventDeal {
                         }
                     }
                 }
-                summary(roomNo, account);
+                if (gamePlay.getGid()==CommonConstant.GAME_ID_QZMJ) {
+                    summary(roomNo, account);
+                }else if (gamePlay.getGid()==CommonConstant.GAME_ID_NAMJ) {
+                    summaryNA(roomNo, account);
+                }
                 gamePlay.getUserPacketMap().get(account).addHuTimes(gamePlay.getHuType());
             }
         }
@@ -1671,6 +1682,60 @@ public class QZMJGameEventDeal {
                 p.setScore(p.getScore()-score);
                 userPacketQZMJ.setScore(userPacketQZMJ.getScore()-score);
 
+                // 更新胡的玩家分数
+                room.getPlayerMap().get(account).setScore(room.getPlayerMap().get(account).getScore()+score);
+                room.getUserPacketMap().get(account).setScore(room.getUserPacketMap().get(account).getScore()+score);
+            }
+        }
+        room.setGameStatus(QZMJConstant.QZ_GAME_STATUS_SUMMARY);
+    }
+
+    public void summaryNA(String roomNo,String account) {
+        QZMJGameRoom room = (QZMJGameRoom) RoomManage.gameRoomMap.get(roomNo);
+        // 计算番
+        for (String uuid : room.getPlayerMap().keySet()) {
+            int fan = room.getUserPacketMap().get(uuid).getNanAnTotalFanShu();
+            room.getUserPacketMap().get(uuid).setFan(fan);
+        }
+        // 赢家的总番数
+        int winnerTotalFan = room.getUserPacketMap().get(account).getFan();
+
+        // 赢家结算 account 为赢家的uuid
+        for (String uuid : room.getPlayerMap().keySet()) {
+            if(!uuid.equals(account)){
+                Playerinfo p = room.getPlayerMap().get(uuid);
+                UserPacketQZMJ userPacketQZMJ = room.getUserPacketMap().get(uuid);
+                int difen = 0;
+                if (room.getHuType()==QZMJConstant.HU_TYPE_ZM) {
+                    difen = QZMJConstant.SCORE_TYPE_NA_ZM;
+                }else if (room.getHuType()==QZMJConstant.HU_TYPE_YJ) {
+                    difen = QZMJConstant.SCORE_TYPE_NA_YJ;
+                }else if (room.getHuType()==QZMJConstant.HU_TYPE_SHY) {
+                    difen = QZMJConstant.SCORE_TYPE_NA_SHY;
+                }else if (room.getHuType()==QZMJConstant.HU_TYPE_SY) {
+                    difen = QZMJConstant.SCORE_TYPE_NA_SY;
+                }
+                if(account.equals(room.getBanker())){
+                    // 庄赢（双倍底分）
+                    difen = difen * 2;
+                }else if(uuid.equals(room.getBanker())){
+                    // 连庄底分加倍
+                    difen = difen * 2;
+                }
+                // 计分
+                int score = difen + winnerTotalFan;
+                if(!room.isCanOver){
+                    // 牌局为1课
+                    if(room.getGameCount()==999){
+                        // 判断牌局是否结束（玩家积分是否小于等于0）
+                        if(p.getScore()-score<=0){
+                            score = (int) p.getScore();
+                        }
+                    }
+                }
+                // 更新未胡的玩家分数
+                p.setScore(p.getScore()-score);
+                userPacketQZMJ.setScore(userPacketQZMJ.getScore()-score);
                 // 更新胡的玩家分数
                 room.getPlayerMap().get(account).setScore(room.getPlayerMap().get(account).getScore()+score);
                 room.getUserPacketMap().get(account).setScore(room.getUserPacketMap().get(account).getScore()+score);

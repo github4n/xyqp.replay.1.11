@@ -244,7 +244,34 @@ public class QZMJConstant {
 	public static final int SCORE_TYPE_YJ_FOUR = 4;
 	public static final int SCORE_TYPE_SHY_FOUR = 8;
 	public static final int SCORE_TYPE_SY_FOUR = 16;
-
+    /**
+     * 加盘类别-南安麻将暗杠
+     */
+	public static final int SCORE_TYPE_NA_GANG_AN = 2;
+    /**
+     * 加盘类别-南安麻将补杠
+     */
+	public static final int SCORE_TYPE_NA_GANG_BU = 1;
+    /**
+     * 加盘类别-南安麻将明杠
+     */
+	public static final int SCORE_TYPE_NA_GANG_MING = 1;
+    /**
+     * 加盘类别-南安麻将自摸
+     */
+	public static final int SCORE_TYPE_NA_ZM = 1;
+    /**
+     * 加盘类别-南安麻将游金
+     */
+	public static final int SCORE_TYPE_NA_YJ = 2;
+    /**
+     * 加盘类别-南安麻将双游
+     */
+	public static final int SCORE_TYPE_NA_SHY = 4;
+    /**
+     * 加盘类别-南安麻将三游
+     */
+	public static final int SCORE_TYPE_NA_SY = 8;
 
     /**
      * 胡牌类型-平胡
