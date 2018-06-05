@@ -79,4 +79,18 @@ public interface PublicBiz {
      * @param platform
      */
     public JSONObject getSignRewardInfoByPlatform(String platform);
+
+    /**
+     * 获取竞技场信息
+     * @return
+     */
+    public JSONArray getArenaInfo();
+
+    /**
+     * 更新玩家积分
+     * @param userId
+     * @param score
+     * @param type
+     */
+    public void addOrUpdateUserCoinsRec(long userId, int score,int type);
 }

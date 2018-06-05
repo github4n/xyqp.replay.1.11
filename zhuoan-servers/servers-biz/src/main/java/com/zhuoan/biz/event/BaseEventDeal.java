@@ -142,6 +142,13 @@ public class BaseEventDeal {
                 CommonConstant.sendMsgEventToSingle(client, result.toString(), "enterRoomPush_NN");
                 return;
             }
+        } else if (baseInfo.getInt("roomType") == CommonConstant.ROOM_TYPE_COMPETITIVE && userInfo.containsKey("roomcard")
+            && userInfo.getDouble("roomcard") < baseInfo.getDouble("goldCoinEnter")) {
+            // 金币不足
+            result.element(CommonConstant.RESULT_KEY_CODE, CommonConstant.GLOBAL_NO);
+            result.element(CommonConstant.RESULT_KEY_MSG, "钻石不足");
+            CommonConstant.sendMsgEventToSingle(client, result.toString(), "enterRoomPush_NN");
+            return;
         }
         // 添加工会信息
         if (!Dto.isObjNull(userInfo)&&userInfo.containsKey("gulidId")&&userInfo.getInt("gulidId")>0&&
@@ -228,7 +235,7 @@ public class BaseEventDeal {
         if (baseInfo.containsKey("paytype")) {
             gameRoom.setPayType(baseInfo.getInt("paytype"));
         }
-        if (gameRoom.getRoomType() == CommonConstant.ROOM_TYPE_YB || gameRoom.getRoomType() == CommonConstant.ROOM_TYPE_JB) {
+        if (gameRoom.getRoomType() == CommonConstant.ROOM_TYPE_YB || gameRoom.getRoomType() == CommonConstant.ROOM_TYPE_JB || gameRoom.getRoomType() == CommonConstant.ROOM_TYPE_COMPETITIVE) {
             gameRoom.setGameCount(9999);
         }else if (gameRoom.getRoomType() == CommonConstant.ROOM_TYPE_FK) {
             if (baseInfo.containsKey("turn")) {
@@ -249,6 +256,9 @@ public class BaseEventDeal {
                 gameRoom.setGameCount(999);
             }
         }
+        if (baseInfo.containsKey("singleRoomCard")) {
+            gameRoom.setSinglePayNum(baseInfo.getInt("singleRoomCard"));
+        }
         // 底分
         if (baseInfo.containsKey("di")) {
             gameRoom.setScore(baseInfo.getDouble("di"));
@@ -257,9 +267,9 @@ public class BaseEventDeal {
         } else {
             gameRoom.setScore(1);
         }
-        // 元宝模式
+        // 机器人
         if (baseInfo.containsKey("robot")&&baseInfo.getInt("robot")==CommonConstant.GLOBAL_YES) {
-            //底分
+            // 机器人
             gameRoom.setRobot(true);
         }else {
             gameRoom.setRobot(false);
@@ -303,7 +313,8 @@ public class BaseEventDeal {
             } else if (baseInfo.getInt("readyovertime") == CommonConstant.READY_OVERTIME_OUT) {
                 gameRoom.setReadyOvertime(CommonConstant.READY_OVERTIME_OUT);
             }
-        } else if (baseInfo.getInt("roomType") == CommonConstant.ROOM_TYPE_YB||baseInfo.getInt("roomType") == CommonConstant.ROOM_TYPE_JB) {
+        } else if (baseInfo.getInt("roomType") == CommonConstant.ROOM_TYPE_YB||baseInfo.getInt("roomType") == CommonConstant.ROOM_TYPE_JB||
+            baseInfo.getInt("roomType") == CommonConstant.ROOM_TYPE_COMPETITIVE) {
             gameRoom.setReadyOvertime(CommonConstant.READY_OVERTIME_OUT);
         } else if (baseInfo.getInt("roomType") == CommonConstant.ROOM_TYPE_FK){
             gameRoom.setReadyOvertime(CommonConstant.READY_OVERTIME_NOTHING);
@@ -502,6 +513,13 @@ public class BaseEventDeal {
                     CommonConstant.sendMsgEventToSingle(client, result.toString(), "enterRoomPush_NN");
                     return;
                 }
+            } else if (room.getRoomType() == CommonConstant.ROOM_TYPE_COMPETITIVE && userInfo.containsKey("roomcard")
+                && userInfo.getDouble("roomcard") < room.getEnterScore()) {
+                // 金币不足
+                result.element(CommonConstant.RESULT_KEY_CODE, CommonConstant.GLOBAL_NO);
+                result.element(CommonConstant.RESULT_KEY_MSG, "钻石不足");
+                CommonConstant.sendMsgEventToSingle(client, result.toString(), "enterRoomPush_NN");
+                return;
             }
         }
         joinRoomBase(client, postData, userInfo);
@@ -652,7 +670,10 @@ public class BaseEventDeal {
         } else if (roomType == CommonConstant.ROOM_TYPE_YB) {
             // 元宝模式
             playerinfo.setScore(userInfo.getDouble("yuanbao"));
-        } else {
+        } else if (roomType == CommonConstant.ROOM_TYPE_COMPETITIVE) {
+            // 竞技场
+            playerinfo.setScore(userInfo.getDouble("score"));
+        } else{
             // 房卡模式
             playerinfo.setScore(0);
         }
@@ -879,6 +900,12 @@ public class BaseEventDeal {
         room.getUserPacketMap().put(account, new Player());
     }
 
+    /**
+     * 设置泉州麻将房间参数
+     * @param room
+     * @param baseInfo
+     * @param account
+     */
     public void createRoomQZMJ(QZMJGameRoom room, JSONObject baseInfo, String account) {
         room.setWfType("泉州麻将");
         if (baseInfo.containsKey("type")) {
@@ -916,6 +943,12 @@ public class BaseEventDeal {
         room.getUserPacketMap().put(account,new UserPacketQZMJ());
     }
 
+    /**
+     * 设置南安麻将房间参数
+     * @param room
+     * @param baseInfo
+     * @param account
+     */
     public void createRoomNAMJ(QZMJGameRoom room, JSONObject baseInfo, String account) {
         if (baseInfo.containsKey("type")) {
             room.setYouJinScore(baseInfo.getInt("type"));
@@ -1946,35 +1979,8 @@ public class BaseEventDeal {
         return minScore;
     }
 
-
     /**
-     * 测试-机器人加入创建房间
-     * @param client
-     * @param data
-     */
-    public void test(SocketIOClient client,Object data){
-        JSONObject postData = JSONObject.fromObject(data);
-        int gameId = postData.getInt("gid");
-        String account = postData.getString("account");
-        List<String> roomNoList = new ArrayList<String>();
-        int limit = postData.getInt("limit");
-        for (String roomNo : RoomManage.gameRoomMap.keySet()) {
-            GameRoom room = RoomManage.gameRoomMap.get(roomNo);
-            if (room.getGid()==gameId&&!room.getPlayerMap().containsKey(account)&&room.getPlayerMap().size()<=limit) {
-                roomNoList.add(roomNo);
-                break;
-            }
-        }
-        if (roomNoList.size()>0) {
-            postData.put("room_no",roomNoList.get(0));
-            joinRoomBase(client,postData);
-        }else {
-            createRoomBase(client,data);
-        }
-    }
-
-    /**
-     * 测试-获取当前房间数和游戏中玩家数量
+     * 获取当前房间数和游戏中玩家数量
      * @param client
      * @param data
      */
@@ -1994,5 +2000,62 @@ public class BaseEventDeal {
         result.put("roomCount",roomCount);
         result.put("playerCount",playerCount);
         CommonConstant.sendMsgEventToSingle(client,result.toString(),"getRoomAndPlayerCountPush");
+    }
+
+    /**
+     * 获取竞技场信息
+     * @param client
+     * @param data
+     */
+    public void getCompetitiveInfo(SocketIOClient client, Object data) {
+        JSONObject result = new JSONObject();
+        JSONArray arenaArray = publicBiz.getArenaInfo();
+        if (arenaArray.size()>0) {
+            for (int i = 0; i < arenaArray.size(); i++) {
+                JSONObject arena = arenaArray.getJSONObject(i);
+                if (arena.containsKey("endTime")&&arena.containsKey("startTime")) {
+                    TimeUtil.transTimeStamp(arena, "yyyy-MM-dd HH:mm:ss", "endTime");
+                    TimeUtil.transTimeStamp(arena, "yyyy-MM-dd HH:mm:ss", "startTime");
+                }
+            }
+            result.put(CommonConstant.RESULT_KEY_CODE,CommonConstant.GLOBAL_YES);
+            result.put("data",arenaArray);
+        }else {
+            result.put(CommonConstant.RESULT_KEY_CODE,CommonConstant.GLOBAL_NO);
+            result.put("msg","暂无场次信息");
+        }
+        CommonConstant.sendMsgEventToSingle(client,String.valueOf(result),"getArenaPush");
+    }
+
+    /**
+     * 竞技场加入房间
+     * @param client
+     * @param data
+     */
+    public void joinCompetitiveRoom(SocketIOClient client, Object data) {
+        JSONObject postData = JSONObject.fromObject(data);
+        int gameId = postData.getInt("gid");
+        String platform = postData.getString("platform");
+        String account = postData.getString(CommonConstant.DATA_KEY_ACCOUNT);
+        if (Dto.stringIsNULL(account)) {
+            return;
+        }
+        for (String roomNo : RoomManage.gameRoomMap.keySet()) {
+            GameRoom room = RoomManage.gameRoomMap.get(roomNo);
+            if (room.getRoomType()==CommonConstant.ROOM_TYPE_COMPETITIVE&&room.getGid()==gameId&&
+                !room.getPlayerMap().containsKey(account)&&room.getPlayerMap().size()<room.getPlayerCount()) {
+                postData.put("room_no",roomNo);
+                joinRoomBase(client,postData);
+                return;
+            }
+        }
+        JSONObject object = new JSONObject();
+        object.put("gameId",gameId);
+        object.put("platform",platform);
+        JSONArray array = getGoldSettingByGameIdAndPlatform(object);
+        if (array.size()>0) {
+            postData.put("base_info",array.getJSONObject(0).getJSONObject("option"));
+            createRoomBase(client,postData);
+        }
     }
  }

@@ -321,4 +321,27 @@ public interface GameDao {
      * @param status
      */
     public void updateRobotStatus(String robotAccount,int status);
+
+    /**
+     * 获取竞技场信息
+     * @return
+     */
+    public JSONArray getArenaInfo();
+
+    /**
+     * 获取用户积分记录
+     * @param userId
+     * @param type
+     * @param startTime
+     * @param endTime
+     * @return
+     */
+    public JSONObject getUserCoinsRecById(long userId, int type, String startTime, String endTime);
+
+    /**
+     * 增加、更新用户积分记录
+     * @param obj
+     * @return
+     */
+    public int addOrUpdateUserCoinsRec(JSONObject obj);
 }

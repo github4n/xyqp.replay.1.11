@@ -2,6 +2,8 @@ package com.zhuoan.biz.game.biz.impl;
 
 import com.zhuoan.biz.game.biz.PublicBiz;
 import com.zhuoan.biz.game.dao.GameDao;
+import com.zhuoan.util.Dto;
+import com.zhuoan.util.TimeUtil;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 import org.springframework.stereotype.Service;
@@ -67,5 +69,41 @@ public class PublicBizImpl implements PublicBiz{
     @Override
     public JSONObject getSignRewardInfoByPlatform(String platform) {
         return gameDao.getSignRewardInfoByPlatform(platform);
+    }
+
+    @Override
+    public JSONArray getArenaInfo() {
+        return gameDao.getArenaInfo();
+    }
+
+    @Override
+    public void addOrUpdateUserCoinsRec(long userId, int score,int type) {
+        String nowDate = TimeUtil.getNowDate("yyyy-MM-dd");
+        JSONObject userCoinsRec = gameDao.getUserCoinsRecById(userId,type,nowDate+" 00:00:00",nowDate+" 23:59:59");
+        JSONObject obj = new JSONObject();
+        obj.put("user_id",userId);
+        obj.put("type",type);
+        obj.put("createTime", TimeUtil.getNowDate("yyyy-MM-dd hh:mm:ss"));
+        if (!Dto.isObjNull(userCoinsRec)) {
+            obj.put("id",userCoinsRec.getLong("id"));
+            if (score>0) {
+                obj.put("win",userCoinsRec.getInt("win")+1);
+            }
+            if (score<0) {
+                obj.put("lose",userCoinsRec.getInt("lose")+1);
+            }
+            obj.put("coins",userCoinsRec.getInt("coins")+score);
+        }else {
+            obj.put("coins",score);
+            if (score>0) {
+                obj.put("win",1);
+                obj.put("lose",0);
+            }
+            if (score<0) {
+                obj.put("win",0);
+                obj.put("lose",1);
+            }
+        }
+        gameDao.addOrUpdateUserCoinsRec(obj);
     }
 }

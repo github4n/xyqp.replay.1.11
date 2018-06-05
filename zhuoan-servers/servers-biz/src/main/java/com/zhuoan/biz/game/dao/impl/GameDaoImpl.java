@@ -706,5 +706,22 @@ public class GameDaoImpl implements GameDao {
         String sql = "update za_users set status=? where account=?";
         DBUtil.executeUpdateBySQL(sql,new Object[]{status,robotAccount});
     }
+
+    @Override
+    public JSONArray getArenaInfo() {
+        String sql="select endTime,startTime,day,hour,isOpen,description,explanation,status,name,id,gid,memo from za_arena where status=1";
+        return DBUtil.getObjectListBySQL(sql, new Object[]{});
+    }
+
+    @Override
+    public JSONObject getUserCoinsRecById(long userId, int type, String startTime, String endTime) {
+        String sql = "SELECT id,win,lose,coins FROM za_coins_rec WHERE user_id=? AND type=? AND createTime>=? AND createTime<=?";
+        return DBUtil.getObjectBySQL(sql,new Object[]{userId,type,startTime,endTime});
+    }
+
+    @Override
+    public int addOrUpdateUserCoinsRec(JSONObject obj) {
+        return DBJsonUtil.saveOrUpdate(obj,"za_coins_rec");
+    }
 }
 

@@ -162,6 +162,18 @@ public class SSSGameEventDealNew {
                 return;
             }
         }
+        if (room.getRoomType()==CommonConstant.ROOM_TYPE_COMPETITIVE){
+            if (room.getPlayerMap().get(account).getRoomCardNum()<room.getLeaveScore()) {
+                postData.put("notSend",CommonConstant.GLOBAL_YES);
+                postData.put("notSendToMe",CommonConstant.GLOBAL_YES);
+                exitRoom(client,postData);
+                JSONObject result = new JSONObject();
+                result.put("type",CommonConstant.SHOW_MSG_TYPE_BIG);
+                result.put(CommonConstant.RESULT_KEY_MSG,"积分不足");
+                CommonConstant.sendMsgEventToSingle(client,result.toString(),"tipMsgPush");
+                return;
+            }
+        }
         // 设置玩家准备状态
         room.getUserPacketMap().get(account).setStatus(SSSConstant.SSS_USER_STATUS_READY);
         // 设置房间准备状态
@@ -538,13 +550,14 @@ public class SSSGameEventDealNew {
                             room.setTimeLeft(SSSConstant.SSS_TIMER_INIT);
                             // 更新数据库
                             updateUserScore(room);
+                            updateCompetitiveUserScore(roomNo);
                             if (room.getRoomType()==CommonConstant.ROOM_TYPE_YB) {
                                 saveUserDeduction(room);
                             }
                             if (room.getRoomType()==CommonConstant.ROOM_TYPE_FK) {
                                 updateRoomCard(room.getRoomNo());
                             }
-                            if (room.getRoomType()!=CommonConstant.ROOM_TYPE_JB) {
+                            if (room.getRoomType()!=CommonConstant.ROOM_TYPE_JB&&room.getRoomType()!=CommonConstant.ROOM_TYPE_COMPETITIVE) {
                                 saveGameLog(room);
                             }
                             // 改变状态，通知玩家
@@ -682,6 +695,45 @@ public class SSSGameEventDealNew {
         // 更新玩家分数
         if (array.size()>0) {
             producerService.sendMessage(daoQueueDestination, new PumpDao(DaoTypeConstant.UPDATE_SCORE, room.getPumpObject(array)));
+        }
+    }
+
+    /**
+     * 竞技场结算
+     * @param roomNo
+     */
+    public void updateCompetitiveUserScore(String roomNo) {
+        SSSGameRoomNew room = (SSSGameRoomNew) RoomManage.gameRoomMap.get(roomNo);
+        if (room.getRoomType() == CommonConstant.ROOM_TYPE_COMPETITIVE) {
+            JSONArray array = new JSONArray();
+            JSONArray userIds = new JSONArray();
+            for (String uuid : room.getUserPacketMap().keySet()) {
+                if (room.getUserPacketMap().get(uuid).getStatus() > SSSConstant.SSS_USER_STATUS_INIT) {
+                    room.getPlayerMap().get(uuid).setRoomCardNum(room.getPlayerMap().get(uuid).getRoomCardNum()-room.getSinglePayNum());
+                    if (room.getPlayerMap().get(uuid).getRoomCardNum()<0) {
+                        room.getPlayerMap().get(uuid).setRoomCardNum(0);
+                    }
+                    JSONObject obj = new JSONObject();
+                    obj.put("total", 1);
+                    obj.put("fen", room.getUserPacketMap().get(uuid).getScore());
+                    obj.put("id", room.getPlayerMap().get(uuid).getId());
+                    array.add(obj);
+                    userIds.add(room.getPlayerMap().get(uuid).getId());
+                    JSONObject object = new JSONObject();
+                    object.put("userId",room.getPlayerMap().get(uuid).getId());
+                    object.put("score",room.getUserPacketMap().get(uuid).getScore());
+                    object.put("type",2);
+                    producerService.sendMessage(daoQueueDestination, new PumpDao(DaoTypeConstant.ADD_OR_UPDATE_USER_COINS_REC,object));
+                }
+            }
+            JSONObject jsonObject = new JSONObject();
+            jsonObject.put("array",array);
+            jsonObject.put("updateType","score");
+            // 更新玩家分数
+            if (array.size()>0 && userIds.size()>0) {
+                producerService.sendMessage(daoQueueDestination, new PumpDao(DaoTypeConstant.UPDATE_SCORE, jsonObject));
+                producerService.sendMessage(daoQueueDestination, new PumpDao(DaoTypeConstant.PUMP, room.getRoomCardChangeObject(userIds,room.getSinglePayNum())));
+            }
         }
     }
 
@@ -832,7 +884,8 @@ public class SSSGameEventDealNew {
         if (!Dto.stringIsNULL(account)&&room.getUserPacketMap().containsKey(account)&&room.getUserPacketMap().get(account)!=null) {
             boolean canExit = false;
             // 金币场、元宝场
-            if (room.getRoomType()==CommonConstant.ROOM_TYPE_JB||room.getRoomType()==CommonConstant.ROOM_TYPE_YB) {
+            if (room.getRoomType()==CommonConstant.ROOM_TYPE_JB||room.getRoomType()==CommonConstant.ROOM_TYPE_YB||
+                room.getRoomType()==CommonConstant.ROOM_TYPE_COMPETITIVE) {
                 // 未参与游戏可以自由退出
                 if (room.getUserPacketMap().get(account).getStatus()== SSSConstant.SSS_USER_STATUS_INIT) {
                     canExit = true;

@@ -83,10 +83,6 @@ public class CommonConstant {
      */
     public static final int BASE_GAME_EVENT_GET_ROOM_AND_PLAYER_COUNT = 16;
     /**
-     * 公共游戏事件-测试接口
-     */
-    public static final int BASE_GAME_EVENT_TEST = 17;
-    /**
      * 公共游戏事件-子游戏接口
      */
     public static final int BASE_GAME_EVENT_SON_GAME  = 18;
@@ -110,6 +106,14 @@ public class CommonConstant {
      * 公共游戏事件-用户签到
      */
     public static final int BASE_GAME_EVENT_DO_USER_SIGN = 23;
+    /**
+     * 公共游戏事件-获取竞技场详情
+     */
+    public static final int BASE_GAME_EVENT_GET_COMPETITIVE_INFO = 24;
+    /**
+     * 公共游戏事件-竞技场加入房间
+     */
+    public static final int BASE_GAME_EVENT_JOIN_COMPETITIVE_ROOM = 25;
     /**
      * 游戏公共部分
      */
@@ -154,6 +158,10 @@ public class CommonConstant {
      * 房间类型-元宝
      */
     public static final int ROOM_TYPE_YB = 3;
+    /**
+     * 房间类型-竞技场
+     */
+    public static final int ROOM_TYPE_COMPETITIVE = 4;
 
     /**
      * 全局-是

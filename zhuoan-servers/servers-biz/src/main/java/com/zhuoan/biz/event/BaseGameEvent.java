@@ -231,16 +231,6 @@ public class BaseGameEvent {
         });
 
         /**
-         *   测试接口
-         */
-        server.addEventListener("testInterface", Object.class, new DataListener<Object>() {
-            @Override
-            public void onData(SocketIOClient client, Object object, AckRequest ackSender) {
-                producerService.sendMessage(baseQueueDestination, new Messages(client, object, CommonConstant.GAME_BASE, CommonConstant.BASE_GAME_EVENT_TEST));
-            }
-        });
-
-        /**
          *  子游戏接口
          */
         server.addEventListener("getRoomGid", Object.class, new DataListener<Object>() {
@@ -292,6 +282,24 @@ public class BaseGameEvent {
             @Override
             public void onData(SocketIOClient client, Object object, AckRequest ackSender) {
                 producerService.sendMessage(baseQueueDestination, new Messages(client, object, CommonConstant.GAME_BASE, CommonConstant.BASE_GAME_EVENT_DO_USER_SIGN));
+            }
+        });
+        /**
+         *  获取竞技场信息
+         */
+        server.addEventListener("getArena", Object.class, new DataListener<Object>() {
+            @Override
+            public void onData(SocketIOClient client, Object object, AckRequest ackSender) {
+                producerService.sendMessage(baseQueueDestination, new Messages(client, object, CommonConstant.GAME_BASE, CommonConstant.BASE_GAME_EVENT_GET_COMPETITIVE_INFO));
+            }
+        });
+        /**
+         *  竞技场加入房间
+         */
+        server.addEventListener("arenaJoin", Object.class, new DataListener<Object>() {
+            @Override
+            public void onData(SocketIOClient client, Object object, AckRequest ackSender) {
+                producerService.sendMessage(baseQueueDestination, new Messages(client, object, CommonConstant.GAME_BASE, CommonConstant.BASE_GAME_EVENT_JOIN_COMPETITIVE_ROOM));
             }
         });
 

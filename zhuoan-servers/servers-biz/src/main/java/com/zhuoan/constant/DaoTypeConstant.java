@@ -43,6 +43,10 @@ public class DaoTypeConstant {
      * The constant UPDATE_USER_INFO.更新玩家信息
      */
     public static final String UPDATE_USER_INFO = "update_user_info";
+    /**
+     * The constant UPDATE_USER_INFO.更新玩家积分记录
+     */
+    public static final String ADD_OR_UPDATE_USER_COINS_REC = "add_or_update_user_coins_rec";
 
 
 }

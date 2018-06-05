@@ -541,6 +541,8 @@ public class GameRoom {
                 return "roomcard";
             case CommonConstant.ROOM_TYPE_YB:
                 return "yuanbao";
+            case CommonConstant.ROOM_TYPE_COMPETITIVE:
+                return "roomcard";
             default:
                 return "";
         }

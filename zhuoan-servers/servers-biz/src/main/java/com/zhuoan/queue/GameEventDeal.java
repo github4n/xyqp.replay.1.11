@@ -113,9 +113,6 @@ public class GameEventDeal {
                     case CommonConstant.BASE_GAME_EVENT_GET_ROOM_AND_PLAYER_COUNT:
                         baseEventDeal.getRoomAndPlayerCount(client, data);
                         break;
-                    case CommonConstant.BASE_GAME_EVENT_TEST:
-                        baseEventDeal.test(client, data);
-                        break;
                     case CommonConstant.BASE_GAME_EVENT_SON_GAME:
                         baseEventDeal.getRoomGid(client, data);
                         break;
@@ -133,6 +130,12 @@ public class GameEventDeal {
                         break;
                     case CommonConstant.BASE_GAME_EVENT_DO_USER_SIGN:
                         baseEventDeal.doUserSignIn(client, data);
+                        break;
+                    case CommonConstant.BASE_GAME_EVENT_GET_COMPETITIVE_INFO:
+                        baseEventDeal.getCompetitiveInfo(client, data);
+                        break;
+                    case CommonConstant.BASE_GAME_EVENT_JOIN_COMPETITIVE_ROOM:
+                        baseEventDeal.joinCompetitiveRoom(client, data);
                         break;
                     default:
                         break;

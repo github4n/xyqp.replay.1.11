@@ -173,7 +173,7 @@ public class SSSGameRoomNew extends GameRoom{
                 obj.put("vip", player.getVip());
                 obj.put("location", player.getLocation());
                 obj.put("area", player.getArea());
-                if (getRoomType()!= CommonConstant.ROOM_TYPE_FK) {
+                if (getRoomType() != CommonConstant.ROOM_TYPE_FK && getRoomType() != CommonConstant.ROOM_TYPE_COMPETITIVE) {
                     if (player.getScore()<0) {
                         obj.put("score", 0);
                     }else {
