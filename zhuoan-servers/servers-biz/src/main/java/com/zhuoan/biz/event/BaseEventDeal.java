@@ -675,11 +675,13 @@ public class BaseEventDeal {
         } else {
             playerinfo.setArea("");
         }
-        int vip = userInfo.getInt("lv");
-        if (vip > 1) {
-            playerinfo.setVip(vip - 1);
-        } else {
-            playerinfo.setVip(0);
+        if (userInfo.containsKey("lv")) {
+            int vip = userInfo.getInt("lv");
+            if (vip > 1) {
+                playerinfo.setVip(vip - 1);
+            } else {
+                playerinfo.setVip(0);
+            }
         }
         playerinfo.setStatus(Constant.ONLINE_STATUS_YES);
         // 保存用户坐标
