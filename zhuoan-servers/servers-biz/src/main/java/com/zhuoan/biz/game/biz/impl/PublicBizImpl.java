@@ -83,7 +83,7 @@ public class PublicBizImpl implements PublicBiz{
         JSONObject obj = new JSONObject();
         obj.put("user_id",userId);
         obj.put("type",type);
-        obj.put("createTime", TimeUtil.getNowDate("yyyy-MM-dd hh:mm:ss"));
+        obj.put("createTime", TimeUtil.getNowDate());
         if (!Dto.isObjNull(userCoinsRec)) {
             obj.put("id",userCoinsRec.getLong("id"));
             if (score>0) {
