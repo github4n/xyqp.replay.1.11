@@ -150,6 +150,10 @@ public class BaseEventDeal {
             CommonConstant.sendMsgEventToSingle(client, result.toString(), "enterRoomPush_NN");
             return;
         }
+        if (!userInfo.containsKey("uuid")||Dto.stringIsNULL(userInfo.getString("uuid"))||
+            !userInfo.getString("uuid").equals(postData.getString("uuid"))) {
+            return;
+        }
         // 添加工会信息
         if (!Dto.isObjNull(userInfo)&&userInfo.containsKey("gulidId")&&userInfo.getInt("gulidId")>0&&
             userInfo.containsKey("unionid")&&userInfo.containsKey("platform")) {
@@ -169,6 +173,11 @@ public class BaseEventDeal {
      * @param userInfo
      */
     public void createRoomBase(SocketIOClient client, JSONObject postData, JSONObject userInfo) {
+        for (String roomNum : RoomManage.gameRoomMap.keySet()) {
+            if (RoomManage.gameRoomMap.get(roomNum).getPlayerMap().containsKey(userInfo.getString("account"))) {
+                return;
+            }
+        }
         JSONObject baseInfo = postData.getJSONObject("base_info");
         // 添加房间信息
         String roomNo = randomRoomNo();
@@ -295,7 +304,7 @@ public class BaseEventDeal {
         if (baseInfo.containsKey("goldCoinLeave")) {
             gameRoom.setLeaveScore(baseInfo.getInt("goldCoinLeave"));
         }
-        if (baseInfo.containsKey("open")&&baseInfo.getInt("open") == 1) {
+        if (baseInfo.containsKey("open") && baseInfo.getInt("open") == 1 && postData.getInt("gid") != CommonConstant.GAME_ID_BDX) {
             gameRoom.setOpen(true);
         } else {
             gameRoom.setOpen(false);
@@ -482,6 +491,10 @@ public class BaseEventDeal {
             CommonConstant.sendMsgEventToSingle(client, result.toString(), "enterRoomPush_NN");
             return;
         }
+        if (!userInfo.containsKey("uuid")||Dto.stringIsNULL(userInfo.getString("uuid"))||
+            !userInfo.getString("uuid").equals(postData.getString("uuid"))) {
+            return;
+        }
         // 添加工会信息
         if (!Dto.isObjNull(userInfo)&&userInfo.containsKey("gulidId")&&userInfo.getInt("gulidId")>0&&
             userInfo.containsKey("unionid")&&userInfo.containsKey("platform")) {
@@ -533,6 +546,11 @@ public class BaseEventDeal {
      */
     public void joinRoomBase(SocketIOClient client, JSONObject postData, JSONObject userInfo) {
         String roomNo = postData.getString(CommonConstant.DATA_KEY_ROOM_NO);
+        for (String roomNum : RoomManage.gameRoomMap.keySet()) {
+            if (!roomNum.equals(roomNo)&&RoomManage.gameRoomMap.get(roomNum).getPlayerMap().containsKey(userInfo.getString("account"))) {
+                return;
+            }
+        }
         GameRoom gameRoom = RoomManage.gameRoomMap.get(roomNo);
         JSONObject result = new JSONObject();
         int myIndex = -1;
@@ -1220,6 +1238,7 @@ public class BaseEventDeal {
         String account = postdata.getString(CommonConstant.DATA_KEY_ACCOUNT);
         JSONObject userInfo = userBiz.getUserByAccount(account);
         if (!Dto.isObjNull(userInfo)) {
+            userInfo.remove("uuid");
             result.put(CommonConstant.RESULT_KEY_CODE, CommonConstant.GLOBAL_YES);
             result.put("user", userInfo);
         }else {

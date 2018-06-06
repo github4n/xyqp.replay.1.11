@@ -2,6 +2,7 @@ package com.zhuoan.biz.event.bdx;
 
 import com.corundumstudio.socketio.SocketIOClient;
 import com.zhuoan.biz.game.biz.RoomBiz;
+import com.zhuoan.biz.game.biz.UserBiz;
 import com.zhuoan.biz.model.Playerinfo;
 import com.zhuoan.biz.model.RoomManage;
 import com.zhuoan.biz.model.bdx.BDXGameRoomNew;
@@ -33,6 +34,9 @@ public class BDXGameEventDealNew {
 
     @Resource
     private RoomBiz roomBiz;
+
+    @Resource
+    private UserBiz userBiz;
 
     @Resource
     private Destination daoQueueDestination;
@@ -132,7 +136,7 @@ public class BDXGameEventDealNew {
                 CommonConstant.sendMsgEventToSingle(client,result.toString(),"gameXiazhuPush_BDX");
                 return;
             }
-            if (room.getPlayerMap().get(account).getScore()<value) {
+            if (value<0||room.getPlayerMap().get(account).getScore()<value) {
                 result.put(CommonConstant.RESULT_KEY_CODE,CommonConstant.GLOBAL_NO);
                 result.put(CommonConstant.RESULT_KEY_MSG,"元宝不足");
                 CommonConstant.sendMsgEventToSingle(client,result.toString(),"gameXiazhuPush_BDX");
@@ -216,8 +220,19 @@ public class BDXGameEventDealNew {
      */
     public void reconnectGame(SocketIOClient client,Object data) {
         JSONObject postData = JSONObject.fromObject(data);
+        if (!postData.containsKey(CommonConstant.DATA_KEY_ROOM_NO)||
+            !postData.containsKey(CommonConstant.DATA_KEY_ACCOUNT)||
+            !postData.containsKey("uuid")) {
+            return;
+        }
         String roomNo = postData.getString(CommonConstant.DATA_KEY_ROOM_NO);
         String account = postData.getString(CommonConstant.DATA_KEY_ACCOUNT);
+        JSONObject userInfo = userBiz.getUserByAccount(account);
+        // uuid不匹配
+        if (!userInfo.containsKey("uuid")||Dto.stringIsNULL(userInfo.getString("uuid"))||
+            !userInfo.getString("uuid").equals(postData.getString("uuid"))) {
+            return;
+        }
         JSONObject result = new JSONObject();
         if (client == null) {
             return;

@@ -5,6 +5,7 @@ import com.zhuoan.biz.core.nn.NiuNiuServer;
 import com.zhuoan.biz.core.nn.Packer;
 import com.zhuoan.biz.core.nn.UserPacket;
 import com.zhuoan.biz.game.biz.RoomBiz;
+import com.zhuoan.biz.game.biz.UserBiz;
 import com.zhuoan.biz.model.PackerCompare;
 import com.zhuoan.biz.model.Playerinfo;
 import com.zhuoan.biz.model.RoomManage;
@@ -61,6 +62,9 @@ public class NNGameEventDealNew {
 
     @Resource
     private RobotEventDeal robotEventDeal;
+
+    @Resource
+    private UserBiz userBiz;
 
     /**
      * 创建房间通知自己
@@ -469,6 +473,10 @@ public class NNGameEventDealNew {
                 if (room.getUserPacketMap().get(account).getStatus() != NNConstant.NN_USER_STATUS_READY) {
                     return;
                 }
+                int maxTimes = getMaxTimes(room.getQzTimes(room.getPlayerMap().get(account).getScore()));
+                if (postData.getInt(NNConstant.DATA_KEY_VALUE)<0||postData.getInt(NNConstant.DATA_KEY_VALUE)>maxTimes) {
+                    return;
+                }
                 // 设置为玩家抢庄状态，抢庄倍数
                 room.getUserPacketMap().get(account).setStatus(NNConstant.NN_USER_STATUS_QZ);
                 room.getUserPacketMap().get(account).setQzTimes(postData.getInt(NNConstant.DATA_KEY_VALUE));
@@ -655,6 +663,10 @@ public class NNGameEventDealNew {
                 if (room.getBankerType() == NNConstant.NN_BANKER_TYPE_TB) {
                     return;
                 }
+                int maxTimes = getMaxTimes(room.getBaseNumTimes(room.getPlayerMap().get(account).getScore()));
+                if (postData.getInt(NNConstant.DATA_KEY_MONEY)<0||postData.getInt(NNConstant.DATA_KEY_MONEY)>maxTimes) {
+                    return;
+                }
                 room.getUserPacketMap().get(account).setStatus(NNConstant.NN_USER_STATUS_XZ);
                 room.getUserPacketMap().get(account).setXzTimes(postData.getInt(NNConstant.DATA_KEY_MONEY));
                 // 通知玩家
@@ -699,6 +711,17 @@ public class NNGameEventDealNew {
                 }
             }
         }
+    }
+
+    public int getMaxTimes(JSONArray array) {
+        int maxTimes = 0;
+        for (int i = 0; i < array.size(); i++) {
+            JSONObject baseNum = array.getJSONObject(i);
+            if (baseNum.getInt("isuse")==CommonConstant.GLOBAL_YES&&baseNum.getInt("val")>maxTimes) {
+                maxTimes = baseNum.getInt("val");
+            }
+        }
+        return  maxTimes;
     }
 
     /**
@@ -1415,8 +1438,19 @@ public class NNGameEventDealNew {
      */
     public void reconnectGame(SocketIOClient client, Object data) {
         JSONObject postData = JSONObject.fromObject(data);
+        if (!postData.containsKey(CommonConstant.DATA_KEY_ROOM_NO)||
+            !postData.containsKey(CommonConstant.DATA_KEY_ACCOUNT)||
+            !postData.containsKey("uuid")) {
+            return;
+        }
         String roomNo = postData.getString(CommonConstant.DATA_KEY_ROOM_NO);
         String account = postData.getString(CommonConstant.DATA_KEY_ACCOUNT);
+        JSONObject userInfo = userBiz.getUserByAccount(account);
+        // uuid不匹配
+        if (!userInfo.containsKey("uuid")||Dto.stringIsNULL(userInfo.getString("uuid"))||
+            !userInfo.getString("uuid").equals(postData.getString("uuid"))) {
+            return;
+        }
         JSONObject result = new JSONObject();
         if (client == null) {
             return;

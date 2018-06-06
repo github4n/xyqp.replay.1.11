@@ -6,6 +6,7 @@ import com.zhuoan.biz.core.sss.SSSOrdinaryCards;
 import com.zhuoan.biz.core.sss.SSSSpecialCardSort;
 import com.zhuoan.biz.core.sss.SSSSpecialCards;
 import com.zhuoan.biz.game.biz.RoomBiz;
+import com.zhuoan.biz.game.biz.UserBiz;
 import com.zhuoan.biz.model.Playerinfo;
 import com.zhuoan.biz.model.RoomManage;
 import com.zhuoan.biz.model.dao.PumpDao;
@@ -63,6 +64,9 @@ public class SSSGameEventDealNew {
 
     @Resource
     private RobotEventDeal robotEventDeal;
+
+    @Resource
+    private UserBiz userBiz;
 
     /**
      * 创建房间通知自己
@@ -1078,8 +1082,19 @@ public class SSSGameEventDealNew {
      */
     public void reconnectGame(SocketIOClient client,Object data){
         JSONObject postData = JSONObject.fromObject(data);
+        if (!postData.containsKey(CommonConstant.DATA_KEY_ROOM_NO)||
+            !postData.containsKey(CommonConstant.DATA_KEY_ACCOUNT)||
+            !postData.containsKey("uuid")) {
+            return;
+        }
         String roomNo = postData.getString(CommonConstant.DATA_KEY_ROOM_NO);
         String account = postData.getString(CommonConstant.DATA_KEY_ACCOUNT);
+        JSONObject userInfo = userBiz.getUserByAccount(account);
+        // uuid不匹配
+        if (!userInfo.containsKey("uuid")||Dto.stringIsNULL(userInfo.getString("uuid"))||
+            !userInfo.getString("uuid").equals(postData.getString("uuid"))) {
+            return;
+        }
         JSONObject result = new JSONObject();
         if (client == null) {
             return;
