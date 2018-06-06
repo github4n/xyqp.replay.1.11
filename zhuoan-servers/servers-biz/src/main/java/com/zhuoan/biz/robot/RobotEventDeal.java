@@ -93,7 +93,7 @@ public class RobotEventDeal {
         // 当前人数
         int playerCount = RoomManage.gameRoomMap.get(roomNo).getPlayerMap().size();
         // 机器人数(随机留出1-3个空座)
-        int robotCount = totalCount - playerCount - RandomUtils.nextInt(3);
+        int robotCount = totalCount - playerCount;
         double minScore = RoomManage.gameRoomMap.get(roomNo).getEnterScore();
         List<String> robotLists = roomBiz.getRobotList(robotCount,minScore);
         for (int i = 0; i < robotCount; i++) {
@@ -122,7 +122,7 @@ public class RobotEventDeal {
                     break;
             }
             robotInfo.setDelayTime(RandomUtils.nextInt(3)+2);
-            robotInfo.setOutTimes(RandomUtils.nextInt(3)+2);
+            robotInfo.setOutTimes(RandomUtils.nextInt(30)+100);
             robots.put(robotAccount,robotInfo);
         }
     }

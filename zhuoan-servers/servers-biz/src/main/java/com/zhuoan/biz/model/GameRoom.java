@@ -179,6 +179,18 @@ public class GameRoom {
      * 是否需要总结算
      */
     private boolean needFinalSummary = false;
+    /**
+     * 是否解散房间
+     */
+    private int isClose=-1;
+
+    public int getIsClose() {
+        return isClose;
+    }
+
+    public void setIsClose(int isClose) {
+        this.isClose = isClose;
+    }
 
     public boolean isNeedFinalSummary() {
         return needFinalSummary;

@@ -226,7 +226,8 @@ public class SSSGameRoomNew extends GameRoom{
                     userData.put("result",userResult);
                     userData.put("sum",getUserPacketMap().get(account).getScore());
                     userData.put("account",account);
-                    if (getGameStatus()==SSSConstant.SSS_GAME_STATUS_COMPARE&&getRoomType()!=CommonConstant.ROOM_TYPE_FK) {
+                    if (getGameStatus()==SSSConstant.SSS_GAME_STATUS_COMPARE && getRoomType()!=CommonConstant.ROOM_TYPE_FK
+                        && getRoomType()!=CommonConstant.ROOM_TYPE_COMPETITIVE) {
                         double scoreLeft = Dto.add(getPlayerMap().get(account).getScore(),getUserPacketMap().get(account).getScore());
                         if (scoreLeft<0) {
                             scoreLeft = 0;

@@ -1149,6 +1149,27 @@ public class BaseEventDeal {
         return gameSetting;
     }
 
+    private JSONObject getGameStatusInfo(int gameId) {
+        JSONObject gameInfoById;
+        try {
+            StringBuffer key = new StringBuffer();
+            key.append("game_on_or_off_");
+            key.append(gameId);
+            Object object = redisService.queryValueByKey(String.valueOf(key));
+            if (object!=null) {
+                gameInfoById = JSONObject.fromObject(redisService.queryValueByKey(String.valueOf(key)));
+
+            }else {
+                gameInfoById = roomBiz.getGameInfoByID(gameId);
+                redisService.insertKey(String.valueOf(key), String.valueOf(gameInfoById), null);
+            }
+        } catch (Exception e) {
+            logger.error("请启动REmote DIctionary Server");
+            gameInfoById = roomBiz.getGameInfoByID(gameId);
+        }
+        return gameInfoById;
+    }
+
     /**
      * 检查用户是否在房间内
      * @param client
@@ -1156,6 +1177,17 @@ public class BaseEventDeal {
      */
     public void checkUser(SocketIOClient client, Object data) {
         JSONObject postData = JSONObject.fromObject(data);
+        if (postData.containsKey("gid")&&postData.getInt("gid")>0) {
+            int gameId = postData.getInt("gid");
+            JSONObject gameStatusInfo = getGameStatusInfo(gameId);
+            if (Dto.isObjNull(gameStatusInfo)||!gameStatusInfo.containsKey("status")||
+                gameStatusInfo.getInt("status")!=1) {
+                JSONObject result = new JSONObject();
+                result.put("type",CommonConstant.SHOW_MSG_TYPE_NORMAL);
+                result.put(CommonConstant.RESULT_KEY_MSG,"该游戏正在维护中");
+                CommonConstant.sendMsgEventToSingle(client,result.toString(),"tipMsgPush");
+            }
+        }
         if (postData.containsKey("account")) {
             String account = postData.getString("account");
             // 遍历房间列表

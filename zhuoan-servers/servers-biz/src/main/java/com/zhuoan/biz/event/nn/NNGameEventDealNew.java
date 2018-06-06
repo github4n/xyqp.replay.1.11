@@ -797,6 +797,7 @@ public class NNGameEventDealNew {
         changeGameStatus(room);
         if (room.getRoomType() == CommonConstant.ROOM_TYPE_FK) {
             if (room.getGameStatus()==NNConstant.NN_GAME_STATUS_JS&&room.getGameIndex()==room.getGameCount()) {
+                room.setIsClose(CommonConstant.CLOSE_ROOM_TYPE_FINISH);
                 room.setGameStatus(NNConstant.NN_GAME_STATUS_ZJS);
             }
         }
@@ -1233,7 +1234,8 @@ public class NNGameEventDealNew {
                 // 所有人都退出清除房间数据
                 if (room.getPlayerMap().size() == 0) {
                     redisService.deleteByKey("summaryTimes_nn"+room.getRoomNo());
-                    roomInfo.put("status", -1);
+                    roomInfo.put("status",room.getIsClose());
+                    roomInfo.put("game_index",room.getGameIndex());
                     RoomManage.gameRoomMap.remove(room.getRoomNo());
                 }
                 producerService.sendMessage(daoQueueDestination, new PumpDao(DaoTypeConstant.UPDATE_ROOM_INFO, roomInfo));
@@ -1380,6 +1382,11 @@ public class NNGameEventDealNew {
                     if (!room.isNeedFinalSummary()) {
                         // 所有玩家
                         List<UUID> uuidList = room.getAllUUIDList();
+                        // 更新数据库
+                        JSONObject roomInfo = new JSONObject();
+                        roomInfo.put("room_no",room.getRoomNo());
+                        roomInfo.put("status",room.getIsClose());
+                        producerService.sendMessage(daoQueueDestination, new PumpDao(DaoTypeConstant.UPDATE_ROOM_INFO, roomInfo));
                         // 移除房间
                         RoomManage.gameRoomMap.remove(roomNo);
                         // 通知玩家

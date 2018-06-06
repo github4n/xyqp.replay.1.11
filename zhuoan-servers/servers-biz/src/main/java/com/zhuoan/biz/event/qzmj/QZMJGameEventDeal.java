@@ -479,7 +479,8 @@ public class QZMJGameEventDeal {
                 }
                 // 所有人都退出清除房间数据
                 if (room.getPlayerMap().size() == 0) {
-                    roomInfo.put("status", -1);
+                    roomInfo.put("status",room.getIsClose());
+                    roomInfo.put("game_index",room.getGameIndex());
                     RoomManage.gameRoomMap.remove(room.getRoomNo());
                 }
                 producerService.sendMessage(daoQueueDestination, new PumpDao(DaoTypeConstant.UPDATE_ROOM_INFO, roomInfo));
@@ -549,6 +550,11 @@ public class QZMJGameEventDeal {
                     if (room.getGameIndex()<=1&&Dto.isObjNull(room.getSummaryData())) {
                         // 所有玩家
                         List<UUID> uuidList = room.getAllUUIDList();
+                        // 更新数据库
+                        JSONObject roomInfo = new JSONObject();
+                        roomInfo.put("room_no",room.getRoomNo());
+                        roomInfo.put("status",room.getIsClose());
+                        producerService.sendMessage(daoQueueDestination, new PumpDao(DaoTypeConstant.UPDATE_ROOM_INFO, roomInfo));
                         // 移除房间
                         RoomManage.gameRoomMap.remove(roomNo);
                         // 通知玩家
@@ -887,6 +893,7 @@ public class QZMJGameEventDeal {
         backObj.put("isLiuju", CommonConstant.GLOBAL_NO);
         if (gamePlay.getRoomType()==CommonConstant.ROOM_TYPE_FK) {
             if(gamePlay.getGameCount()==gamePlay.getGameIndex() || isFinish){
+                gamePlay.setIsClose(CommonConstant.CLOSE_ROOM_TYPE_FINISH);
                 // 保存结算汇总数据
                 JSONArray jiesuanArray = obtainFinalSummaryArray(gamePlay);
                 backObj.put("type", 1);
@@ -3600,6 +3607,7 @@ public class QZMJGameEventDeal {
                     JSONArray jiesuanArray = obtainFinalSummaryArray(room);
                     result.put("data1", jiesuanArray);
                     result.put("type", 1);
+                    room.setIsClose(CommonConstant.CLOSE_ROOM_TYPE_FINISH);
                     room.setGameStatus(QZMJConstant.QZ_GAME_STATUS_FINAL_SUMMARY);
                 }
                 room.setSummaryData(result);

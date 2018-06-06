@@ -471,6 +471,14 @@ public class NNGameRoomNew extends GameRoom{
                         pai = userPacketMap.get(uuid).getMingPai();
                     } else {
                         pai = userPacketMap.get(uuid).getMyPai();
+                        List<Integer> p = new ArrayList<Integer>();
+                        for (int i = 0; i < pai.length; i++) {
+                            p.add(pai[i]);
+                        }
+                        Collections.shuffle(p);
+                        for (int i = 0; i < pai.length; i++) {
+                            pai[i] = p.get(i);
+                        }
                     }
                     // 已亮牌展示牌型
                     if (userPacketMap.get(uuid).getStatus()==NNConstant.NN_USER_STATUS_LP){

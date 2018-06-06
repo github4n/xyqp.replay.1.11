@@ -254,6 +254,14 @@ public class CommonConstant {
      * 签到金币-最大
      */
     public static final int COINS_SIGN_MAX = 1000;
+    /**
+     * 房卡场解散房间
+     */
+    public static final int CLOSE_ROOM_TYPE_DISSOLVE = -1;
+    /**
+     * 房卡场正常结束
+     */
+    public static final int CLOSE_ROOM_TYPE_FINISH = -2;
 
     public static final String DATA_KEY_ROOM_NO = "room_no";
     public static final String DATA_KEY_ACCOUNT = "account";
