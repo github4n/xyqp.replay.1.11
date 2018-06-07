@@ -333,6 +333,17 @@ public class SSSGameEventDealNew {
         if (account.equals(room.getBanker())) {
             return;
         }
+        JSONArray array = room.getBaseNumTimes(room.getPlayerMap().get(account).getScore());
+        int maxTimes = 1;
+        for (Object o : array) {
+            JSONObject baseNum = JSONObject.fromObject(o);
+            if (baseNum.getInt("isuse")==CommonConstant.GLOBAL_YES&&baseNum.getInt("val")>maxTimes) {
+                maxTimes = baseNum.getInt("val");
+            }
+        }
+        if (postData.getInt("money")<0&&postData.getInt("money")>maxTimes) {
+            return;
+        }
         // 设置玩家下注状态
         room.getUserPacketMap().get(account).setStatus(SSSConstant.SSS_USER_STATUS_XZ);
         // 下注分数
