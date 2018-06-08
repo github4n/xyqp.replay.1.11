@@ -120,7 +120,7 @@ public class BaseEventDeal {
             return;
         } else if (baseInfo.getInt("roomType") == CommonConstant.ROOM_TYPE_YB && userInfo.containsKey("yuanbao")) {
             double minScore = obtainBankMinScore(postData);
-            if (userInfo.getDouble("yuanbao") < minScore) {
+            if (minScore!=-1&&userInfo.getDouble("yuanbao") < minScore) {
                 // 元宝不足
                 result.element(CommonConstant.RESULT_KEY_CODE, CommonConstant.GLOBAL_NO);
                 result.element(CommonConstant.RESULT_KEY_MSG, "元宝不足");
