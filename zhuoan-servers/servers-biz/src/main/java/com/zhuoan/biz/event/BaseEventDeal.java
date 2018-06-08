@@ -1080,12 +1080,12 @@ public class BaseEventDeal {
                 gameInfoById = JSONObject.fromObject(redisService.queryValueByKey(String.valueOf(key)));
 
             }else {
-                gameInfoById = roomBiz.getGameInfoByID(CommonConstant.GAME_ID_SSS).getJSONObject("setting");
+                gameInfoById = roomBiz.getGameInfoByID(gameId).getJSONObject("setting");
                 redisService.insertKey(String.valueOf(key), String.valueOf(gameInfoById), null);
             }
         } catch (Exception e) {
             logger.error("请启动REmote DIctionary Server");
-            gameInfoById = roomBiz.getGameInfoByID(CommonConstant.GAME_ID_SSS).getJSONObject("setting");
+            gameInfoById = roomBiz.getGameInfoByID(gameId).getJSONObject("setting");
         }
         return gameInfoById;
     }
@@ -1203,7 +1203,8 @@ public class BaseEventDeal {
                 JSONObject result = new JSONObject();
                 result.put("type",CommonConstant.SHOW_MSG_TYPE_NORMAL);
                 result.put(CommonConstant.RESULT_KEY_MSG,"该游戏正在维护中");
-                CommonConstant.sendMsgEventToSingle(client,result.toString(),"tipMsgPush");
+                CommonConstant.sendMsgEventToSingle(client,result.toString(),"enterRoomPush_NN");
+                return;
             }
         }
         if (postData.containsKey("account")) {
