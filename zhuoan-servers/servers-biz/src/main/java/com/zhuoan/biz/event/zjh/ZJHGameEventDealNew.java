@@ -289,6 +289,9 @@ public class ZJHGameEventDealNew {
                     break;
                 case ZJHConstant.GAME_ACTION_TYPE_JZ:
                     double score = postData.getDouble("score");
+                    if (score<room.getCurrentScore()) {
+                        return;
+                    }
                     xiaZhu(room,account,score,ZJHConstant.GAME_ACTION_TYPE_JZ);
                     break;
                 default:

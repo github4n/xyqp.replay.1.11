@@ -162,9 +162,112 @@ public class BaseEventDeal {
                 userInfo.put("ghName",ghInfo.getString("name"));
             }
         }
+        if (!checkBaseInfo(postData.getJSONObject("base_info"),postData.getInt("gid"))) {
+            result.element(CommonConstant.RESULT_KEY_CODE, CommonConstant.GLOBAL_NO);
+            result.element(CommonConstant.RESULT_KEY_MSG, "参数不正确");
+            CommonConstant.sendMsgEventToSingle(client, result.toString(), "enterRoomPush_NN");
+            return;
+        }
         // 创建房间
         createRoomBase(client, postData, userInfo);
     }
+
+    private boolean checkBaseInfo(JSONObject baseInfo, int gameId) {
+        JSONObject gameInfo = getGameInfoById(gameId);
+        // 房间类型是否开放
+        if (gameInfo.containsKey("openRoomType")&&gameInfo.getJSONArray("openRoomType").contains(baseInfo.getInt("roomType"))) {
+            if (gameId==CommonConstant.GAME_ID_BDX) {
+                return true;
+            }
+            // 游戏模式是否开放
+            if (gameInfo.containsKey("openType")&&gameInfo.getJSONArray("openType").contains(baseInfo.getInt("type"))) {
+                // 入场、离场是否满足条件
+                if (checkScoreRatio(baseInfo,gameInfo)) {
+                    // 判断最大倍数是否超出
+                    if (checkMaxTimes(baseInfo,gameInfo)) {
+                        // 判断人数是否超出
+                        if (checkPlayerNum(baseInfo,gameInfo)) {
+                            return true;
+                        }
+                    }
+                }
+            }
+        }
+        return false;
+    }
+
+    private boolean checkScoreRatio(JSONObject baseInfo,JSONObject gameInfo) {
+        int type = baseInfo.getInt("type");
+        int ratio = 0;
+        JSONArray array = gameInfo.getJSONArray("scoreRatio");
+        if (baseInfo.getInt("roomType")==CommonConstant.ROOM_TYPE_YB) {
+            if (baseInfo.containsKey("yuanbao")&&baseInfo.containsKey("leaveYB")&&baseInfo.containsKey("enterYB")) {
+                for (int i = 0; i < array.size(); i++) {
+                    if (array.getJSONObject(i).containsKey("type")&&array.getJSONObject(i).getInt("type")==type) {
+                        ratio = array.getJSONObject(i).getInt("ybRatio");
+                        break;
+                    }
+                }
+                if (ratio==0||baseInfo.getDouble("yuanbao")<=0||
+                    baseInfo.getDouble("yuanbao")*ratio>baseInfo.getDouble("leaveYB")||
+                    baseInfo.getDouble("yuanbao")*ratio>baseInfo.getDouble("enterYB")) {
+                    return false;
+                }
+            }else {
+                return false;
+            }
+        }else if (baseInfo.getInt("roomType")==CommonConstant.ROOM_TYPE_JB) {
+            if (baseInfo.containsKey("di")&&baseInfo.containsKey("goldCoinEnter")&&baseInfo.containsKey("goldCoinLeave")) {
+                for (int i = 0; i < array.size(); i++) {
+                    if (array.getJSONObject(i).containsKey("type")&&array.getJSONObject(i).getInt("type")==type) {
+                        ratio = array.getJSONObject(i).getInt("jbRatio");
+                        break;
+                    }
+                }
+                if (ratio==0||baseInfo.getDouble("di")<=0||
+                    baseInfo.getDouble("di")*ratio>baseInfo.getDouble("goldCoinLeave")||
+                    baseInfo.getDouble("di")*ratio>baseInfo.getDouble("goldCoinEnter")) {
+                    return false;
+                }
+            }else {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private boolean checkMaxTimes(JSONObject baseInfo,JSONObject gameInfo) {
+        if (baseInfo.containsKey("baseNum")&&gameInfo.containsKey("maxXzTimes")) {
+            JSONArray array = baseInfo.getJSONArray("baseNum");
+            for (int i = 0; i < array.size(); i++) {
+                JSONObject obj = array.getJSONObject(i);
+                if (obj.getInt("val")<0||obj.getInt("val")>gameInfo.getInt("maxXzTimes")) {
+                    return false;
+                }
+            }
+        }
+        if (baseInfo.containsKey("qzTimes")&&gameInfo.containsKey("maxQzTimes")) {
+            JSONArray array = baseInfo.getJSONArray("qzTimes");
+            for (int i = 0; i < array.size(); i++) {
+                if (array.getInt(i)<0 || array.getInt(i)>gameInfo.getInt("maxQzTimes")) {
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
+
+    private boolean checkPlayerNum(JSONObject baseInfo,JSONObject gameInfo) {
+        int playerNum = baseInfo.getInt("player");
+        if (baseInfo.containsKey("maxPlayer")) {
+            playerNum = baseInfo.getInt("maxPlayer");
+        }
+        if (playerNum > gameInfo.getInt("maxplayer")) {
+            return false;
+        }
+        return true;
+    }
+
 
     /**
      * 创建房间创建实体对象
@@ -283,6 +386,14 @@ public class BaseEventDeal {
         }else {
             gameRoom.setRobot(false);
         }
+        //设置金币场准入金币
+        if (baseInfo.containsKey("goldCoinEnter")) {
+            gameRoom.setEnterScore(baseInfo.getInt("goldCoinEnter"));
+        }
+        //设置金币场准入金币
+        if (baseInfo.containsKey("goldCoinLeave")) {
+            gameRoom.setLeaveScore(baseInfo.getInt("goldCoinLeave"));
+        }
         // 元宝模式
         if (baseInfo.containsKey("yuanbao") && baseInfo.getDouble("yuanbao") > 0) {
             //底分
@@ -295,14 +406,6 @@ public class BaseEventDeal {
         // 元宝模式
         if (baseInfo.containsKey("leaveYB") && baseInfo.getDouble("leaveYB") > 0) {
             gameRoom.setLeaveScore(baseInfo.getDouble("leaveYB"));
-        }
-        //设置金币场准入金币
-        if (baseInfo.containsKey("goldCoinEnter")) {
-            gameRoom.setEnterScore(baseInfo.getInt("goldCoinEnter"));
-        }
-        //设置金币场准入金币
-        if (baseInfo.containsKey("goldCoinLeave")) {
-            gameRoom.setLeaveScore(baseInfo.getInt("goldCoinLeave"));
         }
         if (baseInfo.containsKey("open") && baseInfo.getInt("open") == 1 && postData.getInt("gid") != CommonConstant.GAME_ID_BDX) {
             gameRoom.setOpen(true);
@@ -336,12 +439,18 @@ public class BaseEventDeal {
             /* 获取房间设置，插入缓存 */
             JSONObject gameSetting = getGameSetting(gameRoom);
 
+            JSONObject gameInfo = getGameInfoById(postData.getInt("gid"));
+
             JSONObject roomFee = gameSetting.getJSONObject("pumpData");
             double fee;
             // 服务费：费率x底注
             if (baseInfo.containsKey("custFee")) {
                 // 自定义费率
-                fee = baseInfo.getDouble("custFee") * gameRoom.getScore();
+                if (gameInfo.containsKey("custFee")) {
+                    fee = gameInfo.getDouble("custFee") * gameRoom.getScore();
+                }else {
+                    fee = baseInfo.getDouble("custFee") * gameRoom.getScore();
+                }
             } else {
                 // 统一费率
                 fee = roomFee.getDouble("proportion") * gameRoom.getScore();
@@ -377,9 +486,22 @@ public class BaseEventDeal {
         gameRoom.getPlayerMap().put(playerinfo.getAccount(), playerinfo);
         RoomManage.gameRoomMap.put(roomNo, gameRoom);
         // 通知玩家
+        informUser(gameRoom,playerinfo,client);
+        // 组织数据，插入数据库
+        addGameRoom(gameRoom,playerinfo);
+        // 开启机器人
+        if (gameRoom.isRobot()) {
+            robotEventDeal.robotJoin(roomNo);
+        }
+    }
+
+    /**
+     * 通知玩家
+     */
+    public void informUser(GameRoom gameRoom,Playerinfo playerinfo,SocketIOClient client) {
         JSONObject object = new JSONObject();
         object.put(CommonConstant.DATA_KEY_ACCOUNT, playerinfo.getAccount());
-        object.put(CommonConstant.DATA_KEY_ROOM_NO, roomNo);
+        object.put(CommonConstant.DATA_KEY_ROOM_NO, gameRoom.getRoomNo());
         switch (gameRoom.getGid()) {
             case CommonConstant.GAME_ID_NN:
                 nnGameEventDealNew.createRoom(client, object);
@@ -402,7 +524,14 @@ public class BaseEventDeal {
             default:
                 break;
         }
-        // 组织数据，插入数据库
+    }
+
+    /**
+     * 插入房间数据
+     * @param gameRoom
+     * @param playerinfo
+     */
+    public void addGameRoom(GameRoom gameRoom,Playerinfo playerinfo) {
         JSONObject obj = new JSONObject();
         obj.put("game_id", gameRoom.getGid());
         obj.put("room_no", gameRoom.getRoomNo());
@@ -421,11 +550,7 @@ public class BaseEventDeal {
         } else {
             obj.put("open", CommonConstant.GLOBAL_NO);
         }
-
         producerService.sendMessage(daoQueueDestination, new PumpDao(DaoTypeConstant.INSERT_GAME_ROOM, obj));
-        if (gameRoom.isRobot()) {
-            robotEventDeal.robotJoin(roomNo);
-        }
     }
 
     /**
@@ -774,27 +899,11 @@ public class BaseEventDeal {
         room.setBanker(account);
         // 房主
         room.setOwner(account);
+        JSONObject setting = getGameInfoById(CommonConstant.GAME_ID_NN);
         // 设置基本牌型倍数
-        if (baseInfo.containsKey("niuniuNum")) {
-            JSONArray nnNums = baseInfo.getJSONArray("niuniuNum");
-            for (int i = 0; i <= 10; i++) {
-                int value = nnNums.getInt(0);
-                if (i == 7) {
-                    value = nnNums.getInt(1);
-                } else if (i == 8) {
-                    value = nnNums.getInt(2);
-                } else if (i == 9) {
-                    value = nnNums.getInt(3);
-                } else if (i == 10) {
-                    value = nnNums.getInt(4);
-                }
-                // 设置倍率
-                room.ratio.put(i, value);
-            }
-        }
         if (baseInfo.containsKey("special")) {
             List<Integer> specialType = new ArrayList<Integer>();
-            JSONArray types = baseInfo.getJSONArray("special");
+            JSONArray types = setting.getJSONArray("special");
             for (int i = 0; i < types.size(); i++) {
                 int type = types.getJSONObject(i).getInt("type");
                 int value = types.getJSONObject(i).getInt("value");
@@ -1263,7 +1372,8 @@ public class BaseEventDeal {
         }
         JSONArray allRoom = new JSONArray();
         for (String roomNo : RoomManage.gameRoomMap.keySet()) {
-            if (RoomManage.gameRoomMap.get(roomNo).getGid()==gameId&&RoomManage.gameRoomMap.get(roomNo).isOpen()) {
+            if (RoomManage.gameRoomMap.get(roomNo).getGid()!=CommonConstant.GAME_ID_BDX&&
+                RoomManage.gameRoomMap.get(roomNo).getGid()==gameId&&RoomManage.gameRoomMap.get(roomNo).isOpen()) {
                 GameRoom gameRoom = RoomManage.gameRoomMap.get(roomNo);
                 JSONObject obj = new JSONObject();
                 obj.put("room_no", gameRoom.getRoomNo());
@@ -1273,9 +1383,6 @@ public class BaseEventDeal {
                 obj.put("iszs", 0);
                 obj.put("player", gameRoom.getPlayerCount());
                 obj.put("renshu", gameRoom.getPlayerMap().size());
-                for (int i = 0; i < gameRoom.getUserIdList().size(); i++) {
-                    obj.put("user_id"+i, gameRoom.getUserIdList().get(i));
-                }
                 if (type==0||(type==1&&gameRoom.getPlayerMap().size()<gameRoom.getPlayerCount())) {
                     allRoom.add(obj);
                 }
