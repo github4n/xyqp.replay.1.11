@@ -1650,8 +1650,8 @@ public class QZMJGameEventDeal {
 
                         if(!room.isCanOver){
 
-                            // 牌局为1课
-                            if(room.getGameCount()==999){
+                            // 牌局为1课或元宝场金币场
+                            if(room.getGameCount()==999||room.getGameCount()==9999){
 
                                 // 判断牌局是否结束（玩家积分是否小于等于0）
                                 if(p1.getScore()-score<=0){
@@ -1696,8 +1696,8 @@ public class QZMJGameEventDeal {
 
                 if(!room.isCanOver){
 
-                    // 牌局为1课
-                    if(room.getGameCount()==999){
+                    // 牌局为1课或元宝场金币场
+                    if(room.getGameCount()==999||room.getGameCount()==9999){
 
                         // 判断牌局是否结束（玩家积分是否小于等于0）
                         if(p.getScore()-score<=0){
