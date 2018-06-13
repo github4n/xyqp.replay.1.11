@@ -6,6 +6,7 @@ import com.corundumstudio.socketio.SocketIOServer;
 import com.za.game.remote.iservice.IService;
 import com.zhuoan.biz.event.BaseGameEvent;
 import com.zhuoan.biz.event.bdx.BDXGameEvent;
+import com.zhuoan.biz.event.gppj.GPPJGameEvent;
 import com.zhuoan.biz.event.nn.NNGameEvent;
 import com.zhuoan.biz.event.qzmj.QZMJGameEvent;
 import com.zhuoan.biz.event.sss.SSSGameEvent;
@@ -92,6 +93,9 @@ public class GameMain implements SocketIoManagerService {
 
     @Resource
     private QZMJGameEvent qzmjGameEvent;
+
+    @Resource
+    private GPPJGameEvent gppjGameEvent;
 
     @Resource
     private RobotEventDeal robotEventDeal;
@@ -309,6 +313,9 @@ public class GameMain implements SocketIoManagerService {
 
         /* 泉州麻将 */
         qzmjGameEvent.listenerQZMJGameEvent(server);
+
+        /* 骨牌牌九 */
+        gppjGameEvent.listenerGPPJGameEvent(server);
 
     }
 }

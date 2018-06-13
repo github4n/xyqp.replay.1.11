@@ -115,6 +115,10 @@ public class CommonConstant {
      */
     public static final int BASE_GAME_EVENT_JOIN_COMPETITIVE_ROOM = 25;
     /**
+     * 公共游戏事件-ip检测
+     */
+    public static final int BASE_GAME_EVENT_CHECK_IP = 26;
+    /**
      * 游戏公共部分
      */
     public static final int GAME_BASE = 0;
@@ -130,6 +134,10 @@ public class CommonConstant {
      * 游戏id-十三水
      */
     public static final int GAME_ID_SSS = 4;
+    /**
+     * 游戏id-骨牌牌九
+     */
+    public static final int GAME_ID_GP_PJ = 5;
     /**
      * 游戏id-炸金花
      */

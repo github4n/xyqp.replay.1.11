@@ -302,6 +302,15 @@ public class BaseGameEvent {
                 producerService.sendMessage(baseQueueDestination, new Messages(client, object, CommonConstant.GAME_BASE, CommonConstant.BASE_GAME_EVENT_JOIN_COMPETITIVE_ROOM));
             }
         });
+        /**
+         *  竞技场加入房间
+         */
+        server.addEventListener("gameCheckIp", Object.class, new DataListener<Object>() {
+            @Override
+            public void onData(SocketIOClient client, Object object, AckRequest ackSender) {
+                producerService.sendMessage(baseQueueDestination, new Messages(client, object, CommonConstant.GAME_BASE, CommonConstant.BASE_GAME_EVENT_CHECK_IP));
+            }
+        });
 
     }
 

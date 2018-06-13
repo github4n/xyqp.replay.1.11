@@ -3,6 +3,7 @@ package com.zhuoan.biz.event;
 import com.corundumstudio.socketio.SocketIOClient;
 import com.zhuoan.biz.core.nn.UserPacket;
 import com.zhuoan.biz.event.bdx.BDXGameEventDealNew;
+import com.zhuoan.biz.event.gppj.GPPJGameEventDeal;
 import com.zhuoan.biz.event.nn.NNGameEventDealNew;
 import com.zhuoan.biz.event.qzmj.QZMJGameEventDeal;
 import com.zhuoan.biz.event.sss.SSSGameEventDealNew;
@@ -17,6 +18,8 @@ import com.zhuoan.biz.model.RoomManage;
 import com.zhuoan.biz.model.bdx.BDXGameRoomNew;
 import com.zhuoan.biz.model.bdx.UserPackerBDX;
 import com.zhuoan.biz.model.dao.PumpDao;
+import com.zhuoan.biz.model.gppj.GPPJGameRoom;
+import com.zhuoan.biz.model.gppj.UserPacketGPPJ;
 import com.zhuoan.biz.model.nn.NNGameRoomNew;
 import com.zhuoan.biz.model.qzmj.QZMJGameRoom;
 import com.zhuoan.biz.model.qzmj.UserPacketQZMJ;
@@ -84,6 +87,9 @@ public class BaseEventDeal {
 
     @Resource
     private QZMJGameEventDeal qzmjGameEventDeal;
+
+    @Resource
+    private GPPJGameEventDeal gppjGameEventDeal;
 
     @Resource
     private Destination daoQueueDestination;
@@ -312,6 +318,11 @@ public class BaseEventDeal {
                 ((QZMJGameRoom)gameRoom).getUserPacketMap().put(userInfo.getString("account"), new UserPacketQZMJ());
                 createRoomNAMJ((QZMJGameRoom)gameRoom, baseInfo, userInfo.getString("account"));
                 break;
+            case CommonConstant.GAME_ID_GP_PJ:
+                gameRoom = new GPPJGameRoom();
+                ((GPPJGameRoom)gameRoom).getUserPacketMap().put(userInfo.getString("account"), new UserPacketGPPJ());
+                createRoomGPPJ((GPPJGameRoom) gameRoom, baseInfo, userInfo.getString("account"));
+                break;
             default:
                 gameRoom = new GameRoom();
                 break;
@@ -520,6 +531,9 @@ public class BaseEventDeal {
                 break;
             case CommonConstant.GAME_ID_NAMJ:
                 qzmjGameEventDeal.createRoom(client, object);
+                break;
+            case CommonConstant.GAME_ID_GP_PJ:
+                gppjGameEventDeal.createRoom(client, object);
                 break;
             default:
                 break;
@@ -786,6 +800,13 @@ public class BaseEventDeal {
                 }
                 qzmjGameEventDeal.joinRoom(client, joinData);
                 break;
+            case CommonConstant.GAME_ID_GP_PJ:
+                // 重连不需要重新设置用户牌局信息
+                if (!((GPPJGameRoom) gameRoom).getUserPacketMap().containsKey(userInfo.getString("account"))) {
+                    ((GPPJGameRoom) gameRoom).getUserPacketMap().put(userInfo.getString("account"), new UserPacketGPPJ());
+                }
+                gppjGameEventDeal.joinRoom(client, joinData);
+                break;
             default:
                 break;
         }
@@ -1028,6 +1049,49 @@ public class BaseEventDeal {
     }
 
     /**
+     * 创建骨牌牌九房间
+     * @param room
+     * @param baseInfo
+     * @param account
+     */
+    public void createRoomGPPJ(GPPJGameRoom room, JSONObject baseInfo, String account) {
+        room.setBankerType(baseInfo.getInt("type"));
+        // 玩法
+        String wanFa = "";
+        switch (baseInfo.getInt("type")) {
+            case GPPJConstant.BANKER_TYPE_OWNER:
+                wanFa = "房主坐庄";
+                break;
+            case GPPJConstant.BANKER_TYPE_LOOK:
+                wanFa = "看牌抢庄";
+                break;
+            case GPPJConstant.BANKER_TYPE_COMPARE:
+                wanFa = "互比";
+                break;
+            default:
+                break;
+        }
+        room.setWfType(wanFa);
+        // 庄家
+        room.setBanker(account);
+        // 房主
+        room.setOwner(account);
+        JSONObject setting = getGameInfoById(CommonConstant.GAME_ID_GP_PJ);
+        // 下注倍数
+        if (baseInfo.containsKey("baseNum")) {
+            room.setQzTimes(baseInfo.getJSONArray("baseNum"));
+        }else {
+            room.setBaseNum(setting.getJSONArray("xzTimes"));
+        }
+        // 抢庄倍数
+        room.setQzTimes(setting.getJSONArray("qzTimes"));
+        // 倍数
+        if (baseInfo.containsKey("multiple")) {
+            room.setMultiple(baseInfo.getInt("multiple"));
+        }
+    }
+
+    /**
      * 设置泉州麻将房间参数
      * @param room
      * @param baseInfo
@@ -1144,7 +1208,11 @@ public class BaseEventDeal {
         }
         // 倍数
         if(baseInfo.containsKey("baseNum")){
-            room.setBaseNum(baseInfo.getJSONArray("baseNum"));
+            JSONArray baseNum = new JSONArray();
+            for (int i = 0; i < baseInfo.getJSONArray("baseNum").size(); i++) {
+                baseNum.add(baseInfo.getJSONArray("baseNum").getJSONObject(i).getInt("val"));
+            }
+            room.setBaseNum(baseNum);
         }else{
             JSONArray baseNum = new JSONArray();
             for (int i = 1; i <= 5; i++) {
@@ -1234,26 +1302,26 @@ public class BaseEventDeal {
      * @return
      */
     private JSONArray getGameSetting(int gid, String platform, int flag) {
-        String key = "";
-        switch (gid) {
-            case CommonConstant.GAME_ID_NN:
-                key = CacheKeyConstant.GAME_SETTING_NN;
-                break;
-            case CommonConstant.GAME_ID_SSS:
-                key = CacheKeyConstant.GAME_SETTING_SSS;
-                break;
-            case CommonConstant.GAME_ID_ZJH:
-                key = CacheKeyConstant.GAME_SETTING_ZJH;
-                break;
-            case CommonConstant.GAME_ID_QZMJ:
-                key = CacheKeyConstant.GAME_SETTING_QZMJ;
-                break;
-            case CommonConstant.GAME_ID_NAMJ:
-                key = CacheKeyConstant.GAME_SETTING_NAMJ;
-                break;
-            default:
-                break;
-        }
+        String key = "game_setting_"+platform+"_"+gid;
+//        switch (gid) {
+//            case CommonConstant.GAME_ID_NN:
+//                key = CacheKeyConstant.GAME_SETTING_NN;
+//                break;
+//            case CommonConstant.GAME_ID_SSS:
+//                key = CacheKeyConstant.GAME_SETTING_SSS;
+//                break;
+//            case CommonConstant.GAME_ID_ZJH:
+//                key = CacheKeyConstant.GAME_SETTING_ZJH;
+//                break;
+//            case CommonConstant.GAME_ID_QZMJ:
+//                key = CacheKeyConstant.GAME_SETTING_QZMJ;
+//                break;
+//            case CommonConstant.GAME_ID_NAMJ:
+//                key = CacheKeyConstant.GAME_SETTING_NAMJ;
+//                break;
+//            default:
+//                break;
+//        }
         JSONArray gameSetting = new JSONArray();
         if (!key.equals("")) {
             try {
@@ -1783,7 +1851,11 @@ public class BaseEventDeal {
             case CommonConstant.GAME_ID_NAMJ:
                 CommonConstant.sendMsgEventToAll(room.getAllUUIDList(),postData.toString(),"voiceCallGamePush");
                 break;
+            case CommonConstant.GAME_ID_GP_PJ:
+                CommonConstant.sendMsgEventToAll(room.getAllUUIDList(),postData.toString(),"voiceCallGamePush_GPPJ");
+                break;
             default:
+                CommonConstant.sendMsgEventToAll(room.getAllUUIDList(),postData.toString(),"voiceCallGamePush");
                 break;
         }
     }
@@ -2216,5 +2288,27 @@ public class BaseEventDeal {
             postData.put("base_info",array.getJSONObject(0).getJSONObject("option"));
             createRoomBase(client,postData);
         }
+    }
+
+    public void gameCheckIp(SocketIOClient client, Object data) {
+        JSONObject postData = JSONObject.fromObject(data);
+        if (!CommonConstant.checkEvent(postData,CommonConstant.CHECK_GAME_STATUS_NO,client)) {
+            return;
+        }
+        JSONObject result=new JSONObject();
+        String account = postData.getString(CommonConstant.DATA_KEY_ACCOUNT);
+        String roomNo = postData.getString(CommonConstant.DATA_KEY_ROOM_NO);
+        GameRoom gameRoom = RoomManage.gameRoomMap.get(roomNo);
+        result.put("index",gameRoom.getPlayerMap().get(account).getMyIndex());
+        result.put("ipStatus",CommonConstant.GLOBAL_YES);
+        for (String uuid : gameRoom.getPlayerMap().keySet()) {
+            if (!uuid.equals(account)) {
+                if (gameRoom.getPlayerMap().get(account).getIp().equals(gameRoom.getPlayerMap().get(uuid).getIp())) {
+                    result.put("ipStatus",CommonConstant.GLOBAL_NO);
+                    break;
+                }
+            }
+        }
+        CommonConstant.sendMsgEventToSingle(client,String.valueOf(result),"gameCheckIpPush");
     }
  }

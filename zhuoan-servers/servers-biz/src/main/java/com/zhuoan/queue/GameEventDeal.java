@@ -1,8 +1,9 @@
 package com.zhuoan.queue;
 
 import com.corundumstudio.socketio.SocketIOClient;
-import com.zhuoan.biz.event.bdx.BDXGameEventDealNew;
 import com.zhuoan.biz.event.BaseEventDeal;
+import com.zhuoan.biz.event.bdx.BDXGameEventDealNew;
+import com.zhuoan.biz.event.gppj.GPPJGameEventDeal;
 import com.zhuoan.biz.event.nn.NNGameEventDealNew;
 import com.zhuoan.biz.event.qzmj.QZMJGameEventDeal;
 import com.zhuoan.biz.event.sss.SSSGameEventDealNew;
@@ -46,6 +47,8 @@ public class GameEventDeal {
     private BDXGameEventDealNew bdxGameEventDealNew;
     @Resource
     private QZMJGameEventDeal qzmjGameEventDeal;
+    @Resource
+    private GPPJGameEventDeal gppjGameEventDeal;
     @Resource
     private SocketIoManagerService socketIoManagerService;
 
@@ -136,6 +139,9 @@ public class GameEventDeal {
                         break;
                     case CommonConstant.BASE_GAME_EVENT_JOIN_COMPETITIVE_ROOM:
                         baseEventDeal.joinCompetitiveRoom(client, data);
+                        break;
+                    case CommonConstant.BASE_GAME_EVENT_CHECK_IP:
+                        baseEventDeal.gameCheckIp(client, data);
                         break;
                     default:
                         break;
@@ -275,6 +281,41 @@ public class GameEventDeal {
                     default:
                         break;
                 }
+                break;
+            case CommonConstant.GAME_ID_GP_PJ:
+                // 骨牌牌九
+                switch (sorts) {
+                    case GPPJConstant.GP_PJ_GAME_EVENT_READY:
+                        gppjGameEventDeal.gameReady(client,data);
+                        break;
+                    case GPPJConstant.GP_PJ_GAME_EVENT_START:
+                        gppjGameEventDeal.gameStart(client,data);
+                        break;
+                    case GPPJConstant.GP_PJ_GAME_EVENT_CUT:
+                        gppjGameEventDeal.gameCut(client,data);
+                        break;
+                    case GPPJConstant.GP_PJ_GAME_EVENT_QZ:
+                        gppjGameEventDeal.gameQz(client,data);
+                        break;
+                    case GPPJConstant.GP_PJ_GAME_EVENT_XZ:
+                        gppjGameEventDeal.gameXz(client,data);
+                        break;
+                    case GPPJConstant.GP_PJ_GAME_EVENT_SHOW:
+                        gppjGameEventDeal.gameShow(client,data);
+                        break;
+                    case GPPJConstant.GP_PJ_GAME_EVENT_RECONNECT:
+                        gppjGameEventDeal.reconnectGame(client,data);
+                        break;
+                    case GPPJConstant.GP_PJ_GAME_EVENT_EXIT:
+                        gppjGameEventDeal.exitRoom(client,data);
+                        break;
+                    case GPPJConstant.GP_PJ_GAME_EVENT_CLOSE_ROOM:
+                        gppjGameEventDeal.closeRoom(client,data);
+                        break;
+                    default:
+                        break;
+                }
+                break;
             default:
                 break;
         }
