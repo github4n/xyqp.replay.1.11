@@ -1303,25 +1303,6 @@ public class BaseEventDeal {
      */
     private JSONArray getGameSetting(int gid, String platform, int flag) {
         String key = "game_setting_"+platform+"_"+gid;
-//        switch (gid) {
-//            case CommonConstant.GAME_ID_NN:
-//                key = CacheKeyConstant.GAME_SETTING_NN;
-//                break;
-//            case CommonConstant.GAME_ID_SSS:
-//                key = CacheKeyConstant.GAME_SETTING_SSS;
-//                break;
-//            case CommonConstant.GAME_ID_ZJH:
-//                key = CacheKeyConstant.GAME_SETTING_ZJH;
-//                break;
-//            case CommonConstant.GAME_ID_QZMJ:
-//                key = CacheKeyConstant.GAME_SETTING_QZMJ;
-//                break;
-//            case CommonConstant.GAME_ID_NAMJ:
-//                key = CacheKeyConstant.GAME_SETTING_NAMJ;
-//                break;
-//            default:
-//                break;
-//        }
         JSONArray gameSetting = new JSONArray();
         if (!key.equals("")) {
             try {
