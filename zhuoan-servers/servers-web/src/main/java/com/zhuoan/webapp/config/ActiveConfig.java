@@ -51,6 +51,9 @@ public class ActiveConfig {
     private MessageListener qzmjQueueMessageListener;
 
     @Resource
+    private MessageListener gppjQueueMessageListener;
+
+    @Resource
     private MessageListener daoQueueMessageListener;
 
 
@@ -67,6 +70,11 @@ public class ActiveConfig {
     @Bean
     public Queue qzmjQueueDestination() {
         return new ActiveMQQueue("ZA_GAMES_QZMJ");
+    }
+
+    @Bean
+    public Queue gppjQueueDestination() {
+        return new ActiveMQQueue("ZA_GAMES_GPPJ");
     }
 
     /**
@@ -149,6 +157,11 @@ public class ActiveConfig {
     @Bean
     public DefaultMessageListenerContainer qzmjQueueListenerContainer(ConnectionFactory connectionFactory) {
         return configListenerMQ(connectionFactory, qzmjQueueMessageListener, qzmjQueueDestination());
+    }
+
+    @Bean
+    public DefaultMessageListenerContainer gppjQueueListenerContainer(ConnectionFactory connectionFactory) {
+        return configListenerMQ(connectionFactory, gppjQueueMessageListener, gppjQueueDestination());
     }
 
     /**

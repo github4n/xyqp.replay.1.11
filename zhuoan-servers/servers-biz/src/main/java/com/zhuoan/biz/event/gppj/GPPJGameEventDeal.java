@@ -1248,6 +1248,12 @@ public class GPPJGameEventDeal {
                 obj.put("summaryData", obtainFinalSummaryData(roomNo));
             }
         }
+        int[] myPai = new int[]{0,0};
+        // 看牌抢庄模式有参与玩家传第一张牌
+        if (room.getBankerType()==GPPJConstant.BANKER_TYPE_LOOK&&room.getUserPacketMap().get(account).getPai()!=null) {
+            myPai[0] = GPPJCore.getPaiValue(room.getUserPacketMap().get(account).getPai()[1]);
+        }
+        obj.put("myPai", myPai);
         return obj;
     }
 
@@ -1291,7 +1297,7 @@ public class GPPJGameEventDeal {
                     if (room.getBankerType()==GPPJConstant.BANKER_TYPE_LOOK&&uuid.equals(account)) {
                         String[] myPai = room.getUserPacketMap().get(uuid).getPai();
                         if (myPai!=null&&myPai.length==2) {
-                            obj.put("pai",new int[]{GPPJCore.getPaiValue(myPai[0]),0});
+                            obj.put("pai",new int[]{GPPJCore.getPaiValue(myPai[1]),0});
                         }else {
                             obj.put("pai",new int[]{});
                         }
