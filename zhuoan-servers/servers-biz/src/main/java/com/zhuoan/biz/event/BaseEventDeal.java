@@ -1463,6 +1463,8 @@ public class BaseEventDeal {
                     JSONObject obj = new JSONObject();
                     obj.put("room_no",userGameLog.getString("room_no"));
                     obj.put("createTime",userGameLog.getString("createtime"));
+                    obj.put("glog_id",userGameLog.getString("gamelog_id"));
+                    obj.put("id",userGameLog.getString("id"));
                     JSONArray userResult = new JSONArray();
                     for (int j = 0; j < userGameLog.getJSONArray("result").size(); j++) {
                         JSONObject object = userGameLog.getJSONArray("result").getJSONObject(j);
