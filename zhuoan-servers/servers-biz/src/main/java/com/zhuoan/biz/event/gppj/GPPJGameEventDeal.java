@@ -803,6 +803,12 @@ public class GPPJGameEventDeal {
                 gameResult.add(userResult);
             }
         }
+        if (room.getId()==0) {
+            JSONObject roomInfo = roomBiz.getRoomInfoByRno(room.getRoomNo());
+            if (!Dto.isObjNull(roomInfo)) {
+                room.setId(roomInfo.getLong("id"));
+            }
+        }
         // 战绩信息
         JSONObject gameLogObj = room.obtainGameLog(gameLogResults.toString(), String.valueOf(room.getGameProcess()));
         producerService.sendMessage(daoQueueDestination, new PumpDao(DaoTypeConstant.INSERT_GAME_LOG, gameLogObj));
@@ -896,7 +902,10 @@ public class GPPJGameEventDeal {
             room.getUserPacketMap().get(account).setScore(0);
             room.getUserPacketMap().get(account).setXzTimes(0);
             room.getUserPacketMap().get(account).setBankerTimes(0);
-            room.getUserPacketMap().get(account).setPlayTimes(room.getUserPacketMap().get(account).getPlayTimes()+1);
+            // 没参与的玩家不增加游戏局数
+            if (room.getUserPacketMap().get(account).getStatus()==GPPJConstant.GP_PJ_USER_STATUS_READY) {
+                room.getUserPacketMap().get(account).setPlayTimes(room.getUserPacketMap().get(account).getPlayTimes()+1);
+            }
         }
 
     }
@@ -1039,6 +1048,9 @@ public class GPPJGameEventDeal {
      */
     public void summaryCompare(String roomNo) {
         GPPJGameRoom room = (GPPJGameRoom) RoomManage.gameRoomMap.get(roomNo);
+        if (room.getRoomType()==CommonConstant.ROOM_TYPE_FK) {
+            room.setScore(10);
+        }
         List<String> gameList = new ArrayList<String>();
         for (String account : room.getUserPacketMap().keySet()) {
             // 所有参与的玩家

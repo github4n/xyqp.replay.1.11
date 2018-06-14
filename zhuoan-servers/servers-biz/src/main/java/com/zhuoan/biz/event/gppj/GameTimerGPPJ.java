@@ -96,7 +96,7 @@ public class GameTimerGPPJ {
                         if (gameStatus==GPPJConstant.GP_PJ_GAME_STATUS_CUT) {
                             messageSort = GPPJConstant.GP_PJ_GAME_EVENT_CUT;
                             // 切牌超时默认不切
-                            data.put(GPPJConstant.DATA_KEY_CUT_PLACE,-1);
+                            data.put(GPPJConstant.DATA_KEY_CUT_PLACE,1);
                         }
                         if (gameStatus==GPPJConstant.GP_PJ_GAME_STATUS_QZ) {
                             messageSort = GPPJConstant.GP_PJ_GAME_EVENT_QZ;
