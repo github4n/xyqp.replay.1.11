@@ -1820,25 +1820,25 @@ public class BaseEventDeal {
         int gameId=postData.getInt("gid");
         switch (gameId) {
             case CommonConstant.GAME_ID_NN:
-                CommonConstant.sendMsgEventToAll(room.getAllUUIDList(),postData.toString(),"voiceCallGamePush_NN");
+                CommonConstant.sendMsgEventToAll(room.getAllUUIDList(account),postData.toString(),"voiceCallGamePush_NN");
                 break;
             case CommonConstant.GAME_ID_SSS:
-                CommonConstant.sendMsgEventToAll(room.getAllUUIDList(),postData.toString(),"voiceCallGamePush_SSS");
+                CommonConstant.sendMsgEventToAll(room.getAllUUIDList(account),postData.toString(),"voiceCallGamePush_SSS");
                 break;
             case CommonConstant.GAME_ID_ZJH:
-                CommonConstant.sendMsgEventToAll(room.getAllUUIDList(),postData.toString(),"voiceCallGamePush_ZJH");
+                CommonConstant.sendMsgEventToAll(room.getAllUUIDList(account),postData.toString(),"voiceCallGamePush_ZJH");
                 break;
             case CommonConstant.GAME_ID_QZMJ:
-                CommonConstant.sendMsgEventToAll(room.getAllUUIDList(),postData.toString(),"voiceCallGamePush");
+                CommonConstant.sendMsgEventToAll(room.getAllUUIDList(account),postData.toString(),"voiceCallGamePush");
                 break;
             case CommonConstant.GAME_ID_NAMJ:
-                CommonConstant.sendMsgEventToAll(room.getAllUUIDList(),postData.toString(),"voiceCallGamePush");
+                CommonConstant.sendMsgEventToAll(room.getAllUUIDList(account),postData.toString(),"voiceCallGamePush");
                 break;
             case CommonConstant.GAME_ID_GP_PJ:
-                CommonConstant.sendMsgEventToAll(room.getAllUUIDList(),postData.toString(),"voiceCallGamePush_GPPJ");
+                CommonConstant.sendMsgEventToAll(room.getAllUUIDList(account),postData.toString(),"voiceCallGamePush_GPPJ");
                 break;
             default:
-                CommonConstant.sendMsgEventToAll(room.getAllUUIDList(),postData.toString(),"voiceCallGamePush");
+                CommonConstant.sendMsgEventToAll(room.getAllUUIDList(account),postData.toString(),"voiceCallGamePush");
                 break;
         }
     }
