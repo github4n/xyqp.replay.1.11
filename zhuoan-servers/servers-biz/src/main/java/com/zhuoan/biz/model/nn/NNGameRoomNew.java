@@ -346,17 +346,19 @@ public class NNGameRoomNew extends GameRoom{
         JSONArray baseNums = new JSONArray();
         JSONArray array = JSONArray.fromObject(getBaseNum());
         for (int i = 0; i < array.size(); i++) {
-            int val = array.getJSONObject(i).getInt("val");
-            String name = array.getJSONObject(i).getString("name");
-            JSONObject obj = new JSONObject();
-            obj.put("name", name);
-            obj.put("val", val);
-            if(beiShu>=val||getRoomType()==CommonConstant.ROOM_TYPE_FK){
-                obj.put("isuse", CommonConstant.GLOBAL_YES);
-            }else{
-                obj.put("isuse", CommonConstant.GLOBAL_NO);
+            if (array.getJSONObject(i).containsKey("name")) {
+                int val = array.getJSONObject(i).getInt("val");
+                String name = array.getJSONObject(i).getString("name");
+                JSONObject obj = new JSONObject();
+                obj.put("name", name);
+                obj.put("val", val);
+                if(beiShu>=val||getRoomType()==CommonConstant.ROOM_TYPE_FK){
+                    obj.put("isuse", CommonConstant.GLOBAL_YES);
+                }else{
+                    obj.put("isuse", CommonConstant.GLOBAL_NO);
+                }
+                baseNums.add(obj);
             }
-            baseNums.add(obj);
         }
 
         return JSONArray.fromObject(baseNums);
