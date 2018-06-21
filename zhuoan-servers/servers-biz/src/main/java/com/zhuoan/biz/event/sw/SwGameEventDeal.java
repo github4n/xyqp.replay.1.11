@@ -125,6 +125,8 @@ public class SwGameEventDeal {
         if (treasure<SwConstant.TREASURE_BLACK_ROOK||treasure>SwConstant.TREASURE_RED_KING) {
             return;
         }
+        // 重置结算次数
+        redisService.insertKey("summaryTimes_sw_"+room.getRoomNo(),"0",null);
         // 设置押宝
         room.setTreasure(treasure);
         // 清空下注列表
@@ -179,12 +181,21 @@ public class SwGameEventDeal {
             return;
         }
         JSONObject result = new JSONObject();
+        // 元宝是否足够
         if (value+room.getFee()>room.getPlayerMap().get(account).getScore()) {
             result.put(CommonConstant.RESULT_KEY_CODE,CommonConstant.GLOBAL_NO);
             result.put(CommonConstant.RESULT_KEY_MSG,"余额不足");
             CommonConstant.sendMsgEventToSingle(client,String.valueOf(result),"gameBetPush_SW");
             return;
         }
+        // 单子是否达到上限
+        if (room.getSingleMax()>0&&obtainTotalBetByPlace(roomNo,place)+value>room.getSingleMax()) {
+            result.put(CommonConstant.RESULT_KEY_CODE,CommonConstant.GLOBAL_NO);
+            result.put(CommonConstant.RESULT_KEY_MSG,"已达下注上限");
+            CommonConstant.sendMsgEventToSingle(client,String.valueOf(result),"gameBetPush_SW");
+            return;
+        }
+        // 庄家是否够赔
         if ((obtainTotalBetByPlace(roomNo,place)+value)*room.getRatio()*room.getScore()>room.getPlayerMap().get(room.getBanker()).getScore()) {
             result.put(CommonConstant.RESULT_KEY_CODE,CommonConstant.GLOBAL_NO);
             result.put(CommonConstant.RESULT_KEY_MSG,"已达下注上限");
@@ -346,6 +357,7 @@ public class SwGameEventDeal {
             }
             // 所有人都退出清除房间数据
             if (room.getPlayerMap().size() == 0) {
+                redisService.deleteByKey("summaryTimes_sw_"+room.getRoomNo());
                 roomInfo.put("status",room.getIsClose());
                 roomInfo.put("game_index",room.getGameIndex());
                 RoomManage.gameRoomMap.remove(room.getRoomNo());
@@ -544,6 +556,9 @@ public class SwGameEventDeal {
      */
     public void betFinish(final String roomNo) {
         SwGameRoom room = (SwGameRoom) RoomManage.gameRoomMap.get(roomNo);
+        if (room.getGameStatus()!=SwConstant.SW_GAME_STATUS_BET) {
+            return;
+        }
         room.setGameStatus(SwConstant.SW_GAME_STATUS_SHOW);
         // 是否抽水
         if (room.getFee() > 0) {
@@ -575,10 +590,18 @@ public class SwGameEventDeal {
      * @param roomNo
      */
     public void summary(final String roomNo) {
+        // 防止重复结算
+        String summaryTimesKey = "summaryTimes_sw_"+roomNo;
+        long summaryTimes = redisService.incr(summaryTimesKey,1);
+        if (summaryTimes>1) {
+            return;
+        }
         SwGameRoom room = (SwGameRoom) RoomManage.gameRoomMap.get(roomNo);
+        if (room.getGameStatus()!=SwConstant.SW_GAME_STATUS_SHOW) {
+            return;
+        }
         room.setGameStatus(SwConstant.SW_GAME_STATUS_SUMMARY);
         double bankerSum = 0;
-        JSONArray array = new JSONArray();
         for (String account : room.getPlayerMap().keySet()) {
             // 所有非庄家玩家结算
             if (!account.equals(room.getBanker())) {
@@ -591,11 +614,6 @@ public class SwGameEventDeal {
                 bankerSum -= mySum;
                 // 改变玩家积分
                 changeUserScore(roomNo,account,winBetNum*room.getRatio()*room.getScore());
-                JSONObject obj = new JSONObject();
-                obj.put("id", room.getPlayerMap().get(account).getId());
-                obj.put("total", room.getPlayerMap().get(account).getScore());
-                obj.put("fen", mySum);
-                array.add(obj);
                 // 添加结算记录
                 JSONObject myResult = new JSONObject();
                 myResult.put("account", account);
@@ -605,11 +623,6 @@ public class SwGameEventDeal {
             }
         }
         changeUserScore(roomNo,room.getBanker(),bankerSum);
-        JSONObject obj = new JSONObject();
-        obj.put("id", room.getPlayerMap().get(room.getBanker()).getId());
-        obj.put("total", room.getPlayerMap().get(room.getBanker()).getScore());
-        obj.put("fen", bankerSum);
-        array.add(obj);
         // 添加结算记录
         JSONObject bankerResult = new JSONObject();
         bankerResult.put("account",room.getBanker());
@@ -617,7 +630,7 @@ public class SwGameEventDeal {
         bankerResult.put("score", bankerSum);
         room.getSummaryArray().add(bankerResult);
         // 更新玩家分数
-        producerService.sendMessage(daoQueueDestination, new PumpDao(DaoTypeConstant.UPDATE_SCORE, room.getPumpObject(array)));
+        updateUserScore(roomNo);
         // 添加战绩
         addUserGameLog(roomNo,room.getTreasure());
         // 添加输赢记录
@@ -634,6 +647,29 @@ public class SwGameEventDeal {
                     gameTimerSw.gameOverTime(roomNo, SwConstant.SW_TIME_SUMMARY_ANIMATION);
                 }
             });
+        }
+    }
+
+    /**
+     * 更新玩家分数
+     * @param roomNo
+     */
+    public void updateUserScore(String roomNo) {
+        SwGameRoom room = (SwGameRoom) RoomManage.gameRoomMap.get(roomNo);
+        if (room==null) {
+            return;
+        }
+        JSONArray array = new JSONArray();
+        for (int i = 0; i < room.getSummaryArray().size(); i++) {
+            String account = room.getSummaryArray().getJSONObject(i).getString("account");
+            JSONObject obj = new JSONObject();
+            obj.put("id", room.getPlayerMap().get(account).getId());
+            obj.put("total", room.getPlayerMap().get(account).getScore());
+            obj.put("fen", room.getSummaryArray().getJSONObject(i).getDouble("score"));
+            array.add(obj);
+        }
+        if (array.size()>0) {
+            producerService.sendMessage(daoQueueDestination, new PumpDao(DaoTypeConstant.UPDATE_SCORE, room.getPumpObject(array)));
         }
     }
 
@@ -915,16 +951,22 @@ public class SwGameEventDeal {
         obj.put("di",room.getScore());
         StringBuffer roomInfo = new StringBuffer();
         roomInfo.append(room.getWfType());
+        roomInfo.append(" 1赔");
+        roomInfo.append(room.getRatio());
         roomInfo.append(" ");
         roomInfo.append(room.getRoomNo());
+        roomInfo.append("\n单子下注上限:");
+        if (room.getSingleMax()==0) {
+            roomInfo.append("不限");
+        }else {
+            roomInfo.append(room.getSingleMax());
+        }
         roomInfo.append("\n入场:");
         roomInfo.append((int) room.getEnterScore());
         roomInfo.append(" 离场:");
         roomInfo.append((int) room.getLeaveScore());
         roomInfo.append("\n底注:");
         roomInfo.append((int) room.getScore());
-        roomInfo.append("\n赔率:");
-        roomInfo.append(room.getRatio());
         obj.put("roominfo",String.valueOf(roomInfo));
         obj.put("bankerIndex",obtainBankerIndex(roomNo));
         obj.put("bankerBtn", obtainBankerBtnStatus(roomNo,account));

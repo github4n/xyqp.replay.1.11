@@ -37,6 +37,10 @@ public class SwGameRoom extends GameRoom{
      * 走势图
      */
     private List<Integer> historyResult = new ArrayList<Integer>();
+    /**
+     * 单子上限
+     */
+    private int singleMax = 0;
 
     public JSONArray getBaseNum() {
         return baseNum;
@@ -84,5 +88,13 @@ public class SwGameRoom extends GameRoom{
 
     public void setHistoryResult(List<Integer> historyResult) {
         this.historyResult = historyResult;
+    }
+
+    public int getSingleMax() {
+        return singleMax;
+    }
+
+    public void setSingleMax(int singleMax) {
+        this.singleMax = singleMax;
     }
 }

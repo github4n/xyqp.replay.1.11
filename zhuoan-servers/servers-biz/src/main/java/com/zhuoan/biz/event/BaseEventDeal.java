@@ -1233,6 +1233,9 @@ public class BaseEventDeal {
         }
         // 下注倍数
         JSONObject setting = getGameInfoById(CommonConstant.GAME_ID_SW);
+        if (baseInfo.containsKey("singleMax")) {
+            room.setSingleMax(baseInfo.getInt("singleMax"));
+        }
         if (baseInfo.containsKey("baseNum")) {
             room.setBaseNum(baseInfo.getJSONArray("baseNum"));
         }else {
