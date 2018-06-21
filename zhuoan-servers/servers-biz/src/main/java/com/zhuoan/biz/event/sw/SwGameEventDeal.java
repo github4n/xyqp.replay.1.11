@@ -21,6 +21,7 @@ import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
 import javax.jms.Destination;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -122,7 +123,7 @@ public class SwGameEventDeal {
         }
         // 押宝
         int treasure = postData.getInt(SwConstant.SW_DATA_KEY_TREASURE);
-        if (treasure<SwConstant.TREASURE_BLACK_ROOK||treasure>SwConstant.TREASURE_RED_KING) {
+        if (!obtainBetList().contains(treasure)) {
             return;
         }
         // 重置结算次数
@@ -174,7 +175,7 @@ public class SwGameEventDeal {
         int place = postData.getInt(SwConstant.SW_DATA_KEY_PLACE);
         // 下注金额
         int value = postData.getInt(SwConstant.SW_DATA_KEY_VALUE);
-        if (place<SwConstant.TREASURE_BLACK_ROOK||place>SwConstant.TREASURE_RED_KING) {
+        if (!obtainBetList().contains(place)) {
             return;
         }
         if (value<=0||value>obtainMaxTimes(room.getBaseNum())) {
@@ -882,10 +883,10 @@ public class SwGameEventDeal {
      */
     public JSONArray obtainMyScore(String roomNo, String account) {
         JSONArray array = new JSONArray();
-        for (int i = 1; i <= 12; i++) {
+        for (Integer integer : obtainBetList()) {
             JSONObject obj = new JSONObject();
-            obj.put("place",i);
-            obj.put("score",obtainTotalBetByAccountAndPlace(roomNo,account,i));
+            obj.put("place",integer);
+            obj.put("score",obtainTotalBetByAccountAndPlace(roomNo,account,integer));
             array.add(obj);
         }
         return array;
@@ -898,10 +899,10 @@ public class SwGameEventDeal {
      */
     public JSONArray obtainTotalScore(String roomNo) {
         JSONArray array = new JSONArray();
-        for (int i = 1; i <= 12; i++) {
+        for (Integer integer : obtainBetList()) {
             JSONObject obj = new JSONObject();
-            obj.put("place",i);
-            obj.put("score",obtainTotalBetByPlace(roomNo,i));
+            obj.put("place",integer);
+            obj.put("score",obtainTotalBetByPlace(roomNo,integer));
             array.add(obj);
         }
         return array;
@@ -1180,7 +1181,6 @@ public class SwGameEventDeal {
     public int obtainTotalBetByAccount(String roomNo, String account) {
         int totalBet = 0;
         SwGameRoom room = (SwGameRoom) RoomManage.gameRoomMap.get(roomNo);
-        int index = room.getPlayerMap().get(account).getMyIndex();
         JSONArray betArray = room.getBetArray();
         for (int i = 0; i < betArray.size(); i++) {
             JSONObject betRecord = betArray.getJSONObject(i);
@@ -1200,7 +1200,6 @@ public class SwGameEventDeal {
     public JSONObject obtainLastBetRecord(String roomNo, String account) {
         SwGameRoom room = (SwGameRoom) RoomManage.gameRoomMap.get(roomNo);
         JSONArray betArray = room.getBetArray();
-        int myIndex = room.getPlayerMap().get(account).getMyIndex();
         for (int i = betArray.size() - 1; i >= 0; i--) {
             if (betArray.getJSONObject(i).getString("account").equals(account)) {
                 return betArray.getJSONObject(i);
@@ -1295,4 +1294,26 @@ public class SwGameEventDeal {
                 return null;
         }
     }
+
+    /**
+     * 获取所有可选下注筹码
+     * @return
+     */
+    public List<Integer> obtainBetList() {
+        List<Integer> betList = new ArrayList<Integer>();
+        betList.add(SwConstant.TREASURE_BLACK_ROOK);
+        betList.add(SwConstant.TREASURE_BLACK_KNIGHT);
+        betList.add(SwConstant.TREASURE_BLACK_CANNON);
+        betList.add(SwConstant.TREASURE_BLACK_ELEPHANT);
+        betList.add(SwConstant.TREASURE_BLACK_MANDARIN);
+        betList.add(SwConstant.TREASURE_BLACK_KING);
+        betList.add(SwConstant.TREASURE_RED_ROOK);
+        betList.add(SwConstant.TREASURE_RED_KNIGHT);
+        betList.add(SwConstant.TREASURE_RED_CANNON);
+        betList.add(SwConstant.TREASURE_RED_ELEPHANT);
+        betList.add(SwConstant.TREASURE_RED_MANDARIN);
+        betList.add(SwConstant.TREASURE_RED_KING);
+        return betList;
+    }
+
 }
