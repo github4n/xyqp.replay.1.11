@@ -400,7 +400,7 @@ public class SwGameEventDeal {
             return;
         }
         // 已下过注且非结算阶段
-        if (!Dto.isObjNull(obtainLastBetRecord(roomNo,account))&&room.getGameStatus()!=SwConstant.SW_GAME_STATUS_SUMMARY) {
+        if (room.getGameStatus()==SwConstant.SW_GAME_STATUS_BET) {
             result.put(CommonConstant.RESULT_KEY_CODE,CommonConstant.GLOBAL_NO);
             result.put(CommonConstant.RESULT_KEY_MSG,"当前无法换座");
             CommonConstant.sendMsgEventToSingle(client, String.valueOf(result), "gameChangeSeatPush_SW");
@@ -422,9 +422,11 @@ public class SwGameEventDeal {
         room.getPlayerMap().get(account).setMyIndex(index);
         // 设置座位号
         room.getUserIdList().set(index,room.getPlayerMap().get(account).getId());
-        result.put("myIndex",index);
         result.put("user",obtainPlayerInfo(roomNo,account));
-        CommonConstant.sendMsgEventToAll(room.getAllUUIDList(), String.valueOf(result), "gameChangeSeatPush_SW");
+        for (String uuid : room.getPlayerMap().keySet()) {
+            result.put("myIndex",room.getPlayerMap().get(uuid).getMyIndex());
+            CommonConstant.sendMsgEventToSingle(room.getPlayerMap().get(uuid).getUuid(), String.valueOf(result), "gameChangeSeatPush_SW");
+        }
     }
 
     /**
@@ -596,6 +598,7 @@ public class SwGameEventDeal {
                 array.add(obj);
                 // 添加结算记录
                 JSONObject myResult = new JSONObject();
+                myResult.put("account", account);
                 myResult.put("index", room.getPlayerMap().get(account).getMyIndex());
                 myResult.put("score", mySum);
                 room.getSummaryArray().add(myResult);
@@ -609,6 +612,7 @@ public class SwGameEventDeal {
         array.add(obj);
         // 添加结算记录
         JSONObject bankerResult = new JSONObject();
+        bankerResult.put("account",room.getBanker());
         bankerResult.put("index", room.getPlayerMap().get(room.getBanker()).getMyIndex());
         bankerResult.put("score", bankerSum);
         room.getSummaryArray().add(bankerResult);
@@ -644,8 +648,13 @@ public class SwGameEventDeal {
             if (!Dto.isObjNull(obtainLastBetRecord(roomNo,account))||account.equals(room.getBanker())) {
                 JSONObject obj = new JSONObject();
                 obj.put("treasure",treasure);
-                obj.put("totalBet",obtainTotalBetByAccount(roomNo,account)*room.getScore());
-                obj.put("winBet",obtainTotalBetByAccountAndPlace(roomNo,account,treasure)*room.getScore());
+                if (account.equals(room.getBanker())) {
+                    obj.put("totalBet",obtainTotalBet(roomNo)*room.getScore());
+                    obj.put("winBet",obtainTotalBetByPlace(roomNo,treasure)*room.getScore());
+                }else {
+                    obj.put("totalBet",obtainTotalBetByAccount(roomNo,account)*room.getScore());
+                    obj.put("winBet",obtainTotalBetByAccountAndPlace(roomNo,account,treasure)*room.getScore());
+                }
                 obj.put("sum",obtainPlayerScoreByIndex(roomNo,account));
                 obj.put("id",room.getPlayerMap().get(account).getId());
                 array.add(obj);
@@ -655,6 +664,13 @@ public class SwGameEventDeal {
         JSONObject gameLogObj = room.obtainGameLog(String.valueOf(array), String.valueOf(room.getBetArray()));
         producerService.sendMessage(daoQueueDestination, new PumpDao(DaoTypeConstant.INSERT_GAME_LOG, gameLogObj));
         for (int i = 0; i < array.size(); i++) {
+            JSONArray result = new JSONArray();
+            result.add(new JSONObject().element("player","藏宝人").element("score",room.getPlayerMap().get(room.getBanker()).getName()).element("banker",room.getBanker()));
+            result.add(new JSONObject().element("player","藏宝").element("score",obtainTreasureName(array.getJSONObject(i).getInt("treasure"))));
+            result.add(new JSONObject().element("player","赔率").element("score",room.getRatio()));
+            result.add(new JSONObject().element("player","总注").element("score",array.getJSONObject(i).getDouble("totalBet")));
+            result.add(new JSONObject().element("player","押中").element("score",array.getJSONObject(i).getDouble("winBet")));
+            result.add(new JSONObject().element("player","输赢").element("score",array.getJSONObject(i).getDouble("sum")));
             JSONObject userGameLog = new JSONObject();
             userGameLog.put("gid", room.getGid());
             userGameLog.put("room_id", room.getId());
@@ -662,9 +678,9 @@ public class SwGameEventDeal {
             userGameLog.put("game_index", room.getGameIndex());
             userGameLog.put("user_id", array.getJSONObject(i).getLong("id"));
             userGameLog.put("gamelog_id", gameLogObj.getLong("id"));
-            userGameLog.put("result", array.getJSONObject(i));
+            userGameLog.put("result", result);
             userGameLog.put("createtime", TimeUtil.getNowDate());
-            userGameLog.put("account", array.getJSONObject(i).getLong("sum"));
+            userGameLog.put("account", array.getJSONObject(i).getDouble("sum"));
             userGameLog.put("fee", room.getFee());
             producerService.sendMessage(daoQueueDestination, new PumpDao(DaoTypeConstant.INSERT_USER_GAME_LOG, userGameLog));
         }
@@ -699,6 +715,7 @@ public class SwGameEventDeal {
     public void addBetRecord(String roomNo, String account, int place, int value) {
         SwGameRoom room = (SwGameRoom) RoomManage.gameRoomMap.get(roomNo);
         JSONObject betRecord = new JSONObject();
+        betRecord.put("account",account);
         betRecord.put("index",room.getPlayerMap().get(account).getMyIndex());
         betRecord.put("place",place);
         betRecord.put("value",value);
@@ -713,9 +730,8 @@ public class SwGameEventDeal {
     public void removeBetRecord(String roomNo, String account) {
         SwGameRoom room = (SwGameRoom) RoomManage.gameRoomMap.get(roomNo);
         JSONArray betArray = room.getBetArray();
-        int myIndex = room.getPlayerMap().get(account).getMyIndex();
         for (int i = betArray.size() - 1; i >= 0; i--) {
-            if (betArray.getJSONObject(i).getInt("index")==myIndex) {
+            if (betArray.getJSONObject(i).getString("account").equals(account)) {
                 betArray.remove(i);
                 break;
             }
@@ -875,6 +891,8 @@ public class SwGameEventDeal {
         roomInfo.append((int) room.getLeaveScore());
         roomInfo.append("\n底注:");
         roomInfo.append((int) room.getScore());
+        roomInfo.append("\n赔率:");
+        roomInfo.append(room.getRatio());
         obj.put("roominfo",String.valueOf(roomInfo));
         obj.put("bankerIndex",obtainBankerIndex(roomNo));
         obj.put("bankerBtn", obtainBankerBtnStatus(roomNo,account));
@@ -931,11 +949,10 @@ public class SwGameEventDeal {
      */
     public double obtainPlayerScoreByIndex(String roomNo, String account) {
         SwGameRoom room = (SwGameRoom) RoomManage.gameRoomMap.get(roomNo);
-        int index = room.getPlayerMap().get(account).getMyIndex();
         JSONArray summaryArray = room.getSummaryArray();
         for (int i = 0; i < summaryArray.size(); i++) {
             // 下标相同返回对应的分数
-            if (summaryArray.getJSONObject(i).getInt("index")==index) {
+            if (summaryArray.getJSONObject(i).getString("account").equals(account)) {
                 return summaryArray.getJSONObject(i).getDouble("score");
             }
         }
@@ -1036,11 +1053,10 @@ public class SwGameEventDeal {
     public int obtainTotalBetByAccountAndPlace(String roomNo, String account, int place) {
         int totalBet = 0;
         SwGameRoom room = (SwGameRoom) RoomManage.gameRoomMap.get(roomNo);
-        int index = room.getPlayerMap().get(account).getMyIndex();
         JSONArray betArray = room.getBetArray();
         for (int i = 0; i < betArray.size(); i++) {
             JSONObject betRecord = betArray.getJSONObject(i);
-            if (betRecord.getInt("index")==index&&betRecord.getInt("place")==place) {
+            if (betRecord.getString("account").equals(account)&&betRecord.getInt("place")==place) {
                 totalBet += betRecord.getInt("value");
             }
         }
@@ -1048,7 +1064,7 @@ public class SwGameEventDeal {
     }
 
     /**
-     * 获取单个玩家单子的下注金额
+     * 获取单子的下注金额
      * @param roomNo
      * @param place
      * @return
@@ -1067,6 +1083,21 @@ public class SwGameEventDeal {
     }
 
     /**
+     * 获取总下注金额
+     * @param roomNo
+     * @return
+     */
+    public int obtainTotalBet(String roomNo) {
+        int totalBet = 0;
+        SwGameRoom room = (SwGameRoom) RoomManage.gameRoomMap.get(roomNo);
+        JSONArray betArray = room.getBetArray();
+        for (int i = 0; i < betArray.size(); i++) {
+            totalBet += betArray.getJSONObject(i).getInt("value");
+        }
+        return totalBet;
+    }
+
+    /**
      * 获取单个玩家总计的下注金额
      * @param roomNo
      * @param account
@@ -1079,7 +1110,7 @@ public class SwGameEventDeal {
         JSONArray betArray = room.getBetArray();
         for (int i = 0; i < betArray.size(); i++) {
             JSONObject betRecord = betArray.getJSONObject(i);
-            if (betRecord.getInt("index")==index) {
+            if (betRecord.getString("account").equals(account)) {
                 totalBet += betRecord.getInt("value");
             }
         }
@@ -1097,7 +1128,7 @@ public class SwGameEventDeal {
         JSONArray betArray = room.getBetArray();
         int myIndex = room.getPlayerMap().get(account).getMyIndex();
         for (int i = betArray.size() - 1; i >= 0; i--) {
-            if (betArray.getJSONObject(i).getInt("index")==myIndex) {
+            if (betArray.getJSONObject(i).getString("account").equals(account)) {
                 return betArray.getJSONObject(i);
             }
         }
@@ -1155,4 +1186,39 @@ public class SwGameEventDeal {
         return winArray;
     }
 
+    /**
+     * 获取藏宝名称
+     * @param treasure
+     * @return
+     */
+    public String obtainTreasureName(int treasure) {
+        switch (treasure) {
+            case SwConstant.TREASURE_BLACK_ROOK:
+                return "車";
+            case SwConstant.TREASURE_BLACK_KNIGHT:
+                return "馬";
+            case SwConstant.TREASURE_BLACK_CANNON:
+                return "包";
+            case SwConstant.TREASURE_BLACK_ELEPHANT:
+                return "象";
+            case SwConstant.TREASURE_BLACK_MANDARIN:
+                return "士";
+            case SwConstant.TREASURE_BLACK_KING:
+                return "將";
+            case SwConstant.TREASURE_RED_ROOK:
+                return "俥";
+            case SwConstant.TREASURE_RED_KNIGHT:
+                return "傌";
+            case SwConstant.TREASURE_RED_CANNON:
+                return "炮";
+            case SwConstant.TREASURE_RED_ELEPHANT:
+                return "相";
+            case SwConstant.TREASURE_RED_MANDARIN:
+                return "仕";
+            case SwConstant.TREASURE_RED_KING:
+                return "帥";
+            default:
+                return null;
+        }
+    }
 }
