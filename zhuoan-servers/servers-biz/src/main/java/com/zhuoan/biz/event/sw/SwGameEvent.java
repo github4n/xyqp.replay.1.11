@@ -4,7 +4,6 @@ import com.corundumstudio.socketio.AckRequest;
 import com.corundumstudio.socketio.SocketIOClient;
 import com.corundumstudio.socketio.SocketIOServer;
 import com.corundumstudio.socketio.listener.DataListener;
-import com.zhuoan.biz.model.RoomManage;
 import com.zhuoan.constant.CommonConstant;
 import com.zhuoan.constant.SwConstant;
 import com.zhuoan.queue.Messages;
@@ -118,16 +117,6 @@ public class SwGameEvent {
             @Override
             public void onData(SocketIOClient client, Object data, AckRequest ackSender) {
                 producerService.sendMessage(swQueueDestination, new Messages(client, data, CommonConstant.GAME_ID_SW, SwConstant.SW_GAME_EVENT_GET_ALL_USER));
-            }
-        });
-
-        /**
-         * 玩家列表事件
-         */
-        server.addEventListener("clearAllRoom", Object.class, new DataListener<Object>() {
-            @Override
-            public void onData(SocketIOClient client, Object data, AckRequest ackSender) {
-                RoomManage.gameRoomMap.clear();
             }
         });
 
