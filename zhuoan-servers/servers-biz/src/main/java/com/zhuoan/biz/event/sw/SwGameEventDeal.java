@@ -620,6 +620,8 @@ public class SwGameEventDeal {
         producerService.sendMessage(daoQueueDestination, new PumpDao(DaoTypeConstant.UPDATE_SCORE, room.getPumpObject(array)));
         // 添加战绩
         addUserGameLog(roomNo,room.getTreasure());
+        // 添加输赢记录
+        saveUserDeduction(roomNo);
         // 添加走势图记录
         addHistoryTreasure(roomNo,room.getTreasure());
         // 通知玩家
@@ -633,6 +635,36 @@ public class SwGameEventDeal {
                 }
             });
         }
+    }
+
+    /**
+     * 玩家输赢记录
+     * @param roomNo
+     */
+    public void saveUserDeduction(String roomNo) {
+        SwGameRoom room = (SwGameRoom) RoomManage.gameRoomMap.get(roomNo);
+        if (room==null) {
+            return;
+        }
+        JSONArray userDeductionData = new JSONArray();
+        for (int i = 0; i < room.getSummaryArray().size(); i++) {
+            String account = room.getSummaryArray().getJSONObject(i).getString("account");
+            JSONObject object = new JSONObject();
+            object.put("id", room.getPlayerMap().get(account).getId());
+            object.put("gid", room.getGid());
+            object.put("roomNo", room.getRoomNo());
+            object.put("type", room.getRoomType());
+            object.put("fen", room.getSummaryArray().getJSONObject(i).getDouble("score"));
+            object.put("old", Dto.sub(room.getPlayerMap().get(account).getScore(),object.getDouble("fen")));
+            if (room.getPlayerMap().get(account).getScore()<0) {
+                object.put("new", 0);
+            }else {
+                object.put("new", room.getPlayerMap().get(account).getScore());
+            }
+            userDeductionData.add(object);
+        }
+        // 玩家输赢记录
+        producerService.sendMessage(daoQueueDestination, new PumpDao(DaoTypeConstant.USER_DEDUCTION, new JSONObject().element("user", userDeductionData)));
     }
 
     /**
