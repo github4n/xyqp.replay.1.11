@@ -401,9 +401,6 @@ public class SwGameEventDeal {
         String roomNo = postData.getString(CommonConstant.DATA_KEY_ROOM_NO);
         SwGameRoom room = (SwGameRoom) RoomManage.gameRoomMap.get(roomNo);
         String account = postData.getString(CommonConstant.DATA_KEY_ACCOUNT);
-        if (account.equals(room.getBanker())) {
-            return;
-        }
         JSONObject result = new JSONObject();
         // 庄家无法换坐
         if (account.equals(room.getBanker())) {
@@ -412,7 +409,7 @@ public class SwGameEventDeal {
             CommonConstant.sendMsgEventToSingle(client, String.valueOf(result), "gameChangeSeatPush_SW");
             return;
         }
-        // 已下过注且非结算阶段
+        // 下注阶段无法换坐
         if (room.getGameStatus()==SwConstant.SW_GAME_STATUS_BET) {
             result.put(CommonConstant.RESULT_KEY_CODE,CommonConstant.GLOBAL_NO);
             result.put(CommonConstant.RESULT_KEY_MSG,"当前无法换座");
