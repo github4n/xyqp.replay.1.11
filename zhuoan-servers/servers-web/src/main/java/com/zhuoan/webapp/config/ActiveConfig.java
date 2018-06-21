@@ -54,6 +54,9 @@ public class ActiveConfig {
     private MessageListener gppjQueueMessageListener;
 
     @Resource
+    private MessageListener swQueueMessageListener;
+
+    @Resource
     private MessageListener daoQueueMessageListener;
 
 
@@ -65,16 +68,6 @@ public class ActiveConfig {
     @Bean
     public Queue baseQueueDestination() {
         return new ActiveMQQueue("ZA_GAMES_BASE");
-    }
-
-    @Bean
-    public Queue qzmjQueueDestination() {
-        return new ActiveMQQueue("ZA_GAMES_QZMJ");
-    }
-
-    @Bean
-    public Queue gppjQueueDestination() {
-        return new ActiveMQQueue("ZA_GAMES_GPPJ");
     }
 
     /**
@@ -137,6 +130,36 @@ public class ActiveConfig {
         return new ActiveMQQueue("ZA_GAMES_DAO");
     }
 
+    /**
+     * Qzmj queue destination queue.
+     *
+     * @return the queue
+     */
+    @Bean
+    public Queue qzmjQueueDestination() {
+        return new ActiveMQQueue("ZA_GAMES_QZMJ");
+    }
+
+    /**
+     * Gppj queue destination queue.
+     *
+     * @return the queue
+     */
+    @Bean
+    public Queue gppjQueueDestination() {
+        return new ActiveMQQueue("ZA_GAMES_GPPJ");
+    }
+
+    /**
+     * Sw queue destination queue.
+     *
+     * @return the queue
+     */
+    @Bean
+    public Queue swQueueDestination() {
+        return new ActiveMQQueue("ZA_GAMES_SW");
+    }
+
 
 
 
@@ -152,16 +175,6 @@ public class ActiveConfig {
     @Bean
     public DefaultMessageListenerContainer baseQueueListenerContainer(ConnectionFactory connectionFactory) {
         return configListenerMQ(connectionFactory, baseQueueMessageListener, baseQueueDestination());
-    }
-
-    @Bean
-    public DefaultMessageListenerContainer qzmjQueueListenerContainer(ConnectionFactory connectionFactory) {
-        return configListenerMQ(connectionFactory, qzmjQueueMessageListener, qzmjQueueDestination());
-    }
-
-    @Bean
-    public DefaultMessageListenerContainer gppjQueueListenerContainer(ConnectionFactory connectionFactory) {
-        return configListenerMQ(connectionFactory, gppjQueueMessageListener, gppjQueueDestination());
     }
 
     /**
@@ -228,6 +241,39 @@ public class ActiveConfig {
     @Bean
     public DefaultMessageListenerContainer daoQueueListenerContainer(ConnectionFactory connectionFactory) {
         return configListenerMQ(connectionFactory, daoQueueMessageListener, daoQueueDestination());
+    }
+
+    /**
+     * Dao queue listener container default message listener container.
+     *
+     * @param connectionFactory the connection factory
+     * @return the default message listener container
+     */
+    @Bean
+    public DefaultMessageListenerContainer qzmjQueueListenerContainer(ConnectionFactory connectionFactory) {
+        return configListenerMQ(connectionFactory, qzmjQueueMessageListener, qzmjQueueDestination());
+    }
+
+    /**
+     * Dao queue listener container default message listener container.
+     *
+     * @param connectionFactory the connection factory
+     * @return the default message listener container
+     */
+    @Bean
+    public DefaultMessageListenerContainer gppjQueueListenerContainer(ConnectionFactory connectionFactory) {
+        return configListenerMQ(connectionFactory, gppjQueueMessageListener, gppjQueueDestination());
+    }
+
+    /**
+     * Dao queue listener container default message listener container.
+     *
+     * @param connectionFactory the connection factory
+     * @return the default message listener container
+     */
+    @Bean
+    public DefaultMessageListenerContainer swQueueListenerContainer(ConnectionFactory connectionFactory) {
+        return configListenerMQ(connectionFactory, swQueueMessageListener, swQueueDestination());
     }
 
 

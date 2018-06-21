@@ -151,6 +151,14 @@ public class CommonConstant {
      */
     public static final int GAME_ID_NAMJ = 12;
     /**
+     * 游戏id-水蛙
+     */
+    public static final int GAME_ID_SW = 14;
+    /**
+     * 游戏id-水蛙
+     */
+    public static final int GAME_ID_PDK = 15;
+    /**
      * 房间类型-房卡
      */
     public static final int ROOM_TYPE_FK = 0;

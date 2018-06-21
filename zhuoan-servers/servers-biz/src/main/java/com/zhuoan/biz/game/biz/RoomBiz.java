@@ -3,8 +3,6 @@ package com.zhuoan.biz.game.biz;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 
-import java.util.List;
-
 /**
  * @author huaping.li
  * @Description: 游戏房间操作接口
@@ -93,7 +91,7 @@ public interface RoomBiz {
      * @param minScore
      * @return
      */
-    public List<String> getRobotList(int count,double minScore);
+    public JSONArray getRobotArray(int count,double minScore);
 
     /**
      * 金币场玩家抽水

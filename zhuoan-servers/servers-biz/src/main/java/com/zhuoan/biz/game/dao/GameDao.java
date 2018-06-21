@@ -3,8 +3,6 @@ package com.zhuoan.biz.game.dao;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 
-import java.util.List;
-
 /**
  * @author huaping.li
  * @Description: 底层数据操作接口
@@ -141,7 +139,7 @@ public interface GameDao {
      * @param minScore
      * @return
      */
-    public List<String> getRobotList(int count,double minScore);
+    public JSONArray getRobotArray(int count,double minScore);
 
     /**
      * 金币场玩家抽水

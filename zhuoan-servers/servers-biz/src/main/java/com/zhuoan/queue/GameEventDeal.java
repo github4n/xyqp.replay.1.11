@@ -7,6 +7,7 @@ import com.zhuoan.biz.event.gppj.GPPJGameEventDeal;
 import com.zhuoan.biz.event.nn.NNGameEventDealNew;
 import com.zhuoan.biz.event.qzmj.QZMJGameEventDeal;
 import com.zhuoan.biz.event.sss.SSSGameEventDealNew;
+import com.zhuoan.biz.event.sw.SwGameEventDeal;
 import com.zhuoan.biz.event.zjh.ZJHGameEventDealNew;
 import com.zhuoan.constant.*;
 import com.zhuoan.exception.EventException;
@@ -37,18 +38,28 @@ public class GameEventDeal {
 
     @Resource
     private BaseEventDeal baseEventDeal;
+
     @Resource
     private NNGameEventDealNew nnGameEventDealNew;
+
     @Resource
     private SSSGameEventDealNew sssGameEventDealNew;
+
     @Resource
     private ZJHGameEventDealNew zjhGameEventDealNew;
+
     @Resource
     private BDXGameEventDealNew bdxGameEventDealNew;
+
     @Resource
     private QZMJGameEventDeal qzmjGameEventDeal;
+
     @Resource
     private GPPJGameEventDeal gppjGameEventDeal;
+
+    @Resource
+    private SwGameEventDeal swGameEventDeal;
+
     @Resource
     private SocketIoManagerService socketIoManagerService;
 
@@ -311,6 +322,40 @@ public class GameEventDeal {
                         break;
                     case GPPJConstant.GP_PJ_GAME_EVENT_CLOSE_ROOM:
                         gppjGameEventDeal.closeRoom(client,data);
+                        break;
+                    default:
+                        break;
+                }
+                break;
+            case CommonConstant.GAME_ID_SW:
+                // 水蛙
+                switch (sorts) {
+                    case SwConstant.SW_GAME_EVENT_START_GAME:
+                        swGameEventDeal.gameStart(client,data);
+                        break;
+                    case SwConstant.SW_GAME_EVENT_BET:
+                        swGameEventDeal.gameBet(client,data);
+                        break;
+                    case SwConstant.SW_GAME_EVENT_BE_BANKER:
+                        swGameEventDeal.gameBeBanker(client,data);
+                        break;
+                    case SwConstant.SW_GAME_EVENT_UNDO:
+                        swGameEventDeal.gameUndo(client,data);
+                        break;
+                    case SwConstant.SW_GAME_EVENT_EXIT_ROOM:
+                        swGameEventDeal.exitRoom(client,data);
+                        break;
+                    case SwConstant.SW_GAME_EVENT_CHANGE_SEAT:
+                        swGameEventDeal.gameChangeSeat(client,data);
+                        break;
+                    case SwConstant.SW_GAME_EVENT_RECONNECT:
+                        swGameEventDeal.reconnectGame(client,data);
+                        break;
+                    case SwConstant.SW_GAME_EVENT_GET_HISTORY:
+                        swGameEventDeal.getHistory(client,data);
+                        break;
+                    case SwConstant.SW_GAME_EVENT_GET_ALL_USER:
+                        swGameEventDeal.getAllUser(client,data);
                         break;
                     default:
                         break;

@@ -325,26 +325,15 @@ public class GameDaoImpl implements GameDao {
         return DBUtil.getObjectBySQL(sql, new Object[]{});
     }
 
-    /**
-     * 获取机器人列表
-     *
-     * @param count
-     * @return
-     */
     @Override
-    public List<String> getRobotList(int count,double minScore) {
-
-        List<String> list = new ArrayList<String>();
-        for (int i = 0; i < count; i++) {
-            String sql = "select account from za_users where openid='0' and status=0 and coins>? limit ?,1";
-            JSONObject jsonObject = DBUtil.getObjectBySQL(sql, new Object[]{minScore,i});
-            if (jsonObject!=null) {
-                list.add(jsonObject.getString("account"));
-                sql = "update za_users set status=1 where account=?";
-                DBUtil.executeUpdateBySQL(sql, new Object[]{jsonObject.getString("account")});
-            }
+    public JSONArray getRobotArray(int count,double minScore) {
+        String sql = "select account,uuid from za_users where openid='0' and status=0 and coins>? limit ?,?";
+        JSONArray robotArray = DBUtil.getObjectListBySQL(sql,new Object[]{minScore,0,count});
+        for (int i = 0; i < robotArray.size(); i++) {
+            sql = "update za_users set status=1 where account=?";
+            DBUtil.executeUpdateBySQL(sql, new Object[]{robotArray.getJSONObject(i).getString("account")});
         }
-        return list;
+        return robotArray;
     }
 
     /**

@@ -7,6 +7,7 @@ import com.zhuoan.biz.event.gppj.GPPJGameEventDeal;
 import com.zhuoan.biz.event.nn.NNGameEventDealNew;
 import com.zhuoan.biz.event.qzmj.QZMJGameEventDeal;
 import com.zhuoan.biz.event.sss.SSSGameEventDealNew;
+import com.zhuoan.biz.event.sw.SwGameEventDeal;
 import com.zhuoan.biz.event.zjh.ZJHGameEventDealNew;
 import com.zhuoan.biz.game.biz.GameLogBiz;
 import com.zhuoan.biz.game.biz.PublicBiz;
@@ -25,6 +26,7 @@ import com.zhuoan.biz.model.qzmj.QZMJGameRoom;
 import com.zhuoan.biz.model.qzmj.UserPacketQZMJ;
 import com.zhuoan.biz.model.sss.Player;
 import com.zhuoan.biz.model.sss.SSSGameRoomNew;
+import com.zhuoan.biz.model.sw.SwGameRoom;
 import com.zhuoan.biz.model.zjh.ZJHGameRoomNew;
 import com.zhuoan.biz.robot.RobotEventDeal;
 import com.zhuoan.constant.*;
@@ -90,6 +92,9 @@ public class BaseEventDeal {
 
     @Resource
     private GPPJGameEventDeal gppjGameEventDeal;
+
+    @Resource
+    private SwGameEventDeal swGameEventDeal;
 
     @Resource
     private Destination daoQueueDestination;
@@ -290,43 +295,7 @@ public class BaseEventDeal {
         JSONObject baseInfo = postData.getJSONObject("base_info");
         // 添加房间信息
         String roomNo = randomRoomNo();
-        GameRoom gameRoom;
-        switch (postData.getInt("gid")) {
-            case CommonConstant.GAME_ID_NN:
-                gameRoom = new NNGameRoomNew();
-                createRoomNN((NNGameRoomNew) gameRoom, baseInfo, userInfo.getString("account"));
-                break;
-            case CommonConstant.GAME_ID_SSS:
-                gameRoom = new SSSGameRoomNew();
-                createRoomSSS((SSSGameRoomNew) gameRoom, baseInfo, userInfo.getString("account"));
-                break;
-            case CommonConstant.GAME_ID_ZJH:
-                gameRoom = new ZJHGameRoomNew();
-                createRoomZJH((ZJHGameRoomNew) gameRoom, baseInfo, userInfo.getString("account"));
-                break;
-            case CommonConstant.GAME_ID_BDX:
-                gameRoom = new BDXGameRoomNew();
-                ((BDXGameRoomNew)gameRoom).getUserPacketMap().put(userInfo.getString("account"), new UserPackerBDX());
-                break;
-            case CommonConstant.GAME_ID_QZMJ:
-                gameRoom = new QZMJGameRoom();
-                ((QZMJGameRoom)gameRoom).getUserPacketMap().put(userInfo.getString("account"), new UserPacketQZMJ());
-                createRoomQZMJ((QZMJGameRoom)gameRoom, baseInfo, userInfo.getString("account"));
-                break;
-            case CommonConstant.GAME_ID_NAMJ:
-                gameRoom = new QZMJGameRoom();
-                ((QZMJGameRoom)gameRoom).getUserPacketMap().put(userInfo.getString("account"), new UserPacketQZMJ());
-                createRoomNAMJ((QZMJGameRoom)gameRoom, baseInfo, userInfo.getString("account"));
-                break;
-            case CommonConstant.GAME_ID_GP_PJ:
-                gameRoom = new GPPJGameRoom();
-                ((GPPJGameRoom)gameRoom).getUserPacketMap().put(userInfo.getString("account"), new UserPacketGPPJ());
-                createRoomGPPJ((GPPJGameRoom) gameRoom, baseInfo, userInfo.getString("account"));
-                break;
-            default:
-                gameRoom = new GameRoom();
-                break;
-        }
+        GameRoom gameRoom = createRoomByGameId(postData.getInt("gid"),baseInfo,userInfo);
         // 设置房间属性
         gameRoom.setRoomType(baseInfo.getInt("roomType"));
         gameRoom.setGid(postData.getInt("gid"));
@@ -444,6 +413,7 @@ public class BaseEventDeal {
         }
         // 玩家人数
         gameRoom.setPlayerCount(playerNum);
+        gameRoom.setLastIndex(playerNum);
         // 金币、元宝扣服务费
         if (baseInfo.getInt("roomType") == CommonConstant.ROOM_TYPE_YB) {
 
@@ -507,6 +477,58 @@ public class BaseEventDeal {
     }
 
     /**
+     * 获取房间实体对象
+     * @param gameId
+     * @param baseInfo
+     * @param userInfo
+     * @return
+     */
+    public GameRoom createRoomByGameId(int gameId,JSONObject baseInfo,JSONObject userInfo) {
+        GameRoom gameRoom;
+        switch (gameId) {
+            case CommonConstant.GAME_ID_NN:
+                gameRoom = new NNGameRoomNew();
+                createRoomNN((NNGameRoomNew) gameRoom, baseInfo, userInfo.getString("account"));
+                break;
+            case CommonConstant.GAME_ID_SSS:
+                gameRoom = new SSSGameRoomNew();
+                createRoomSSS((SSSGameRoomNew) gameRoom, baseInfo, userInfo.getString("account"));
+                break;
+            case CommonConstant.GAME_ID_ZJH:
+                gameRoom = new ZJHGameRoomNew();
+                createRoomZJH((ZJHGameRoomNew) gameRoom, baseInfo, userInfo.getString("account"));
+                break;
+            case CommonConstant.GAME_ID_BDX:
+                gameRoom = new BDXGameRoomNew();
+                ((BDXGameRoomNew)gameRoom).getUserPacketMap().put(userInfo.getString("account"), new UserPackerBDX());
+                break;
+            case CommonConstant.GAME_ID_QZMJ:
+                gameRoom = new QZMJGameRoom();
+                ((QZMJGameRoom)gameRoom).getUserPacketMap().put(userInfo.getString("account"), new UserPacketQZMJ());
+                createRoomQZMJ((QZMJGameRoom)gameRoom, baseInfo, userInfo.getString("account"));
+                break;
+            case CommonConstant.GAME_ID_NAMJ:
+                gameRoom = new QZMJGameRoom();
+                ((QZMJGameRoom)gameRoom).getUserPacketMap().put(userInfo.getString("account"), new UserPacketQZMJ());
+                createRoomNAMJ((QZMJGameRoom)gameRoom, baseInfo, userInfo.getString("account"));
+                break;
+            case CommonConstant.GAME_ID_GP_PJ:
+                gameRoom = new GPPJGameRoom();
+                ((GPPJGameRoom)gameRoom).getUserPacketMap().put(userInfo.getString("account"), new UserPacketGPPJ());
+                createRoomGPPJ((GPPJGameRoom) gameRoom, baseInfo, userInfo.getString("account"));
+                break;
+            case CommonConstant.GAME_ID_SW:
+                gameRoom = new SwGameRoom();
+                createRoomSw((SwGameRoom) gameRoom, baseInfo, userInfo.getString("account"));
+                break;
+            default:
+                gameRoom = new GameRoom();
+                break;
+        }
+        return gameRoom;
+    }
+
+    /**
      * 通知玩家
      */
     public void informUser(GameRoom gameRoom,Playerinfo playerinfo,SocketIOClient client) {
@@ -534,6 +556,9 @@ public class BaseEventDeal {
                 break;
             case CommonConstant.GAME_ID_GP_PJ:
                 gppjGameEventDeal.createRoom(client, object);
+                break;
+            case CommonConstant.GAME_ID_SW:
+                swGameEventDeal.createRoom(client, object);
                 break;
             default:
                 break;
@@ -694,11 +719,21 @@ public class BaseEventDeal {
         JSONObject result = new JSONObject();
         int myIndex = -1;
         // 获取当前房间的第一个空位
-        for (int i = 0; i < gameRoom.getUserIdList().size(); i++) {
-            if (gameRoom.getUserIdList().get(i) == 0) {
+        int begin = 0;
+        // 水蛙从1号位开始
+        if (gameRoom.getGid()==CommonConstant.GAME_ID_SW) {
+            begin = 1;
+        }
+        for (int i = begin;i < gameRoom.getUserIdList().size(); i++) {
+            if (gameRoom.getUserIdList().get(i) == 0||gameRoom.getUserIdList().get(i)==userInfo.getLong("id")) {
                 myIndex = i;
                 break;
             }
+        }
+        // 水蛙观战
+        if (gameRoom.getGid()==CommonConstant.GAME_ID_SW&&myIndex==-1) {
+            myIndex = gameRoom.getLastIndex();
+            gameRoom.setLastIndex(myIndex+1);
         }
         // 重连不需要重新获取座位号
         if (postData.containsKey("myIndex")) {
@@ -711,7 +746,9 @@ public class BaseEventDeal {
             return;
         }
         // 设置房间属性
-        gameRoom.getUserIdList().set(myIndex, userInfo.getLong("id"));
+        if (myIndex<gameRoom.getUserIdList().size()) {
+            gameRoom.getUserIdList().set(myIndex, userInfo.getLong("id"));
+        }
         RoomManage.gameRoomMap.put(roomNo, gameRoom);
         // 获取用户信息
         JSONObject obtainPlayerInfoData = new JSONObject();
@@ -744,13 +781,15 @@ public class BaseEventDeal {
             joinData.put("isReconnect", CommonConstant.GLOBAL_YES);
         } else {
             // 更新数据库
-            JSONObject roomInfo = new JSONObject();
-            roomInfo.put("room_no", gameRoom.getRoomNo());
-            roomInfo.put("user_id" + myIndex, playerinfo.getId());
-            roomInfo.put("user_icon" + myIndex, playerinfo.getHeadimg());
-            roomInfo.put("user_name" + myIndex, playerinfo.getName());
-            // 更新房间信息
-            producerService.sendMessage(daoQueueDestination, new PumpDao(DaoTypeConstant.UPDATE_ROOM_INFO, roomInfo));
+            if (myIndex<10) {
+                JSONObject roomInfo = new JSONObject();
+                roomInfo.put("room_no", gameRoom.getRoomNo());
+                roomInfo.put("user_id" + myIndex, playerinfo.getId());
+                roomInfo.put("user_icon" + myIndex, playerinfo.getHeadimg());
+                roomInfo.put("user_name" + myIndex, playerinfo.getName());
+                // 更新房间信息
+                producerService.sendMessage(daoQueueDestination, new PumpDao(DaoTypeConstant.UPDATE_ROOM_INFO, roomInfo));
+            }
             joinData.put("isReconnect", CommonConstant.GLOBAL_NO);
         }
         gameRoom.getPlayerMap().put(playerinfo.getAccount(), playerinfo);
@@ -806,6 +845,9 @@ public class BaseEventDeal {
                     ((GPPJGameRoom) gameRoom).getUserPacketMap().put(userInfo.getString("account"), new UserPacketGPPJ());
                 }
                 gppjGameEventDeal.joinRoom(client, joinData);
+                break;
+            case CommonConstant.GAME_ID_SW:
+                swGameEventDeal.joinRoom(client, joinData);
                 break;
             default:
                 break;
@@ -966,6 +1008,7 @@ public class BaseEventDeal {
             JSONArray array = new JSONArray();
             JSONObject obj = new JSONObject();
             obj.put("val",baseInfo.getDouble("yuanbao"));
+            obj.put("name",baseInfo.getDouble("yuanbao"));
             array.add(obj);
             room.setBaseNum(array.toString());
         }
@@ -1079,7 +1122,7 @@ public class BaseEventDeal {
         JSONObject setting = getGameInfoById(CommonConstant.GAME_ID_GP_PJ);
         // 下注倍数
         if (baseInfo.containsKey("baseNum")) {
-            room.setQzTimes(baseInfo.getJSONArray("baseNum"));
+            room.setBaseNum(baseInfo.getJSONArray("baseNum"));
         }else {
             room.setBaseNum(setting.getJSONArray("xzTimes"));
         }
@@ -1162,6 +1205,39 @@ public class BaseEventDeal {
         // 房主
         room.setOwner(account);
         room.getUserPacketMap().put(account,new UserPacketQZMJ());
+    }
+
+    /**
+     * 设置水蛙房间参数
+     * @param room
+     * @param baseInfo
+     * @param account
+     */
+    public void createRoomSw(SwGameRoom room,JSONObject baseInfo, String account) {
+        room.setWfType("水蛙");
+        // 庄家
+        room.setBanker(account);
+        // 房主
+        room.setOwner(account);
+        // 设置赔率
+        switch (baseInfo.getInt("type")) {
+            case SwConstant.SW_TYPE_TEN:
+                room.setRatio(10);
+                break;
+            case SwConstant.SW_TYPE_TEN_POINT_FIVE:
+                room.setRatio(10.5);
+                break;
+            default:
+                room.setRatio(10);
+                break;
+        }
+        // 下注倍数
+        JSONObject setting = getGameInfoById(CommonConstant.GAME_ID_SW);
+        if (baseInfo.containsKey("baseNum")) {
+            room.setBaseNum(baseInfo.getJSONArray("baseNum"));
+        }else {
+            room.setBaseNum(setting.getJSONArray("xzTimes"));
+        }
     }
 
     /**
@@ -2189,6 +2265,15 @@ public class BaseEventDeal {
                 noBankerNum = baseInfo.getInt("maxPlayer")-1;
             }
             minScore = noBankerNum*maxNum*baseInfo.getDouble("yuanbao")*SSSConstant.SSS_XZ_BASE_NUM;
+        }
+        if (gameId==CommonConstant.GAME_ID_SW) {
+            double ratio = 1;
+            if (baseInfo.getInt("type")==SwConstant.SW_TYPE_TEN) {
+                ratio = 10;
+            }else if (baseInfo.getInt("type")==SwConstant.SW_TYPE_TEN_POINT_FIVE) {
+                ratio = 10.5;
+            }
+            minScore = noBankerNum*3*baseInfo.getDouble("yuanbao")*ratio;
         }
         return minScore;
     }

@@ -18,7 +18,6 @@ import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
 import javax.jms.Destination;
-import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -93,14 +92,15 @@ public class RobotEventDeal {
         // 当前人数
         int playerCount = RoomManage.gameRoomMap.get(roomNo).getPlayerMap().size();
         // 机器人数(随机留出1-3个空座)
-        int robotCount = totalCount - playerCount;
+        int robotCount = totalCount - playerCount - 8;
         double minScore = RoomManage.gameRoomMap.get(roomNo).getEnterScore();
-        List<String> robotLists = roomBiz.getRobotList(robotCount,minScore);
-        for (int i = 0; i < robotCount; i++) {
-            String robotAccount = robotLists.get(i);
+        JSONArray robotArray = roomBiz.getRobotArray(robotCount,minScore);
+        for (int i = 0; i < robotArray.size(); i++) {
+            String robotAccount = robotArray.getJSONObject(i).getString("account");
             JSONObject obj = new JSONObject();
             obj.put(CommonConstant.DATA_KEY_ACCOUNT,robotAccount);
             obj.put(CommonConstant.DATA_KEY_ROOM_NO,roomNo);
+            obj.put("uuid",robotArray.getJSONObject(i).getString("uuid"));
             // 加入房间
             producerService.sendMessage(baseQueueDestination, new Messages(null, obj, CommonConstant.GAME_BASE, CommonConstant.BASE_GAME_EVENT_JOIN_ROOM));
             // 添加机器人列表

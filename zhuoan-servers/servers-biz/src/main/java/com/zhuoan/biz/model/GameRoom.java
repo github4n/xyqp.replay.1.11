@@ -183,6 +183,18 @@ public class GameRoom {
      * 是否解散房间
      */
     private int isClose=-1;
+    /**
+     * 最后一个座位
+     */
+    private int lastIndex;
+
+    public int getLastIndex() {
+        return lastIndex;
+    }
+
+    public void setLastIndex(int lastIndex) {
+        this.lastIndex = lastIndex;
+    }
 
     public int getIsClose() {
         return isClose;

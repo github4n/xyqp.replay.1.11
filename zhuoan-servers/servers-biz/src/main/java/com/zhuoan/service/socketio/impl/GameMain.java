@@ -10,6 +10,7 @@ import com.zhuoan.biz.event.gppj.GPPJGameEvent;
 import com.zhuoan.biz.event.nn.NNGameEvent;
 import com.zhuoan.biz.event.qzmj.QZMJGameEvent;
 import com.zhuoan.biz.event.sss.SSSGameEvent;
+import com.zhuoan.biz.event.sw.SwGameEvent;
 import com.zhuoan.biz.event.zjh.ZJHGameEvent;
 import com.zhuoan.biz.model.RoomManage;
 import com.zhuoan.biz.robot.RobotEventDeal;
@@ -96,6 +97,9 @@ public class GameMain implements SocketIoManagerService {
 
     @Resource
     private GPPJGameEvent gppjGameEvent;
+
+    @Resource
+    private SwGameEvent swGameEvent;
 
     @Resource
     private RobotEventDeal robotEventDeal;
@@ -316,6 +320,9 @@ public class GameMain implements SocketIoManagerService {
 
         /* 骨牌牌九 */
         gppjGameEvent.listenerGPPJGameEvent(server);
+
+        /* 水蛙 */
+        swGameEvent.listenerSwGameEvent(server);
 
     }
 }
