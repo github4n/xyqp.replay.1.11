@@ -531,7 +531,9 @@ public class GameRoom {
     public List<UUID> getAllUUIDList(){
         List<UUID> uuidList = new ArrayList<UUID>();
         for (String account : getPlayerMap().keySet()) {
-            uuidList.add(getPlayerMap().get(account).getUuid());
+            if (getPlayerMap().containsKey(account)&&getPlayerMap().get(account)!=null) {
+                uuidList.add(getPlayerMap().get(account).getUuid());
+            }
         }
         return uuidList;
     }
@@ -544,8 +546,10 @@ public class GameRoom {
     public List<UUID> getAllUUIDList(String uuid){
         List<UUID> uuidList = new ArrayList<UUID>();
         for (String account : getPlayerMap().keySet()) {
-            if (!uuid.equals(account)) {
-                uuidList.add(getPlayerMap().get(account).getUuid());
+            if (getPlayerMap().containsKey(account)&&getPlayerMap().get(account)!=null) {
+                if (!uuid.equals(account)) {
+                    uuidList.add(getPlayerMap().get(account).getUuid());
+                }
             }
         }
         return uuidList;

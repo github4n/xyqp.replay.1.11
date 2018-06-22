@@ -64,28 +64,30 @@ public class GameTimerNiuNiu{
                 gameStatus = NNConstant.NN_GAME_STATUS_XZ;
                 // 通知玩家
                 for (String account : room.getPlayerMap().keySet()) {
-                    JSONObject obj = new JSONObject();
-                    obj.put("gameStatus", room.getGameStatus());
-                    if (room.getGameStatus() > NNConstant.NN_GAME_STATUS_DZ && room.getBankerType() != NNConstant.NN_BANKER_TYPE_TB) {
-                        obj.put("zhuang", room.getPlayerMap().get(room.getBanker()).getMyIndex());
-                        obj.put("qzScore", room.getUserPacketMap().get(room.getBanker()).getQzTimes());
-                    } else {
-                        obj.put("zhuang", -1);
-                        obj.put("qzScore", 0);
-                    }
-                    obj.put("game_index", room.getGameIndex());
-                    obj.put("showTimer", CommonConstant.GLOBAL_YES);
-                    if (room.getTimeLeft() == NNConstant.NN_TIMER_INIT) {
-                        obj.put("showTimer", CommonConstant.GLOBAL_NO);
-                    }
-                    obj.put("timer", room.getTimeLeft());
-                    obj.put("qzTimes", room.getQzTimes(room.getPlayerMap().get(account).getScore()));
-                    obj.put("baseNum", room.getBaseNumTimes(room.getPlayerMap().get(account).getScore()));
-                    obj.put("users", room.getAllPlayer());
-                    obj.put("gameData", room.getGameData(account));
-                    UUID uuid = room.getPlayerMap().get(account).getUuid();
-                    if (uuid != null) {
-                        CommonConstant.sendMsgEventToSingle(uuid, obj.toString(), "changeGameStatusPush_NN");
+                    if (room.getUserPacketMap().containsKey(account)&&room.getUserPacketMap().get(account)!=null) {
+                        JSONObject obj = new JSONObject();
+                        obj.put("gameStatus", room.getGameStatus());
+                        if (room.getGameStatus() > NNConstant.NN_GAME_STATUS_DZ && room.getBankerType() != NNConstant.NN_BANKER_TYPE_TB) {
+                            obj.put("zhuang", room.getPlayerMap().get(room.getBanker()).getMyIndex());
+                            obj.put("qzScore", room.getUserPacketMap().get(room.getBanker()).getQzTimes());
+                        } else {
+                            obj.put("zhuang", -1);
+                            obj.put("qzScore", 0);
+                        }
+                        obj.put("game_index", room.getGameIndex());
+                        obj.put("showTimer", CommonConstant.GLOBAL_YES);
+                        if (room.getTimeLeft() == NNConstant.NN_TIMER_INIT) {
+                            obj.put("showTimer", CommonConstant.GLOBAL_NO);
+                        }
+                        obj.put("timer", room.getTimeLeft());
+                        obj.put("qzTimes", room.getQzTimes(room.getPlayerMap().get(account).getScore()));
+                        obj.put("baseNum", room.getBaseNumTimes(room.getPlayerMap().get(account).getScore()));
+                        obj.put("users", room.getAllPlayer());
+                        obj.put("gameData", room.getGameData(account));
+                        UUID uuid = room.getPlayerMap().get(account).getUuid();
+                        if (uuid != null) {
+                            CommonConstant.sendMsgEventToSingle(uuid, obj.toString(), "changeGameStatusPush_NN");
+                        }
                     }
                 }
                 if (room.isRobot()) {
@@ -140,15 +142,17 @@ public class GameTimerNiuNiu{
                     // 当前阶段所有未完成操作的玩家
                     List<String> autoAccountList = new ArrayList<String>();
                     for (String account : room.getUserPacketMap().keySet()) {
-                        // 除准备阶段以外不需要判断中途加入的玩家
-                        if (gameStatus==NNConstant.NN_GAME_STATUS_READY||room.getUserPacketMap().get(account).getStatus()!= NNConstant.NN_USER_STATUS_INIT) {
-                            if (room.getUserPacketMap().get(account).getStatus()!=userStatus) {
-                                autoAccountList.add(account);
+                        if (room.getUserPacketMap().containsKey(account)&&room.getUserPacketMap().get(account)!=null) {
+                            // 除准备阶段以外不需要判断中途加入的玩家
+                            if (gameStatus==NNConstant.NN_GAME_STATUS_READY||room.getUserPacketMap().get(account).getStatus()!= NNConstant.NN_USER_STATUS_INIT) {
+                                if (room.getUserPacketMap().get(account).getStatus()!=userStatus) {
+                                    autoAccountList.add(account);
+                                }
                             }
-                        }
-                        if (room.getBankerType()==NNConstant.NN_BANKER_TYPE_ZZ&&gameStatus==NNConstant.NN_GAME_STATUS_READY) {
-                            if (autoAccountList.contains(account)&&account.equals(room.getBanker())) {
-                                autoAccountList.remove(account);
+                            if (room.getBankerType()==NNConstant.NN_BANKER_TYPE_ZZ&&gameStatus==NNConstant.NN_GAME_STATUS_READY) {
+                                if (autoAccountList.contains(account)&&account.equals(room.getBanker())) {
+                                    autoAccountList.remove(account);
+                                }
                             }
                         }
                     }
@@ -221,8 +225,10 @@ public class GameTimerNiuNiu{
                     // 当前阶段所有未完成操作的玩家
                     List<String> autoAccountList = new ArrayList<String>();
                     for (String account : room.getUserPacketMap().keySet()) {
-                        if (room.getUserPacketMap().get(account).getIsCloseRoom() == CommonConstant.CLOSE_ROOM_UNSURE) {
-                            autoAccountList.add(account);
+                        if (room.getUserPacketMap().containsKey(account)&&room.getUserPacketMap().get(account)!=null) {
+                            if (room.getUserPacketMap().get(account).getIsCloseRoom() == CommonConstant.CLOSE_ROOM_UNSURE) {
+                                autoAccountList.add(account);
+                            }
                         }
                     }
                     for (String account : autoAccountList) {

@@ -74,15 +74,17 @@ public class GameTimerSSS {
                     // 当前阶段所有未完成操作的玩家
                     List<String> autoAccountList = new ArrayList<String>();
                     for (String account : room.getUserPacketMap().keySet()) {
-                        // 除准备阶段以外不需要判断中途加入的玩家
-                        if (gameStatus==SSSConstant.SSS_GAME_STATUS_READY||room.getUserPacketMap().get(account).getStatus()!=SSSConstant.SSS_USER_STATUS_INIT) {
-                            if (room.getUserPacketMap().get(account).getStatus()!=userStatus) {
-                                autoAccountList.add(account);
+                        if (room.getUserPacketMap().containsKey(account)&&room.getUserPacketMap().get(account)!=null) {
+                            // 除准备阶段以外不需要判断中途加入的玩家
+                            if (gameStatus==SSSConstant.SSS_GAME_STATUS_READY||room.getUserPacketMap().get(account).getStatus()!=SSSConstant.SSS_USER_STATUS_INIT) {
+                                if (room.getUserPacketMap().get(account).getStatus()!=userStatus) {
+                                    autoAccountList.add(account);
+                                }
                             }
-                        }
-                        if (room.getBankerType() == SSSConstant.SSS_BANKER_TYPE_ZZ&&gameStatus==SSSConstant.SSS_GAME_STATUS_READY) {
-                            if (autoAccountList.contains(account)&&account.equals(room.getBanker())) {
-                                autoAccountList.remove(account);
+                            if (room.getBankerType() == SSSConstant.SSS_BANKER_TYPE_ZZ&&gameStatus==SSSConstant.SSS_GAME_STATUS_READY) {
+                                if (autoAccountList.contains(account)&&account.equals(room.getBanker())) {
+                                    autoAccountList.remove(account);
+                                }
                             }
                         }
                     }
@@ -147,8 +149,10 @@ public class GameTimerSSS {
                     // 当前阶段所有未完成操作的玩家
                     List<String> autoAccountList = new ArrayList<String>();
                     for (String account : room.getUserPacketMap().keySet()) {
-                        if (room.getUserPacketMap().get(account).getIsCloseRoom() == CommonConstant.CLOSE_ROOM_UNSURE) {
-                            autoAccountList.add(account);
+                        if (room.getUserPacketMap().containsKey(account)&&room.getUserPacketMap().get(account)!=null) {
+                            if (room.getUserPacketMap().get(account).getIsCloseRoom() == CommonConstant.CLOSE_ROOM_UNSURE) {
+                                autoAccountList.add(account);
+                            }
                         }
                     }
                     for (String account : autoAccountList) {

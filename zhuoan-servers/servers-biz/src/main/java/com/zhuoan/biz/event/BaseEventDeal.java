@@ -288,8 +288,10 @@ public class BaseEventDeal {
      */
     public void createRoomBase(SocketIOClient client, JSONObject postData, JSONObject userInfo) {
         for (String roomNum : RoomManage.gameRoomMap.keySet()) {
-            if (RoomManage.gameRoomMap.get(roomNum).getPlayerMap().containsKey(userInfo.getString("account"))) {
-                return;
+            if (RoomManage.gameRoomMap.containsKey(roomNum)&&RoomManage.gameRoomMap.get(roomNum)!=null) {
+                if (RoomManage.gameRoomMap.get(roomNum).getPlayerMap().containsKey(userInfo.getString("account"))) {
+                    return;
+                }
             }
         }
         JSONObject baseInfo = postData.getJSONObject("base_info");
@@ -452,7 +454,11 @@ public class BaseEventDeal {
         JSONObject obtainPlayerInfoData = new JSONObject();
         obtainPlayerInfoData.put("userInfo", userInfo);
         obtainPlayerInfoData.put("myIndex", 0);
-        obtainPlayerInfoData.put("uuid", client.getSessionId().toString());
+        if (client!=null) {
+            obtainPlayerInfoData.put("uuid", String.valueOf(client.getSessionId()));
+        }else {
+            obtainPlayerInfoData.put("uuid", String.valueOf(UUID.randomUUID()));
+        }
         obtainPlayerInfoData.put("room_type", gameRoom.getRoomType());
         if (postData.containsKey("location")) {
             obtainPlayerInfoData.put("location", postData.getString("location"));
@@ -711,8 +717,10 @@ public class BaseEventDeal {
     public void joinRoomBase(SocketIOClient client, JSONObject postData, JSONObject userInfo) {
         String roomNo = postData.getString(CommonConstant.DATA_KEY_ROOM_NO);
         for (String roomNum : RoomManage.gameRoomMap.keySet()) {
-            if (!roomNum.equals(roomNo)&&RoomManage.gameRoomMap.get(roomNum).getPlayerMap().containsKey(userInfo.getString("account"))) {
-                return;
+            if (RoomManage.gameRoomMap.containsKey(roomNum)&&RoomManage.gameRoomMap.get(roomNum)!=null) {
+                if (!roomNum.equals(roomNo)&&RoomManage.gameRoomMap.get(roomNum).getPlayerMap().containsKey(userInfo.getString("account"))) {
+                    return;
+                }
             }
         }
         GameRoom gameRoom = RoomManage.gameRoomMap.get(roomNo);
@@ -1448,12 +1456,14 @@ public class BaseEventDeal {
             String account = postData.getString("account");
             // 遍历房间列表
             for (String roomNo : RoomManage.gameRoomMap.keySet()) {
-                GameRoom gameRoom = RoomManage.gameRoomMap.get(roomNo);
-                if (!Dto.stringIsNULL(account) && gameRoom.getPlayerMap().containsKey(account) && gameRoom.getPlayerMap().get(account) != null) {
-                    postData.put(CommonConstant.DATA_KEY_ROOM_NO, gameRoom.getRoomNo());
-                    postData.put("myIndex", gameRoom.getPlayerMap().get(account).getMyIndex());
-                    joinRoomBase(client, postData);
-                    return;
+                if (RoomManage.gameRoomMap.containsKey(roomNo)&&RoomManage.gameRoomMap.get(roomNo)!=null) {
+                    GameRoom gameRoom = RoomManage.gameRoomMap.get(roomNo);
+                    if (!Dto.stringIsNULL(account) && gameRoom.getPlayerMap().containsKey(account) && gameRoom.getPlayerMap().get(account) != null) {
+                        postData.put(CommonConstant.DATA_KEY_ROOM_NO, gameRoom.getRoomNo());
+                        postData.put("myIndex", gameRoom.getPlayerMap().get(account).getMyIndex());
+                        joinRoomBase(client, postData);
+                        return;
+                    }
                 }
             }
             JSONObject result = new JSONObject();
@@ -1500,19 +1510,21 @@ public class BaseEventDeal {
         }
         JSONArray allRoom = new JSONArray();
         for (String roomNo : RoomManage.gameRoomMap.keySet()) {
-            if (RoomManage.gameRoomMap.get(roomNo).getGid()!=CommonConstant.GAME_ID_BDX&&
-                RoomManage.gameRoomMap.get(roomNo).getGid()==gameId&&RoomManage.gameRoomMap.get(roomNo).isOpen()) {
-                GameRoom gameRoom = RoomManage.gameRoomMap.get(roomNo);
-                JSONObject obj = new JSONObject();
-                obj.put("room_no", gameRoom.getRoomNo());
-                obj.put("gid", gameId);
-                obj.put("base_info", gameRoom.getRoomInfo());
-                obj.put("fytype", gameRoom.getWfType());
-                obj.put("iszs", 0);
-                obj.put("player", gameRoom.getPlayerCount());
-                obj.put("renshu", gameRoom.getPlayerMap().size());
-                if (type==0||(type==1&&gameRoom.getPlayerMap().size()<gameRoom.getPlayerCount())) {
-                    allRoom.add(obj);
+            if (RoomManage.gameRoomMap.containsKey(roomNo)&&RoomManage.gameRoomMap.get(roomNo)!=null) {
+                if (RoomManage.gameRoomMap.get(roomNo).getGid()!=CommonConstant.GAME_ID_BDX&&
+                    RoomManage.gameRoomMap.get(roomNo).getGid()==gameId&&RoomManage.gameRoomMap.get(roomNo).isOpen()) {
+                    GameRoom gameRoom = RoomManage.gameRoomMap.get(roomNo);
+                    JSONObject obj = new JSONObject();
+                    obj.put("room_no", gameRoom.getRoomNo());
+                    obj.put("gid", gameId);
+                    obj.put("base_info", gameRoom.getRoomInfo());
+                    obj.put("fytype", gameRoom.getWfType());
+                    obj.put("iszs", 0);
+                    obj.put("player", gameRoom.getPlayerCount());
+                    obj.put("renshu", gameRoom.getPlayerMap().size());
+                    if (type==0||(type==1&&gameRoom.getPlayerMap().size()<gameRoom.getPlayerCount())) {
+                        allRoom.add(obj);
+                    }
                 }
             }
         }
@@ -1649,7 +1661,9 @@ public class BaseEventDeal {
                         case CommonConstant.NOTICE_TYPE_GAME:
                             BaseEventDeal.noticeContentGame = content;
                             for (String roomNo : RoomManage.gameRoomMap.keySet()) {
-                                sendNoticeToPlayerByRoomNo(roomNo, content, type);
+                                if (RoomManage.gameRoomMap.containsKey(roomNo)&&RoomManage.gameRoomMap.get(roomNo)!=null) {
+                                    sendNoticeToPlayerByRoomNo(roomNo, content, type);
+                                }
                             }
                             break;
                         default:
@@ -2012,10 +2026,12 @@ public class BaseEventDeal {
         }
         List<String> roomNoList = new ArrayList<String>();
         for (String roomNo : RoomManage.gameRoomMap.keySet()) {
-            GameRoom room = RoomManage.gameRoomMap.get(roomNo);
-            if (room.getRoomType()==CommonConstant.ROOM_TYPE_JB&&room.getGid()==gameId&&room.getScore()==option.getDouble("di")&&
-                !room.getPlayerMap().containsKey(account)&&room.getPlayerMap().size()<room.getPlayerCount()) {
-                roomNoList.add(roomNo);
+            if (RoomManage.gameRoomMap.containsKey(roomNo)&&RoomManage.gameRoomMap.get(roomNo)!=null) {
+                GameRoom room = RoomManage.gameRoomMap.get(roomNo);
+                if (room.getRoomType()==CommonConstant.ROOM_TYPE_JB&&room.getGid()==gameId&&room.getScore()==option.getDouble("di")&&
+                    !room.getPlayerMap().containsKey(account)&&room.getPlayerMap().size()<room.getPlayerCount()) {
+                    roomNoList.add(roomNo);
+                }
             }
         }
         if (roomNoList.size()==0) {
@@ -2292,10 +2308,12 @@ public class BaseEventDeal {
         int roomCount = 0;
         int playerCount = 0;
         for (String roomNo : RoomManage.gameRoomMap.keySet()) {
-            GameRoom room = RoomManage.gameRoomMap.get(roomNo);
-            if (room.getGid()==gameId) {
-                roomCount ++;
-                playerCount += room.getPlayerMap().size();
+            if (RoomManage.gameRoomMap.containsKey(roomNo)&&RoomManage.gameRoomMap.get(roomNo)!=null) {
+                GameRoom room = RoomManage.gameRoomMap.get(roomNo);
+                if (room.getGid()==gameId) {
+                    roomCount ++;
+                    playerCount += room.getPlayerMap().size();
+                }
             }
         }
         JSONObject result = new JSONObject();
@@ -2343,12 +2361,14 @@ public class BaseEventDeal {
             return;
         }
         for (String roomNo : RoomManage.gameRoomMap.keySet()) {
-            GameRoom room = RoomManage.gameRoomMap.get(roomNo);
-            if (room.getRoomType()==CommonConstant.ROOM_TYPE_COMPETITIVE&&room.getGid()==gameId&&
-                !room.getPlayerMap().containsKey(account)&&room.getPlayerMap().size()<room.getPlayerCount()) {
-                postData.put("room_no",roomNo);
-                joinRoomBase(client,postData);
-                return;
+            if (RoomManage.gameRoomMap.containsKey(roomNo)&&RoomManage.gameRoomMap.get(roomNo)!=null) {
+                GameRoom room = RoomManage.gameRoomMap.get(roomNo);
+                if (room.getRoomType()==CommonConstant.ROOM_TYPE_COMPETITIVE&&room.getGid()==gameId&&
+                    !room.getPlayerMap().containsKey(account)&&room.getPlayerMap().size()<room.getPlayerCount()) {
+                    postData.put("room_no",roomNo);
+                    joinRoomBase(client,postData);
+                    return;
+                }
             }
         }
         JSONObject object = new JSONObject();
@@ -2373,10 +2393,12 @@ public class BaseEventDeal {
         result.put("index",gameRoom.getPlayerMap().get(account).getMyIndex());
         result.put("ipStatus",CommonConstant.GLOBAL_YES);
         for (String uuid : gameRoom.getPlayerMap().keySet()) {
-            if (!uuid.equals(account)) {
-                if (gameRoom.getPlayerMap().get(account).getIp().equals(gameRoom.getPlayerMap().get(uuid).getIp())) {
-                    result.put("ipStatus",CommonConstant.GLOBAL_NO);
-                    break;
+            if (gameRoom.getPlayerMap().containsKey(uuid)&&gameRoom.getPlayerMap().get(uuid)!=null) {
+                if (!uuid.equals(account)) {
+                    if (gameRoom.getPlayerMap().get(account).getIp().equals(gameRoom.getPlayerMap().get(uuid).getIp())) {
+                        result.put("ipStatus",CommonConstant.GLOBAL_NO);
+                        break;
+                    }
                 }
             }
         }

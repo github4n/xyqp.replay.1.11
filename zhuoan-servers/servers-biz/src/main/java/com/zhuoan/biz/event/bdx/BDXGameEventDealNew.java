@@ -177,13 +177,15 @@ public class BDXGameEventDealNew {
         summary(room,account);
         JSONArray gameData = new JSONArray();
         for (String uuid : room.getUserPacketMap().keySet()) {
-            JSONObject userData = new JSONObject();
-            userData.put("scoreLeft",room.getPlayerMap().get(uuid).getScore());
-            userData.put("index",room.getPlayerMap().get(uuid).getMyIndex());
-            userData.put("sum",room.getUserPacketMap().get(uuid).getScore());
-            userData.put("pai",room.getUserPacketMap().get(uuid).getPai());
-            userData.put("iswin",room.getUserPacketMap().get(uuid).getIsWin());
-            gameData.add(userData);
+            if (room.getUserPacketMap().containsKey(uuid)&&room.getUserPacketMap().get(uuid)!=null) {
+                JSONObject userData = new JSONObject();
+                userData.put("scoreLeft",room.getPlayerMap().get(uuid).getScore());
+                userData.put("index",room.getPlayerMap().get(uuid).getMyIndex());
+                userData.put("sum",room.getUserPacketMap().get(uuid).getScore());
+                userData.put("pai",room.getUserPacketMap().get(uuid).getPai());
+                userData.put("iswin",room.getUserPacketMap().get(uuid).getIsWin());
+                gameData.add(userData);
+            }
         }
         result.put(CommonConstant.RESULT_KEY_CODE,CommonConstant.GLOBAL_YES);
         result.put("gameData",gameData);
@@ -266,18 +268,20 @@ public class BDXGameEventDealNew {
         double sum = room.getUserPacketMap().get(giveUpAccount).getValue();
         List<Integer> pai = obtainPai();
         for (String account : room.getUserPacketMap().keySet()) {
-            room.getUserPacketMap().get(account).setStatus(BDXConstant.BDX_USER_STATUS_INIT);
-            double oldScore = room.getPlayerMap().get(account).getScore();
-            if (account.equals(giveUpAccount)) {
-                room.getUserPacketMap().get(account).setScore(-sum);
-                room.getUserPacketMap().get(account).setPai(new int[]{pai.get(1)});
-                room.getUserPacketMap().get(account).setIsWin(CommonConstant.GLOBAL_NO);
-                room.getPlayerMap().get(account).setScore(Dto.sub(oldScore,sum));
-            }else {
-                room.getUserPacketMap().get(account).setScore(sum);
-                room.getUserPacketMap().get(account).setPai(new int[]{pai.get(0)});
-                room.getUserPacketMap().get(account).setIsWin(CommonConstant.GLOBAL_YES);
-                room.getPlayerMap().get(account).setScore(Dto.add(oldScore,sum));
+            if (room.getUserPacketMap().containsKey(account)&&room.getUserPacketMap().get(account)!=null) {
+                room.getUserPacketMap().get(account).setStatus(BDXConstant.BDX_USER_STATUS_INIT);
+                double oldScore = room.getPlayerMap().get(account).getScore();
+                if (account.equals(giveUpAccount)) {
+                    room.getUserPacketMap().get(account).setScore(-sum);
+                    room.getUserPacketMap().get(account).setPai(new int[]{pai.get(1)});
+                    room.getUserPacketMap().get(account).setIsWin(CommonConstant.GLOBAL_NO);
+                    room.getPlayerMap().get(account).setScore(Dto.sub(oldScore,sum));
+                }else {
+                    room.getUserPacketMap().get(account).setScore(sum);
+                    room.getUserPacketMap().get(account).setPai(new int[]{pai.get(0)});
+                    room.getUserPacketMap().get(account).setIsWin(CommonConstant.GLOBAL_YES);
+                    room.getPlayerMap().get(account).setScore(Dto.add(oldScore,sum));
+                }
             }
         }
         JSONArray array = new JSONArray();
@@ -287,52 +291,54 @@ public class BDXGameEventDealNew {
         // 存放游戏记录
         JSONArray gameProcessJS = new JSONArray();
         for (String account : room.getUserPacketMap().keySet()) {
-            // 有参与的玩家
-            JSONObject userJS = new JSONObject();
-            userJS.put("account", account);
-            userJS.put("name", room.getPlayerMap().get(account).getName());
-            userJS.put("sum", room.getUserPacketMap().get(account).getScore());
-            gameProcessJS.add(userJS);
-            // 元宝输赢情况
-            JSONObject obj = new JSONObject();
-            obj.put("total", room.getPlayerMap().get(account).getScore());
-            obj.put("fen", room.getUserPacketMap().get(account).getScore());
-            obj.put("id", room.getPlayerMap().get(account).getId());
-            array.add(obj);
-            // 用户游戏记录
-            JSONObject object = new JSONObject();
-            object.put("id", room.getPlayerMap().get(account).getId());
-            object.put("gid", room.getGid());
-            object.put("roomNo", room.getRoomNo());
-            object.put("type", room.getRoomType());
-            object.put("fen", room.getUserPacketMap().get(account).getScore());
-            object.put("old", Dto.sub(room.getPlayerMap().get(account).getScore(),room.getUserPacketMap().get(account).getScore()));
-            object.put("new", room.getPlayerMap().get(account).getScore());
-            userDeductionData.add(object);
-            // 战绩记录
-            JSONObject gameLogResult = new JSONObject();
-            gameLogResult.put("account", account);
-            gameLogResult.put("name", room.getPlayerMap().get(account).getName());
-            gameLogResult.put("headimg", room.getPlayerMap().get(account).getHeadimg());
-            gameLogResult.put("myIndex", room.getPlayerMap().get(account).getMyIndex());
-            gameLogResult.put("score", room.getUserPacketMap().get(account).getScore());
-            gameLogResult.put("totalScore", room.getPlayerMap().get(account).getScore());
-            gameLogResult.put("win", CommonConstant.GLOBAL_YES);
-            if (room.getUserPacketMap().get(account).getStatus() < 0) {
-                gameLogResult.put("win", CommonConstant.GLOBAL_NO);
+            if (room.getUserPacketMap().containsKey(account)&&room.getUserPacketMap().get(account)!=null) {
+                // 有参与的玩家
+                JSONObject userJS = new JSONObject();
+                userJS.put("account", account);
+                userJS.put("name", room.getPlayerMap().get(account).getName());
+                userJS.put("sum", room.getUserPacketMap().get(account).getScore());
+                gameProcessJS.add(userJS);
+                // 元宝输赢情况
+                JSONObject obj = new JSONObject();
+                obj.put("total", room.getPlayerMap().get(account).getScore());
+                obj.put("fen", room.getUserPacketMap().get(account).getScore());
+                obj.put("id", room.getPlayerMap().get(account).getId());
+                array.add(obj);
+                // 用户游戏记录
+                JSONObject object = new JSONObject();
+                object.put("id", room.getPlayerMap().get(account).getId());
+                object.put("gid", room.getGid());
+                object.put("roomNo", room.getRoomNo());
+                object.put("type", room.getRoomType());
+                object.put("fen", room.getUserPacketMap().get(account).getScore());
+                object.put("old", Dto.sub(room.getPlayerMap().get(account).getScore(),room.getUserPacketMap().get(account).getScore()));
+                object.put("new", room.getPlayerMap().get(account).getScore());
+                userDeductionData.add(object);
+                // 战绩记录
+                JSONObject gameLogResult = new JSONObject();
+                gameLogResult.put("account", account);
+                gameLogResult.put("name", room.getPlayerMap().get(account).getName());
+                gameLogResult.put("headimg", room.getPlayerMap().get(account).getHeadimg());
+                gameLogResult.put("myIndex", room.getPlayerMap().get(account).getMyIndex());
+                gameLogResult.put("score", room.getUserPacketMap().get(account).getScore());
+                gameLogResult.put("totalScore", room.getPlayerMap().get(account).getScore());
+                gameLogResult.put("win", CommonConstant.GLOBAL_YES);
+                if (room.getUserPacketMap().get(account).getStatus() < 0) {
+                    gameLogResult.put("win", CommonConstant.GLOBAL_NO);
+                }
+                gameLogResults.add(gameLogResult);
+                // 用户战绩
+                JSONObject userResult = new JSONObject();
+                userResult.put("zhuang", room.getBanker());
+                userResult.put("isWinner", CommonConstant.GLOBAL_NO);
+                if (room.getUserPacketMap().get(account).getScore() > 0) {
+                    userResult.put("isWinner", CommonConstant.GLOBAL_YES);
+                }
+                userResult.put("score", room.getUserPacketMap().get(account).getScore());
+                userResult.put("totalScore", room.getPlayerMap().get(account).getScore());
+                userResult.put("player", room.getPlayerMap().get(account).getName());
+                gameResult.add(userResult);
             }
-            gameLogResults.add(gameLogResult);
-            // 用户战绩
-            JSONObject userResult = new JSONObject();
-            userResult.put("zhuang", room.getBanker());
-            userResult.put("isWinner", CommonConstant.GLOBAL_NO);
-            if (room.getUserPacketMap().get(account).getScore() > 0) {
-                userResult.put("isWinner", CommonConstant.GLOBAL_YES);
-            }
-            userResult.put("score", room.getUserPacketMap().get(account).getScore());
-            userResult.put("totalScore", room.getPlayerMap().get(account).getScore());
-            userResult.put("player", room.getPlayerMap().get(account).getName());
-            gameResult.add(userResult);
         }
         room.getGameProcess().put("JieSuan", gameProcessJS);
         if (room.getId()==0) {

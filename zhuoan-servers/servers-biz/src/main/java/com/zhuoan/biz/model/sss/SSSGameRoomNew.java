@@ -214,30 +214,32 @@ public class SSSGameRoomNew extends GameRoom{
         if (getGameStatus()>SSSConstant.SSS_GAME_STATUS_GAME_EVENT) {
             // 获取所有参与玩家得分情况
             for (String account : getUserPacketMap().keySet()) {
-                if (getUserPacketMap().get(account).getStatus() != SSSConstant.SSS_USER_STATUS_INIT) {
-                    JSONObject userData = new JSONObject();
-                    userData.put("index",getPlayerMap().get(account).getMyIndex());
-                    userData.put("paiType",getUserPacketMap().get(account).getPaiType());
-                    userData.put("havema",0);
-                    JSONArray userResult = new JSONArray();
-                    userResult.add(getUserPacketMap().get(account).getHeadResult());
-                    userResult.add(getUserPacketMap().get(account).getMidResult());
-                    userResult.add(getUserPacketMap().get(account).getFootResult());
-                    userData.put("result",userResult);
-                    userData.put("sum",getUserPacketMap().get(account).getScore());
-                    userData.put("account",account);
-                    if (getGameStatus()==SSSConstant.SSS_GAME_STATUS_COMPARE && getRoomType()!=CommonConstant.ROOM_TYPE_FK
-                        && getRoomType()!=CommonConstant.ROOM_TYPE_COMPETITIVE) {
-                        double scoreLeft = Dto.add(getPlayerMap().get(account).getScore(),getUserPacketMap().get(account).getScore());
-                        if (scoreLeft<0) {
-                            scoreLeft = 0;
+                if (getUserPacketMap().containsKey(account)&&getUserPacketMap().get(account)!=null) {
+                    if (getUserPacketMap().get(account).getStatus() != SSSConstant.SSS_USER_STATUS_INIT) {
+                        JSONObject userData = new JSONObject();
+                        userData.put("index",getPlayerMap().get(account).getMyIndex());
+                        userData.put("paiType",getUserPacketMap().get(account).getPaiType());
+                        userData.put("havema",0);
+                        JSONArray userResult = new JSONArray();
+                        userResult.add(getUserPacketMap().get(account).getHeadResult());
+                        userResult.add(getUserPacketMap().get(account).getMidResult());
+                        userResult.add(getUserPacketMap().get(account).getFootResult());
+                        userData.put("result",userResult);
+                        userData.put("sum",getUserPacketMap().get(account).getScore());
+                        userData.put("account",account);
+                        if (getGameStatus()==SSSConstant.SSS_GAME_STATUS_COMPARE && getRoomType()!=CommonConstant.ROOM_TYPE_FK
+                            && getRoomType()!=CommonConstant.ROOM_TYPE_COMPETITIVE) {
+                            double scoreLeft = Dto.add(getPlayerMap().get(account).getScore(),getUserPacketMap().get(account).getScore());
+                            if (scoreLeft<0) {
+                                scoreLeft = 0;
+                            }
+                            userData.put("scoreLeft",scoreLeft);
+                        }else {
+                            userData.put("scoreLeft",getPlayerMap().get(account).getScore());
                         }
-                        userData.put("scoreLeft",scoreLeft);
-                    }else {
-                        userData.put("scoreLeft",getPlayerMap().get(account).getScore());
+                        userData.put("isQld",getUserPacketMap().get(account).getSwat());
+                        data.add(userData);
                     }
-                    userData.put("isQld",getUserPacketMap().get(account).getSwat());
-                    data.add(userData);
                 }
             }
         }
@@ -259,11 +261,13 @@ public class SSSGameRoomNew extends GameRoom{
             Map<String,Double> footMap = new HashMap<String, Double>();
             // 获取所有参与玩家得分情况
             for (String account : getUserPacketMap().keySet()) {
-                if (getUserPacketMap().get(account).getStatus()!=SSSConstant.SSS_USER_STATUS_INIT) {
-                    if (getUserPacketMap().get(account).getPaiType()==0) {
-                        headMap.put(account,getUserPacketMap().get(account).getHeadResult().getDouble("score"));
-                        midMap.put(account,getUserPacketMap().get(account).getMidResult().getDouble("score"));
-                        footMap.put(account,getUserPacketMap().get(account).getFootResult().getDouble("score"));
+                if (getUserPacketMap().containsKey(account)&&getUserPacketMap().get(account)!=null) {
+                    if (getUserPacketMap().get(account).getStatus()!=SSSConstant.SSS_USER_STATUS_INIT) {
+                        if (getUserPacketMap().get(account).getPaiType()==0) {
+                            headMap.put(account,getUserPacketMap().get(account).getHeadResult().getDouble("score"));
+                            midMap.put(account,getUserPacketMap().get(account).getMidResult().getDouble("score"));
+                            footMap.put(account,getUserPacketMap().get(account).getFootResult().getDouble("score"));
+                        }
                     }
                 }
             }
@@ -315,13 +319,15 @@ public class SSSGameRoomNew extends GameRoom{
             if (!userPacketMap.containsKey(getBanker())||userPacketMap.get(getBanker())==null) {
                 // 换庄
                 for (String newBanker : getUserPacketMap().keySet()) {
-                    setBanker(newBanker);
+                    if (getUserPacketMap().containsKey(newBanker)&&getUserPacketMap().get(newBanker)!=null) {
+                        setBanker(newBanker);
+                    }
                 }
             }
         }
         // 初始化用户信息
         for (String uuid : getUserPacketMap().keySet()) {
-            if(userPacketMap.containsKey(uuid)){
+            if(userPacketMap.containsKey(uuid)&&userPacketMap.get(uuid)!=null){
                 userPacketMap.get(uuid).initUserPacket();
             }
         }
@@ -334,9 +340,11 @@ public class SSSGameRoomNew extends GameRoom{
     public int obtainNotSpecialCount(){
         int notSpecialCount = 0;
         for (String account : getUserPacketMap().keySet()) {
-            if (getUserPacketMap().get(account).getStatus()!=SSSConstant.SSS_USER_STATUS_INIT) {
-                if (getUserPacketMap().get(account).getPaiType()==0) {
-                    notSpecialCount ++;
+            if (getUserPacketMap().containsKey(account)&&getUserPacketMap().get(account)!=null) {
+                if (getUserPacketMap().get(account).getStatus()!=SSSConstant.SSS_USER_STATUS_INIT) {
+                    if (getUserPacketMap().get(account).getPaiType()==0) {
+                        notSpecialCount ++;
+                    }
                 }
             }
         }
@@ -426,16 +434,18 @@ public class SSSGameRoomNew extends GameRoom{
     public void faPai() {
         int paiIndex = 0;
         for (String account : getUserPacketMap().keySet()) {
-            if (getUserPacketMap().get(account).getStatus()>SSSConstant.SSS_USER_STATUS_INIT) {
-                String[] userPai = new String[13];
-                for (int i = 0; i < userPai.length; i++) {
-                    userPai[i] = getPai().get(paiIndex);
-                    paiIndex++;
+            if (getUserPacketMap().containsKey(account)&&getUserPacketMap().get(account)!=null) {
+                if (getUserPacketMap().get(account).getStatus()>SSSConstant.SSS_USER_STATUS_INIT) {
+                    String[] userPai = new String[13];
+                    for (int i = 0; i < userPai.length; i++) {
+                        userPai[i] = getPai().get(paiIndex);
+                        paiIndex++;
+                    }
+                    // 设置玩家手牌
+                    getUserPacketMap().get(account).setPai(sortPaiDesc(userPai));
+                    // 设置玩家牌型
+                    getUserPacketMap().get(account).setPaiType(SSSSpecialCards.isSpecialCards(userPai,getSetting()));
                 }
-                // 设置玩家手牌
-                getUserPacketMap().get(account).setPai(sortPaiDesc(userPai));
-                // 设置玩家牌型
-                getUserPacketMap().get(account).setPaiType(SSSSpecialCards.isSpecialCards(userPai,getSetting()));
             }
         }
     }
@@ -576,8 +586,10 @@ public class SSSGameRoomNew extends GameRoom{
     public int getNowReadyCount(){
         int readyCount = 0;
         for (String account : getUserPacketMap().keySet()) {
-            if (getUserPacketMap().get(account).getStatus()==SSSConstant.SSS_USER_STATUS_READY) {
-                readyCount++;
+            if (getUserPacketMap().containsKey(account)&&getUserPacketMap().get(account)!=null) {
+                if (getUserPacketMap().get(account).getStatus()==SSSConstant.SSS_USER_STATUS_READY) {
+                    readyCount++;
+                }
             }
         }
         return readyCount;
@@ -589,8 +601,10 @@ public class SSSGameRoomNew extends GameRoom{
      */
     public boolean isAllReady(){
         for (String account : getUserPacketMap().keySet()) {
-            if (getUserPacketMap().get(account).getStatus()!=SSSConstant.SSS_USER_STATUS_READY) {
-                return false;
+            if (getUserPacketMap().containsKey(account)&&getUserPacketMap().get(account)!=null) {
+                if (getUserPacketMap().get(account).getStatus()!=SSSConstant.SSS_USER_STATUS_READY) {
+                    return false;
+                }
             }
         }
         return true;
@@ -602,9 +616,11 @@ public class SSSGameRoomNew extends GameRoom{
      */
     public boolean isAllFinish(){
         for (String account : getUserPacketMap().keySet()) {
-            if (getUserPacketMap().get(account).getStatus()!=SSSConstant.SSS_USER_STATUS_INIT) {
-                if (getUserPacketMap().get(account).getStatus()!=SSSConstant.SSS_USER_STATUS_GAME_EVENT) {
-                    return false;
+            if (getUserPacketMap().containsKey(account)&&getUserPacketMap().get(account)!=null) {
+                if (getUserPacketMap().get(account).getStatus()!=SSSConstant.SSS_USER_STATUS_INIT) {
+                    if (getUserPacketMap().get(account).getStatus()!=SSSConstant.SSS_USER_STATUS_GAME_EVENT) {
+                        return false;
+                    }
                 }
             }
         }
@@ -663,27 +679,29 @@ public class SSSGameRoomNew extends GameRoom{
         }
         JSONArray array = new JSONArray();
         for (String account : getUserPacketMap().keySet()) {
-            if (getUserPacketMap().get(account).getStatus()>SSSConstant.SSS_USER_STATUS_INIT) {
-                JSONObject obj = new JSONObject();
-                obj.put("name",getPlayerMap().get(account).getName());
-                obj.put("account",account);
-                obj.put("headimg",getPlayerMap().get(account).getRealHeadimg());
-                obj.put("score",getPlayerMap().get(account).getScore());
-                obj.put("isFangzhu",CommonConstant.GLOBAL_NO);
-                if (account.equals(getOwner())) {
-                    obj.put("isFangzhu",CommonConstant.GLOBAL_YES);
+            if (getUserPacketMap().containsKey(account)&&getUserPacketMap().get(account)!=null) {
+                if (getUserPacketMap().get(account).getStatus()>SSSConstant.SSS_USER_STATUS_INIT) {
+                    JSONObject obj = new JSONObject();
+                    obj.put("name",getPlayerMap().get(account).getName());
+                    obj.put("account",account);
+                    obj.put("headimg",getPlayerMap().get(account).getRealHeadimg());
+                    obj.put("score",getPlayerMap().get(account).getScore());
+                    obj.put("isFangzhu",CommonConstant.GLOBAL_NO);
+                    if (account.equals(getOwner())) {
+                        obj.put("isFangzhu",CommonConstant.GLOBAL_YES);
+                    }
+                    obj.put("isWinner",CommonConstant.GLOBAL_NO);
+                    if (getPlayerMap().get(account).getScore()>0) {
+                        obj.put("isWinner",CommonConstant.GLOBAL_YES);
+                    }
+                    obj.put("winTimes",getUserPacketMap().get(account).getWinTimes());
+                    obj.put("dqTimes",getUserPacketMap().get(account).getDqTimes());
+                    obj.put("bdqTimes",getUserPacketMap().get(account).getBdqTimes());
+                    obj.put("qldTimes",getUserPacketMap().get(account).getSwatTimes());
+                    obj.put("specialTimes",getUserPacketMap().get(account).getSpecialTimes());
+                    obj.put("ordinaryTimes",getUserPacketMap().get(account).getOrdinaryTimes());
+                    array.add(obj);
                 }
-                obj.put("isWinner",CommonConstant.GLOBAL_NO);
-                if (getPlayerMap().get(account).getScore()>0) {
-                    obj.put("isWinner",CommonConstant.GLOBAL_YES);
-                }
-                obj.put("winTimes",getUserPacketMap().get(account).getWinTimes());
-                obj.put("dqTimes",getUserPacketMap().get(account).getDqTimes());
-                obj.put("bdqTimes",getUserPacketMap().get(account).getBdqTimes());
-                obj.put("qldTimes",getUserPacketMap().get(account).getSwatTimes());
-                obj.put("specialTimes",getUserPacketMap().get(account).getSpecialTimes());
-                obj.put("ordinaryTimes",getUserPacketMap().get(account).getOrdinaryTimes());
-                array.add(obj);
             }
         }
         setFinalSummaryData(array);
@@ -696,8 +714,10 @@ public class SSSGameRoomNew extends GameRoom{
      */
     public boolean isAgreeClose(){
         for (String account : userPacketMap.keySet()){
-            if (userPacketMap.get(account).getIsCloseRoom()!= CommonConstant.CLOSE_ROOM_AGREE) {
-                return false;
+            if (getUserPacketMap().containsKey(account)&&getUserPacketMap().get(account)!=null) {
+                if (userPacketMap.get(account).getIsCloseRoom()!= CommonConstant.CLOSE_ROOM_AGREE) {
+                    return false;
+                }
             }
         }
         return true;
@@ -710,12 +730,14 @@ public class SSSGameRoomNew extends GameRoom{
     public JSONArray getJieSanData(){
         JSONArray array = new JSONArray();
         for (String account : getUserPacketMap().keySet()) {
-            JSONObject obj = new JSONObject();
-            obj.put("index",getPlayerMap().get(account).getMyIndex());
-            obj.put("name",getPlayerMap().get(account).getName());
-            obj.put("result",getUserPacketMap().get(account).getIsCloseRoom());
-            obj.put("jiesanTimer",getJieSanTime());
-            array.add(obj);
+            if (getUserPacketMap().containsKey(account)&&getUserPacketMap().get(account)!=null) {
+                JSONObject obj = new JSONObject();
+                obj.put("index",getPlayerMap().get(account).getMyIndex());
+                obj.put("name",getPlayerMap().get(account).getName());
+                obj.put("result",getUserPacketMap().get(account).getIsCloseRoom());
+                obj.put("jiesanTimer",getJieSanTime());
+                array.add(obj);
+            }
         }
         return array;
     }
@@ -753,10 +775,12 @@ public class SSSGameRoomNew extends GameRoom{
      */
     public boolean isAllXiaZhu(){
         for (String account : userPacketMap.keySet()){
-            if (!account.equals(getBanker())) {
-                if (userPacketMap.get(account).getStatus()!= SSSConstant.SSS_USER_STATUS_INIT&&
-                    userPacketMap.get(account).getStatus()!= SSSConstant.SSS_USER_STATUS_XZ) {
-                    return false;
+            if (getUserPacketMap().containsKey(account)&&getUserPacketMap().get(account)!=null) {
+                if (!account.equals(getBanker())) {
+                    if (userPacketMap.get(account).getStatus()!= SSSConstant.SSS_USER_STATUS_INIT&&
+                        userPacketMap.get(account).getStatus()!= SSSConstant.SSS_USER_STATUS_XZ) {
+                        return false;
+                    }
                 }
             }
         }
@@ -770,12 +794,14 @@ public class SSSGameRoomNew extends GameRoom{
     public JSONArray obtainXzResult() {
         JSONArray array = new JSONArray();
         for (String account : userPacketMap.keySet()) {
-            if(userPacketMap.get(account).getXzTimes()>0){
-                JSONObject obj = new JSONObject();
-                obj.put("index", getPlayerMap().get(account).getMyIndex());
-                obj.put("value", userPacketMap.get(account).getXzTimes());
-                obj.put("result", CommonConstant.GLOBAL_YES);
-                array.add(obj);
+            if (getUserPacketMap().containsKey(account)&&getUserPacketMap().get(account)!=null) {
+                if(userPacketMap.get(account).getXzTimes()>0){
+                    JSONObject obj = new JSONObject();
+                    obj.put("index", getPlayerMap().get(account).getMyIndex());
+                    obj.put("value", userPacketMap.get(account).getXzTimes());
+                    obj.put("result", CommonConstant.GLOBAL_YES);
+                    array.add(obj);
+                }
             }
         }
         return array;

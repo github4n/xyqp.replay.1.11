@@ -42,9 +42,11 @@ public class NiuNiuServer {
 		NNGameRoomNew room=(NNGameRoomNew) RoomManage.gameRoomMap.get(roomNo);
 		List<String> uuids = new ArrayList<String>();
 		for (String uuid : room.getUserPacketMap().keySet()) {
-			if(room.getUserPacketMap().get(uuid).getType()>=10){
-				uuids.add(uuid);
-			}
+            if (room.getUserPacketMap().containsKey(uuid)&&room.getUserPacketMap().get(uuid)!=null) {
+                if(room.getUserPacketMap().get(uuid).getType()>=10){
+                    uuids.add(uuid);
+                }
+            }
 		}
 		int count = uuids.size();
 		if(count>0){
@@ -110,9 +112,11 @@ public class NiuNiuServer {
         List<UserPacket> userPackets =NiuNiu.faPai(room.getPai(), room.getPlayerCount(), room.getSpecialType());
 		List<String> uuidList = new ArrayList<String>();
 		for (String uuid:room.getUserPacketMap().keySet()) {
-			if(room.getUserPacketMap().get(uuid).getStatus()> NNConstant.NN_USER_STATUS_INIT){
-				uuidList.add(uuid);
-			}
+            if (room.getUserPacketMap().containsKey(uuid)&&room.getUserPacketMap().get(uuid)!=null) {
+                if(room.getUserPacketMap().get(uuid).getStatus()> NNConstant.NN_USER_STATUS_INIT){
+                    uuidList.add(uuid);
+                }
+            }
 		}
         // 遍历玩家列表
         for (int i = 0; i < uuidList.size(); i++) {

@@ -258,7 +258,9 @@ public class ZJHGameRoomNew extends GameRoom{
         xiaZhuList.clear();
         outUserData.clear();
         for (String account : getUserPacketMap().keySet()) {
-            getUserPacketMap().get(account).initUserPacket();
+            if (getUserPacketMap().containsKey(account)&&getUserPacketMap().get(account)!=null) {
+                getUserPacketMap().get(account).initUserPacket();
+            }
         }
     }
 
@@ -310,14 +312,16 @@ public class ZJHGameRoomNew extends GameRoom{
      */
     public void faPai(){
         for(String account : getUserPacketMap().keySet()){
-            Integer[] myPai = new Integer[3];
-            for (int i = 0; i < 3; i++) {
-                myPai[i] = pai[paiIndex];
-                paiIndex = paiIndex + 1;
+            if (getUserPacketMap().containsKey(account)&&getUserPacketMap().get(account)!=null) {
+                Integer[] myPai = new Integer[3];
+                for (int i = 0; i < 3; i++) {
+                    myPai[i] = pai[paiIndex];
+                    paiIndex = paiIndex + 1;
+                }
+                getUserPacketMap().get(account).setPai(myPai);
+                getUserPacketMap().get(account).setType(ZhaJinHuaCore.getPaiType(Arrays.asList(myPai)));
+                getUserPacketMap().get(account).setStatus(ZJHConstant.ZJH_USER_STATUS_AP);
             }
-            getUserPacketMap().get(account).setPai(myPai);
-            getUserPacketMap().get(account).setType(ZhaJinHuaCore.getPaiType(Arrays.asList(myPai)));
-            getUserPacketMap().get(account).setStatus(ZJHConstant.ZJH_USER_STATUS_AP);
         }
     }
 
@@ -374,10 +378,12 @@ public class ZJHGameRoomNew extends GameRoom{
 
         List<Integer> indexList = new ArrayList<Integer>();
         for (String uuid :userPacketMap.keySet()) {
-            int status = getUserPacketMap().get(uuid).getStatus();
-            // 暗牌或是明牌
-            if(status==ZJHConstant.ZJH_USER_STATUS_AP || status==ZJHConstant.ZJH_USER_STATUS_KP){
-                indexList.add(getPlayerMap().get(uuid).getMyIndex());
+            if (getUserPacketMap().containsKey(uuid)&&getUserPacketMap().get(uuid)!=null) {
+                int status = getUserPacketMap().get(uuid).getStatus();
+                // 暗牌或是明牌
+                if(status==ZJHConstant.ZJH_USER_STATUS_AP || status==ZJHConstant.ZJH_USER_STATUS_KP){
+                    indexList.add(getPlayerMap().get(uuid).getMyIndex());
+                }
             }
         }
         return indexList.toArray(new Integer[indexList.size()]);
@@ -414,8 +420,10 @@ public class ZJHGameRoomNew extends GameRoom{
                     next=0;
                 }
                 for (String uuid : getPlayerMap().keySet()) {
-                    if(next==getPlayerMap().get(uuid).getMyIndex()){
-                        return uuid;
+                    if (getPlayerMap().containsKey(account)&&getPlayerMap().get(account)!=null) {
+                        if(next==getPlayerMap().get(uuid).getMyIndex()){
+                            return uuid;
+                        }
                     }
                 }
                 next++;
@@ -453,8 +461,10 @@ public class ZJHGameRoomNew extends GameRoom{
      */
     public boolean isAllReady() {
         for (String account : getUserPacketMap().keySet()) {
-            if (getUserPacketMap().get(account).getStatus()!=ZJHConstant.ZJH_USER_STATUS_READY) {
-                return false;
+            if (getUserPacketMap().containsKey(account)&&getUserPacketMap().get(account)!=null) {
+                if (getUserPacketMap().get(account).getStatus()!=ZJHConstant.ZJH_USER_STATUS_READY) {
+                    return false;
+                }
             }
         }
         return true;
@@ -467,8 +477,10 @@ public class ZJHGameRoomNew extends GameRoom{
     public int getNowReadyCount(){
         int readyCount = 0;
         for (String account : getUserPacketMap().keySet()) {
-            if (getUserPacketMap().get(account).getStatus()==ZJHConstant.ZJH_USER_STATUS_READY) {
-                readyCount ++;
+            if (getUserPacketMap().containsKey(account)&&getUserPacketMap().get(account)!=null) {
+                if (getUserPacketMap().get(account).getStatus()==ZJHConstant.ZJH_USER_STATUS_READY) {
+                    readyCount ++;
+                }
             }
         }
         return readyCount;
@@ -481,11 +493,13 @@ public class ZJHGameRoomNew extends GameRoom{
     public JSONArray getPlayerScore(){
         JSONArray array = new JSONArray();
         for (String account : getUserPacketMap().keySet()) {
-            if (getUserPacketMap().get(account).getStatus()>ZJHConstant.ZJH_USER_STATUS_INIT) {
-                JSONObject obj = new JSONObject();
-                obj.put("index",getPlayerIndex(account));
-                obj.put("myScore",getUserPacketMap().get(account).getScore());
-                array.add(obj);
+            if (getUserPacketMap().containsKey(account)&&getUserPacketMap().get(account)!=null) {
+                if (getUserPacketMap().get(account).getStatus()>ZJHConstant.ZJH_USER_STATUS_INIT) {
+                    JSONObject obj = new JSONObject();
+                    obj.put("index",getPlayerIndex(account));
+                    obj.put("myScore",getUserPacketMap().get(account).getScore());
+                    array.add(obj);
+                }
             }
         }
         return array;
@@ -500,22 +514,24 @@ public class ZJHGameRoomNew extends GameRoom{
         }
         JSONArray array = new JSONArray();
         for (String account : getUserPacketMap().keySet()) {
-            if (getUserPacketMap().get(account).getStatus()> ZJHConstant.ZJH_USER_STATUS_INIT) {
-                JSONObject obj = new JSONObject();
-                obj.put("name",getPlayerMap().get(account).getName());
-                obj.put("account",account);
-                obj.put("headimg",getPlayerMap().get(account).getRealHeadimg());
-                obj.put("score",getPlayerMap().get(account).getScore());
-                obj.put("isFangzhu",CommonConstant.GLOBAL_NO);
-                if (account.equals(getOwner())) {
-                    obj.put("isFangzhu",CommonConstant.GLOBAL_YES);
+            if (getUserPacketMap().containsKey(account)&&getUserPacketMap().get(account)!=null) {
+                if (getUserPacketMap().get(account).getStatus()> ZJHConstant.ZJH_USER_STATUS_INIT) {
+                    JSONObject obj = new JSONObject();
+                    obj.put("name",getPlayerMap().get(account).getName());
+                    obj.put("account",account);
+                    obj.put("headimg",getPlayerMap().get(account).getRealHeadimg());
+                    obj.put("score",getPlayerMap().get(account).getScore());
+                    obj.put("isFangzhu",CommonConstant.GLOBAL_NO);
+                    if (account.equals(getOwner())) {
+                        obj.put("isFangzhu",CommonConstant.GLOBAL_YES);
+                    }
+                    obj.put("isWinner",CommonConstant.GLOBAL_NO);
+                    if (getPlayerMap().get(account).getScore()>0) {
+                        obj.put("isWinner",CommonConstant.GLOBAL_YES);
+                    }
+                    obj.put("winTimes",getUserPacketMap().get(account).getWinTimes());
+                    array.add(obj);
                 }
-                obj.put("isWinner",CommonConstant.GLOBAL_NO);
-                if (getPlayerMap().get(account).getScore()>0) {
-                    obj.put("isWinner",CommonConstant.GLOBAL_YES);
-                }
-                obj.put("winTimes",getUserPacketMap().get(account).getWinTimes());
-                array.add(obj);
             }
         }
         setFinalSummaryData(array);
@@ -528,8 +544,10 @@ public class ZJHGameRoomNew extends GameRoom{
      */
     public boolean isAgreeClose(){
         for (String account : userPacketMap.keySet()){
-            if (userPacketMap.get(account).getIsCloseRoom()!= CommonConstant.CLOSE_ROOM_AGREE) {
-                return false;
+            if (getUserPacketMap().containsKey(account)&&getUserPacketMap().get(account)!=null) {
+                if (userPacketMap.get(account).getIsCloseRoom()!= CommonConstant.CLOSE_ROOM_AGREE) {
+                    return false;
+                }
             }
         }
         return true;
@@ -542,12 +560,14 @@ public class ZJHGameRoomNew extends GameRoom{
     public JSONArray getJieSanData(){
         JSONArray array = new JSONArray();
         for (String account : getUserPacketMap().keySet()) {
-            JSONObject obj = new JSONObject();
-            obj.put("index",getPlayerMap().get(account).getMyIndex());
-            obj.put("name",getPlayerMap().get(account).getName());
-            obj.put("result",getUserPacketMap().get(account).isCloseRoom);
-            obj.put("jiesanTimer",getJieSanTime());
-            array.add(obj);
+            if (getUserPacketMap().containsKey(account)&&getUserPacketMap().get(account)!=null) {
+                JSONObject obj = new JSONObject();
+                obj.put("index",getPlayerMap().get(account).getMyIndex());
+                obj.put("name",getPlayerMap().get(account).getName());
+                obj.put("result",getUserPacketMap().get(account).isCloseRoom);
+                obj.put("jiesanTimer",getJieSanTime());
+                array.add(obj);
+            }
         }
         return array;
     }

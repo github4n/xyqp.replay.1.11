@@ -77,10 +77,12 @@ public class GameTimerGPPJ {
                     // 当前阶段所有未完成操作的玩家
                     List<String> autoAccountList = new ArrayList<String>();
                     for (String account : room.getUserPacketMap().keySet()) {
-                        // 除准备阶段以外不需要判断中途加入的玩家
-                        if (gameStatus==GPPJConstant.GP_PJ_GAME_STATUS_READY||room.getUserPacketMap().get(account).getStatus()!=GPPJConstant.GP_PJ_USER_STATUS_INIT) {
-                            if (room.getUserPacketMap().get(account).getStatus()!=userStatus) {
-                                autoAccountList.add(account);
+                        if (room.getUserPacketMap().containsKey(account)&&room.getUserPacketMap().get(account)!=null) {
+                            // 除准备阶段以外不需要判断中途加入的玩家
+                            if (gameStatus==GPPJConstant.GP_PJ_GAME_STATUS_READY||room.getUserPacketMap().get(account).getStatus()!=GPPJConstant.GP_PJ_USER_STATUS_INIT) {
+                                if (room.getUserPacketMap().get(account).getStatus()!=userStatus) {
+                                    autoAccountList.add(account);
+                                }
                             }
                         }
                     }
@@ -148,8 +150,10 @@ public class GameTimerGPPJ {
                     // 当前阶段所有未完成操作的玩家
                     List<String> autoAccountList = new ArrayList<String>();
                     for (String account : room.getUserPacketMap().keySet()) {
-                        if (room.getUserPacketMap().get(account).getIsCloseRoom() == CommonConstant.CLOSE_ROOM_UNSURE) {
-                            autoAccountList.add(account);
+                        if (room.getUserPacketMap().containsKey(account)&&room.getUserPacketMap().get(account)!=null) {
+                            if (room.getUserPacketMap().get(account).getIsCloseRoom() == CommonConstant.CLOSE_ROOM_UNSURE) {
+                                autoAccountList.add(account);
+                            }
                         }
                     }
                     for (String account : autoAccountList) {
