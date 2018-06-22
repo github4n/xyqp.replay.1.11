@@ -434,8 +434,10 @@ public class SwGameEventDeal {
         room.getUserIdList().set(index,room.getPlayerMap().get(account).getId());
         result.put("user",obtainPlayerInfo(roomNo,account));
         for (String uuid : room.getPlayerMap().keySet()) {
-            result.put("myIndex",room.getPlayerMap().get(uuid).getMyIndex());
-            CommonConstant.sendMsgEventToSingle(room.getPlayerMap().get(uuid).getUuid(), String.valueOf(result), "gameChangeSeatPush_SW");
+            if (room.getPlayerMap().containsKey(uuid)&&room.getPlayerMap().get(uuid)!=null) {
+                result.put("myIndex",room.getPlayerMap().get(uuid).getMyIndex());
+                CommonConstant.sendMsgEventToSingle(room.getPlayerMap().get(uuid).getUuid(), String.valueOf(result), "gameChangeSeatPush_SW");
+            }
         }
     }
 
@@ -518,15 +520,17 @@ public class SwGameEventDeal {
         JSONObject result = new JSONObject();
         JSONArray array = new JSONArray();
         for (String account : room.getPlayerMap().keySet()) {
-            JSONObject obj = new JSONObject();
-            obj.put("name",room.getPlayerMap().get(account).getName());
-            obj.put("score",room.getPlayerMap().get(account).getScore());
-            obj.put("headimg",room.getPlayerMap().get(account).getRealHeadimg());
-            obj.put("isBanker",CommonConstant.GLOBAL_NO);
-            if (account.equals(room.getBanker())) {
-                obj.put("isBanker",CommonConstant.GLOBAL_YES);
+            if (room.getPlayerMap().containsKey(account)&&room.getPlayerMap().get(account)!=null) {
+                JSONObject obj = new JSONObject();
+                obj.put("name",room.getPlayerMap().get(account).getName());
+                obj.put("score",room.getPlayerMap().get(account).getScore());
+                obj.put("headimg",room.getPlayerMap().get(account).getRealHeadimg());
+                obj.put("isBanker",CommonConstant.GLOBAL_NO);
+                if (account.equals(room.getBanker())) {
+                    obj.put("isBanker",CommonConstant.GLOBAL_YES);
+                }
+                array.add(obj);
             }
-            array.add(obj);
         }
         JSONArray users = new JSONArray();
         // 开始
@@ -562,10 +566,12 @@ public class SwGameEventDeal {
         if (room.getFee() > 0) {
             JSONArray array = new JSONArray();
             for (String account : room.getPlayerMap().keySet()) {
-                // 中途加入不抽水
-                if (!Dto.isObjNull(obtainLastBetRecord(roomNo,account))||account.equals(room.getBanker())) {
-                    changeUserScore(roomNo,account,-room.getFee());
-                    array.add(room.getPlayerMap().get(account).getId());
+                if (room.getPlayerMap().containsKey(account)&&room.getPlayerMap().get(account)!=null) {
+                    // 中途加入不抽水
+                    if (!Dto.isObjNull(obtainLastBetRecord(roomNo,account))||account.equals(room.getBanker())) {
+                        changeUserScore(roomNo,account,-room.getFee());
+                        array.add(room.getPlayerMap().get(account).getId());
+                    }
                 }
             }
             // 抽水
@@ -601,23 +607,25 @@ public class SwGameEventDeal {
         room.setGameStatus(SwConstant.SW_GAME_STATUS_SUMMARY);
         double bankerSum = 0;
         for (String account : room.getPlayerMap().keySet()) {
-            // 所有非庄家玩家结算
-            if (!account.equals(room.getBanker())) {
-                // 押宝下注金额
-                int winBetNum = obtainTotalBetByAccountAndPlace(roomNo,account,room.getTreasure());
-                // 总下注金额
-                int totalBetNum = obtainTotalBetByAccount(roomNo,account);
-                // 当局输赢=(赢*赔率-总下注)*底分
-                double mySum = (winBetNum * room.getRatio() - totalBetNum) * room.getScore();
-                bankerSum -= mySum;
-                // 改变玩家积分
-                changeUserScore(roomNo,account,winBetNum*room.getRatio()*room.getScore());
-                // 添加结算记录
-                JSONObject myResult = new JSONObject();
-                myResult.put("account", account);
-                myResult.put("index", room.getPlayerMap().get(account).getMyIndex());
-                myResult.put("score", mySum);
-                room.getSummaryArray().add(myResult);
+            if (room.getPlayerMap().containsKey(account)&&room.getPlayerMap().get(account)!=null) {
+                // 所有非庄家玩家结算
+                if (!account.equals(room.getBanker())) {
+                    // 押宝下注金额
+                    int winBetNum = obtainTotalBetByAccountAndPlace(roomNo,account,room.getTreasure());
+                    // 总下注金额
+                    int totalBetNum = obtainTotalBetByAccount(roomNo,account);
+                    // 当局输赢=(赢*赔率-总下注)*底分
+                    double mySum = (winBetNum * room.getRatio() - totalBetNum) * room.getScore();
+                    bankerSum -= mySum;
+                    // 改变玩家积分
+                    changeUserScore(roomNo,account,winBetNum*room.getRatio()*room.getScore());
+                    // 添加结算记录
+                    JSONObject myResult = new JSONObject();
+                    myResult.put("account", account);
+                    myResult.put("index", room.getPlayerMap().get(account).getMyIndex());
+                    myResult.put("score", mySum);
+                    room.getSummaryArray().add(myResult);
+                }
             }
         }
         changeUserScore(roomNo,room.getBanker(),bankerSum);
@@ -710,20 +718,22 @@ public class SwGameEventDeal {
         SwGameRoom room = (SwGameRoom) RoomManage.gameRoomMap.get(roomNo);
         JSONArray array = new JSONArray();
         for (String account : room.getPlayerMap().keySet()) {
-            // 有参与的玩家
-            if (!Dto.isObjNull(obtainLastBetRecord(roomNo,account))||account.equals(room.getBanker())) {
-                JSONObject obj = new JSONObject();
-                obj.put("treasure",treasure);
-                if (account.equals(room.getBanker())) {
-                    obj.put("totalBet",obtainTotalBet(roomNo)*room.getScore());
-                    obj.put("winBet",obtainTotalBetByPlace(roomNo,treasure)*room.getScore());
-                }else {
-                    obj.put("totalBet",obtainTotalBetByAccount(roomNo,account)*room.getScore());
-                    obj.put("winBet",obtainTotalBetByAccountAndPlace(roomNo,account,treasure)*room.getScore());
+            if (room.getPlayerMap().containsKey(account)&&room.getPlayerMap().get(account)!=null) {
+                // 有参与的玩家
+                if (!Dto.isObjNull(obtainLastBetRecord(roomNo,account))||account.equals(room.getBanker())) {
+                    JSONObject obj = new JSONObject();
+                    obj.put("treasure",treasure);
+                    if (account.equals(room.getBanker())) {
+                        obj.put("totalBet",obtainTotalBet(roomNo)*room.getScore());
+                        obj.put("winBet",obtainTotalBetByPlace(roomNo,treasure)*room.getScore());
+                    }else {
+                        obj.put("totalBet",obtainTotalBetByAccount(roomNo,account)*room.getScore());
+                        obj.put("winBet",obtainTotalBetByAccountAndPlace(roomNo,account,treasure)*room.getScore());
+                    }
+                    obj.put("sum",obtainPlayerScoreByIndex(roomNo,account));
+                    obj.put("id",room.getPlayerMap().get(account).getId());
+                    array.add(obj);
                 }
-                obj.put("sum",obtainPlayerScoreByIndex(roomNo,account));
-                obj.put("id",room.getPlayerMap().get(account).getId());
-                array.add(obj);
             }
         }
         // 战绩信息
@@ -845,29 +855,31 @@ public class SwGameEventDeal {
     public void changeGameStatus(String roomNo) {
         SwGameRoom room = (SwGameRoom) RoomManage.gameRoomMap.get(roomNo);
         for (String account : room.getPlayerMap().keySet()) {
-            JSONObject obj = new JSONObject();
-            obj.put("gameStatus", room.getGameStatus());
-            obj.put("game_index", room.getGameIndex());
-            obj.put("treasure", obtainTreasure(roomNo));
-            obj.put("showTimer", CommonConstant.GLOBAL_NO);
-            if (room.getTimeLeft()>0) {
-                obj.put("showTimer", CommonConstant.GLOBAL_YES);
-                obj.put("time", room.getTimeLeft());
-            }
-            obj.put("users", obtainAllPlayer(roomNo,account));
-            obj.put("myScore", obtainMyScore(roomNo,account));
-            obj.put("totalScore", obtainTotalScore(roomNo));
-            obj.put("baseNum", room.getBaseNum());
-            obj.put("bankerIndex", obtainBankerIndex(roomNo));
-            obj.put("bankerBtn", obtainBankerBtnStatus(roomNo,account));
-            obj.put("bankerScore", room.getMinBankerScore());
-            obj.put("summaryData", obtainSummaryData(roomNo,account));
-            obj.put("winArray", obtainWinIndex(roomNo));
-            obj.put("myIndex", room.getPlayerMap().get(account).getMyIndex());
-            UUID uuid = room.getPlayerMap().get(account).getUuid();
-            // 通知玩家
-            if (uuid != null) {
-                CommonConstant.sendMsgEventToSingle(uuid, String.valueOf(obj), "changeGameStatusPush_SW");
+            if (room.getPlayerMap().containsKey(account)&&room.getPlayerMap().get(account)!=null) {
+                JSONObject obj = new JSONObject();
+                obj.put("gameStatus", room.getGameStatus());
+                obj.put("game_index", room.getGameIndex());
+                obj.put("treasure", obtainTreasure(roomNo));
+                obj.put("showTimer", CommonConstant.GLOBAL_NO);
+                if (room.getTimeLeft()>0) {
+                    obj.put("showTimer", CommonConstant.GLOBAL_YES);
+                    obj.put("time", room.getTimeLeft());
+                }
+                obj.put("users", obtainAllPlayer(roomNo,account));
+                obj.put("myScore", obtainMyScore(roomNo,account));
+                obj.put("totalScore", obtainTotalScore(roomNo));
+                obj.put("baseNum", room.getBaseNum());
+                obj.put("bankerIndex", obtainBankerIndex(roomNo));
+                obj.put("bankerBtn", obtainBankerBtnStatus(roomNo,account));
+                obj.put("bankerScore", room.getMinBankerScore());
+                obj.put("summaryData", obtainSummaryData(roomNo,account));
+                obj.put("winArray", obtainWinIndex(roomNo));
+                obj.put("myIndex", room.getPlayerMap().get(account).getMyIndex());
+                UUID uuid = room.getPlayerMap().get(account).getUuid();
+                // 通知玩家
+                if (uuid != null) {
+                    CommonConstant.sendMsgEventToSingle(uuid, String.valueOf(obj), "changeGameStatusPush_SW");
+                }
             }
         }
     }
@@ -1214,8 +1226,10 @@ public class SwGameEventDeal {
     public String obtainUserAccountByIndex(String roomNo, int index) {
         SwGameRoom room = (SwGameRoom) RoomManage.gameRoomMap.get(roomNo);
         for (String account : room.getPlayerMap().keySet()) {
-            if (room.getPlayerMap().get(account).getMyIndex()==index) {
-                return account;
+            if (room.getPlayerMap().containsKey(account)&&room.getPlayerMap().get(account)!=null) {
+                if (room.getPlayerMap().get(account).getMyIndex()==index) {
+                    return account;
+                }
             }
         }
         return null;

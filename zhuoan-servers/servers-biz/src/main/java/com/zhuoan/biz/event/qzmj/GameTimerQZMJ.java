@@ -111,40 +111,43 @@ public class GameTimerQZMJ {
                         otherBuHua.add(obuhua);
                     }
                     for (String uuid : room.getPlayerMap().keySet()) {
+                        if (room.getPlayerMap().containsKey(uuid)&&room.getPlayerMap().get(uuid)!=null) {
+                            JSONObject buhua = new JSONObject();
+                            buhua.put("index", room.getPlayerMap().get(clientTag).getMyIndex());
+                            buhua.put("zpaishu", room.getPai().length-room.getIndex());
 
-                        JSONObject buhua = new JSONObject();
-                        buhua.put("index", room.getPlayerMap().get(clientTag).getMyIndex());
-                        buhua.put("zpaishu", room.getPai().length-room.getIndex());
+                            if(clientTag.equals(uuid)){
+                                buhua.put("huavals", huavals);
+                            }else{
+                                buhua.put("huavals", otherBuHua);
+                            }
 
-                        if(clientTag.equals(uuid)){
-                            buhua.put("huavals", huavals);
-                        }else{
-                            buhua.put("huavals", otherBuHua);
+                            JSONObject buhuaData = new JSONObject();
+                            buhuaData.put("type", startStatus);
+                            buhuaData.put("buhua", buhua);
+                            CommonConstant.sendMsgEventToSingle(room.getPlayerMap().get(uuid).getUuid(),String.valueOf(buhuaData),"gameKaiJuPush");
                         }
 
-                        JSONObject buhuaData = new JSONObject();
-                        buhuaData.put("type", startStatus);
-                        buhuaData.put("buhua", buhua);
-                        CommonConstant.sendMsgEventToSingle(room.getPlayerMap().get(uuid).getUuid(),String.valueOf(buhuaData),"gameKaiJuPush");
                     }
                 }
             }
         }else{ // （除补花外）其他开局流程
 
             for (String uuid : room.getPlayerMap().keySet()) {
-
-                UserPacketQZMJ userPacketQZMJ = room.getUserPacketMap().get(uuid);
-                JSONObject result = new JSONObject();
-                result.put("type", startStatus);
-                if(startStatus==3){
-                    //发牌流程返回总牌数
-                    result.put("zpaishu", room.getPai().length-room.getIndex());
-                }else if(startStatus==5){
-                    //返回当前最新的牌
-                    result.put(QZMJConstant.myPai, userPacketQZMJ.getMyPai().toArray());
-                    result.put("huaValue", userPacketQZMJ.getHuaList().toArray());
+                if (room.getPlayerMap().containsKey(uuid)&&room.getPlayerMap().get(uuid)!=null) {
+                    UserPacketQZMJ userPacketQZMJ = room.getUserPacketMap().get(uuid);
+                    JSONObject result = new JSONObject();
+                    result.put("type", startStatus);
+                    if(startStatus==3){
+                        //发牌流程返回总牌数
+                        result.put("zpaishu", room.getPai().length-room.getIndex());
+                    }else if(startStatus==5){
+                        //返回当前最新的牌
+                        result.put(QZMJConstant.myPai, userPacketQZMJ.getMyPai().toArray());
+                        result.put("huaValue", userPacketQZMJ.getHuaList().toArray());
+                    }
+                    CommonConstant.sendMsgEventToSingle(room.getPlayerMap().get(uuid).getUuid(),String.valueOf(result),"gameKaiJuPush");
                 }
-                CommonConstant.sendMsgEventToSingle(room.getPlayerMap().get(uuid).getUuid(),String.valueOf(result),"gameKaiJuPush");
             }
         }
     }
@@ -236,8 +239,10 @@ public class GameTimerQZMJ {
                     // 当前阶段所有未完成操作的玩家
                     List<String> autoAccountList = new ArrayList<String>();
                     for (String account : room.getUserPacketMap().keySet()) {
-                        if (room.getUserPacketMap().get(account).getIsCloseRoom() == CommonConstant.CLOSE_ROOM_UNSURE) {
-                            autoAccountList.add(account);
+                        if (room.getPlayerMap().containsKey(account)&&room.getPlayerMap().get(account)!=null) {
+                            if (room.getUserPacketMap().get(account).getIsCloseRoom() == CommonConstant.CLOSE_ROOM_UNSURE) {
+                                autoAccountList.add(account);
+                            }
                         }
                     }
                     for (String account : autoAccountList) {
