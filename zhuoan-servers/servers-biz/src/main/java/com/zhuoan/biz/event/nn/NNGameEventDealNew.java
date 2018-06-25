@@ -894,6 +894,22 @@ public class NNGameEventDealNew {
                             if (qzTimes <= 0) {
                                 qzTimes = 1;
                             }
+                            // 坐庄模式闲家没牛十点以下直接输
+                            if (room.getBankerType()==NNConstant.NN_BANKER_TYPE_ZZ) {
+                                if (room.getUserPacketMap().get(account).getType()==0) {
+                                    Packer[] ps = room.getUserPacketMap().get(account).getPs();
+                                    boolean allMin = true;
+                                    for (Packer p : ps) {
+                                        if (p.getNum().getNum()>10) {
+                                            allMin = false;
+                                            break;
+                                        }
+                                    }
+                                    if (allMin) {
+                                        userpacket.setWin(false);
+                                    }
+                                }
+                            }
                             // 输赢分数 下注倍数*倍率*底注*抢庄倍数
                             double totalScore = room.getUserPacketMap().get(account).getXzTimes() * room.getRatio().get(winner.getType()) * room.getScore() * qzTimes;
                             // 闲家赢
