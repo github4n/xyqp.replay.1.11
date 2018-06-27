@@ -145,6 +145,9 @@ public class NNGameEventDealNew {
             roomInfo.append((int) room.getEnterScore());
             roomInfo.append(" 出:");
             roomInfo.append((int) room.getLeaveScore());
+            if (room.getBankerType()==NNConstant.NN_BANKER_TYPE_ZZ) {
+                roomInfo.append("\nJ以下庄家赢");
+            }
             obj.put("roominfo", roomInfo.toString());
             obj.put("roominfo2", room.getWfType());
         }

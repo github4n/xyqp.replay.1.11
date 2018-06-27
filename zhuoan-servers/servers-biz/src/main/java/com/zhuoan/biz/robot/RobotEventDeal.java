@@ -92,7 +92,7 @@ public class RobotEventDeal {
         // 当前人数
         int playerCount = RoomManage.gameRoomMap.get(roomNo).getPlayerMap().size();
         // 机器人数(随机留出1-3个空座)
-        int robotCount = totalCount - playerCount - 8;
+        int robotCount = totalCount - playerCount ;
         double minScore = RoomManage.gameRoomMap.get(roomNo).getEnterScore();
         JSONArray robotArray = roomBiz.getRobotArray(robotCount,minScore);
         for (int i = 0; i < robotArray.size(); i++) {

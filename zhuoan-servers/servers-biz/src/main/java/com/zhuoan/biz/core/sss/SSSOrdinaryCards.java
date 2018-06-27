@@ -151,7 +151,7 @@ public class SSSOrdinaryCards {
 							}
 						}else {
 							int loop=0;
-							for(int k=hulu.size()-1;k>=0;k++){
+							for(int k=hulu.size()-1;k>=0;k--){
 								ArrayList<String> huluTemp=new ArrayList<String>();
 								huluTemp.addAll(playerTemp);
 								for(String temp:hulu.get(k)){
