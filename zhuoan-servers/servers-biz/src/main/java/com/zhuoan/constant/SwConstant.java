@@ -57,29 +57,33 @@ public class SwConstant {
     public static final int TREASURE_RED_KING = 12;
 
     /**
-     * 游戏性状态-初始
+     * 游戏状态-初始
      */
     public static final int SW_GAME_STATUS_INIT = 0;
     /**
-     * 游戏性状态-准备
+     * 游戏状态-准备
      */
     public static final int SW_GAME_STATUS_READY = 1;
     /**
-     * 游戏性状态-下注
+     * 游戏状态-下注
      */
     public static final int SW_GAME_STATUS_BET = 2;
     /**
-     * 游戏性状态-展示押宝
+     * 游戏状态-展示押宝
      */
     public static final int SW_GAME_STATUS_SHOW = 3;
     /**
-     * 游戏性状态-结算
+     * 游戏状态-结算
      */
     public static final int SW_GAME_STATUS_SUMMARY = 4;
     /**
-     * 游戏性状态-上庄
+     * 游戏状态-上庄
      */
     public static final int SW_GAME_STATUS_CHOICE_BANKER = 5;
+    /**
+     * 游戏状态-押宝
+     */
+    public static final int SW_GAME_STATUS_HIDE_TREASURE = 6;
 
     /**
      * 结算结果-胜利
@@ -130,6 +134,10 @@ public class SwConstant {
      * 游戏事件-获取玩家列表
      */
     public static final int SW_GAME_EVENT_GET_ALL_USER = 9;
+    /**
+     * 游戏事件-开始游戏押宝
+     */
+    public static final int SW_GAME_EVENT_HIDE_TREASURE = 10;
 
     /**
      * 最小座位号
@@ -151,6 +159,14 @@ public class SwConstant {
      * 1赔10.5
      */
     public static final int SW_TYPE_TEN_POINT_FIVE = 1;
+    /**
+     * 1赔11
+     */
+    public static final int SW_TYPE_TEN_ELEVEN = 2;
+    /**
+     * 押宝倒计时
+     */
+    public static final int SW_TIME_HIDE_TREASURE = 60;
     /**
      * 下注倒计时
      */

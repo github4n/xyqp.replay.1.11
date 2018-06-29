@@ -600,6 +600,9 @@ public class QZMJGameEventDeal {
         //返回庄家的位置
         result.put(QZMJConstant.zhuang, game.getPlayerIndex(game.getBanker()));
         result.put("lianzhuang", game.getBankerTimes());
+        if (game.getRoomType()==CommonConstant.ROOM_TYPE_YB) {
+            result.put("lianzhuang", 0);
+        }
         //返回玩家的状态
         result.put(QZMJConstant.status, game.getUserPacketMap().get(account).getStatus());
         //返回游戏的底分
@@ -764,14 +767,14 @@ public class QZMJGameEventDeal {
                 int yjtype = game.getUserPacketMap().get(cliTag).getYouJinIng();
                 // 光游时直接返回游金类型
                 if(cliTag.equals(account) || game.isGuangYou){
-                    user.put("youjin", yjtype);
+                    user.put("youjinType", yjtype);
                 }else{
                     // 暗游时，只有双游以上才通知其他人
                     if(yjtype>1){
                         // 通知其他玩家正在双游、三游
-                        user.put("youjin", yjtype);
+                        user.put("youjinType", yjtype);
                     }else{
-                        user.put("youjin", 0);
+                        user.put("youjinType", 0);
                     }
                 }
 
@@ -835,6 +838,10 @@ public class QZMJGameEventDeal {
                 data.put("zhuang", 0);
                 data.put("difen", gamePlay.getScore());
             }
+            // 山弹头元宝场差异化
+            if (gamePlay.getRoomType()==CommonConstant.ROOM_TYPE_YB) {
+                data.put("difen", 5);
+            }
             array.add(data);
         }
 
@@ -889,6 +896,10 @@ public class QZMJGameEventDeal {
                     }else{
                         data.put("zhuang", 0);
                         data.put("difen", gamePlay.getScore());
+                    }
+                    // 山弹头元宝场差异化
+                    if (gamePlay.getRoomType()==CommonConstant.ROOM_TYPE_YB) {
+                        data.put("difen", 5);
                     }
                     array.add(data);
                 }
@@ -1346,6 +1357,9 @@ public class QZMJGameEventDeal {
                     result.put(QZMJConstant.zhuang, room.getPlayerIndex(room.getBanker()));
                     //返回连庄数
                     result.put("lianzhuang", room.getBankerTimes());
+                    if (room.getRoomType()==CommonConstant.ROOM_TYPE_YB) {
+                        result.put("lianzhuang", 0);
+                    }
                     //返回焦点的位置
                     result.put(QZMJConstant.foucs, room.getPlayerIndex(room.getBanker()));
                     result.put(QZMJConstant.foucsIndex, room.getFocusIndex());
@@ -1713,8 +1727,16 @@ public class QZMJGameEventDeal {
                         difen = difen * (2 + room.getBankerTimes()-1);
                     }
 
+                    if (room.getRoomType()==CommonConstant.ROOM_TYPE_YB) {
+                        difen = 5;
+                    }
+
                     // 计分
                     int score = QZMJGameRoom.jiSuanScore(room.getHuType(), difen, winnerTotalFan, room.getYouJinScore());
+
+                    if (room.getRoomType()==CommonConstant.ROOM_TYPE_YB) {
+                        score = (int) (score*room.getScore());
+                    }
 
                     if(!room.isCanOver){
 
@@ -3644,6 +3666,10 @@ public class QZMJGameEventDeal {
                             data.put("zhuang", 0);
                             data.put("difen", room.getScore());
                         }
+                        // 山弹头元宝场差异化
+                        if (room.getRoomType()==CommonConstant.ROOM_TYPE_YB) {
+                            data.put("difen", 5);
+                        }
                         array.add(data);
                     }
                 }
@@ -3846,6 +3872,9 @@ public class QZMJGameEventDeal {
     public String checkIsPeng(String roomNo,int oldPai){
         if(RoomManage.gameRoomMap.containsKey(roomNo) && RoomManage.gameRoomMap.get(roomNo)!=null){
             QZMJGameRoom room = (QZMJGameRoom) RoomManage.gameRoomMap.get(roomNo);
+            if (oldPai==room.getJin()) {
+                return null;
+            }
             String askAccount = room.getNextAskAccount();
             String nextAsk = room.getNextPlayer(askAccount);
             if(nextAsk.equals(room.getLastAccount())){

@@ -120,5 +120,15 @@ public class SwGameEvent {
             }
         });
 
+        /**
+         * 玩家列表事件
+         */
+        server.addEventListener("gameHide_SW", Object.class, new DataListener<Object>() {
+            @Override
+            public void onData(SocketIOClient client, Object data, AckRequest ackSender) {
+                producerService.sendMessage(swQueueDestination, new Messages(client, data, CommonConstant.GAME_ID_SW, SwConstant.SW_GAME_EVENT_HIDE_TREASURE));
+            }
+        });
+
     }
 }

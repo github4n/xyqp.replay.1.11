@@ -137,7 +137,7 @@ public class BaseEventDeal {
             return;
         } else if (baseInfo.getInt("roomType") == CommonConstant.ROOM_TYPE_YB && userInfo.containsKey("yuanbao")) {
             double minScore = obtainBankMinScore(postData);
-            if (minScore!=-1&&userInfo.getDouble("yuanbao") < minScore) {
+            if (minScore==-1||userInfo.getDouble("yuanbao") < minScore) {
                 // 元宝不足
                 result.element(CommonConstant.RESULT_KEY_CODE, CommonConstant.GLOBAL_NO);
                 result.element(CommonConstant.RESULT_KEY_MSG, "元宝不足");
@@ -199,7 +199,7 @@ public class BaseEventDeal {
             // 游戏模式是否开放
             if (gameInfo.containsKey("openType")&&gameInfo.getJSONArray("openType").contains(baseInfo.getInt("type"))) {
                 // 入场、离场是否满足条件
-                if (checkScoreRatio(baseInfo,gameInfo)) {
+                if (checkScoreRatio(baseInfo,gameInfo)||gameId==CommonConstant.GAME_ID_SW) {
                     // 判断最大倍数是否超出
                     if (checkMaxTimes(baseInfo,gameInfo)) {
                         // 判断人数是否超出
@@ -1255,14 +1255,21 @@ public class BaseEventDeal {
             case SwConstant.SW_TYPE_TEN_POINT_FIVE:
                 room.setRatio(10.5);
                 break;
+            case SwConstant.SW_TYPE_TEN_ELEVEN:
+                room.setRatio(11);
+                break;
             default:
                 room.setRatio(10);
                 break;
         }
         // 下注倍数
         JSONObject setting = getGameInfoById(CommonConstant.GAME_ID_SW);
-        if (baseInfo.containsKey("singleMax")) {
+        // 设置房间信息
+        room.setSetting(setting);
+        if (baseInfo.containsKey("singleMax")&&baseInfo.getInt("singleMax")>=0) {
             room.setSingleMax(baseInfo.getInt("singleMax"));
+        }else if (baseInfo.containsKey("yuanbao") && baseInfo.getDouble("yuanbao") > 0) {
+            room.setSingleMax(baseInfo.getInt("yuanbao")*180);
         }
         if (baseInfo.containsKey("baseNum")) {
             room.setBaseNum(baseInfo.getJSONArray("baseNum"));

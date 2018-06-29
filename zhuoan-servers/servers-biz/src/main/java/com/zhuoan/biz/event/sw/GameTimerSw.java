@@ -42,6 +42,8 @@ public class GameTimerSw {
                         swGameEventDeal.summary(roomNo);
                     }else if (room.getGameStatus() == SwConstant.SW_GAME_STATUS_SUMMARY) {
                         swGameEventDeal.choiceBanker(roomNo);
+                    }else if (room.getGameStatus() == SwConstant.SW_GAME_STATUS_HIDE_TREASURE) {
+                        swGameEventDeal.hideOverTime(roomNo);
                     }
                 }
                 try {

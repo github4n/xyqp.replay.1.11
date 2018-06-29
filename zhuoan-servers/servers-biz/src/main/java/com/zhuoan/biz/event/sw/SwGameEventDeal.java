@@ -102,12 +102,41 @@ public class SwGameEventDeal {
      * @param client
      * @param data
      */
-    public void gameStart(SocketIOClient client, Object data) {
+    public void gameHide(SocketIOClient client, Object data) {
         JSONObject postData = JSONObject.fromObject(data);
         // 不满足准备条件直接忽略
         if (!CommonConstant.checkEvent(postData, SwConstant.SW_GAME_STATUS_INIT, client)&&
             !CommonConstant.checkEvent(postData, SwConstant.SW_GAME_STATUS_READY, client)&&
             !CommonConstant.checkEvent(postData, SwConstant.SW_GAME_STATUS_SUMMARY, client)) {
+            return;
+        }
+        // 房间号
+        final String roomNo = postData.getString(CommonConstant.DATA_KEY_ROOM_NO);
+        SwGameRoom room = (SwGameRoom) RoomManage.gameRoomMap.get(roomNo);
+        // 玩家账号
+        String account = postData.getString(CommonConstant.DATA_KEY_ACCOUNT);
+        if (!account.equals(room.getBanker())) {
+            return;
+        }
+        // 设置房间状态
+        room.setGameStatus(SwConstant.SW_GAME_STATUS_HIDE_TREASURE);
+        // 设置倒计时
+        room.setTimeLeft(SwConstant.SW_TIME_HIDE_TREASURE);
+        // 改变状态通知玩家
+        changeGameStatus(roomNo);
+        // 开始下注倒计时
+        ThreadPoolHelper.executorService.submit(new Runnable() {
+            @Override
+            public void run() {
+                gameTimerSw.gameOverTime(roomNo, SwConstant.SW_TIME_HIDE_TREASURE);
+            }
+        });
+    }
+
+    public void gameStart(SocketIOClient client, Object data) {
+        JSONObject postData = JSONObject.fromObject(data);
+        // 不满足准备条件直接忽略
+        if (!CommonConstant.checkEvent(postData, SwConstant.SW_GAME_STATUS_HIDE_TREASURE, client)) {
             return;
         }
         // 房间号
@@ -189,15 +218,24 @@ public class SwGameEventDeal {
             CommonConstant.sendMsgEventToSingle(client,String.valueOf(result),"gameBetPush_SW");
             return;
         }
+        boolean canBet = true;
+        int playerBetMax = 10;
+        if (room.getSetting().containsKey("playerBetMax")) {
+            playerBetMax = room.getSetting().getInt("playerBetMax");
+        }
+        // 单子是否达到玩家上限
+        if (obtainTotalBetByAccountAndPlace(roomNo,account,place)+value>playerBetMax) {
+            canBet = false;
+        }
         // 单子是否达到上限
         if (room.getSingleMax()>0&&obtainTotalBetByPlace(roomNo,place)+value>room.getSingleMax()) {
-            result.put(CommonConstant.RESULT_KEY_CODE,CommonConstant.GLOBAL_NO);
-            result.put(CommonConstant.RESULT_KEY_MSG,"已达下注上限");
-            CommonConstant.sendMsgEventToSingle(client,String.valueOf(result),"gameBetPush_SW");
-            return;
+            canBet = false;
         }
         // 庄家是否够赔
         if ((obtainTotalBetByPlace(roomNo,place)+value)*room.getRatio()*room.getScore()>room.getPlayerMap().get(room.getBanker()).getScore()) {
+            canBet = false;
+        }
+        if (!canBet) {
             result.put(CommonConstant.RESULT_KEY_CODE,CommonConstant.GLOBAL_NO);
             result.put(CommonConstant.RESULT_KEY_MSG,"已达下注上限");
             CommonConstant.sendMsgEventToSingle(client,String.valueOf(result),"gameBetPush_SW");
@@ -763,6 +801,17 @@ public class SwGameEventDeal {
     }
 
     /**
+     * 押宝超时
+     * @param roomNo
+     */
+    public void hideOverTime(String roomNo) {
+        SwGameRoom room = (SwGameRoom) RoomManage.gameRoomMap.get(roomNo);
+        // 改变状态，通知玩家
+        room.setGameStatus(SwConstant.SW_GAME_STATUS_READY);
+        changeGameStatus(roomNo);
+    }
+
+    /**
      * 重置庄家
      * @param roomNo
      */
@@ -1013,13 +1062,17 @@ public class SwGameEventDeal {
             if (!account.equals(room.getBanker())&&obtainTotalBetByAccount(roomNo,account)<=0) {
                 summaryData.put("isWinner",SwConstant.SUMMARY_RESULT_NO_IN);
                 summaryData.put("sum",0);
+                summaryData.put("winNum",0);
             }else {
+                // 押宝下注金额
+                int winBetNum = obtainTotalBetByAccountAndPlace(roomNo,account,room.getTreasure());
                 double score = obtainPlayerScoreByIndex(roomNo,account);
                 summaryData.put("isWinner",SwConstant.SUMMARY_RESULT_LOSE);
                 if (score>0) {
                     summaryData.put("isWinner",SwConstant.SUMMARY_RESULT_WIN);
                 }
                 summaryData.put("sum",score);
+                summaryData.put("winNum",winBetNum*room.getRatio()*room.getScore());
             }
         }
         return summaryData;
