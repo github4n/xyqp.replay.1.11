@@ -1,6 +1,7 @@
 package com.zhuoan.biz.event.sw;
 
 import com.corundumstudio.socketio.SocketIOClient;
+import com.zhuoan.biz.game.biz.PublicBiz;
 import com.zhuoan.biz.game.biz.RoomBiz;
 import com.zhuoan.biz.game.biz.UserBiz;
 import com.zhuoan.biz.model.Playerinfo;
@@ -21,9 +22,7 @@ import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
 import javax.jms.Destination;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 
 /**
  * @author wqm
@@ -42,6 +41,9 @@ public class SwGameEventDeal {
 
     @Resource
     private UserBiz userBiz;
+
+    @Resource
+    private PublicBiz publicBiz;
 
     @Resource
     private Destination daoQueueDestination;
@@ -128,7 +130,7 @@ public class SwGameEventDeal {
         ThreadPoolHelper.executorService.submit(new Runnable() {
             @Override
             public void run() {
-                gameTimerSw.gameOverTime(roomNo, SwConstant.SW_TIME_HIDE_TREASURE);
+                gameTimerSw.gameOverTime(roomNo, SwConstant.SW_TIME_HIDE_TREASURE,SwConstant.SW_GAME_STATUS_HIDE_TREASURE);
             }
         });
     }
@@ -173,7 +175,7 @@ public class SwGameEventDeal {
         ThreadPoolHelper.executorService.submit(new Runnable() {
             @Override
             public void run() {
-                gameTimerSw.gameOverTime(roomNo, SwConstant.SW_TIME_BET);
+                gameTimerSw.gameOverTime(roomNo, SwConstant.SW_TIME_BET,SwConstant.SW_GAME_STATUS_BET);
             }
         });
     }
@@ -298,6 +300,38 @@ public class SwGameEventDeal {
     }
 
     /**
+     * 获取有下注的区域
+     * @param client
+     * @param data
+     */
+    public void getUndoInfo(SocketIOClient client, Object data) {
+        JSONObject postData = JSONObject.fromObject(data);
+        // 不满足准备条件直接忽略
+        if (!CommonConstant.checkEvent(postData, SwConstant.SW_GAME_STATUS_BET, client)) {
+            return;
+        }
+        // 房间号
+        String roomNo = postData.getString(CommonConstant.DATA_KEY_ROOM_NO);
+        SwGameRoom room = (SwGameRoom) RoomManage.gameRoomMap.get(roomNo);
+        // 玩家账号
+        String account = postData.getString(CommonConstant.DATA_KEY_ACCOUNT);
+        if (account.equals(room.getBanker())) {
+            return;
+        }
+        JSONObject result = new JSONObject();
+        Set<Integer> betArray = obtainMyBetArray(roomNo,account);
+        if (betArray.size()==0) {
+            result.put(CommonConstant.RESULT_KEY_CODE,CommonConstant.GLOBAL_NO);
+            result.put(CommonConstant.RESULT_KEY_MSG,"当前未下注");
+        }else {
+            result.put(CommonConstant.RESULT_KEY_CODE,CommonConstant.GLOBAL_YES);
+            result.put("betArray",betArray);
+        }
+        // 通知玩家
+        CommonConstant.sendMsgEventToSingle(client,String.valueOf(result),"getUndoInfoPush_SW");
+    }
+
+    /**
      * 撤销下注
      * @param client
      * @param data
@@ -316,25 +350,32 @@ public class SwGameEventDeal {
         if (account.equals(room.getBanker())) {
             return;
         }
+        // 下注位置
+        int place = postData.getInt(SwConstant.SW_DATA_KEY_PLACE);
+        if (!obtainBetList().contains(place)) {
+            return;
+        }
         JSONObject result = new JSONObject();
-        JSONObject lastBetRecord = obtainLastBetRecord(roomNo,account);
-        if (!Dto.isObjNull(lastBetRecord)) {
+        double betScore = obtainTotalBetByAccountAndPlace(roomNo,account,place);
+        if (betScore>0) {
             // 移除下注记录
-            removeBetRecord(roomNo,account);
+            removeBetRecord(roomNo,account,place);
             // 增加分数
-            changeUserScore(roomNo,account,lastBetRecord.getInt("value")*room.getScore());
+            changeUserScore(roomNo,account,betScore);
             // 通知玩家
             result.put(CommonConstant.RESULT_KEY_CODE,CommonConstant.GLOBAL_YES);
-            result.putAll(lastBetRecord);
-            result.put("myScore", obtainTotalBetByAccountAndPlace(roomNo,account,lastBetRecord.getInt("place")));
-            result.put("totalScore", obtainTotalBetByPlace(roomNo,lastBetRecord.getInt("place")));
+            result.put("place",place);
+            result.put("index",room.getPlayerMap().get(account).getMyIndex());
+            result.put("myScore", obtainTotalBetByAccountAndPlace(roomNo,account,place));
+            result.put("totalScore", obtainTotalBetByPlace(roomNo,place));
             result.put("scoreLeft", room.getPlayerMap().get(account).getScore());
+            result.put("betArray",obtainMyBetArray(roomNo,account));
             // 通知玩家
             CommonConstant.sendMsgEventToAll(room.getAllUUIDList(),String.valueOf(result),"gameUndoPush_SW");
         }else {
             // 通知玩家
             result.put(CommonConstant.RESULT_KEY_CODE,CommonConstant.GLOBAL_NO);
-            result.put(CommonConstant.RESULT_KEY_MSG,"当前未下注");
+            result.put(CommonConstant.RESULT_KEY_MSG,"该子当前未下注");
             CommonConstant.sendMsgEventToSingle(client,String.valueOf(result),"gameUndoPush_SW");
         }
     }
@@ -538,7 +579,16 @@ public class SwGameEventDeal {
         String roomNo = postData.getString(CommonConstant.DATA_KEY_ROOM_NO);
         SwGameRoom room = (SwGameRoom) RoomManage.gameRoomMap.get(roomNo);
         JSONObject result = new JSONObject();
-        result.put("array",room.getHistoryResult());
+        if (!Dto.stringIsNULL(room.getBanker())) {
+            JSONObject bankerInfo = publicBiz.getUserGameInfo(room.getBanker());
+            if (!Dto.isObjNull(bankerInfo)) {
+                result.put("array", bankerInfo.getJSONArray("treasure_history"));
+            }else {
+                result.put("array",new JSONArray());
+            }
+        }else {
+            result.put("array",new JSONArray());
+        }
         CommonConstant.sendMsgEventToSingle(client, String.valueOf(result), "getHistoryPush_SW");
     }
 
@@ -622,7 +672,7 @@ public class SwGameEventDeal {
         ThreadPoolHelper.executorService.submit(new Runnable() {
             @Override
             public void run() {
-                gameTimerSw.gameOverTime(roomNo, SwConstant.SW_TIME_SHOW);
+                gameTimerSw.gameOverTime(roomNo, SwConstant.SW_TIME_SHOW,SwConstant.SW_GAME_STATUS_SHOW);
             }
         });
     }
@@ -679,8 +729,6 @@ public class SwGameEventDeal {
         addUserGameLog(roomNo,room.getTreasure());
         // 添加输赢记录
         saveUserDeduction(roomNo);
-        // 添加走势图记录
-        addHistoryTreasure(roomNo,room.getTreasure());
         // 通知玩家
         changeGameStatus(roomNo);
         // 分数不够重置庄家
@@ -688,10 +736,44 @@ public class SwGameEventDeal {
             ThreadPoolHelper.executorService.submit(new Runnable() {
                 @Override
                 public void run() {
-                    gameTimerSw.gameOverTime(roomNo, SwConstant.SW_TIME_SUMMARY_ANIMATION);
+                    gameTimerSw.gameOverTime(roomNo, SwConstant.SW_TIME_SUMMARY_ANIMATION,SwConstant.SW_GAME_STATUS_SUMMARY);
                 }
             });
         }
+        // 添加走势图记录
+        updateBankerTreasureHistory(room.getBanker(),room.getTreasure());
+    }
+
+    /**
+     * 添加走势图
+     * @param banker
+     * @param treasure
+     */
+    public void updateBankerTreasureHistory(String banker,int treasure) {
+        JSONObject bankerInfo = publicBiz.getUserGameInfo(banker);
+        JSONObject obj = new JSONObject();
+        if (!Dto.isObjNull(bankerInfo)) {
+            obj.put("id",bankerInfo.getLong("id"));
+            JSONArray treasureHistory= bankerInfo.getJSONArray("treasure_history");
+            treasureHistory.add(0,treasure);
+            // 超出指定长度后移除超出部分
+            if (treasureHistory.size()>SwConstant.SW_HISTORY_TREASURE_SIZE) {
+                for (int i = 0; i < treasureHistory.size(); i++) {
+                    if (i>=SwConstant.SW_HISTORY_TREASURE_SIZE) {
+                        treasureHistory.remove(i);
+                    }
+                }
+            }
+            obj.put("treasure_history",treasureHistory);
+            obj.put("update_time",TimeUtil.getNowDate());
+        }else {
+            JSONArray treasureHistory= new JSONArray();
+            treasureHistory.add(treasure);
+            obj.put("treasure_history",treasureHistory);
+            obj.put("account",banker);
+            obj.put("update_time",TimeUtil.getNowDate());
+        }
+        publicBiz.addOrUpdateUserGameInfo(obj);
     }
 
     /**
@@ -848,35 +930,16 @@ public class SwGameEventDeal {
     }
 
     /**
-     * 移除下注记录
+     * 移除某个子的下注记录
      * @param roomNo
      * @param account
      */
-    public void removeBetRecord(String roomNo, String account) {
+    public void removeBetRecord(String roomNo, String account, int place) {
         SwGameRoom room = (SwGameRoom) RoomManage.gameRoomMap.get(roomNo);
         JSONArray betArray = room.getBetArray();
         for (int i = betArray.size() - 1; i >= 0; i--) {
-            if (betArray.getJSONObject(i).getString("account").equals(account)) {
+            if (betArray.getJSONObject(i).getString("account").equals(account)&&betArray.getJSONObject(i).getInt("place")==place) {
                 betArray.remove(i);
-                break;
-            }
-        }
-    }
-
-    /**
-     * 添加走势图记录
-     * @param roomNo
-     * @param treasure
-     */
-    public void addHistoryTreasure(String roomNo, int treasure) {
-        SwGameRoom room = (SwGameRoom) RoomManage.gameRoomMap.get(roomNo);
-        room.getHistoryResult().add(0,treasure);
-        // 超出指定长度后移除超出部分
-        if (room.getHistoryResult().size()>SwConstant.SW_HISTORY_TREASURE_SIZE) {
-            for (int i = 0; i < room.getHistoryResult().size(); i++) {
-                if (i>=SwConstant.SW_HISTORY_TREASURE_SIZE) {
-                    room.getHistoryResult().remove(i);
-                }
             }
         }
     }
@@ -931,6 +994,25 @@ public class SwGameEventDeal {
                 }
             }
         }
+    }
+
+    /**
+     * 获取有下注的区域
+     * @param roomNo
+     * @param account
+     * @return
+     */
+    public Set<Integer> obtainMyBetArray(String roomNo, String account) {
+        Set<Integer> set = new HashSet<>();
+        SwGameRoom room = (SwGameRoom) RoomManage.gameRoomMap.get(roomNo);
+        JSONArray betArray = room.getBetArray();
+        for (int i = 0; i < betArray.size(); i++) {
+            JSONObject betRecord = betArray.getJSONObject(i);
+            if (betRecord.getString("account").equals(account)) {
+                set.add(betRecord.getInt("place"));
+            }
+        }
+        return set;
     }
 
     /**

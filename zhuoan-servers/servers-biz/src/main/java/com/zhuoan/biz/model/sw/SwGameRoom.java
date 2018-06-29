@@ -3,9 +3,6 @@ package com.zhuoan.biz.model.sw;
 import com.zhuoan.biz.model.GameRoom;
 import net.sf.json.JSONArray;
 
-import java.util.ArrayList;
-import java.util.List;
-
 /**
  * @author wqm
  * @DESCRIPTION
@@ -33,10 +30,6 @@ public class SwGameRoom extends GameRoom{
      * 赔率
      */
     private double ratio;
-    /**
-     * 走势图
-     */
-    private List<Integer> historyResult = new ArrayList<Integer>();
     /**
      * 单子上限
      */
@@ -80,14 +73,6 @@ public class SwGameRoom extends GameRoom{
 
     public void setRatio(double ratio) {
         this.ratio = ratio;
-    }
-
-    public List<Integer> getHistoryResult() {
-        return historyResult;
-    }
-
-    public void setHistoryResult(List<Integer> historyResult) {
-        this.historyResult = historyResult;
     }
 
     public int getSingleMax() {

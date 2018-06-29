@@ -27,22 +27,25 @@ public class GameTimerSw {
      * @param roomNo
      * @param timeLeft
      */
-    public void gameOverTime(String roomNo,int timeLeft){
+    public void gameOverTime(String roomNo,int timeLeft,int gameStatus){
         for (int i = timeLeft; i >= 0; i--) {
             // 房间存在
             if (RoomManage.gameRoomMap.containsKey(roomNo)&&RoomManage.gameRoomMap.get(roomNo)!=null) {
                 SwGameRoom room = (SwGameRoom)RoomManage.gameRoomMap.get(roomNo);
                 // 设置倒计时
                 room.setTimeLeft(i);
+                if (room.getGameStatus()!=gameStatus) {
+                    break;
+                }
                 // 倒计时到了之后执行事件
                 if (i==0) {
-                    if (room.getGameStatus() == SwConstant.SW_GAME_STATUS_BET) {
+                    if (gameStatus == SwConstant.SW_GAME_STATUS_BET) {
                         swGameEventDeal.betFinish(roomNo);
-                    }else if (room.getGameStatus() == SwConstant.SW_GAME_STATUS_SHOW) {
+                    }else if (gameStatus == SwConstant.SW_GAME_STATUS_SHOW) {
                         swGameEventDeal.summary(roomNo);
-                    }else if (room.getGameStatus() == SwConstant.SW_GAME_STATUS_SUMMARY) {
+                    }else if (gameStatus == SwConstant.SW_GAME_STATUS_SUMMARY) {
                         swGameEventDeal.choiceBanker(roomNo);
-                    }else if (room.getGameStatus() == SwConstant.SW_GAME_STATUS_HIDE_TREASURE) {
+                    }else if (gameStatus == SwConstant.SW_GAME_STATUS_HIDE_TREASURE) {
                         swGameEventDeal.hideOverTime(roomNo);
                     }
                 }

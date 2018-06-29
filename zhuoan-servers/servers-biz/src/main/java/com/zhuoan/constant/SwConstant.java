@@ -138,6 +138,10 @@ public class SwConstant {
      * 游戏事件-开始游戏押宝
      */
     public static final int SW_GAME_EVENT_HIDE_TREASURE = 10;
+    /**
+     * 游戏事件-开始游戏押宝
+     */
+    public static final int SW_GAME_EVENT_GET_UNDO_INFO = 11;
 
     /**
      * 最小座位号

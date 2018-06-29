@@ -106,4 +106,14 @@ public class PublicBizImpl implements PublicBiz{
         }
         gameDao.addOrUpdateUserCoinsRec(obj);
     }
+
+    @Override
+    public JSONObject getUserGameInfo(String account) {
+        return gameDao.getUserGameInfo(account);
+    }
+
+    @Override
+    public void addOrUpdateUserGameInfo(JSONObject obj) {
+        gameDao.addOrUpdateUserGameInfo(obj);
+    }
 }

@@ -342,4 +342,18 @@ public interface GameDao {
      * @return
      */
     public int addOrUpdateUserCoinsRec(JSONObject obj);
+
+    /**
+     * 获取玩家游戏信息
+     * @param account
+     * @return
+     */
+    public JSONObject getUserGameInfo(String account);
+
+    /**
+     * 更改玩家游戏信息
+     * @param obj
+     */
+    public void addOrUpdateUserGameInfo(JSONObject obj);
+
 }

@@ -93,4 +93,17 @@ public interface PublicBiz {
      * @param type
      */
     public void addOrUpdateUserCoinsRec(long userId, int score,int type);
+
+    /**
+     * 获取玩家游戏信息
+     * @param account
+     * @return
+     */
+    public JSONObject getUserGameInfo(String account);
+
+    /**
+     * 更改玩家游戏信息
+     * @param obj
+     */
+    public void addOrUpdateUserGameInfo(JSONObject obj);
 }

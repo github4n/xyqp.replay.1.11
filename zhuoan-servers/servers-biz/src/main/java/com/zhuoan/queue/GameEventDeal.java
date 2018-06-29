@@ -364,6 +364,9 @@ public class GameEventDeal {
                     case SwConstant.SW_GAME_EVENT_HIDE_TREASURE:
                         swGameEventDeal.gameHide(client,data);
                         break;
+                    case SwConstant.SW_GAME_EVENT_GET_UNDO_INFO:
+                        swGameEventDeal.getUndoInfo(client,data);
+                        break;
                     default:
                         break;
                 }

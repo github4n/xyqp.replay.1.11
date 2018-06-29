@@ -712,5 +712,16 @@ public class GameDaoImpl implements GameDao {
     public int addOrUpdateUserCoinsRec(JSONObject obj) {
         return DBJsonUtil.saveOrUpdate(obj,"za_coins_rec");
     }
+
+    @Override
+    public JSONObject getUserGameInfo(String account) {
+        String sql = "SELECT id,account,update_time,treasure_history,shuffle_times FROM za_user_game_info WHERE account=?";
+        return DBUtil.getObjectBySQL(sql,new Object[]{account});
+    }
+
+    @Override
+    public void addOrUpdateUserGameInfo(JSONObject obj) {
+        DBJsonUtil.saveOrUpdate(obj,"za_user_game_info");
+    }
 }
 
