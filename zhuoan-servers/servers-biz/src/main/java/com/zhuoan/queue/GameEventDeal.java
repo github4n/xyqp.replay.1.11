@@ -3,6 +3,7 @@ package com.zhuoan.queue;
 import com.corundumstudio.socketio.SocketIOClient;
 import com.zhuoan.biz.event.BaseEventDeal;
 import com.zhuoan.biz.event.bdx.BDXGameEventDealNew;
+import com.zhuoan.biz.event.ddz.DdzGameEventDeal;
 import com.zhuoan.biz.event.gppj.GPPJGameEventDeal;
 import com.zhuoan.biz.event.nn.NNGameEventDealNew;
 import com.zhuoan.biz.event.qzmj.QZMJGameEventDeal;
@@ -59,6 +60,9 @@ public class GameEventDeal {
 
     @Resource
     private SwGameEventDeal swGameEventDeal;
+
+    @Resource
+    private DdzGameEventDeal ddzGameEventDeal;
 
     @Resource
     private SocketIoManagerService socketIoManagerService;
@@ -356,6 +360,31 @@ public class GameEventDeal {
                         break;
                     case SwConstant.SW_GAME_EVENT_GET_ALL_USER:
                         swGameEventDeal.getAllUser(client,data);
+                        break;
+                    default:
+                        break;
+                }
+                break;
+            case CommonConstant.GAME_ID_DDZ:
+                // 斗地主
+                switch (sorts) {
+                    case DdzConstant.DDZ_GAME_EVENT_READY:
+                        ddzGameEventDeal.gameReady(client,data);
+                        break;
+                    case DdzConstant.DDZ_GAME_EVENT_CALL_AND_ROB:
+                        ddzGameEventDeal.gameBeLandlord(client,data);
+                        break;
+                    case DdzConstant.DDZ_GAME_EVENT_GAME_IN:
+                        ddzGameEventDeal.gameEvent(client,data);
+                        break;
+                    case DdzConstant.DDZ_GAME_EVENT_RECONNECT:
+                        ddzGameEventDeal.reconnectGame(client,data);
+                        break;
+                    case DdzConstant.DDZ_GAME_EVENT_PROMPT:
+                        ddzGameEventDeal.gamePrompt(client,data);
+                        break;
+                    case DdzConstant.DDZ_GAME_EVENT_CONTINUE:
+                        ddzGameEventDeal.gameContinue(client,data);
                         break;
                     default:
                         break;

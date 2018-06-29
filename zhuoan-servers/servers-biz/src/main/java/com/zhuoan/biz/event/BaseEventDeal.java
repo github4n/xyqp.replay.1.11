@@ -3,6 +3,7 @@ package com.zhuoan.biz.event;
 import com.corundumstudio.socketio.SocketIOClient;
 import com.zhuoan.biz.core.nn.UserPacket;
 import com.zhuoan.biz.event.bdx.BDXGameEventDealNew;
+import com.zhuoan.biz.event.ddz.DdzGameEventDeal;
 import com.zhuoan.biz.event.gppj.GPPJGameEventDeal;
 import com.zhuoan.biz.event.nn.NNGameEventDealNew;
 import com.zhuoan.biz.event.qzmj.QZMJGameEventDeal;
@@ -19,6 +20,8 @@ import com.zhuoan.biz.model.RoomManage;
 import com.zhuoan.biz.model.bdx.BDXGameRoomNew;
 import com.zhuoan.biz.model.bdx.UserPackerBDX;
 import com.zhuoan.biz.model.dao.PumpDao;
+import com.zhuoan.biz.model.ddz.DdzGameRoom;
+import com.zhuoan.biz.model.ddz.UserPacketDdz;
 import com.zhuoan.biz.model.gppj.GPPJGameRoom;
 import com.zhuoan.biz.model.gppj.UserPacketGPPJ;
 import com.zhuoan.biz.model.nn.NNGameRoomNew;
@@ -95,6 +98,9 @@ public class BaseEventDeal {
 
     @Resource
     private SwGameEventDeal swGameEventDeal;
+
+    @Resource
+    private DdzGameEventDeal ddzGameEventDeal;
 
     @Resource
     private Destination daoQueueDestination;
@@ -527,6 +533,10 @@ public class BaseEventDeal {
                 gameRoom = new SwGameRoom();
                 createRoomSw((SwGameRoom) gameRoom, baseInfo, userInfo.getString("account"));
                 break;
+            case CommonConstant.GAME_ID_DDZ:
+                gameRoom = new DdzGameRoom();
+                createRoomDdz((DdzGameRoom) gameRoom, baseInfo, userInfo.getString("account"));
+                break;
             default:
                 gameRoom = new GameRoom();
                 break;
@@ -565,6 +575,9 @@ public class BaseEventDeal {
                 break;
             case CommonConstant.GAME_ID_SW:
                 swGameEventDeal.createRoom(client, object);
+                break;
+            case CommonConstant.GAME_ID_DDZ:
+                ddzGameEventDeal.createRoom(client, object);
                 break;
             default:
                 break;
@@ -856,6 +869,13 @@ public class BaseEventDeal {
                 break;
             case CommonConstant.GAME_ID_SW:
                 swGameEventDeal.joinRoom(client, joinData);
+                break;
+            case CommonConstant.GAME_ID_DDZ:
+                // 重连不需要重新设置用户牌局信息
+                if (!((DdzGameRoom) gameRoom).getUserPacketMap().containsKey(userInfo.getString("account"))) {
+                    ((DdzGameRoom) gameRoom).getUserPacketMap().put(userInfo.getString("account"), new UserPacketDdz());
+                }
+                ddzGameEventDeal.joinRoom(client, joinData);
                 break;
             default:
                 break;
@@ -1249,6 +1269,22 @@ public class BaseEventDeal {
         }else {
             room.setBaseNum(setting.getJSONArray("xzTimes"));
         }
+    }
+
+    /**
+     * 斗地主
+     * @param room
+     * @param baseInfo
+     * @param account
+     */
+    public void createRoomDdz(DdzGameRoom room,JSONObject baseInfo, String account) {
+        room.setWfType("斗地主");
+        // 庄家
+        room.setBanker(account);
+        // 房主
+        room.setOwner(account);
+        // 添加牌局信息
+        room.getUserPacketMap().put(account,new UserPacketDdz());
     }
 
     /**

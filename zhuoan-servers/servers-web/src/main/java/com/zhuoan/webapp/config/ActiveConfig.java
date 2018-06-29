@@ -57,6 +57,9 @@ public class ActiveConfig {
     private MessageListener swQueueMessageListener;
 
     @Resource
+    private MessageListener ddzQueueMessageListener;
+
+    @Resource
     private MessageListener daoQueueMessageListener;
 
 
@@ -158,6 +161,16 @@ public class ActiveConfig {
     @Bean
     public Queue swQueueDestination() {
         return new ActiveMQQueue("ZA_GAMES_SW");
+    }
+
+    /**
+     * Ddz queue destination queue.
+     *
+     * @return the queue
+     */
+    @Bean
+    public Queue ddzQueueDestination() {
+        return new ActiveMQQueue("ZA_GAMES_DDZ");
     }
 
 
@@ -274,6 +287,17 @@ public class ActiveConfig {
     @Bean
     public DefaultMessageListenerContainer swQueueListenerContainer(ConnectionFactory connectionFactory) {
         return configListenerMQ(connectionFactory, swQueueMessageListener, swQueueDestination());
+    }
+
+    /**
+     * Dao queue listener container default message listener container.
+     *
+     * @param connectionFactory the connection factory
+     * @return the default message listener container
+     */
+    @Bean
+    public DefaultMessageListenerContainer ddzQueueListenerContainer(ConnectionFactory connectionFactory) {
+        return configListenerMQ(connectionFactory, ddzQueueMessageListener, ddzQueueDestination());
     }
 
 

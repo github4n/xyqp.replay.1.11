@@ -127,6 +127,10 @@ public class CommonConstant {
      */
     public static final int GAME_ID_NN = 1;
     /**
+     * 游戏id-斗地主
+     */
+    public static final int GAME_ID_DDZ = 2;
+    /**
      * 游戏id-泉州麻将
      */
     public static final int GAME_ID_QZMJ = 3;
@@ -155,7 +159,7 @@ public class CommonConstant {
      */
     public static final int GAME_ID_SW = 14;
     /**
-     * 游戏id-水蛙
+     * 游戏id-跑得快
      */
     public static final int GAME_ID_PDK = 15;
     /**
