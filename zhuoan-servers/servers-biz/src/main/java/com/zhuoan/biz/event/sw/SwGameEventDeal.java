@@ -729,6 +729,8 @@ public class SwGameEventDeal {
         addUserGameLog(roomNo,room.getTreasure());
         // 添加输赢记录
         saveUserDeduction(roomNo);
+        // 添加走势图记录
+        updateBankerTreasureHistory(room.getBanker(),room.getTreasure());
         // 通知玩家
         changeGameStatus(roomNo);
         // 分数不够重置庄家
@@ -740,8 +742,6 @@ public class SwGameEventDeal {
                 }
             });
         }
-        // 添加走势图记录
-        updateBankerTreasureHistory(room.getBanker(),room.getTreasure());
     }
 
     /**
@@ -1102,10 +1102,6 @@ public class SwGameEventDeal {
         }else {
             roomInfo.append(room.getSingleMax());
         }
-        roomInfo.append("\n入场:");
-        roomInfo.append((int) room.getEnterScore());
-        roomInfo.append(" 离场:");
-        roomInfo.append((int) room.getLeaveScore());
         roomInfo.append("\n底注:");
         roomInfo.append((int) room.getScore());
         obj.put("roominfo",String.valueOf(roomInfo));
