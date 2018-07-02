@@ -31,11 +31,11 @@ public class DdzCore {
         List<String> cards = ALL_CARD;
         // 打乱牌序
         Collections.shuffle(cards);
-        List<List<String>> cardArray = new ArrayList<List<String>>();
+        List<List<String>> cardArray = new ArrayList<>();
         int cardIndex = 0;
         // 遍历所有玩家
         for (int i = 0; i < DdzConstant.DDZ_PLAYER_NUMBER; i++) {
-            List<String> playerCard = new ArrayList<String>();
+            List<String> playerCard = new ArrayList<>();
             // 玩家手牌
             for (int j = 0; j < DdzConstant.DDZ_INIT_CARD_NUMBER; j++) {
                 playerCard.add(cards.get(cardIndex));
@@ -45,7 +45,7 @@ public class DdzCore {
             cardArray.add(playerCard);
         }
         // 地主牌
-        List<String> landlordCard = new ArrayList<String>();
+        List<String> landlordCard = new ArrayList<>();
         for (int i = cardIndex; i < cards.size(); i++) {
             landlordCard.add(cards.get(i));
         }
@@ -56,7 +56,7 @@ public class DdzCore {
 
     /**
      * 手牌排序
-     * @param cards
+     * @param cards 手牌
      */
     public static void sortCard(List<String> cards) {
         Collections.sort(cards, new Comparator<String>() {
@@ -74,9 +74,9 @@ public class DdzCore {
 
     /**
      * 判断所选的牌是否可出
-     * @param oldCards
-     * @param newCards
-     * @return
+     * @param oldCards 上一次出牌
+     * @param newCards 本次出牌
+     * @return 是否可出
      */
     public static boolean checkCard(List<String> oldCards,List<String> newCards) {
         // 牌型不符合条件无法出牌
@@ -113,16 +113,16 @@ public class DdzCore {
             // 三带一、三带二、飞机带单牌、飞机带对子只比较最大的三带
             if (cardType==DdzConstant.DDZ_CARD_TYPE_THREE_WITH_SINGLE||cardType==DdzConstant.DDZ_CARD_TYPE_THREE_WITH_PARIS||
                 cardType==DdzConstant.DDZ_CARD_TYPE_PLANE_WITH_SINGLE||cardType==DdzConstant.DDZ_CARD_TYPE_PLANE_WITH_DOUBLE) {
-                List<List<String>> oldThree = obtainRepeatCardList(oldCards,3);
-                List<List<String>> newThree = obtainRepeatCardList(newCards,3);
+                List<List<String>> oldThree = obtainRepeatList(oldCards,3,false);
+                List<List<String>> newThree = obtainRepeatList(newCards,3,false);
                 if (obtainCardValue(newThree.get(newThree.size()-1).get(0))>obtainCardValue(oldThree.get(oldThree.size()-1).get(0))) {
                     return true;
                 }
             }
             // 四带二、四带两对只比较最大的炸弹
             if (cardType==DdzConstant.DDZ_CARD_TYPE_BOMB_WITH_SINGLE||cardType==DdzConstant.DDZ_CARD_TYPE_BOMB_WITH_PARIS) {
-                List<List<String>> oldThree = obtainRepeatCardList(oldCards,4);
-                List<List<String>> newThree = obtainRepeatCardList(newCards,4);
+                List<List<String>> oldThree = obtainRepeatList(oldCards,4,false);
+                List<List<String>> newThree = obtainRepeatList(newCards,4,false);
                 if (obtainCardValue(newThree.get(newThree.size()-1).get(0))>obtainCardValue(oldThree.get(oldThree.size()-1).get(0))) {
                     return true;
                 }
@@ -133,8 +133,8 @@ public class DdzCore {
 
     /**
      * 获取牌型
-     * @param cards
-     * @return
+     * @param cards 牌组
+     * @return 牌型
      */
     public static int obtainCardType(List<String> cards) {
         sortCard(cards);
@@ -209,12 +209,12 @@ public class DdzCore {
 
     /**
      * 获取单牌、对子、三带、炸弹数量
-     * @param cards
-     * @return
+     * @param cards 手牌
+     * @return 单牌、对子、三带、炸弹数量
      */
     private static Map<Integer,Integer> obtainCardNum(List<String> cards) {
         // 每张牌更有多少张
-        Map<Integer,Integer> cardNum = new HashMap<Integer,Integer>();
+        Map<Integer,Integer> cardNum = new HashMap<>();
         for (String card : cards) {
             int cardValue = obtainCardValue(card);
             if (!cardNum.containsKey(cardValue)) {
@@ -224,7 +224,7 @@ public class DdzCore {
             }
         }
         // 单牌、对子、三带、炸弹更有多少个
-        Map<Integer,Integer> map = new HashMap<Integer,Integer>();
+        Map<Integer,Integer> map = new HashMap<>();
         map.put(1,0);
         map.put(2,0);
         map.put(3,0);
@@ -237,16 +237,16 @@ public class DdzCore {
 
     /**
      * 是否是飞机、飞机带单牌、飞机不带
-     * @param cards
-     * @param n
-     * @return
+     * @param cards 牌组
+     * @param n 0-不带 1-带单牌 2-带对子
+     * @return 是否是飞机带N牌型
      */
     private static boolean isPlaneWithN(List<String> cards,int n) {
         if (cards.size()%(n+3)!=0) {
             return false;
         }
         int threeNum = cards.size()/(n+3);
-        List<List<String>> three = obtainRepeatCardList(cards,3);
+        List<List<String>> three = obtainRepeatList(cards,3,true);
         if (three.size()!=threeNum) {
             return false;
         }
@@ -263,16 +263,13 @@ public class DdzCore {
         }
         int min = obtainCardValue(three.get(0).get(0));
         int max = obtainCardValue(three.get(threeNum-1).get(0));
-        if (max-min!=threeNum-1) {
-            return false;
-        }
-        return true;
+        return max - min == threeNum - 1;
     }
 
     /**
      * 判断牌组是否是同一张牌
-     * @param cards
-     * @return
+     * @param cards 牌组
+     * @return 是否是单牌、对子、三带、炸弹
      */
     private static boolean isAllTheSame(List<String> cards) {
         if (cards.size()<1) {
@@ -290,8 +287,8 @@ public class DdzCore {
 
     /**
      * 判断是否是顺子
-     * @param cards
-     * @return
+     * @param cards 牌组
+     * @return 是否是顺子
      */
     private static boolean isStraight(List<String> cards) {
         // 5张以上
@@ -315,8 +312,8 @@ public class DdzCore {
 
     /**
      * 判断是否是连对
-     * @param cards
-     * @return
+     * @param cards 牌组
+     * @return 是否是连对
      */
     private static boolean isDoubleStraight(List<String> cards) {
         // 6张以上且是双数
@@ -340,8 +337,8 @@ public class DdzCore {
 
     /**
      * 判断是否是双王
-     * @param cards
-     * @return
+     * @param cards 牌组
+     * @return 是否是双王
      */
     private static boolean isDoubleJoker(List<String> cards) {
         if (cards.size()!=2) {
@@ -358,7 +355,7 @@ public class DdzCore {
 
     /**
      * 获取牌的点数
-     * @param card
+     * @param card 牌
      * @return 点数
      */
     private static int obtainCardValue(String card) {
@@ -376,7 +373,7 @@ public class DdzCore {
 
     /**
      * 获取牌的花色
-     * @param card
+     * @param card 牌
      * @return 花色
      */
     private static int obtainCardColor(String card) {
@@ -385,9 +382,9 @@ public class DdzCore {
 
     /**
      * 获取重复数为num的所有手牌
-     * @param cards
-     * @param num
-     * @return
+     * @param cards 手牌
+     * @param num 张数
+     * @return [[x,x],[x,x]]
      */
     private static List<List<String>> obtainRepeatCardList(List<String> cards,int num) {
         sortCard(cards);
@@ -410,12 +407,12 @@ public class DdzCore {
 
     /**
      * 获取牌中所有的顺子、连对、飞机不带
-     * @param cards
+     * @param cards 手牌
      * @param num 1-顺子  2-连对  3-飞机不带
-     * @return
+     * @return [[x,x],[x,x]]
      */
     private static List<List<String>> obtainStraightList(List<String> cards,int num) {
-        List<List<String>> cardList = new ArrayList<List<String>>();
+        List<List<String>> cardList = new ArrayList<>();
         List<String> distinctCards = obtainCardsWithNum(cards,num,true);
         int minLength = 0;
         int beginIndex = 0;
@@ -434,10 +431,10 @@ public class DdzCore {
             minLength = 6;
             beginIndex = 3;
         }
-        if (beginIndex>0&&minLength>0&&distinctCards.size()>minLength) {
+        if ((beginIndex > 0) && (minLength > 0) && (distinctCards.size() > minLength)) {
             // 取顺子间隔1 取连对间隔2 取飞机不带间隔3
-            for (int i = 0; i < distinctCards.size()-minLength; i=i+num) {
-                for (int j = i+beginIndex; j < distinctCards.size()-num+1; j=j+num) {
+            for (int i = 0; i < (distinctCards.size() - minLength); i += num) {
+                for (int j = i+beginIndex; j < ((distinctCards.size() - num) + 1); j += num) {
                     List<String> list = distinctCards.subList(i, j+num);
                     if (obtainCardValue(distinctCards.get(j))<15&&obtainCardValue(distinctCards.get(j))-obtainCardValue(distinctCards.get(i))==(j-i)/num) {
                         cardList.add(list);
@@ -465,9 +462,9 @@ public class DdzCore {
     /**
      * 获取牌中所有的单牌、对子、三带、炸弹
      * @param cards
-     * @param num
+     * @param num 张数 1-单牌 2-对子 3-三带 4-炸弹
      * @param isMore true包含大于的，false不包含
-     * @return
+     * @return [[x,x],[x,x]]
      */
     public static List<List<String>> obtainRepeatList(List<String> cards,int num,boolean isMore) {
         List<List<String>> list = new ArrayList<>();
@@ -484,14 +481,14 @@ public class DdzCore {
 
     /**
      * 获取张数为num的所有牌
-     * @param cards
-     * @param num
+     * @param cards 牌组
+     * @param num 张数
      * @param isMore true包含大于的，false不包含
-     * @return
+     * @return [x,x]
      */
     private static List<String> obtainCardsWithNum(List<String> cards,int num,boolean isMore) {
         List<String> cardList = new ArrayList<>();
-        Map<Integer,List<String>> cardMap = new HashMap<Integer,List<String>>();
+        Map<Integer,List<String>> cardMap = new HashMap<>();
         // 将牌根据点数分类
         for (String card : cards) {
             int cardValue = obtainCardValue(card);
@@ -516,59 +513,102 @@ public class DdzCore {
         return cardList;
     }
 
+    /**
+     * 所有可出的牌
+     * @param lastCard 上次出的牌
+     * @param myPai 玩家手牌
+     * @return 所有可出的牌
+     */
     public static List<List<String>> obtainAllCard(List<String> lastCard, List<String> myPai) {
         List<List<String>> list = new ArrayList<>();
         int lastType = DdzCore.obtainCardType(lastCard);
         switch (lastType) {
             case DdzConstant.DDZ_CARD_TYPE_SINGLE:
+                // 单牌
                 list.addAll(obtainRepeatList(myPai,1,false));
+                // 三带、对子、炸弹拆单牌
+                List<List<String>> singleBreakList = obtainRepeatList(myPai, 1, true);
+                for (List<String> breakCard : singleBreakList) {
+                    if (!list.contains(breakCard)) {
+                        list.add(breakCard);
+                    }
+                }
                 break;
             case DdzConstant.DDZ_CARD_TYPE_PAIRS:
+                // 对子
                 list.addAll(obtainRepeatList(myPai,2,false));
+                // 三带、炸弹拆对子
+                List<List<String>> pairsBreakList = obtainRepeatList(myPai, 2, true);
+                for (List<String> breakCard : pairsBreakList) {
+                    if (!list.contains(breakCard)) {
+                        list.add(breakCard);
+                    }
+                }
                 break;
             case DdzConstant.DDZ_CARD_TYPE_THREE:
+                // 三不带
                 list.addAll(obtainRepeatList(myPai,3,false));
                 break;
             case DdzConstant.DDZ_CARD_TYPE_THREE_WITH_SINGLE:
+                // 三带一
                 list.addAll(joinCardList(obtainRepeatList(myPai,3,false),myPai,1,3));
                 break;
             case DdzConstant.DDZ_CARD_TYPE_THREE_WITH_PARIS:
+                // 三带一对
                 list.addAll(joinCardList(obtainRepeatList(myPai,3,false),myPai,2,3));
                 break;
             case DdzConstant.DDZ_CARD_TYPE_BOMB_WITH_SINGLE:
+                // 四带二
                 list.addAll(joinCardList(obtainRepeatList(myPai,4,false),myPai,1,4));
                 break;
             case DdzConstant.DDZ_CARD_TYPE_BOMB_WITH_PARIS:
+                // 四带两对
                 list.addAll(joinCardList(obtainRepeatList(myPai,4,false),myPai,2,4));
                 break;
             case DdzConstant.DDZ_CARD_TYPE_STRAIGHT:
+                // 顺子
                 list.addAll(obtainStraightList(myPai,1));
                 break;
             case DdzConstant.DDZ_CARD_TYPE_DOUBLE_STRAIGHT:
+                // 连对
                 list.addAll(obtainStraightList(myPai,2));
                 break;
             case DdzConstant.DDZ_CARD_TYPE_PLANE:
+                // 飞机
                 list.addAll(obtainStraightList(myPai,3));
                 break;
             case DdzConstant.DDZ_CARD_TYPE_PLANE_WITH_SINGLE:
+                // 飞机带单牌
                 list.addAll(joinCardList(obtainStraightList(myPai,3),myPai,1,3));
                 break;
             case DdzConstant.DDZ_CARD_TYPE_PLANE_WITH_DOUBLE:
+                // 飞机带对子
                 list.addAll(joinCardList(obtainStraightList(myPai,3),myPai,2,3));
                 break;
             default:
                 break;
         }
+        // 炸弹
         list.addAll(obtainRepeatList(myPai,4,false));
-        List<List<String>> list1 = new ArrayList<>();
+        // 所有可出的牌
+        List<List<String>> allCard = new ArrayList<>();
         for (List<String> strings : list) {
+            // 判断牌型是否可出
             if (checkCard(lastCard,strings)) {
-                list1.add(strings);
+                allCard.add(strings);
             }
         }
-        return list1;
+        return allCard;
     }
 
+    /**
+     * 带牌
+     * @param allChoice 所有可出的牌
+     * @param myPai 玩家手牌
+     * @param num 1-带单牌 2-带对子
+     * @param type 3-三带、飞机 4-炸弹
+     * @return 带牌结果
+     */
     private static List<List<String>> joinCardList(List<List<String>> allChoice,List<String> myPai,int num,int type) {
         List<List<String>> list = new ArrayList<>();
         // 带的牌
@@ -580,9 +620,11 @@ public class DdzCore {
             bandChoice.addAll(obtainCardsWithNum(myPai, 2, false));
         }
         for (List<String> choice : allChoice) {
+            // 炸弹2/三带1 * 单牌1/对子2 * 三带个数
+            int bandNum = (type-2) * num * choice.size()/type;
             // 足够带
-            if (bandChoice.size() >= (type-2) * choice.size() / type) {
-                choice.addAll(bandChoice.subList(0, (type-2) * choice.size() / type));
+            if (bandChoice.size() >= bandNum) {
+                choice.addAll(bandChoice.subList(0, bandNum));
                 list.add(choice);
             }
         }
@@ -592,10 +634,26 @@ public class DdzCore {
 
     public static void main(String[] args) {
         long start = System.currentTimeMillis();
-        List<List<String>> list = shuffleAndDeal();
-        for (List<String> strings : list) {
-            System.out.println(strings);
-        }
+        List<String> oldList = new ArrayList<>();
+        oldList.add("1-3");
+        oldList.add("2-3");
+        oldList.add("3-3");
+        oldList.add("1-4");
+        oldList.add("2-4");
+        oldList.add("3-4");
+        oldList.add("1-5");
+        oldList.add("2-6");
+        List<String> myPai = new ArrayList<>();
+        myPai.add("1-13");
+        myPai.add("2-13");
+        myPai.add("3-13");
+        myPai.add("1-1");
+        myPai.add("2-1");
+        myPai.add("3-1");
+        myPai.add("1-7");
+        myPai.add("2-8");
+        myPai.add("1-8");
+        System.out.println(obtainAllCard(oldList,myPai));
         long end = System.currentTimeMillis();
         System.out.println(end-start);
     }
