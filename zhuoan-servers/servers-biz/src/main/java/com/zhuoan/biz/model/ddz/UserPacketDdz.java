@@ -38,6 +38,14 @@ public class UserPacketDdz {
      * 是否托管
      */
     private int isTrustee;
+    /**
+     * 参与局数
+     */
+    private int playTimes;
+    /**
+     * 是否同意解散房间
+     */
+    private int isCloseRoom;
 
     public int getStatus() {
         return status;
@@ -93,5 +101,21 @@ public class UserPacketDdz {
 
     public void setIsTrustee(int isTrustee) {
         this.isTrustee = isTrustee;
+    }
+
+    public int getPlayTimes() {
+        return playTimes;
+    }
+
+    public void setPlayTimes(int playTimes) {
+        this.playTimes = playTimes;
+    }
+
+    public int getIsCloseRoom() {
+        return isCloseRoom;
+    }
+
+    public void setIsCloseRoom(int isCloseRoom) {
+        this.isCloseRoom = isCloseRoom;
     }
 }

@@ -392,6 +392,18 @@ public class GameEventDeal {
                     case DdzConstant.DDZ_GAME_EVENT_CONTINUE:
                         ddzGameEventDeal.gameContinue(client,data);
                         break;
+                    case DdzConstant.DDZ_GAME_EVENT_EXIT_ROOM:
+                        ddzGameEventDeal.exitRoom(client,data);
+                        break;
+                    case DdzConstant.DDZ_GAME_EVENT_CLOSE_ROOM:
+                        ddzGameEventDeal.closeRoom(client,data);
+                        break;
+                    case DdzConstant.DDZ_GAME_EVENT_TRUSTEE:
+                        ddzGameEventDeal.gameTrustee(client,data);
+                        break;
+                    case DdzConstant.DDZ_GAME_EVENT_AUTO_PLAY:
+                        ddzGameEventDeal.gameAutoPlay(client,data);
+                        break;
                     default:
                         break;
                 }

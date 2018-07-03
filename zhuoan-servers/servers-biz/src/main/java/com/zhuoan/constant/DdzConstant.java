@@ -123,6 +123,10 @@ public class DdzConstant {
     public static final int DDZ_GAME_EVENT_RECONNECT = 4;
     public static final int DDZ_GAME_EVENT_PROMPT = 5;
     public static final int DDZ_GAME_EVENT_CONTINUE = 6;
+    public static final int DDZ_GAME_EVENT_EXIT_ROOM = 7;
+    public static final int DDZ_GAME_EVENT_CLOSE_ROOM = 8;
+    public static final int DDZ_GAME_EVENT_TRUSTEE = 9;
+    public static final int DDZ_GAME_EVENT_AUTO_PLAY = 10;
 
     public static final int DDZ_RECONNECT_NODE_READY = 0;
     public static final int DDZ_RECONNECT_NODE_CALL = 1;
@@ -135,5 +139,6 @@ public class DdzConstant {
     public static final String DDZ_DATA_KEY_TYPE = "type";
     public static final String DDZ_DATA_KEY_IS_CHOICE = "isChoice";
     public static final String DDZ_DATA_KEY_PAI_LIST = "paiList";
+    public static final String DDZ_DATA_KEY_AUTO = "auto";
 
 }

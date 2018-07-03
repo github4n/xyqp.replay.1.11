@@ -2,22 +2,30 @@ package com.zhuoan.biz.event.ddz;
 
 import com.corundumstudio.socketio.SocketIOClient;
 import com.zhuoan.biz.core.ddz.DdzCore;
+import com.zhuoan.biz.game.biz.RoomBiz;
 import com.zhuoan.biz.game.biz.UserBiz;
 import com.zhuoan.biz.model.Playerinfo;
 import com.zhuoan.biz.model.RoomManage;
+import com.zhuoan.biz.model.dao.PumpDao;
 import com.zhuoan.biz.model.ddz.DdzGameRoom;
 import com.zhuoan.biz.model.ddz.UserPacketDdz;
 import com.zhuoan.constant.CommonConstant;
+import com.zhuoan.constant.DaoTypeConstant;
 import com.zhuoan.constant.DdzConstant;
+import com.zhuoan.service.cache.RedisService;
+import com.zhuoan.service.jms.ProducerService;
 import com.zhuoan.util.Dto;
+import com.zhuoan.util.thread.ThreadPoolHelper;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 import org.apache.commons.lang.math.RandomUtils;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
+import javax.jms.Destination;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 /**
  * @author wqm
@@ -30,6 +38,21 @@ public class DdzGameEventDeal {
 
     @Resource
     private UserBiz userBiz;
+
+    @Resource
+    private RoomBiz roomBiz;
+
+    @Resource
+    private Destination daoQueueDestination;
+
+    @Resource
+    private ProducerService producerService;
+
+    @Resource
+    private RedisService redisService;
+
+    @Resource
+    private GameTimerDdz gameTimerDdz;
 
     /**
      * 创建房间通知自己
@@ -145,6 +168,9 @@ public class DdzGameEventDeal {
         // 抢地主翻倍
         if (type==DdzConstant.DDZ_BE_LANDLORD_TYPE_ROB&&isChoice==CommonConstant.GLOBAL_YES) {
             room.setMultiple(room.getMultiple()*2);
+            if (room.getRoomType()==CommonConstant.ROOM_TYPE_FK) {
+                room.getUserPacketMap().get(account).setCallNum(room.getUserPacketMap().get(account).getCallNum()+1);
+            }
         }
         // 添加抢地主记录
         JSONObject record = new JSONObject();
@@ -156,24 +182,28 @@ public class DdzGameEventDeal {
         room.setFocusIndex(obtainNextDoLandlordIndex(roomNo,account));
         // 通知玩家
         JSONObject result = new JSONObject();
-        if (isAllChoice(roomNo)) {
-            // 确定地主
-            determineLandlord(roomNo);
-            // 状态改变
-            result.put("card",obtainLandlordCard(roomNo));
-            result.put("landlord",obtainLandlordIndex(roomNo));
-        }
         result.put("type",type);
-        result.put("num",room.getPlayerMap().get(account).getMyIndex());
         result.put("isChoice",isChoice);
-        result.put("multiple",room.getMultiple());
-        result.put("nextChoice",room.getFocusIndex());
-        result.put("gameStatus",room.getGameStatus());
+        result.put("num",room.getPlayerMap().get(account).getMyIndex());
         if (type==DdzConstant.DDZ_BE_LANDLORD_TYPE_CALL&&isChoice==CommonConstant.GLOBAL_NO) {
             result.put("nextType",DdzConstant.DDZ_BE_LANDLORD_TYPE_CALL);
         }else {
             result.put("nextType",DdzConstant.DDZ_BE_LANDLORD_TYPE_ROB);
         }
+        if (isAllChoice(roomNo)) {
+            // 确定地主
+            determineLandlord(roomNo);
+            // 开启定时器
+            beginEventTimer(roomNo,room.getLandlordAccount());
+            // 状态改变
+            result.put("card",obtainLandlordCard(roomNo));
+            result.put("landlord",obtainLandlordIndex(roomNo));
+        }else {
+            beginRobTimer(roomNo,room.getFocusIndex(),result.getInt("nextType"));
+        }
+        result.put("multiple",room.getMultiple());
+        result.put("nextChoice",room.getFocusIndex());
+        result.put("gameStatus",room.getGameStatus());
         for (String player : obtainAllPlayerAccount(roomNo)) {
             result.put("myPai",room.getUserPacketMap().get(player).getMyPai());
             CommonConstant.sendMsgEventToSingle(room.getPlayerMap().get(player).getUuid(),String.valueOf(result),"gameLandlordPush_DDZ");
@@ -236,6 +266,8 @@ public class DdzGameEventDeal {
             room.setLastCard(paiList);
             // 设置上一个出牌人
             room.setLastOperateAccount(account);
+        }else {
+            paiList.clear();
         }
         // 设置下一个出牌玩家
         room.setFocusIndex(obtainNextPlayerIndex(roomNo,account));
@@ -268,14 +300,29 @@ public class DdzGameEventDeal {
             summary(roomNo,account);
             result.put("isGameOver",CommonConstant.GLOBAL_YES);
             result.put("summaryData",obtainSummaryData(roomNo));
-            // TODO: 2018/6/27 总结算
+            result.put("isEnd",CommonConstant.GLOBAL_NO);
+            // 房卡场局数到了之后触发总结算
+            if (room.getGameStatus()==DdzConstant.DDZ_GAME_STATUS_FINAL_SUMMARY) {
+                result.put("isEnd",CommonConstant.GLOBAL_YES);
+                result.put("endData",obtainFinalSummaryData(roomNo));
+            }
         }
         for (String player : obtainAllPlayerAccount(roomNo)) {
             result.put("myPai",room.getUserPacketMap().get(player).getMyPai());
             CommonConstant.sendMsgEventToSingle(room.getPlayerMap().get(player).getUuid(),String.valueOf(result),"gameEventPush_DDZ");
         }
+        final String nextPlayerAccount = obtainNextPlayerAccount(roomNo,account);
+        if (!Dto.stringIsNULL(nextPlayerAccount)&&
+            room.getUserPacketMap().containsKey(nextPlayerAccount)&&room.getUserPacketMap().get(nextPlayerAccount)!=null) {
+            beginEventTimer(roomNo,nextPlayerAccount);
+        }
     }
 
+    /**
+     * 提示
+     * @param client
+     * @param data
+     */
     public void gamePrompt(SocketIOClient client,Object data) {
         JSONObject postData = JSONObject.fromObject(data);
         // 不满足准备条件直接忽略
@@ -293,12 +340,9 @@ public class DdzGameEventDeal {
         }
         JSONArray proList = new JSONArray();
         List<String> myPai = room.getUserPacketMap().get(account).getMyPai();
-        // 还没出过牌或轮到自己出牌
+        // 还没出过牌或轮到自己出牌依次提示单牌、对子、三张、炸弹
         if (room.getLastCard().size()==0||account.equals(room.getLastOperateAccount())) {
-            proList.addAll(changeFormat(DdzCore.obtainRepeatList(myPai,1,false)));
-            proList.addAll(changeFormat(DdzCore.obtainRepeatList(myPai,2,false)));
-            proList.addAll(changeFormat(DdzCore.obtainRepeatList(myPai,3,false)));
-            proList.addAll(changeFormat(DdzCore.obtainRepeatList(myPai,4,false)));
+            proList.addAll(changeFormat(DdzCore.obtainAllCard(new ArrayList<String>(),myPai)));
         }else {
             proList.addAll(changeFormat(DdzCore.obtainAllCard(room.getLastCard(),myPai)));
         }
@@ -309,9 +353,227 @@ public class DdzGameEventDeal {
         }else {
             postData.put("type",DdzConstant.DDZ_GAME_EVENT_TYPE_NO);
             postData.put("paiList",proList);
-            gameEvent(client,postData);
+            gameEvent(null,postData);
         }
+    }
 
+    /**
+     * 托管
+     * @param client
+     * @param data
+     */
+    public void gameTrustee(SocketIOClient client,Object data) {
+        JSONObject postData = JSONObject.fromObject(data);
+        // 不满足准备条件直接忽略
+        if (!CommonConstant.checkEvent(postData, DdzConstant.DDZ_GAME_STATUS_GAME_IN, client)) {
+            return;
+        }
+        // 房间号
+        String roomNo = postData.getString(CommonConstant.DATA_KEY_ROOM_NO);
+        DdzGameRoom room = (DdzGameRoom) RoomManage.gameRoomMap.get(roomNo);
+        // 玩家账号
+        String account = postData.getString(CommonConstant.DATA_KEY_ACCOUNT);
+        if (!postData.containsKey(DdzConstant.DDZ_DATA_KEY_TYPE)) {
+            return;
+        }
+        // 改变玩家托管状态
+        int trustee = postData.getInt(DdzConstant.DDZ_DATA_KEY_TYPE);
+        room.getUserPacketMap().get(account).setIsTrustee(trustee);
+        JSONObject result = new JSONObject();
+        result.put("num",room.getPlayerMap().get(account).getMyIndex());
+        result.put("type",trustee);
+        CommonConstant.sendMsgEventToAll(room.getAllUUIDList(),String.valueOf(result),"gameTrusteePush_DDZ");
+        // 自己出牌托管需要出牌
+        if (trustee==CommonConstant.GLOBAL_YES&&room.getPlayerMap().get(account).getMyIndex()==room.getFocusIndex()) {
+            gameAutoPlay(null,postData);
+        }
+    }
+
+    /**
+     * 自动出牌
+     * @param client
+     * @param data
+     */
+    public void gameAutoPlay(SocketIOClient client,Object data) {
+        if (client!=null) {
+            return;
+        }
+        JSONObject postData = JSONObject.fromObject(data);
+        // 不满足准备条件直接忽略
+        if (!CommonConstant.checkEvent(postData, DdzConstant.DDZ_GAME_STATUS_GAME_IN, client)) {
+            return;
+        }
+        String roomNo = postData.getString(CommonConstant.DATA_KEY_ROOM_NO);
+        String account = postData.getString(CommonConstant.DATA_KEY_ACCOUNT);
+        DdzGameRoom room = (DdzGameRoom) RoomManage.gameRoomMap.get(roomNo);
+        List<String> lastCard = room.getLastCard();
+        if (room.getLastCard().size()==0||account.equals(room.getLastOperateAccount())) {
+            lastCard.clear();
+        }
+        List<List<String>> allCard = DdzCore.obtainAllCard(lastCard, room.getUserPacketMap().get(account).getMyPai());
+        if (allCard.size()>0) {
+            postData.put(DdzConstant.DDZ_DATA_KEY_PAI_LIST,allCard.get(0));
+            postData.put(DdzConstant.DDZ_DATA_KEY_TYPE,DdzConstant.DDZ_GAME_EVENT_TYPE_YES);
+        }else {
+            postData.put(DdzConstant.DDZ_DATA_KEY_PAI_LIST,new ArrayList<String>());
+            postData.put(DdzConstant.DDZ_DATA_KEY_TYPE,DdzConstant.DDZ_GAME_EVENT_TYPE_NO);
+        }
+        gameEvent(client,postData);
+    }
+
+    /**
+     * 退出
+     * @param client
+     * @param data
+     */
+    public void exitRoom(SocketIOClient client, Object data) {
+        JSONObject postData = JSONObject.fromObject(data);
+        if (!CommonConstant.checkEvent(postData, CommonConstant.CHECK_GAME_STATUS_NO, client)) {
+            return;
+        }
+        String roomNo = postData.getString(CommonConstant.DATA_KEY_ROOM_NO);
+        DdzGameRoom room = (DdzGameRoom) RoomManage.gameRoomMap.get(roomNo);
+        String account = postData.getString(CommonConstant.DATA_KEY_ACCOUNT);
+        boolean canExit = false;
+        // 金币场、元宝场
+        if (room.getRoomType() == CommonConstant.ROOM_TYPE_JB || room.getRoomType() == CommonConstant.ROOM_TYPE_YB) {
+            // 未参与游戏可以自由退出
+            if (room.getUserPacketMap().get(account).getStatus() == DdzConstant.DDZ_USER_STATUS_INIT) {
+                canExit = true;
+            } else if (room.getGameStatus() == DdzConstant.DDZ_GAME_STATUS_INIT ||
+                room.getGameStatus() == DdzConstant.DDZ_GAME_STATUS_READY ||
+                room.getGameStatus() == DdzConstant.DDZ_GAME_STATUS_SUMMARY) {// 初始及准备阶段可以退出
+                canExit = true;
+            }
+        }else if (room.getRoomType() == CommonConstant.ROOM_TYPE_FK) {
+            // 总结算之后可以退出房间
+            if (room.getGameStatus() == DdzConstant.DDZ_GAME_STATUS_FINAL_SUMMARY) {
+                canExit = true;
+            }
+            if (room.getGameStatus()==DdzConstant.DDZ_GAME_STATUS_INIT||room.getGameStatus()==DdzConstant.DDZ_GAME_STATUS_READY) {
+                if (room.getUserPacketMap().get(account).getPlayTimes()==0) {
+                    if (room.getPayType()==CommonConstant.PAY_TYPE_AA||!room.getOwner().equals(account)) {
+                        canExit = true;
+                    }
+                }
+            }
+        }
+        Playerinfo player = room.getPlayerMap().get(account);
+        if (canExit) {
+            List<UUID> allUUIDList = room.getAllUUIDList();
+            // 更新数据库
+            JSONObject roomInfo = new JSONObject();
+            roomInfo.put("room_no", room.getRoomNo());
+            if (room.getRoomType()!=CommonConstant.ROOM_TYPE_FK) {
+                roomInfo.put("user_id" + room.getPlayerMap().get(account).getMyIndex(), 0);
+            }
+            // 移除数据
+            for (int i = 0; i < room.getUserIdList().size(); i++) {
+                if (room.getUserIdList().get(i) == room.getPlayerMap().get(account).getId()) {
+                    room.getUserIdList().set(i, 0L);
+                    break;
+                }
+            }
+            room.getPlayerMap().remove(account);
+            room.getUserPacketMap().remove(account);
+            // 组织数据，通知玩家
+            JSONObject result = new JSONObject();
+            result.put(CommonConstant.RESULT_KEY_CODE, CommonConstant.GLOBAL_YES);
+            result.put("type", 1);
+            result.put("index", player.getMyIndex());
+            if (!postData.containsKey("notSend")) {
+                CommonConstant.sendMsgEventToAll(allUUIDList, String.valueOf(result), "exitRoomPush_DDZ");
+            }
+            if (postData.containsKey("notSendToMe")) {
+                CommonConstant.sendMsgEventToAll(room.getAllUUIDList(), String.valueOf(result), "exitRoomPush_DDZ");
+            }
+            // 所有人都退出清除房间数据
+            if (room.getPlayerMap().size() == 0) {
+                roomInfo.put("status",room.getIsClose());
+                roomInfo.put("game_index",room.getGameIndex());
+                RoomManage.gameRoomMap.remove(room.getRoomNo());
+            }
+            producerService.sendMessage(daoQueueDestination, new PumpDao(DaoTypeConstant.UPDATE_ROOM_INFO, roomInfo));
+        } else {
+            // 组织数据，通知玩家
+            JSONObject result = new JSONObject();
+            result.put(CommonConstant.RESULT_KEY_CODE, CommonConstant.GLOBAL_NO);
+            result.put(CommonConstant.RESULT_KEY_MSG, "当前无法退出,请发起解散");
+            result.put("type", 1);
+            CommonConstant.sendMsgEventToSingle(client, String.valueOf(result), "exitRoomPush_DDZ");
+        }
+    }
+
+    /**
+     * 解散房间
+     * @param client
+     * @param data
+     */
+    public void closeRoom(SocketIOClient client, Object data) {
+        JSONObject postData = JSONObject.fromObject(data);
+        if (!CommonConstant.checkEvent(postData, CommonConstant.CHECK_GAME_STATUS_NO, client)) {
+            return;
+        }
+        final String roomNo = postData.getString(CommonConstant.DATA_KEY_ROOM_NO);
+        DdzGameRoom room = (DdzGameRoom) RoomManage.gameRoomMap.get(roomNo);
+        String account = postData.getString(CommonConstant.DATA_KEY_ACCOUNT);
+        if (postData.containsKey("type")) {
+            JSONObject result = new JSONObject();
+            int type = postData.getInt("type");
+            // 有人发起解散设置解散时间
+            if (type == CommonConstant.CLOSE_ROOM_AGREE && room.getJieSanTime() == 0) {
+                // TODO: 2018/7/2 解散倒计时
+                room.setJieSanTime(60);
+            }
+            // 设置解散状态
+            room.getUserPacketMap().get(account).setIsCloseRoom(type);
+            // 有人拒绝解散
+            if (type == CommonConstant.CLOSE_ROOM_DISAGREE) {
+                // 重置解散
+                room.setJieSanTime(0);
+                // 设置玩家为未确认状态
+                for (String uuid : room.getUserPacketMap().keySet()) {
+                    if (room.getUserPacketMap().containsKey(uuid)&&room.getUserPacketMap().get(uuid)!=null) {
+                        room.getUserPacketMap().get(uuid).setIsCloseRoom(CommonConstant.CLOSE_ROOM_UNSURE);
+                    }
+                }
+                // 通知玩家
+                result.put(CommonConstant.RESULT_KEY_CODE, CommonConstant.GLOBAL_NO);
+                String[] names = {room.getPlayerMap().get(account).getName()};
+                result.put("names", names);
+                CommonConstant.sendMsgEventToAll(room.getAllUUIDList(), String.valueOf(result), "closeRoomPush_DDZ");
+                return;
+            }
+            if (type == CommonConstant.CLOSE_ROOM_AGREE) {
+                // 全部同意解散
+                if (isAllAgreeClose(roomNo)) {
+                    // 未玩完一局不需要强制结算
+                    if (!room.isNeedFinalSummary()) {
+                        // 所有玩家
+                        List<UUID> uuidList = room.getAllUUIDList();
+                        // 更新数据库
+                        JSONObject roomInfo = new JSONObject();
+                        roomInfo.put("room_no",room.getRoomNo());
+                        roomInfo.put("status",room.getIsClose());
+                        producerService.sendMessage(daoQueueDestination, new PumpDao(DaoTypeConstant.UPDATE_ROOM_INFO, roomInfo));
+                        // 移除房间
+                        RoomManage.gameRoomMap.remove(roomNo);
+                        // 通知玩家
+                        result.put("type",CommonConstant.SHOW_MSG_TYPE_BIG);
+                        result.put(CommonConstant.RESULT_KEY_MSG,"解散成功");
+                        CommonConstant.sendMsgEventToAll(uuidList,String.valueOf(result),"tipMsgPush");
+                        return;
+                    }
+                    room.setGameStatus(DdzConstant.DDZ_GAME_STATUS_FINAL_SUMMARY);
+                    changeGameStatus(roomNo);
+                } else {// 刷新数据
+                    room.getUserPacketMap().get(account).setIsCloseRoom(CommonConstant.CLOSE_ROOM_AGREE);
+                    result.put(CommonConstant.RESULT_KEY_CODE, CommonConstant.GLOBAL_YES);
+                    result.put("data", obtainCloseData(roomNo));
+                    CommonConstant.sendMsgEventToAll(room.getAllUUIDList(), String.valueOf(result), "closeRoomPush_DDZ");
+                }
+            }
+        }
     }
 
     /**
@@ -394,6 +656,20 @@ public class DdzGameEventDeal {
     }
 
     /**
+     * 状态改变通知玩家
+     * @param roomNo
+     */
+    private void changeGameStatus(String roomNo) {
+        DdzGameRoom room = (DdzGameRoom) RoomManage.gameRoomMap.get(roomNo);
+        JSONObject result = new JSONObject();
+        result.put("gameStatus",room.getGameStatus());
+        if (room.getGameStatus()==DdzConstant.DDZ_GAME_STATUS_FINAL_SUMMARY) {
+            result.put("endData",obtainFinalSummaryData(roomNo));
+        }
+        CommonConstant.sendMsgEventToAll(room.getAllUUIDList(),String.valueOf(result),"changeGameStatusPush_DDZ");
+    }
+
+    /**
      * 转换格式
      * @param list
      * @return
@@ -435,12 +711,15 @@ public class DdzGameEventDeal {
         room.setLandlordCard(cardList.get(cardIndex));
         // 随机产生叫地主玩家
         room.setFocusIndex(RandomUtils.nextInt(DdzConstant.DDZ_PLAYER_NUMBER));
+        // 开始叫地主定时器
+        beginRobTimer(roomNo,room.getFocusIndex(),DdzConstant.DDZ_BE_LANDLORD_TYPE_CALL);
         // 通知玩家
         for (String account : accountList) {
             JSONObject result = new JSONObject();
             result.put("myPai",room.getUserPacketMap().get(account).getMyPai());
             result.put("number",room.getFocusIndex());
             result.put("multiple",room.getMultiple());
+            result.put("gameIndex",room.getGameIndex());
             CommonConstant.sendMsgEventToSingle(room.getPlayerMap().get(account).getUuid(),String.valueOf(result),"gameStartPush_DDZ");
         }
     }
@@ -461,6 +740,8 @@ public class DdzGameEventDeal {
         room.getOperateRecord().clear();
         // 初始化倍数
         room.setMultiple(1);
+        // 增加游戏局数
+        room.setGameIndex(room.getGameIndex()+1);
         // 初始化玩家
         for (String account : obtainAllPlayerAccount(roomNo)) {
             room.getUserPacketMap().get(account).setScore(0);
@@ -479,6 +760,10 @@ public class DdzGameEventDeal {
         if (winAccount.equals(room.getLandlordAccount())) {
             farmerScore = Dto.sub(0,farmerScore);
         }
+        // 春天翻倍
+        if (isSpring(roomNo)==CommonConstant.GLOBAL_YES) {
+            farmerScore *= 2;
+        }
         // 设置为玩家分数
         for (String account : obtainAllPlayerAccount(roomNo)) {
             if (account.equals(room.getLandlordAccount())) {
@@ -488,8 +773,31 @@ public class DdzGameEventDeal {
             }
             double oldScore =  room.getPlayerMap().get(account).getScore();
             room.getPlayerMap().get(account).setScore(Dto.add(room.getUserPacketMap().get(account).getScore(),oldScore));
+            // 重置托管状态
+            room.getUserPacketMap().get(account).setIsTrustee(CommonConstant.GLOBAL_NO);
         }
         room.setGameStatus(DdzConstant.DDZ_GAME_STATUS_SUMMARY);
+        // 房卡场
+        if (room.getRoomType()==CommonConstant.ROOM_TYPE_FK) {
+            for (String account : obtainAllPlayerAccount(roomNo)) {
+                // 游戏局数+1
+                room.getUserPacketMap().get(account).setPlayTimes(room.getUserPacketMap().get(account).getPlayTimes()+1);
+                if (room.getUserPacketMap().get(account).getScore()>0) {
+                    // 胜利局数+1
+                    room.getUserPacketMap().get(account).setWinNum(room.getUserPacketMap().get(account).getWinNum()+1);
+                }
+                if (account.equals(room.getLandlordAccount())) {
+                    // 地主局数+1
+                    room.getUserPacketMap().get(account).setLandlordNum(room.getUserPacketMap().get(account).getLandlordNum()+1);
+                }
+            }
+            // 是否需要总结算
+            room.setNeedFinalSummary(true);
+            // 局数到了之后触发总结算
+            if (room.getGameIndex()==room.getGameCount()) {
+                room.setGameStatus(DdzConstant.DDZ_GAME_STATUS_FINAL_SUMMARY);
+            }
+        }
     }
 
     /**
@@ -524,6 +832,47 @@ public class DdzGameEventDeal {
         room.getUserPacketMap().get(room.getLandlordAccount()).setMyPai(landlordPai);
         // 设置房间状态
         room.setGameStatus(DdzConstant.DDZ_GAME_STATUS_GAME_IN);
+    }
+
+    /**
+     * 开始出牌定时器
+     * @param roomNo
+     * @param nextPlayerAccount
+     */
+    private void beginEventTimer(final String roomNo, final String nextPlayerAccount) {
+        DdzGameRoom room = (DdzGameRoom) RoomManage.gameRoomMap.get(roomNo);
+        final int timeLeft;
+        if (room.getSetting().containsKey("eventTime")) {
+            timeLeft = room.getSetting().getInt("eventTime");
+        } else {
+            timeLeft = 20;
+        }
+        ThreadPoolHelper.executorService.submit(new Runnable() {
+            @Override
+            public void run() {
+                gameTimerDdz.gameEventOverTime(roomNo, nextPlayerAccount,timeLeft);
+            }
+        });
+    }
+
+    /**
+     * 开始出牌定时器
+     * @param roomNo
+     */
+    private void beginRobTimer(final String roomNo, final int focus,final int type) {
+        DdzGameRoom room = (DdzGameRoom) RoomManage.gameRoomMap.get(roomNo);
+        final int timeLeft;
+        if (room.getSetting().containsKey("robTime")) {
+            timeLeft = room.getSetting().getInt("robTime");
+        } else {
+            timeLeft = 15;
+        }
+        ThreadPoolHelper.executorService.submit(new Runnable() {
+            @Override
+            public void run() {
+                gameTimerDdz.gameRobOverTime(roomNo,focus,type,timeLeft);
+            }
+        });
     }
 
     /**
@@ -570,6 +919,70 @@ public class DdzGameEventDeal {
     }
 
     /**
+     * 是否全部同意解散
+     * @param roomNo
+     * @return
+     */
+    private boolean isAllAgreeClose(String roomNo) {
+        DdzGameRoom room = (DdzGameRoom) RoomManage.gameRoomMap.get(roomNo);
+        for (String account : obtainAllPlayerAccount(roomNo)) {
+            if (room.getUserPacketMap().get(account).getIsCloseRoom()!=CommonConstant.CLOSE_ROOM_AGREE) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    /**
+     * 是否春天
+     * @param roomNo
+     * @return
+     */
+    private int isSpring(String roomNo) {
+        DdzGameRoom room = (DdzGameRoom) RoomManage.gameRoomMap.get(roomNo);
+        List<JSONObject> operateRecord = room.getOperateRecord();
+        // 地主出牌次数
+        int landlordCardCount = 0;
+        // 农民出牌次数
+        int farmerCardCount = 0;
+        for (JSONObject object : operateRecord) {
+            if (object.containsKey("cardList")&&object.getJSONArray("cardList").size()>0) {
+                if (object.getString("account").equals(room.getLandlordAccount())) {
+                    landlordCardCount ++;
+                }else {
+                    farmerCardCount ++;
+                }
+            }
+        }
+        if (landlordCardCount==1||farmerCardCount==0) {
+            return CommonConstant.GLOBAL_YES;
+        }
+        return CommonConstant.GLOBAL_NO;
+    }
+
+    /**
+     * 获取总结算数据
+     * @param roomNo
+     * @return
+     */
+    private JSONArray obtainFinalSummaryData(String roomNo) {
+        JSONArray array = new JSONArray();
+        DdzGameRoom room = (DdzGameRoom) RoomManage.gameRoomMap.get(roomNo);
+        for (String account : obtainAllPlayerAccount(roomNo)) {
+            JSONObject obj = new JSONObject();
+            obj.put("account",account);
+            obj.put("name",room.getPlayerMap().get(account).getName());
+            obj.put("score",room.getPlayerMap().get(account).getScore());
+            obj.put("callNum",room.getUserPacketMap().get(account).getCallNum());
+            obj.put("winNum",room.getUserPacketMap().get(account).getWinNum());
+            obj.put("landlordNum",room.getUserPacketMap().get(account).getLandlordNum());
+            obj.put("headimg",room.getPlayerMap().get(account).getRealHeadimg());
+            array.add(obj);
+        }
+        return array;
+    }
+
+    /**
      * 获取结算数据
      * @param roomNo
      * @return
@@ -577,13 +990,11 @@ public class DdzGameEventDeal {
     private JSONObject obtainSummaryData(String roomNo) {
         DdzGameRoom room = (DdzGameRoom) RoomManage.gameRoomMap.get(roomNo);
         JSONObject obj = new JSONObject();
-        // TODO: 2018/6/27 春天
-        obj.put("isSpring",CommonConstant.GLOBAL_NO);
+        obj.put("isSpring",isSpring(roomNo));
         obj.put("landlordWin",CommonConstant.GLOBAL_NO);
         if (!Dto.stringIsNULL(room.getWinner())&&room.getWinner().equals(room.getLandlordCard())) {
             obj.put("landlordWin",CommonConstant.GLOBAL_YES);
         }
-        obj.put("gameIndex",room.getGameIndex());
         JSONObject array = new JSONObject();
         for (String account : obtainAllPlayerAccount(roomNo)) {
             JSONObject object = new JSONObject();
@@ -631,12 +1042,37 @@ public class DdzGameEventDeal {
         if (room.getGameStatus()==DdzConstant.DDZ_GAME_STATUS_SUMMARY) {
             obj.put("summaryData",obtainSummaryData(roomNo));
         }
-        // TODO: 2018/6/27 总结算
+        // 是否总结算
         obj.put("isEnd",CommonConstant.GLOBAL_NO);
-        obj.put("endData","");
-        // TODO: 2018/6/27 解散
+        if (room.getGameStatus()==DdzConstant.DDZ_GAME_STATUS_FINAL_SUMMARY) {
+            obj.put("isEnd",CommonConstant.GLOBAL_NO);
+            obj.put("endData",obtainFinalSummaryData(roomNo));
+        }
+        // 是否解散房间
         obj.put("isClose",CommonConstant.GLOBAL_NO);
-        obj.put("closeData","");
+        if (room.getJieSanTime()>0) {
+            obj.put("isClose",CommonConstant.GLOBAL_YES);
+            obj.put("closeData",obtainCloseData(roomNo));
+        }
+        JSONArray timeArray = new JSONArray();
+        if (room.getSetting().containsKey("readyTime")) {
+            timeArray.add(room.getSetting().getInt("readyTime"));
+        } else {
+            timeArray.add(15);
+        }
+        if (room.getSetting().containsKey("robTime")) {
+            timeArray.add(room.getSetting().getInt("robTime"));
+            timeArray.add(room.getSetting().getInt("robTime"));
+        } else {
+            timeArray.add(15);
+            timeArray.add(15);
+        }
+        if (room.getSetting().containsKey("eventTime")) {
+            timeArray.add(room.getSetting().getInt("eventTime"));
+        } else {
+            timeArray.add(20);
+        }
+        obj.put("timeArray",timeArray);
         return obj;
     }
 
@@ -812,6 +1248,24 @@ public class DdzGameEventDeal {
     }
 
     /**
+     * 获取下个操作玩家账号
+     * @param roomNo
+     * @param account
+     * @return
+     */
+    private String obtainNextPlayerAccount(String roomNo,String account) {
+        DdzGameRoom room = (DdzGameRoom) RoomManage.gameRoomMap.get(roomNo);
+        int playerIndex = room.getPlayerMap().get(account).getMyIndex();
+        playerIndex++;
+        for (String next : obtainAllPlayerAccount(roomNo)) {
+            if (room.getPlayerMap().get(next).getMyIndex()==playerIndex%DdzConstant.DDZ_PLAYER_NUMBER) {
+                return next;
+            }
+        }
+        return null;
+    }
+
+    /**
      * 获取下个叫、抢地主玩家下标
      * @param roomNo
      * @param account
@@ -840,4 +1294,22 @@ public class DdzGameEventDeal {
         return nextIndex;
     }
 
+    /**
+     * 获取解散数据
+     * @param roomNo
+     * @return
+     */
+    public JSONArray obtainCloseData(String roomNo) {
+        DdzGameRoom room = (DdzGameRoom) RoomManage.gameRoomMap.get(roomNo);
+        JSONArray closeData = new JSONArray();
+        for (String account : obtainAllPlayerAccount(roomNo)) {
+            JSONObject obj = new JSONObject();
+            obj.put("jiesanTime",room.getJieSanTime());
+            obj.put("index",room.getPlayerMap().get(account).getMyIndex());
+            obj.put("name",room.getPlayerMap().get(account).getName());
+            obj.put("result",room.getUserPacketMap().get(account).getIsCloseRoom());
+            closeData.add(obj);
+        }
+        return closeData;
+    }
 }

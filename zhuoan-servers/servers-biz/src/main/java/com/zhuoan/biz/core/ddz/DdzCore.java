@@ -480,6 +480,24 @@ public class DdzCore {
     }
 
     /**
+     * 获取牌中的王炸
+     * @param cards 手牌
+     * @return [[x,x]]
+     */
+    public static List<List<String>> obtainDoubleJokerList(List<String> cards) {
+        List<List<String>> list = new ArrayList<>();
+        sortCard(cards);
+        if (list.size()>=2) {
+            // 取排序后最大的两张牌
+            List<String> maxList = cards.subList(cards.size()-2,cards.size());
+            if (isDoubleJoker(maxList)) {
+                list.add(maxList);
+            }
+        }
+        return list;
+    }
+
+    /**
      * 获取张数为num的所有牌
      * @param cards 牌组
      * @param num 张数
@@ -521,6 +539,13 @@ public class DdzCore {
      */
     public static List<List<String>> obtainAllCard(List<String> lastCard, List<String> myPai) {
         List<List<String>> list = new ArrayList<>();
+        if (lastCard.size()==0) {
+            list.addAll(obtainRepeatList(myPai,1,false));
+            list.addAll(obtainRepeatList(myPai,2,false));
+            list.addAll(obtainRepeatList(myPai,3,false));
+            list.addAll(obtainRepeatList(myPai,4,false));
+            return list;
+        }
         int lastType = DdzCore.obtainCardType(lastCard);
         switch (lastType) {
             case DdzConstant.DDZ_CARD_TYPE_SINGLE:
@@ -590,6 +615,8 @@ public class DdzCore {
         }
         // 炸弹
         list.addAll(obtainRepeatList(myPai,4,false));
+        // 王炸
+        list.addAll(obtainDoubleJokerList(myPai));
         // 所有可出的牌
         List<List<String>> allCard = new ArrayList<>();
         for (List<String> strings : list) {

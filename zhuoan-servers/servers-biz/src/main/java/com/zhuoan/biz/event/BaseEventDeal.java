@@ -1292,6 +1292,9 @@ public class BaseEventDeal {
         room.setOwner(account);
         // 添加牌局信息
         room.getUserPacketMap().put(account,new UserPacketDdz());
+        JSONObject setting = getGameInfoById(CommonConstant.GAME_ID_DDZ);
+        // 设置房间信息
+        room.setSetting(setting);
     }
 
     /**

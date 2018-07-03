@@ -67,8 +67,9 @@ public class DdzGameEvent {
                 producerService.sendMessage(ddzQueueDestination, new Messages(client, data, CommonConstant.GAME_ID_DDZ, DdzConstant.DDZ_GAME_EVENT_RECONNECT));
             }
         });
+
         /**
-         * 重连事件
+         * 提示事件
          */
         server.addEventListener("gamePrompt_DDZ", Object.class, new DataListener<Object>() {
             @Override
@@ -76,13 +77,44 @@ public class DdzGameEvent {
                 producerService.sendMessage(ddzQueueDestination, new Messages(client, data, CommonConstant.GAME_ID_DDZ, DdzConstant.DDZ_GAME_EVENT_PROMPT));
             }
         });
+
         /**
-         * 重连事件
+         * 继续游戏事件
          */
         server.addEventListener("gameContinue_DDZ", Object.class, new DataListener<Object>() {
             @Override
             public void onData(SocketIOClient client, Object data, AckRequest ackSender) {
                 producerService.sendMessage(ddzQueueDestination, new Messages(client, data, CommonConstant.GAME_ID_DDZ, DdzConstant.DDZ_GAME_EVENT_CONTINUE));
+            }
+        });
+
+        /**
+         * 退出房间事件
+         */
+        server.addEventListener("exitRoom_DDZ", Object.class, new DataListener<Object>() {
+            @Override
+            public void onData(SocketIOClient client, Object data, AckRequest ackSender) {
+                producerService.sendMessage(ddzQueueDestination, new Messages(client, data, CommonConstant.GAME_ID_DDZ, DdzConstant.DDZ_GAME_EVENT_EXIT_ROOM));
+            }
+        });
+
+        /**
+         * 解散房间事件
+         */
+        server.addEventListener("closeRoom_DDZ", Object.class, new DataListener<Object>() {
+            @Override
+            public void onData(SocketIOClient client, Object data, AckRequest ackSender) {
+                producerService.sendMessage(ddzQueueDestination, new Messages(client, data, CommonConstant.GAME_ID_DDZ, DdzConstant.DDZ_GAME_EVENT_CLOSE_ROOM));
+            }
+        });
+
+        /**
+         * 解散房间事件
+         */
+        server.addEventListener("gameTrustee_DDZ", Object.class, new DataListener<Object>() {
+            @Override
+            public void onData(SocketIOClient client, Object data, AckRequest ackSender) {
+                producerService.sendMessage(ddzQueueDestination, new Messages(client, data, CommonConstant.GAME_ID_DDZ, DdzConstant.DDZ_GAME_EVENT_TRUSTEE));
             }
         });
     }
