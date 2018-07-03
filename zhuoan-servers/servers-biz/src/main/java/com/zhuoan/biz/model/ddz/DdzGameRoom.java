@@ -52,13 +52,21 @@ public class DdzGameRoom extends GameRoom {
      * 胜利玩家
      */
     private String winner;
+    /**
+     * 最大倍数
+     */
+    private int maxMultiple;
 
     public int getMultiple() {
         return multiple;
     }
 
     public void setMultiple(int multiple) {
-        this.multiple = multiple;
+        if (this.maxMultiple !=0 && multiple > this.maxMultiple) {
+            this.multiple = this.maxMultiple;
+        } else {
+            this.multiple = multiple;
+        }
     }
 
     public List<String> getLandlordCard() {
@@ -123,5 +131,13 @@ public class DdzGameRoom extends GameRoom {
 
     public void setOperateRecord(List<JSONObject> operateRecord) {
         this.operateRecord = operateRecord;
+    }
+
+    public int getMaxMultiple() {
+        return maxMultiple;
+    }
+
+    public void setMaxMultiple(int maxMultiple) {
+        this.maxMultiple = maxMultiple;
     }
 }

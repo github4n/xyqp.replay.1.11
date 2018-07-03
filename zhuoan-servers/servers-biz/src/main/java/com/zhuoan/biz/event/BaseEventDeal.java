@@ -364,7 +364,11 @@ public class BaseEventDeal {
             gameRoom.setScore(baseInfo.getDouble("di"));
         } else if (gameRoom.getGid()==CommonConstant.GAME_ID_QZMJ||gameRoom.getGid()==CommonConstant.GAME_ID_NAMJ){
             gameRoom.setScore(5);
-        } else {
+        } else if (gameRoom.getGid()==CommonConstant.GAME_ID_DDZ) {
+            if (baseInfo.containsKey("baseNum")) {
+                gameRoom.setScore(baseInfo.getInt("baseNum"));
+            }
+        } else{
             gameRoom.setScore(1);
         }
         // 机器人
@@ -1295,6 +1299,10 @@ public class BaseEventDeal {
         JSONObject setting = getGameInfoById(CommonConstant.GAME_ID_DDZ);
         // 设置房间信息
         room.setSetting(setting);
+        // 最大倍数
+        if (baseInfo.containsKey("multiple")){
+            room.setMaxMultiple(baseInfo.getInt("multiple"));
+        }
     }
 
     /**
