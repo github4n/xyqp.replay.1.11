@@ -214,7 +214,7 @@ public class SwGameEventDeal {
         }
         JSONObject result = new JSONObject();
         // 元宝是否足够
-        if (value+room.getFee()>room.getPlayerMap().get(account).getScore()) {
+        if (value*room.getScore()+room.getFee()>room.getPlayerMap().get(account).getScore()) {
             result.put(CommonConstant.RESULT_KEY_CODE,CommonConstant.GLOBAL_NO);
             result.put(CommonConstant.RESULT_KEY_MSG,"余额不足");
             CommonConstant.sendMsgEventToSingle(client,String.valueOf(result),"gameBetPush_SW");
@@ -361,7 +361,7 @@ public class SwGameEventDeal {
             // 移除下注记录
             removeBetRecord(roomNo,account,place);
             // 增加分数
-            changeUserScore(roomNo,account,betScore);
+            changeUserScore(roomNo,account,betScore*room.getScore());
             // 通知玩家
             result.put(CommonConstant.RESULT_KEY_CODE,CommonConstant.GLOBAL_YES);
             result.put("place",place);
@@ -956,6 +956,9 @@ public class SwGameEventDeal {
             room.getPlayerMap().get(account)!=null) {
             double oldScore = room.getPlayerMap().get(account).getScore();
             double newScore = Dto.add(oldScore,score);
+            if (newScore<0) {
+                newScore = 0;
+            }
             room.getPlayerMap().get(account).setScore(newScore);
         }
     }

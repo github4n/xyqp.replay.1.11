@@ -4,6 +4,7 @@ import com.corundumstudio.socketio.SocketIOClient;
 import com.zhuoan.biz.core.nn.NiuNiuServer;
 import com.zhuoan.biz.core.nn.Packer;
 import com.zhuoan.biz.core.nn.UserPacket;
+import com.zhuoan.biz.event.FundEventDeal;
 import com.zhuoan.biz.game.biz.RoomBiz;
 import com.zhuoan.biz.game.biz.UserBiz;
 import com.zhuoan.biz.model.PackerCompare;
@@ -28,9 +29,7 @@ import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
 import javax.jms.Destination;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 
 /**
  * @author wqm
@@ -65,6 +64,9 @@ public class NNGameEventDealNew {
 
     @Resource
     private UserBiz userBiz;
+
+    @Resource
+    private FundEventDeal fundEventDeal;
 
     /**
      * 创建房间通知自己
@@ -387,6 +389,7 @@ public class NNGameEventDealNew {
         // 是否抽水
         if (room.getFee() > 0) {
             JSONArray array = new JSONArray();
+            Map<String,Double> map = new HashMap<String, Double>();
             for (String account : room.getPlayerMap().keySet()) {
                 if (room.getPlayerMap().containsKey(account)&&room.getPlayerMap().get(account)!=null) {
                     // 中途加入不抽水
@@ -398,12 +401,16 @@ public class NNGameEventDealNew {
                         if (RoomManage.gameRoomMap.get(room.getRoomNo()).getPlayerMap().get(account).getScore() < 0) {
                             RoomManage.gameRoomMap.get(room.getRoomNo()).getPlayerMap().get(account).setScore(0);
                         }
+                        map.put(room.getPlayerMap().get(account).getOpenId(),-room.getFee());
                         array.add(playerinfo.getId());
                     }
                 }
             }
             // 抽水
             producerService.sendMessage(daoQueueDestination, new PumpDao(DaoTypeConstant.PUMP, room.getJsonObject(array)));
+            if (room.isFund()) {
+                fundEventDeal.addBalChangeRecord(map,"牛牛游戏抽水");
+            }
 
         }
         // 通知前端状态改变
@@ -1030,6 +1037,7 @@ public class NNGameEventDealNew {
             return;
         }
         JSONArray array = new JSONArray();
+        Map<String,Double> map = new HashMap<String, Double>();
         for (String account : room.getUserPacketMap().keySet()) {
             if (room.getUserPacketMap().containsKey(account)&&room.getUserPacketMap().get(account)!=null) {
                 // 有参与的玩家
@@ -1041,6 +1049,7 @@ public class NNGameEventDealNew {
                         long userId = room.getPlayerMap().get(account).getId();
                         double sum = room.getUserPacketMap().get(account).getScore();
                         array.add(obtainUserScoreData(total,sum,userId));
+                        map.put(room.getPlayerMap().get(account).getOpenId(),sum);
                     }
                 }
             }
@@ -1054,6 +1063,9 @@ public class NNGameEventDealNew {
         if (array.size()>0) {
             // 更新玩家分数
             producerService.sendMessage(daoQueueDestination, new PumpDao(DaoTypeConstant.UPDATE_SCORE, room.getPumpObject(array)));
+            if (room.isFund()) {
+                fundEventDeal.addBalChangeRecord(map,"牛牛游戏输赢");
+            }
         }
     }
 

@@ -7,6 +7,7 @@ import com.zhuoan.service.socketio.impl.GameMain;
 import com.zhuoan.util.Dto;
 import net.sf.json.JSONObject;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
 
@@ -288,6 +289,10 @@ public class CommonConstant {
 
     public static final String RESULT_KEY_CODE = "code";
     public static final String RESULT_KEY_MSG = "msg";
+
+    public static String SECRET_KEY_ZOB = "zhoan";
+
+    public static List<String> fundPlatformList = Arrays.asList("ZOBQP");
 
     /**
      * 检查客户端数据是否正确，是否符合当前游戏状态

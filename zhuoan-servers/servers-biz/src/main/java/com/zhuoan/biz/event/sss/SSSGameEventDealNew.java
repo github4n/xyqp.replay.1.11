@@ -5,6 +5,7 @@ import com.zhuoan.biz.core.sss.SSSComputeCards;
 import com.zhuoan.biz.core.sss.SSSOrdinaryCards;
 import com.zhuoan.biz.core.sss.SSSSpecialCardSort;
 import com.zhuoan.biz.core.sss.SSSSpecialCards;
+import com.zhuoan.biz.event.FundEventDeal;
 import com.zhuoan.biz.game.biz.RoomBiz;
 import com.zhuoan.biz.game.biz.UserBiz;
 import com.zhuoan.biz.model.Playerinfo;
@@ -29,10 +30,7 @@ import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
 import javax.jms.Destination;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 
 /**
  * @author wqm
@@ -67,6 +65,9 @@ public class SSSGameEventDealNew {
 
     @Resource
     private UserBiz userBiz;
+
+    @Resource
+    private FundEventDeal fundEventDeal;
 
     /**
      * 创建房间通知自己
@@ -253,6 +254,7 @@ public class SSSGameEventDealNew {
         }
         if (room.getFee()>0) {
             JSONArray array = new JSONArray();
+            Map<String,Double> map = new HashMap<String, Double>();
             for (String account : room.getPlayerMap().keySet()) {
                 if (room.getPlayerMap().containsKey(account)&&room.getPlayerMap().get(account)!=null) {
                     // 中途加入不抽水
@@ -265,11 +267,15 @@ public class SSSGameEventDealNew {
                             RoomManage.gameRoomMap.get(room.getRoomNo()).getPlayerMap().get(account).setScore(0);
                         }
                         array.add(playerinfo.getId());
+                        map.put(room.getPlayerMap().get(account).getOpenId(),-room.getFee());
                     }
                 }
             }
             // 抽水
             producerService.sendMessage(daoQueueDestination, new PumpDao(DaoTypeConstant.PUMP, room.getJsonObject(array)));
+            if (room.isFund()) {
+                fundEventDeal.addBalChangeRecord(map,"十三水游戏抽水");
+            }
         }
     }
 
@@ -704,6 +710,7 @@ public class SSSGameEventDealNew {
      */
     public void updateUserScore(SSSGameRoomNew room){
         JSONArray array = new JSONArray();
+        Map<String,Double> map = new HashMap<String, Double>();
         // 存放游戏记录
         for (String uuid : room.getUserPacketMap().keySet()) {
             if (room.getUserPacketMap().containsKey(uuid)&&room.getUserPacketMap().get(uuid)!=null) {
@@ -716,6 +723,7 @@ public class SSSGameEventDealNew {
                         obj.put("fen", room.getUserPacketMap().get(uuid).getScore());
                         obj.put("id", room.getPlayerMap().get(uuid).getId());
                         array.add(obj);
+                        map.put(room.getPlayerMap().get(uuid).getOpenId(),room.getUserPacketMap().get(uuid).getScore());
                     }
                 }
             }
@@ -723,6 +731,9 @@ public class SSSGameEventDealNew {
         // 更新玩家分数
         if (array.size()>0) {
             producerService.sendMessage(daoQueueDestination, new PumpDao(DaoTypeConstant.UPDATE_SCORE, room.getPumpObject(array)));
+            if (room.isFund()) {
+                fundEventDeal.addBalChangeRecord(map,"十三水游戏输赢");
+            }
         }
     }
 

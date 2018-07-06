@@ -114,6 +114,9 @@ public class BaseEventDeal {
     @Resource
     private RobotEventDeal robotEventDeal;
 
+    @Resource
+    private FundEventDeal fundEventDeal;
+
     /**
      * 创建房间判断是否满足条件
      * @param client
@@ -489,6 +492,13 @@ public class BaseEventDeal {
         // 开启机器人
         if (gameRoom.isRobot()) {
             robotEventDeal.robotJoin(roomNo);
+        }
+        // 是否是资金盘
+        if (userInfo.containsKey("platform") && CommonConstant.fundPlatformList.contains(userInfo.getString("platform"))) {
+            gameRoom.setFund(true);
+            if (gameRoom.getGid()==CommonConstant.GAME_ID_BDX) {
+                fundEventDeal.joinSysUser(roomNo);
+            }
         }
     }
 
@@ -917,7 +927,11 @@ public class BaseEventDeal {
         }
         playerinfo.setHeadimg(userInfo.getString("headimg"));
         playerinfo.setSex(userInfo.getString("sex"));
-        playerinfo.setIp(userInfo.getString("ip"));
+        if (userInfo.containsKey("")) {
+            playerinfo.setIp(userInfo.getString("ip"));
+        }else {
+            playerinfo.setIp("");
+        }
         if (userInfo.containsKey("sign")) {
             playerinfo.setSignature(userInfo.getString("sign"));
         } else {
@@ -950,6 +964,9 @@ public class BaseEventDeal {
         // 设置幸运值
         if (userInfo.containsKey("luck")) {
             playerinfo.setLuck(userInfo.getInt("luck"));
+        }
+        if (userInfo.containsKey("openid")) {
+            playerinfo.setOpenId(userInfo.getString("openid"));
         }
         return playerinfo;
     }
@@ -1540,6 +1557,10 @@ public class BaseEventDeal {
         String account = postdata.getString(CommonConstant.DATA_KEY_ACCOUNT);
         JSONObject userInfo = userBiz.getUserByAccount(account);
         if (!Dto.isObjNull(userInfo)) {
+            if (userInfo.containsKey("platform") && CommonConstant.fundPlatformList.contains(userInfo.getString("platform"))) {
+                fundEventDeal.getAndUpdateUserMoney(userInfo.getString("openid"));
+                userInfo = userBiz.getUserByAccount(account);
+            }
             userInfo.remove("uuid");
             result.put(CommonConstant.RESULT_KEY_CODE, CommonConstant.GLOBAL_YES);
             result.put("user", userInfo);

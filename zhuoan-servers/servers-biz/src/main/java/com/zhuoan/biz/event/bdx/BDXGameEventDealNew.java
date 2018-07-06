@@ -1,6 +1,7 @@
 package com.zhuoan.biz.event.bdx;
 
 import com.corundumstudio.socketio.SocketIOClient;
+import com.zhuoan.biz.event.FundEventDeal;
 import com.zhuoan.biz.game.biz.RoomBiz;
 import com.zhuoan.biz.game.biz.UserBiz;
 import com.zhuoan.biz.model.Playerinfo;
@@ -19,9 +20,7 @@ import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
 import javax.jms.Destination;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 
 /**
  * @author wqm
@@ -43,6 +42,10 @@ public class BDXGameEventDealNew {
 
     @Resource
     private ProducerService producerService;
+
+    @Resource
+    private FundEventDeal fundEventDeal;
+
     /**
      * 创建房间通知自己
      * @param client
@@ -190,6 +193,21 @@ public class BDXGameEventDealNew {
         result.put(CommonConstant.RESULT_KEY_CODE,CommonConstant.GLOBAL_YES);
         result.put("gameData",gameData);
         CommonConstant.sendMsgEventToAll(room.getAllUUIDList(),result.toString(),"gameEventPush_BDX");
+        // 资金盘
+        if (room.isFund()) {
+            Map<String,Double> map = new HashMap<String, Double>();
+            JSONArray array = new JSONArray();
+            for (String uuid : room.getUserPacketMap().keySet()) {
+                if (room.getUserPacketMap().containsKey(uuid)&&room.getUserPacketMap().get(uuid)!=null) {
+                    map.put(room.getPlayerMap().get(uuid).getOpenId(),room.getUserPacketMap().get(uuid).getScore());
+                    JSONObject obj = new JSONObject();
+                    obj.put("sum",room.getUserPacketMap().get(uuid).getScore());
+                    obj.put("openId",room.getPlayerMap().get(uuid).getOpenId());
+                    array.add(obj);
+                }
+            }
+            fundEventDeal.addGameOrder(array);
+        }
     }
 
     /**
@@ -204,6 +222,12 @@ public class BDXGameEventDealNew {
         }
         final String roomNo = postData.getString(CommonConstant.DATA_KEY_ROOM_NO);
         BDXGameRoomNew room = (BDXGameRoomNew) RoomManage.gameRoomMap.get(roomNo);
+        // 资金盘
+        if (room.isFund()) {
+            for (String account : room.getRobotList()) {
+                fundEventDeal.sysUserExit(account);
+            }
+        }
         List<UUID> list = room.getAllUUIDList();
         RoomManage.gameRoomMap.remove(roomNo);
         JSONObject result = new JSONObject();

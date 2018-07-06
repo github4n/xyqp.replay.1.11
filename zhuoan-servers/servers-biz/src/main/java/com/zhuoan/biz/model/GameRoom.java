@@ -187,6 +187,10 @@ public class GameRoom {
      * 最后一个座位
      */
     private int lastIndex;
+    /**
+     * 是否是资金盘
+     */
+    private boolean isFund = false;
 
     public int getLastIndex() {
         return lastIndex;
@@ -522,6 +526,14 @@ public class GameRoom {
 
     public void setMinBankerScore(double minBankerScore) {
         this.minBankerScore = minBankerScore;
+    }
+
+    public boolean isFund() {
+        return isFund;
+    }
+
+    public void setFund(boolean fund) {
+        isFund = fund;
     }
 
     /**

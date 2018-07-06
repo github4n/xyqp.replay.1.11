@@ -84,6 +84,14 @@ public class Playerinfo implements Serializable{
      * 房卡数
      */
     private int roomCardNum = 0;
+    /**
+     * openId
+     */
+    private String openId;
+    /**
+     * 冻结资金id
+     */
+    private long assetsId;
 
     public int getRoomCardNum() {
         return roomCardNum;
@@ -203,6 +211,23 @@ public class Playerinfo implements Serializable{
     public void setTipMsg(boolean isTipMsg) {
         this.isTipMsg = isTipMsg;
     }
+
+    public String getOpenId() {
+        return openId;
+    }
+
+    public void setOpenId(String openId) {
+        this.openId = openId;
+    }
+
+    public long getAssetsId() {
+        return assetsId;
+    }
+
+    public void setAssetsId(long assetsId) {
+        this.assetsId = assetsId;
+    }
+
     /**
      * 获取玩家真实头像
      * @return
