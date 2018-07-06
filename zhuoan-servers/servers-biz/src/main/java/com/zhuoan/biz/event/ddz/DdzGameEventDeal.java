@@ -821,6 +821,8 @@ public class DdzGameEventDeal {
             updateRoomCard(roomNo);
             // 存战绩
             saveGameLog(roomNo);
+        }else if (room.getRoomType()==CommonConstant.ROOM_TYPE_JB) {
+            updateUserScore(roomNo);
         }
     }
 
@@ -856,6 +858,34 @@ public class DdzGameEventDeal {
             producerService.sendMessage(daoQueueDestination, new PumpDao(DaoTypeConstant.PUMP, room.getRoomCardChangeObject(array,roomCardCount)));
         }
     }
+
+    /**
+     * 更新数据库
+     * @param roomNo
+     */
+    public void updateUserScore(String roomNo){
+        DdzGameRoom room = (DdzGameRoom) RoomManage.gameRoomMap.get(roomNo);
+        if (room.getRoomType()==CommonConstant.ROOM_TYPE_YB||room.getRoomType()==CommonConstant.ROOM_TYPE_JB) {
+            JSONArray array = new JSONArray();
+            // 存放游戏记录
+            for (String uuid : obtainAllPlayerAccount(roomNo)) {
+                // 有参与的玩家
+                if (room.getUserPacketMap().get(uuid).getStatus() > DdzConstant.DDZ_USER_STATUS_INIT) {
+                    // 元宝输赢情况
+                    JSONObject obj = new JSONObject();
+                    obj.put("total", room.getPlayerMap().get(uuid).getScore());
+                    obj.put("fen", room.getUserPacketMap().get(uuid).getScore());
+                    obj.put("id", room.getPlayerMap().get(uuid).getId());
+                    array.add(obj);
+                }
+            }
+            // 更新玩家分数
+            if (array.size()>0) {
+                producerService.sendMessage(daoQueueDestination, new PumpDao(DaoTypeConstant.UPDATE_SCORE, room.getPumpObject(array)));
+            }
+        }
+    }
+
 
     /**
      * 保存战绩
