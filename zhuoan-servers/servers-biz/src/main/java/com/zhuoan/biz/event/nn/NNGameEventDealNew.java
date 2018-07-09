@@ -154,7 +154,7 @@ public class NNGameEventDealNew {
             obj.put("roominfo2", room.getWfType());
         }
         // 房卡场
-        if (room.getRoomType() == CommonConstant.ROOM_TYPE_FK) {
+        if (room.getRoomType() == CommonConstant.ROOM_TYPE_FK || room.getRoomType() == CommonConstant.ROOM_TYPE_DK) {
             StringBuffer roomInfo = new StringBuffer();
             roomInfo.append(room.getWfType());
             obj.put("roominfo",String.valueOf(roomInfo));
@@ -848,7 +848,7 @@ public class NNGameEventDealNew {
         }
         // 通知玩家
         changeGameStatus(room);
-        if (room.getRoomType() == CommonConstant.ROOM_TYPE_FK) {
+        if (room.getRoomType() == CommonConstant.ROOM_TYPE_FK || room.getRoomType() == CommonConstant.ROOM_TYPE_DK) {
             if (room.getGameStatus()==NNConstant.NN_GAME_STATUS_JS&&room.getGameIndex()==room.getGameCount()) {
                 room.setIsClose(CommonConstant.CLOSE_ROOM_TYPE_FINISH);
                 room.setGameStatus(NNConstant.NN_GAME_STATUS_ZJS);
@@ -968,9 +968,11 @@ public class NNGameEventDealNew {
             }
         }
         // 房卡场结算
-        if (room.getRoomType()==CommonConstant.ROOM_TYPE_FK) {
+        if (room.getRoomType()==CommonConstant.ROOM_TYPE_FK || room.getRoomType() == CommonConstant.ROOM_TYPE_DK) {
             room.setNeedFinalSummary(true);
             roomCardSummary(room.getRoomNo());
+            // 更新房卡
+            updateRoomCard(room.getRoomNo());
         }
         // 更新数据库
         updateUserScore(room.getRoomNo());
@@ -980,9 +982,6 @@ public class NNGameEventDealNew {
         // 金币场不插入战绩
         if (room.getRoomType()!=CommonConstant.ROOM_TYPE_JB) {
             saveGameLog(room.getRoomNo());
-        }
-        if (room.getRoomType()==CommonConstant.ROOM_TYPE_FK) {
-            updateRoomCard(room.getRoomNo());
         }
     }
 
@@ -1073,26 +1072,34 @@ public class NNGameEventDealNew {
         NNGameRoomNew room = (NNGameRoomNew) RoomManage.gameRoomMap.get(roomNo);
         JSONArray array = new JSONArray();
         int roomCardCount = 0;
-        for (String account : room.getUserPacketMap().keySet()) {
-            if (room.getUserPacketMap().containsKey(account)&&room.getUserPacketMap().get(account)!=null) {
-                // 房主支付
-                if (room.getPayType()==CommonConstant.PAY_TYPE_OWNER) {
-                    if (account.equals(room.getOwner())) {
+        if (room.getRoomType()==CommonConstant.ROOM_TYPE_FK) {
+            for (String account : room.getUserPacketMap().keySet()) {
+                if (room.getUserPacketMap().containsKey(account)&&room.getUserPacketMap().get(account)!=null) {
+                    // 房主支付
+                    if (room.getPayType()==CommonConstant.PAY_TYPE_OWNER) {
+                        if (account.equals(room.getOwner())) {
+                            // 参与第一局需要扣房卡
+                            if (room.getUserPacketMap().get(account).getPlayTimes()==1) {
+                                roomCardCount = room.getPlayerCount()*room.getSinglePayNum();
+                                array.add(room.getPlayerMap().get(account).getId());
+                            }
+                        }
+                    }
+                    // 房费AA
+                    if (room.getPayType()==CommonConstant.PAY_TYPE_AA) {
                         // 参与第一局需要扣房卡
                         if (room.getUserPacketMap().get(account).getPlayTimes()==1) {
-                            roomCardCount = room.getPlayerCount()*room.getSinglePayNum();
                             array.add(room.getPlayerMap().get(account).getId());
+                            roomCardCount = room.getSinglePayNum();
                         }
                     }
                 }
-                // 房费AA
-                if (room.getPayType()==CommonConstant.PAY_TYPE_AA) {
-                    // 参与第一局需要扣房卡
-                    if (room.getUserPacketMap().get(account).getPlayTimes()==1) {
-                        array.add(room.getPlayerMap().get(account).getId());
-                        roomCardCount = room.getSinglePayNum();
-                    }
-                }
+            }
+        }else if (room.getRoomType()==CommonConstant.ROOM_TYPE_DK&&room.getGameIndex()==1) {
+            JSONObject userInfo = userBiz.getUserByAccount(room.getOwner());
+            if (!Dto.isObjNull(userInfo)) {
+                roomCardCount = room.getPlayerCount()*room.getSinglePayNum();
+                array.add(userInfo.getLong("id"));
             }
         }
         if (array.size()>0) {
@@ -1248,7 +1255,7 @@ public class NNGameEventDealNew {
                     room.getGameStatus() == NNConstant.NN_GAME_STATUS_JS) {// 初始及准备阶段可以退出
                     canExit = true;
                 }
-            }else if (room.getRoomType() == CommonConstant.ROOM_TYPE_FK) {
+            }else if (room.getRoomType() == CommonConstant.ROOM_TYPE_FK || room.getRoomType() == CommonConstant.ROOM_TYPE_DK) {
                 if (room.getUserPacketMap().get(account).getPlayTimes()==0) {
                     if (room.getPayType()==CommonConstant.PAY_TYPE_AA||!room.getOwner().equals(account)) {
                         canExit = true;
@@ -1264,7 +1271,7 @@ public class NNGameEventDealNew {
                 // 更新数据库
                 JSONObject roomInfo = new JSONObject();
                 roomInfo.put("room_no", room.getRoomNo());
-                if (room.getRoomType()!=CommonConstant.ROOM_TYPE_FK) {
+                if (room.getRoomType()!=CommonConstant.ROOM_TYPE_FK&&room.getRoomType()!=CommonConstant.ROOM_TYPE_DK) {
                      roomInfo.put("user_id" + room.getPlayerMap().get(account).getMyIndex(), 0);
                 }
                 // 移除数据
@@ -1322,7 +1329,7 @@ public class NNGameEventDealNew {
                     startGame(room);
                 }
                 // 所有人都退出清除房间数据
-                if (room.getPlayerMap().size() == 0) {
+                if (room.getPlayerMap().size() == 0 && room.getRoomType()!=CommonConstant.ROOM_TYPE_DK) {
                     redisService.deleteByKey("summaryTimes_nn"+room.getRoomNo());
                     roomInfo.put("status",room.getIsClose());
                     roomInfo.put("game_index",room.getGameIndex());
@@ -1375,7 +1382,7 @@ public class NNGameEventDealNew {
                 obj.put("baseNum", room.getBaseNumTimes(RoomManage.gameRoomMap.get(room.getRoomNo()).getPlayerMap().get(account).getScore()));
                 obj.put("users", room.getAllPlayer());
                 obj.put("gameData", room.getGameData(account));
-                if (room.getRoomType()==CommonConstant.ROOM_TYPE_FK) {
+                if (room.getRoomType()==CommonConstant.ROOM_TYPE_FK || room.getRoomType() == CommonConstant.ROOM_TYPE_DK) {
                     if (room.getGameStatus()==NNConstant.NN_GAME_STATUS_ZJS) {
                         obj.put("jiesuanData", room.getFinalSummary());
                     }

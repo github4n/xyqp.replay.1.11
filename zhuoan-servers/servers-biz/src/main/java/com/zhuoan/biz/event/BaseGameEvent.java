@@ -303,12 +303,39 @@ public class BaseGameEvent {
             }
         });
         /**
-         *  竞技场加入房间
+         *  ip检测
          */
         server.addEventListener("gameCheckIp", Object.class, new DataListener<Object>() {
             @Override
             public void onData(SocketIOClient client, Object object, AckRequest ackSender) {
                 producerService.sendMessage(baseQueueDestination, new Messages(client, object, CommonConstant.GAME_BASE, CommonConstant.BASE_GAME_EVENT_CHECK_IP));
+            }
+        });
+        /**
+         *  获取代开房间列表
+         */
+        server.addEventListener("getProxyRoomList", Object.class, new DataListener<Object>() {
+            @Override
+            public void onData(SocketIOClient client, Object object, AckRequest ackSender) {
+                producerService.sendMessage(baseQueueDestination, new Messages(client, object, CommonConstant.GAME_BASE, CommonConstant.BASE_GAME_EVENT_GET_PROXY_ROOM_LIST));
+            }
+        });
+        /**
+         *  获取代开房间列表
+         */
+        server.addEventListener("dissolveProxyRoom", Object.class, new DataListener<Object>() {
+            @Override
+            public void onData(SocketIOClient client, Object object, AckRequest ackSender) {
+                producerService.sendMessage(baseQueueDestination, new Messages(client, object, CommonConstant.GAME_BASE, CommonConstant.BASE_GAME_EVENT_GET_PROXY_ROOM_LIST));
+            }
+        });
+        /**
+         *  获取代开房间列表
+         */
+        server.addEventListener("dissolveProxyRoom", Object.class, new DataListener<Object>() {
+            @Override
+            public void onData(SocketIOClient client, Object object, AckRequest ackSender) {
+                producerService.sendMessage(baseQueueDestination, new Messages(client, object, CommonConstant.GAME_BASE, CommonConstant.BASE_GAME_EVENT_DISSOLVE_PROXY_ROOM));
             }
         });
 

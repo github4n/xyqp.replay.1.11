@@ -9,6 +9,7 @@ import com.zhuoan.biz.model.RoomManage;
 import com.zhuoan.biz.model.dao.PumpDao;
 import com.zhuoan.biz.model.ddz.DdzGameRoom;
 import com.zhuoan.biz.model.ddz.UserPacketDdz;
+import com.zhuoan.biz.robot.RobotEventDeal;
 import com.zhuoan.constant.CommonConstant;
 import com.zhuoan.constant.DaoTypeConstant;
 import com.zhuoan.constant.DdzConstant;
@@ -53,6 +54,9 @@ public class DdzGameEventDeal {
 
     @Resource
     private GameTimerDdz gameTimerDdz;
+
+    @Resource
+    private RobotEventDeal robotEventDeal;
 
     /**
      * 创建房间通知自己
@@ -289,7 +293,7 @@ public class DdzGameEventDeal {
             result.put("check",DdzConstant.DDZ_GAME_EVENT_RESULT_NO);
             result.put("lastPai",new ArrayList<String>());
         }
-        result.put("paiType",paiType);
+        result.put("paiType",obtainPaiTypeName(paiType));
         result.put("cardNum",room.getUserPacketMap().get(account).getMyPai().size());
         result.put("num",room.getPlayerMap().get(account).getMyIndex());
         result.put("nextNum",obtainNextPlayerIndex(roomNo,account));
@@ -314,7 +318,21 @@ public class DdzGameEventDeal {
         final String nextPlayerAccount = obtainNextPlayerAccount(roomNo,account);
         if (!Dto.stringIsNULL(nextPlayerAccount)&&
             room.getUserPacketMap().containsKey(nextPlayerAccount)&&room.getUserPacketMap().get(nextPlayerAccount)!=null) {
-            beginEventTimer(roomNo,nextPlayerAccount);
+            if (!isGameOver) {
+                beginEventTimer(roomNo,nextPlayerAccount);
+            }else if (room.isRobot()) {
+                // 重置准备状态
+                for (String player : obtainAllPlayerAccount(roomNo)) {
+                    room.getUserPacketMap().get(player).setStatus(DdzConstant.DDZ_USER_STATUS_INIT);
+                }
+                // 机器人准备
+                for (String robotAccount : room.getRobotList()) {
+                    if (room.getUserPacketMap().containsKey(robotAccount)&&room.getUserPacketMap().get(robotAccount)!=null) {
+                        int delayTime = RandomUtils.nextInt(3)+2;
+                        robotEventDeal.changeRobotActionDetail(robotAccount,DdzConstant.DDZ_GAME_EVENT_READY,delayTime);
+                    }
+                }
+            }
         }
     }
 
@@ -1000,6 +1018,11 @@ public class DdzGameEventDeal {
                 gameTimerDdz.gameEventOverTime(roomNo, nextPlayerAccount,timeLeft);
             }
         });
+        // 机器人出牌
+        if (room.isRobot()&&room.getRobotList().contains(nextPlayerAccount)) {
+            int delayTime = RandomUtils.nextInt(3)+2;
+            robotEventDeal.changeRobotActionDetail(nextPlayerAccount,DdzConstant.DDZ_GAME_EVENT_GAME_IN,delayTime);
+        }
     }
 
     /**
@@ -1020,6 +1043,20 @@ public class DdzGameEventDeal {
                 gameTimerDdz.gameRobOverTime(roomNo,focus,type,timeLeft);
             }
         });
+        // 机器人出牌
+        if (room.isRobot()) {
+            for (String robotAccount : obtainAllPlayerAccount(roomNo)) {
+                if (room.getPlayerMap().get(robotAccount).getMyIndex()==focus&&room.getRobotList().contains(robotAccount)) {
+                    int delayTime = RandomUtils.nextInt(3)+2;
+                    if (type==DdzConstant.DDZ_BE_LANDLORD_TYPE_CALL) {
+                        robotEventDeal.changeRobotActionDetail(robotAccount,DdzConstant.DDZ_GAME_EVENT_ROBOT_CALL,delayTime);
+                    }else if (type==DdzConstant.DDZ_BE_LANDLORD_TYPE_ROB) {
+                        robotEventDeal.changeRobotActionDetail(robotAccount,DdzConstant.DDZ_GAME_EVENT_ROBOT_ROB,delayTime);
+                    }
+                    break;
+                }
+            }
+        }
     }
 
     /**
@@ -1458,5 +1495,43 @@ public class DdzGameEventDeal {
             closeData.add(obj);
         }
         return closeData;
+    }
+
+    /**
+     * 获取牌型
+     * @param paiType
+     * @return
+     */
+    private String obtainPaiTypeName(int paiType) {
+        switch (paiType) {
+            case DdzConstant.DDZ_CARD_TYPE_SINGLE:
+                return "c1";
+            case DdzConstant.DDZ_CARD_TYPE_PAIRS:
+                return "c2";
+            case DdzConstant.DDZ_CARD_TYPE_THREE:
+                return "c3";
+            case DdzConstant.DDZ_CARD_TYPE_THREE_WITH_SINGLE:
+                return "c31";
+            case DdzConstant.DDZ_CARD_TYPE_THREE_WITH_PARIS:
+                return "c32";
+            case DdzConstant.DDZ_CARD_TYPE_BOMB:
+                return "c4";
+            case DdzConstant.DDZ_CARD_TYPE_BOMB_WITH_SINGLE:
+                return "c41";
+            case DdzConstant.DDZ_CARD_TYPE_BOMB_WITH_PARIS:
+                return "c42";
+            case DdzConstant.DDZ_CARD_TYPE_STRAIGHT:
+                return "c123";
+            case DdzConstant.DDZ_CARD_TYPE_DOUBLE_STRAIGHT:
+                return "c1122";
+            case DdzConstant.DDZ_CARD_TYPE_PLANE:
+                return "c111222";
+            case DdzConstant.DDZ_CARD_TYPE_PLANE_WITH_SINGLE:
+                return "c11122234";
+            case DdzConstant.DDZ_CARD_TYPE_PLANE_WITH_DOUBLE:
+                return "c1112223344";
+            default:
+                return "c0";
+        }
     }
 }

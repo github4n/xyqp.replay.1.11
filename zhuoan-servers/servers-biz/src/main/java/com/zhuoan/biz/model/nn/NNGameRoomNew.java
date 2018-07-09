@@ -325,7 +325,7 @@ public class NNGameRoomNew extends GameRoom{
             int val = qzTimes.getInt(i);
             obj.put("name", new StringBuffer().append(String.valueOf(val)).append("倍").toString());
             obj.put("val", val);
-            if(beiShu>=val||getRoomType()==CommonConstant.ROOM_TYPE_FK){
+            if(beiShu>=val||getRoomType()==CommonConstant.ROOM_TYPE_FK||getRoomType()==CommonConstant.ROOM_TYPE_DK){
                 obj.put("isuse",CommonConstant.GLOBAL_YES);
             }else{
                 obj.put("isuse", CommonConstant.GLOBAL_NO);
@@ -364,7 +364,7 @@ public class NNGameRoomNew extends GameRoom{
                 JSONObject obj = new JSONObject();
                 obj.put("name", name);
                 obj.put("val", val);
-                if(beiShu>=val||getRoomType()==CommonConstant.ROOM_TYPE_FK){
+                if(beiShu>=val||getRoomType()==CommonConstant.ROOM_TYPE_FK||getRoomType()==CommonConstant.ROOM_TYPE_DK){
                     obj.put("isuse", CommonConstant.GLOBAL_YES);
                 }else{
                     obj.put("isuse", CommonConstant.GLOBAL_NO);

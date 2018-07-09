@@ -158,6 +158,12 @@ public class GameEventDeal {
                     case CommonConstant.BASE_GAME_EVENT_CHECK_IP:
                         baseEventDeal.gameCheckIp(client, data);
                         break;
+                    case CommonConstant.BASE_GAME_EVENT_GET_PROXY_ROOM_LIST:
+                        baseEventDeal.getProxyRoomList(client, data);
+                        break;
+                    case CommonConstant.BASE_GAME_EVENT_DISSOLVE_PROXY_ROOM:
+                        baseEventDeal.dissolveProxyRoom(client, data);
+                        break;
                     default:
                         break;
                 }

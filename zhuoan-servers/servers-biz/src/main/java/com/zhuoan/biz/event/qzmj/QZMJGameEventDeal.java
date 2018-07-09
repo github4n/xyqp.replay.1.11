@@ -3,6 +3,7 @@ package com.zhuoan.biz.event.qzmj;
 import com.corundumstudio.socketio.SocketIOClient;
 import com.zhuoan.biz.core.qzmj.MaJiangCore;
 import com.zhuoan.biz.game.biz.RoomBiz;
+import com.zhuoan.biz.game.biz.UserBiz;
 import com.zhuoan.biz.model.Playerinfo;
 import com.zhuoan.biz.model.RoomManage;
 import com.zhuoan.biz.model.dao.PumpDao;
@@ -52,6 +53,9 @@ public class QZMJGameEventDeal {
 
     @Resource
     private RoomBiz roomBiz;
+
+    @Resource
+    private UserBiz userBiz;
 
     /**
      * 创建房间
@@ -126,7 +130,7 @@ public class QZMJGameEventDeal {
         }
         int type = postData.getInt("type");
         if (type == QZMJConstant.GAME_READY_TYPE_RECONNECT) {
-            if (room.getRoomType()!=CommonConstant.ROOM_TYPE_FK) {
+            if (room.getRoomType()!=CommonConstant.ROOM_TYPE_FK && room.getRoomType()!=CommonConstant.ROOM_TYPE_DK) {
                 reconnectGame(client,data);
             }else if (room.getGameStatus()==QZMJConstant.QZ_GAME_STATUS_INIT||room.getGameStatus()==QZMJConstant.QZ_GAME_STATUS_READY) {
                 gameReady(client,data);
@@ -435,7 +439,7 @@ public class QZMJGameEventDeal {
                     // 初始及准备阶段可以退出
                     canExit = true;
                 }
-            }else if (room.getRoomType() == CommonConstant.ROOM_TYPE_FK) {
+            }else if (room.getRoomType() == CommonConstant.ROOM_TYPE_FK||room.getRoomType() == CommonConstant.ROOM_TYPE_DK) {
                 if (room.getUserPacketMap().get(account).getPlayTimes()==0) {
                     if (room.getPayType()==CommonConstant.PAY_TYPE_AA||!room.getOwner().equals(account)) {
                         canExit = true;
@@ -451,7 +455,7 @@ public class QZMJGameEventDeal {
                 // 更新数据库
                 JSONObject roomInfo = new JSONObject();
                 roomInfo.put("room_no", room.getRoomNo());
-                if (room.getRoomType()!=CommonConstant.ROOM_TYPE_FK) {
+                if (room.getRoomType()!=CommonConstant.ROOM_TYPE_FK&&room.getRoomType()!=CommonConstant.ROOM_TYPE_DK) {
                     roomInfo.put("user_id" + room.getPlayerMap().get(account).getMyIndex(), 0);
                 }
                 // 移除数据
@@ -512,7 +516,7 @@ public class QZMJGameEventDeal {
         }
         final String roomNo = postData.getString(CommonConstant.DATA_KEY_ROOM_NO);
         QZMJGameRoom room = (QZMJGameRoom) RoomManage.gameRoomMap.get(roomNo);
-        if (room.getRoomType()!=CommonConstant.ROOM_TYPE_FK) {
+        if (room.getRoomType()!=CommonConstant.ROOM_TYPE_FK&&room.getRoomType()!=CommonConstant.ROOM_TYPE_DK) {
             return;
         }
         String account = postData.getString(CommonConstant.DATA_KEY_ACCOUNT);
@@ -911,7 +915,7 @@ public class QZMJGameEventDeal {
         backObj.put("type", 0);
         backObj.put("data", array);
         backObj.put("isLiuju", CommonConstant.GLOBAL_NO);
-        if (gamePlay.getRoomType()==CommonConstant.ROOM_TYPE_FK) {
+        if (gamePlay.getRoomType()==CommonConstant.ROOM_TYPE_FK||gamePlay.getRoomType() == CommonConstant.ROOM_TYPE_DK) {
             if(gamePlay.getGameCount()==gamePlay.getGameIndex() || isFinish){
                 gamePlay.setIsClose(CommonConstant.CLOSE_ROOM_TYPE_FINISH);
                 // 保存结算汇总数据
@@ -1301,7 +1305,7 @@ public class QZMJGameEventDeal {
                 if (gamePlay.getRoomType()==CommonConstant.ROOM_TYPE_YB) {
                     saveUserDeduction(roomNo);
                 }
-                if (gamePlay.getRoomType()==CommonConstant.ROOM_TYPE_FK) {
+                if (gamePlay.getRoomType()==CommonConstant.ROOM_TYPE_FK||gamePlay.getRoomType() == CommonConstant.ROOM_TYPE_DK) {
                     updateRoomCard(roomNo);
                 }
             }
@@ -1326,7 +1330,7 @@ public class QZMJGameEventDeal {
             room.faPai();
             // 开金
             room.choiceJin();
-            if (room.getFee() > 0 && room.getRoomType()!=CommonConstant.ROOM_TYPE_FK) {
+            if (room.getFee() > 0 && room.getRoomType()!=CommonConstant.ROOM_TYPE_FK&&room.getRoomType()!=CommonConstant.ROOM_TYPE_DK) {
                 JSONArray array = new JSONArray();
                 for (String account : room.getPlayerMap().keySet()) {
                     if (room.getPlayerMap().containsKey(account)&&room.getPlayerMap().get(account)!=null) {
@@ -1383,7 +1387,7 @@ public class QZMJGameEventDeal {
                 }
             }
             final int startStatus;
-            if (room.getGameIndex()>1||room.getRoomType()!=CommonConstant.ROOM_TYPE_FK) {
+            if (room.getGameIndex()>1||(room.getRoomType()!=CommonConstant.ROOM_TYPE_FK&&room.getRoomType()!=CommonConstant.ROOM_TYPE_DK)) {
                 startStatus = 2;
             }else {
                 startStatus = 1;
@@ -1546,7 +1550,7 @@ public class QZMJGameEventDeal {
         roomInfo.append("人 ");
         if (room.getGameCount()==999) {
             roomInfo.append("1课");
-        }else if (room.getRoomType()==CommonConstant.ROOM_TYPE_FK){
+        }else if (room.getRoomType()==CommonConstant.ROOM_TYPE_FK||room.getRoomType() == CommonConstant.ROOM_TYPE_DK){
             roomInfo.append(room.getGameCount());
             roomInfo.append("局");
         }
@@ -1934,26 +1938,34 @@ public class QZMJGameEventDeal {
         QZMJGameRoom room = (QZMJGameRoom) RoomManage.gameRoomMap.get(roomNo);
         JSONArray array = new JSONArray();
         int roomCardCount = 0;
-        for (String account : room.getUserPacketMap().keySet()) {
-            if (room.getUserPacketMap().containsKey(account)&&room.getUserPacketMap().get(account)!=null) {
-                // 房主支付
-                if (room.getPayType()==CommonConstant.PAY_TYPE_OWNER) {
-                    if (account.equals(room.getOwner())) {
+        if (room.getRoomType()==CommonConstant.ROOM_TYPE_FK) {
+            for (String account : room.getUserPacketMap().keySet()) {
+                if (room.getUserPacketMap().containsKey(account)&&room.getUserPacketMap().get(account)!=null) {
+                    // 房主支付
+                    if (room.getPayType()==CommonConstant.PAY_TYPE_OWNER) {
+                        if (account.equals(room.getOwner())) {
+                            // 参与第一局需要扣房卡
+                            if (room.getUserPacketMap().get(account).getPlayTimes()==1) {
+                                array.add(room.getPlayerMap().get(account).getId());
+                                roomCardCount = room.getPlayerCount()*room.getSinglePayNum();
+                            }
+                        }
+                    }
+                    // 房费AA
+                    if (room.getPayType()==CommonConstant.PAY_TYPE_AA) {
                         // 参与第一局需要扣房卡
                         if (room.getUserPacketMap().get(account).getPlayTimes()==1) {
                             array.add(room.getPlayerMap().get(account).getId());
-                            roomCardCount = room.getPlayerCount()*room.getSinglePayNum();
+                            roomCardCount = room.getSinglePayNum();
                         }
                     }
                 }
-                // 房费AA
-                if (room.getPayType()==CommonConstant.PAY_TYPE_AA) {
-                    // 参与第一局需要扣房卡
-                    if (room.getUserPacketMap().get(account).getPlayTimes()==1) {
-                        array.add(room.getPlayerMap().get(account).getId());
-                        roomCardCount = room.getSinglePayNum();
-                    }
-                }
+            }
+        }else if (room.getRoomType()==CommonConstant.ROOM_TYPE_DK&&room.getGameIndex()==1) {
+            JSONObject userInfo = userBiz.getUserByAccount(room.getOwner());
+            if (!Dto.isObjNull(userInfo)) {
+                roomCardCount = room.getPlayerCount()*room.getSinglePayNum();
+                array.add(userInfo.getLong("id"));
             }
         }
         if (array.size()>0) {
@@ -3699,7 +3711,7 @@ public class QZMJGameEventDeal {
                 if (room.getRoomType()==CommonConstant.ROOM_TYPE_YB) {
                     saveUserDeduction(roomNo);
                 }
-                if (room.getRoomType()==CommonConstant.ROOM_TYPE_FK) {
+                if (room.getRoomType()==CommonConstant.ROOM_TYPE_FK||room.getRoomType() == CommonConstant.ROOM_TYPE_DK) {
                     updateRoomCard(roomNo);
                 }
             }

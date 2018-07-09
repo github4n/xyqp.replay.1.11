@@ -154,8 +154,12 @@ public class BaseEventDeal {
             result.element(CommonConstant.RESULT_KEY_MSG, "金币不足");
             CommonConstant.sendMsgEventToSingle(client, String.valueOf(result), "enterRoomPush_NN");
             return;
-        } else if (baseInfo.getInt("roomType") == CommonConstant.ROOM_TYPE_FK && userInfo.containsKey("roomcard")) {
+        } else if ((baseInfo.getInt("roomType") == CommonConstant.ROOM_TYPE_FK||baseInfo.getInt("roomType") == CommonConstant.ROOM_TYPE_DK)
+            && userInfo.containsKey("roomcard")) {
             int roomCard = getRoomCardPayInfo(baseInfo);
+            if (baseInfo.getInt("roomType") == CommonConstant.ROOM_TYPE_DK) {
+                roomCard += obtainProxyRoomCard(account);
+            }
             if (userInfo.getInt("roomcard")<roomCard) {
                 result.element(CommonConstant.RESULT_KEY_CODE, CommonConstant.GLOBAL_NO);
                 result.element(CommonConstant.RESULT_KEY_MSG, "房卡不足");
@@ -340,7 +344,7 @@ public class BaseEventDeal {
         }
         if (gameRoom.getRoomType() == CommonConstant.ROOM_TYPE_YB || gameRoom.getRoomType() == CommonConstant.ROOM_TYPE_JB || gameRoom.getRoomType() == CommonConstant.ROOM_TYPE_COMPETITIVE) {
             gameRoom.setGameCount(9999);
-        }else if (gameRoom.getRoomType() == CommonConstant.ROOM_TYPE_FK) {
+        }else if (gameRoom.getRoomType() == CommonConstant.ROOM_TYPE_FK || gameRoom.getRoomType() == CommonConstant.ROOM_TYPE_DK) {
             if (baseInfo.containsKey("turn")) {
                 JSONObject turn = baseInfo.getJSONObject("turn");
                 if (turn.containsKey("turn")) {
@@ -423,7 +427,7 @@ public class BaseEventDeal {
         } else if (baseInfo.getInt("roomType") == CommonConstant.ROOM_TYPE_YB||baseInfo.getInt("roomType") == CommonConstant.ROOM_TYPE_JB||
             baseInfo.getInt("roomType") == CommonConstant.ROOM_TYPE_COMPETITIVE) {
             gameRoom.setReadyOvertime(CommonConstant.READY_OVERTIME_OUT);
-        } else if (baseInfo.getInt("roomType") == CommonConstant.ROOM_TYPE_FK){
+        } else if (baseInfo.getInt("roomType") == CommonConstant.ROOM_TYPE_FK || gameRoom.getRoomType() == CommonConstant.ROOM_TYPE_DK){
             gameRoom.setReadyOvertime(CommonConstant.READY_OVERTIME_NOTHING);
         }
         // 玩家人数
@@ -463,42 +467,54 @@ public class BaseEventDeal {
         }else if (baseInfo.containsKey("fee")) {
             gameRoom.setFee(baseInfo.getDouble("fee"));
         }
-        // 获取用户信息
-        JSONObject obtainPlayerInfoData = new JSONObject();
-        obtainPlayerInfoData.put("userInfo", userInfo);
-        obtainPlayerInfoData.put("myIndex", 0);
-        if (client!=null) {
-            obtainPlayerInfoData.put("uuid", String.valueOf(client.getSessionId()));
-        }else {
-            obtainPlayerInfoData.put("uuid", String.valueOf(UUID.randomUUID()));
-        }
-        obtainPlayerInfoData.put("room_type", gameRoom.getRoomType());
-        if (postData.containsKey("location")) {
-            obtainPlayerInfoData.put("location", postData.getString("location"));
-        }
-        Playerinfo playerinfo = obtainPlayerInfo(obtainPlayerInfoData);
-        if (gameRoom.getRoomType() == CommonConstant.ROOM_TYPE_FK&&gameRoom.getGameCount()==999) {
-            playerinfo.setScore(100);
-            if (gameRoom.getGid()==CommonConstant.GAME_ID_NAMJ) {
-                playerinfo.setScore(15);
-            }
-        }
-        gameRoom.getPlayerMap().put(playerinfo.getAccount(), playerinfo);
         RoomManage.gameRoomMap.put(roomNo, gameRoom);
-        // 通知玩家
-        informUser(gameRoom,playerinfo,client);
-        // 组织数据，插入数据库
-        addGameRoom(gameRoom,playerinfo);
-        // 开启机器人
-        if (gameRoom.isRobot()) {
-            robotEventDeal.robotJoin(roomNo);
-        }
-        // 是否是资金盘
-        if (userInfo.containsKey("platform") && CommonConstant.fundPlatformList.contains(userInfo.getString("platform"))) {
-            gameRoom.setFund(true);
-            if (gameRoom.getGid()==CommonConstant.GAME_ID_BDX) {
-                fundEventDeal.joinSysUser(roomNo);
+        if (gameRoom.getRoomType()!=CommonConstant.ROOM_TYPE_DK) {
+            // 获取用户信息
+            JSONObject obtainPlayerInfoData = new JSONObject();
+            obtainPlayerInfoData.put("userInfo", userInfo);
+            obtainPlayerInfoData.put("myIndex", 0);
+            if (client!=null) {
+                obtainPlayerInfoData.put("uuid", String.valueOf(client.getSessionId()));
+            }else {
+                obtainPlayerInfoData.put("uuid", String.valueOf(UUID.randomUUID()));
             }
+            obtainPlayerInfoData.put("room_type", gameRoom.getRoomType());
+            if (postData.containsKey("location")) {
+                obtainPlayerInfoData.put("location", postData.getString("location"));
+            }
+            Playerinfo playerinfo = obtainPlayerInfo(obtainPlayerInfoData);
+            if ((gameRoom.getRoomType() == CommonConstant.ROOM_TYPE_FK || gameRoom.getRoomType() == CommonConstant.ROOM_TYPE_DK)&&gameRoom.getGameCount()==999) {
+                playerinfo.setScore(100);
+                if (gameRoom.getGid()==CommonConstant.GAME_ID_NAMJ) {
+                    playerinfo.setScore(15);
+                }
+            }
+            RoomManage.gameRoomMap.get(roomNo).getPlayerMap().put(playerinfo.getAccount(), playerinfo);
+            // 通知玩家
+            informUser(gameRoom,playerinfo,client);
+            // 组织数据，插入数据库
+            addGameRoom(gameRoom,playerinfo);
+            // 开启机器人
+            if (gameRoom.isRobot()) {
+                robotEventDeal.robotJoin(roomNo);
+            }
+            // 是否是资金盘
+            if (userInfo.containsKey("platform") && CommonConstant.fundPlatformList.contains(userInfo.getString("platform"))) {
+                gameRoom.setFund(true);
+                if (gameRoom.getGid()==CommonConstant.GAME_ID_BDX) {
+                    fundEventDeal.joinSysUser(roomNo);
+                }
+            }
+        }else {
+            // 插入数据库
+            Playerinfo playerinfo = new Playerinfo();
+            addGameRoom(gameRoom,playerinfo);
+            // 清空座位
+            RoomManage.gameRoomMap.get(roomNo).getUserIdList().set(0,0L);
+            JSONObject result = new JSONObject();
+            result.put("type",0);
+            result.put("array",obtainProxyRoomList(userInfo.getString("account")));
+            CommonConstant.sendMsgEventToSingle(client,String.valueOf(result),"getProxyRoomListPush");
         }
     }
 
@@ -530,7 +546,9 @@ public class BaseEventDeal {
                 break;
             case CommonConstant.GAME_ID_QZMJ:
                 gameRoom = new QZMJGameRoom();
-                ((QZMJGameRoom)gameRoom).getUserPacketMap().put(userInfo.getString("account"), new UserPacketQZMJ());
+                if (baseInfo.getInt("roomType")!=CommonConstant.ROOM_TYPE_DK) {
+                    ((QZMJGameRoom)gameRoom).getUserPacketMap().put(userInfo.getString("account"), new UserPacketQZMJ());
+                }
                 createRoomQZMJ((QZMJGameRoom)gameRoom, baseInfo, userInfo.getString("account"));
                 break;
             case CommonConstant.GAME_ID_NAMJ:
@@ -800,7 +818,7 @@ public class BaseEventDeal {
         }
         Playerinfo playerinfo = obtainPlayerInfo(obtainPlayerInfoData);
         // 麻将一刻设置底分
-        if (gameRoom.getRoomType() == CommonConstant.ROOM_TYPE_FK&&gameRoom.getGameCount()==999) {
+        if ((gameRoom.getRoomType() == CommonConstant.ROOM_TYPE_FK || gameRoom.getRoomType() == CommonConstant.ROOM_TYPE_DK)&&gameRoom.getGameCount()==999) {
             playerinfo.setScore(100);
             if (gameRoom.getGid()==CommonConstant.GAME_ID_NAMJ) {
                 playerinfo.setScore(15);
@@ -810,7 +828,7 @@ public class BaseEventDeal {
         // 是否重连
         if (gameRoom.getPlayerMap().containsKey(playerinfo.getAccount())) {
             // 房卡场不需要重新刷新分数
-            if (gameRoom.getRoomType() == CommonConstant.ROOM_TYPE_FK) {
+            if (gameRoom.getRoomType() == CommonConstant.ROOM_TYPE_FK || gameRoom.getRoomType() == CommonConstant.ROOM_TYPE_DK) {
                 playerinfo.setScore(gameRoom.getPlayerMap().get(playerinfo.getAccount()).getScore());
             }
             joinData.put("isReconnect", CommonConstant.GLOBAL_YES);
@@ -1061,7 +1079,9 @@ public class BaseEventDeal {
             array.add(obj);
             room.setBaseNum(String.valueOf(array));
         }
-        room.getUserPacketMap().put(account, new UserPacket());
+        if (baseInfo.getInt("roomType")!=CommonConstant.ROOM_TYPE_DK) {
+            room.getUserPacketMap().put(account, new UserPacket());
+        }
     }
 
     /**
@@ -1137,7 +1157,9 @@ public class BaseEventDeal {
             setting.put("goldpeipai",baseInfo.getInt("peiPaiTime"));
         }
         room.setSetting(setting);
-        room.getUserPacketMap().put(account, new Player());
+        if (baseInfo.getInt("roomType")!=CommonConstant.ROOM_TYPE_DK) {
+            room.getUserPacketMap().put(account, new Player());
+        }
     }
 
     /**
@@ -1223,7 +1245,9 @@ public class BaseEventDeal {
         room.setBanker(account);
         // 房主
         room.setOwner(account);
-        room.getUserPacketMap().put(account,new UserPacketQZMJ());
+        if (baseInfo.getInt("roomType")!=CommonConstant.ROOM_TYPE_DK) {
+            room.getUserPacketMap().put(account,new UserPacketQZMJ());
+        }
     }
 
     /**
@@ -1253,7 +1277,9 @@ public class BaseEventDeal {
         room.setBanker(account);
         // 房主
         room.setOwner(account);
-        room.getUserPacketMap().put(account,new UserPacketQZMJ());
+        if (baseInfo.getInt("roomType")!=CommonConstant.ROOM_TYPE_DK) {
+            room.getUserPacketMap().put(account,new UserPacketQZMJ());
+        }
     }
 
     /**
@@ -1312,7 +1338,9 @@ public class BaseEventDeal {
         // 房主
         room.setOwner(account);
         // 添加牌局信息
-        room.getUserPacketMap().put(account,new UserPacketDdz());
+        if (baseInfo.getInt("roomType")!=CommonConstant.ROOM_TYPE_DK) {
+            room.getUserPacketMap().put(account,new UserPacketDdz());
+        }
         JSONObject setting = getGameInfoById(CommonConstant.GAME_ID_DDZ);
         // 设置房间信息
         room.setSetting(setting);
@@ -2478,5 +2506,103 @@ public class BaseEventDeal {
             }
         }
         CommonConstant.sendMsgEventToSingle(client,String.valueOf(result),"gameCheckIpPush");
+    }
+
+    /**
+     * 获取代开房间列表
+     * @param client
+     * @param data
+     */
+    public void getProxyRoomList(SocketIOClient client, Object data) {
+        JSONObject postData = JSONObject.fromObject(data);
+        if (!postData.containsKey(CommonConstant.DATA_KEY_ACCOUNT)||Dto.stringIsNULL(postData.getString(CommonConstant.DATA_KEY_ACCOUNT))) {
+            return;
+        }
+        String account = postData.getString(CommonConstant.DATA_KEY_ACCOUNT);
+        JSONObject result=new JSONObject();
+        result.put("type",1);
+        result.put("array",obtainProxyRoomList(account));
+        CommonConstant.sendMsgEventToSingle(client,String.valueOf(result),"getProxyRoomListPush");
+    }
+
+    /**
+     * 代开房间解散
+     * @param client
+     * @param data
+     */
+    public void dissolveProxyRoom(SocketIOClient client, Object data) {
+        JSONObject postData = JSONObject.fromObject(data);
+        if (!postData.containsKey(CommonConstant.DATA_KEY_ACCOUNT)||Dto.stringIsNULL(postData.getString(CommonConstant.DATA_KEY_ACCOUNT))) {
+            return;
+        }
+        if (!postData.containsKey(CommonConstant.DATA_KEY_ROOM_NO)||Dto.stringIsNULL(postData.getString(CommonConstant.DATA_KEY_ROOM_NO))) {
+            return;
+        }
+        String account = postData.getString(CommonConstant.DATA_KEY_ACCOUNT);
+        String roomNo = postData.getString(CommonConstant.DATA_KEY_ROOM_NO);
+        JSONObject result=new JSONObject();
+        if (RoomManage.gameRoomMap.containsKey(roomNo)&&RoomManage.gameRoomMap.get(roomNo)!=null) {
+            if (RoomManage.gameRoomMap.get(roomNo).getRoomType()==CommonConstant.ROOM_TYPE_DK&&account.equals(RoomManage.gameRoomMap.get(roomNo).getOwner())
+                &&RoomManage.gameRoomMap.get(roomNo).getPlayerMap().size()==0) {
+                RoomManage.gameRoomMap.remove(roomNo);
+            }else {
+                result.put(CommonConstant.RESULT_KEY_MSG,"当前房间不可解散");
+            }
+        }else {
+            result.put(CommonConstant.RESULT_KEY_MSG,"房间不存在");
+        }
+        result.put("type",2);
+        result.put("array",obtainProxyRoomList(account));
+        CommonConstant.sendMsgEventToSingle(client,String.valueOf(result),"getProxyRoomListPush");
+    }
+
+    /**
+     * 获取代开房间列表
+     * @param account
+     * @return
+     */
+    private List<JSONObject> obtainProxyRoomList(String account) {
+        List<JSONObject> proxyRoomList = new ArrayList<>();
+        for (String roomNo : RoomManage.gameRoomMap.keySet()) {
+            GameRoom room = RoomManage.gameRoomMap.get(roomNo);
+            if (room.getRoomType()==CommonConstant.ROOM_TYPE_DK&&account.equals(room.getOwner())) {
+                JSONObject obj = new JSONObject();
+                if (room.getGameIndex()==0) {
+                    obj.put("status",0);
+                }else if (room.getGameIndex()<room.getGameCount()) {
+                    obj.put("status",1);
+                }else {
+                    obj.put("status",-2);
+                }
+                obj.put("game_id",room.getGid());
+                obj.put("room_no",room.getRoomNo());
+                obj.put("playerCount",room.getPlayerCount());
+                List<String> playerList = new ArrayList<>();
+                for (String player : room.getPlayerMap().keySet()) {
+                    if (room.getPlayerMap().containsKey(player)&&room.getPlayerMap().get(player)!=null) {
+                        playerList.add(room.getPlayerMap().get(player).getName());
+                    }
+                }
+                obj.put("users",playerList);
+                proxyRoomList.add(obj);
+            }
+        }
+        return proxyRoomList;
+    }
+
+    /**
+     * 当前已代开房卡
+     * @param account
+     * @return
+     */
+    private int obtainProxyRoomCard(String account) {
+        int roomCard = 0;
+        for (String roomNo : RoomManage.gameRoomMap.keySet()) {
+            GameRoom room = RoomManage.gameRoomMap.get(roomNo);
+            if (room.getRoomType()==CommonConstant.ROOM_TYPE_DK&&account.equals(room.getOwner())) {
+                roomCard += room.getSinglePayNum() * room.getPlayerCount();
+            }
+        }
+        return roomCard;
     }
  }

@@ -1,10 +1,13 @@
 package com.zhuoan.biz.robot;
 
+import com.zhuoan.biz.core.ddz.DdzCore;
 import com.zhuoan.biz.core.nn.UserPacket;
 import com.zhuoan.biz.game.biz.RoomBiz;
 import com.zhuoan.biz.model.RoomManage;
+import com.zhuoan.biz.model.ddz.DdzGameRoom;
 import com.zhuoan.biz.model.nn.NNGameRoomNew;
 import com.zhuoan.constant.CommonConstant;
+import com.zhuoan.constant.DdzConstant;
 import com.zhuoan.constant.NNConstant;
 import com.zhuoan.constant.SSSConstant;
 import com.zhuoan.queue.Messages;
@@ -18,6 +21,8 @@ import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
 import javax.jms.Destination;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -36,6 +41,9 @@ public class RobotEventDeal {
 
     @Resource
     private Destination sssQueueDestination;
+
+    @Resource
+    private Destination ddzQueueDestination;
 
     @Resource
     private Destination nnQueueDestination;
@@ -62,6 +70,9 @@ public class RobotEventDeal {
                                             break;
                                         case CommonConstant.GAME_ID_SSS:
                                             playSSS(robotAccount);
+                                            break;
+                                        case CommonConstant.GAME_ID_DDZ:
+                                            playDdz(robotAccount);
                                             break;
                                         default:
                                             break;
@@ -118,6 +129,9 @@ public class RobotEventDeal {
                 case CommonConstant.GAME_ID_SSS:
                     robotInfo.setActionType(SSSConstant.SSS_GAME_EVENT_READY);
                     break;
+                case CommonConstant.GAME_ID_DDZ:
+                    robotInfo.setActionType(DdzConstant.DDZ_GAME_EVENT_READY);
+                    break;
                 default:
                     break;
             }
@@ -151,6 +165,9 @@ public class RobotEventDeal {
                 robots.get(robotAccount).subOutTimes();
             }
             if (robots.get(robotAccount).getPlayGameId()==CommonConstant.GAME_ID_SSS&&nextActionType==SSSConstant.SSS_GAME_EVENT_READY) {
+                robots.get(robotAccount).subOutTimes();
+            }
+            if (robots.get(robotAccount).getPlayGameId()==CommonConstant.GAME_ID_DDZ&&nextActionType==DdzConstant.DDZ_GAME_EVENT_READY) {
                 robots.get(robotAccount).subOutTimes();
             }
         }
@@ -266,6 +283,120 @@ public class RobotEventDeal {
             }
             producerService.sendMessage(sssQueueDestination, new Messages(null, obj, CommonConstant.GAME_ID_SSS, robotInfo.getActionType()));
         }
+    }
+
+    /**
+     * 斗地主
+     * @param robotAccount
+     */
+    public void playDdz(String robotAccount) {
+        if (checkRobotAccount(robotAccount)) {
+            RobotInfo robotInfo = robots.get(robotAccount);
+            JSONObject obj = new JSONObject();
+            obj.put(CommonConstant.DATA_KEY_ROOM_NO,robotInfo.getPlayRoomNo());
+            obj.put(CommonConstant.DATA_KEY_ACCOUNT,robotAccount);
+            // 叫、抢地主
+            if (robotInfo.getActionType() == DdzConstant.DDZ_GAME_EVENT_ROBOT_CALL || robotInfo.getActionType() == DdzConstant.DDZ_GAME_EVENT_ROBOT_ROB) {
+                if (robotInfo.getActionType() == DdzConstant.DDZ_GAME_EVENT_ROBOT_CALL) {
+                    obj.put(DdzConstant.DDZ_DATA_KEY_TYPE,DdzConstant.DDZ_BE_LANDLORD_TYPE_CALL);
+                }else {
+                    obj.put(DdzConstant.DDZ_DATA_KEY_TYPE,DdzConstant.DDZ_BE_LANDLORD_TYPE_ROB);
+                }
+                obj.put(DdzConstant.DDZ_DATA_KEY_IS_CHOICE,obtainRobOrNot(robotInfo.getPlayRoomNo(),robotAccount));
+                robotInfo.setActionType(DdzConstant.DDZ_GAME_EVENT_CALL_AND_ROB);
+            }
+            // 出牌
+            if (robotInfo.getActionType() == DdzConstant.DDZ_GAME_EVENT_GAME_IN) {
+                List<String> allCard = obtainRobotCardDdz(robotInfo.getPlayRoomNo(),robotAccount);
+                obj.put(DdzConstant.DDZ_DATA_KEY_PAI_LIST,allCard);
+                if (allCard.size()>0) {
+                    obj.put(DdzConstant.DDZ_DATA_KEY_TYPE,DdzConstant.DDZ_GAME_EVENT_TYPE_YES);
+                }else {
+                    obj.put(DdzConstant.DDZ_DATA_KEY_TYPE,DdzConstant.DDZ_GAME_EVENT_TYPE_NO);
+                }
+            }
+            if (robotInfo.getOutTimes()<0&&robotInfo.getActionType()== DdzConstant.DDZ_GAME_EVENT_READY) {
+                robotInfo.setActionType(DdzConstant.DDZ_GAME_EVENT_EXIT_ROOM);
+            }
+            producerService.sendMessage(ddzQueueDestination, new Messages(null, obj, CommonConstant.GAME_ID_DDZ, robotInfo.getActionType()));
+        }
+    }
+
+    /**
+     * 是否抢地主
+     * @param roomNo
+     * @param robotAccount
+     * @return
+     */
+    private int obtainRobOrNot(String roomNo, String robotAccount) {
+        DdzGameRoom room = (DdzGameRoom) RoomManage.gameRoomMap.get(roomNo);
+        List<String> robotPai = room.getUserPacketMap().get(robotAccount).getMyPai();
+        DdzCore.sortCard(robotPai);
+        if (DdzCore.obtainCardValue(robotPai.get(robotPai.size()-4))>DdzConstant.DDZ_CARD_NUM_THIRTEEN) {
+            return CommonConstant.GLOBAL_YES;
+        }
+        List<List<String>> bombList = DdzCore.obtainRepeatList(robotPai, 4, false);
+        if (bombList.size()>0) {
+            return CommonConstant.GLOBAL_YES;
+        }
+        return CommonConstant.GLOBAL_NO;
+    }
+
+    /**
+     * 获取机器人的牌
+     * @param roomNo
+     * @param robotAccount
+     * @return
+     */
+    private List<String> obtainRobotCardDdz(String roomNo, String robotAccount) {
+        DdzGameRoom room = (DdzGameRoom) RoomManage.gameRoomMap.get(roomNo);
+        List<String> lastCard = room.getLastCard();
+        if (room.getLastCard().size()==0||robotAccount.equals(room.getLastOperateAccount())) {
+            lastCard.clear();
+        }
+        List<String> robotPai = room.getUserPacketMap().get(robotAccount).getMyPai();
+        // 手牌能一次出完
+        if (DdzCore.checkCard(lastCard,robotPai)) {
+            // 不是4带2 或 4带2两对
+            if (DdzCore.obtainCardType(robotPai)!=DdzConstant.DDZ_CARD_TYPE_BOMB_WITH_SINGLE&&DdzCore.obtainCardType(robotPai)!=DdzConstant.DDZ_CARD_TYPE_BOMB_WITH_PARIS) {
+                return robotPai;
+            }
+        }
+        if (isTeammateWithLast(roomNo,room.getLastOperateAccount(),robotAccount)) {
+            // 单牌和对子 垫牌
+            if (DdzCore.obtainCardType(lastCard) != DdzConstant.DDZ_CARD_TYPE_SINGLE && DdzCore.obtainCardType(lastCard) != DdzConstant.DDZ_CARD_TYPE_PAIRS) {
+                return new ArrayList<String>();
+            }else if (lastCard.size()>0 && DdzCore.obtainCardValue(lastCard.get(0)) > DdzConstant.DDZ_CARD_NUM_TWELVE) {
+                return new ArrayList<String>();
+            }
+        }
+        List<List<String>> allCard = DdzCore.obtainRobotCard(lastCard, robotPai);
+        // 手牌多的时候不出炸
+        if (lastCard.size()>0&&allCard.size()>0&&DdzCore.obtainCardType(allCard.get(0))==DdzConstant.DDZ_CARD_TYPE_BOMB) {
+            if (room.getUserPacketMap().get(room.getLastOperateAccount()).getMyPai().size()>10) {
+                return new ArrayList<>();
+            }
+        }
+        return allCard.size()>0?allCard.get(0):new ArrayList<String>();
+    }
+
+    /**
+     * 上一个出牌玩家和自己是不是队友
+     * @param roomNo
+     * @param lastAccount
+     * @param account
+     * @return
+     */
+    private boolean isTeammateWithLast(String roomNo, String lastAccount, String account) {
+        DdzGameRoom room = (DdzGameRoom) RoomManage.gameRoomMap.get(roomNo);
+        // 不是自己
+        if (!Dto.stringIsNULL(lastAccount)&&!Dto.stringIsNULL(account)&&!lastAccount.equals(account)) {
+            // 都不是地主
+            if (!lastAccount.equals(room.getLandlordAccount())&&!account.equals(room.getLandlordAccount())) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**

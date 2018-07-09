@@ -358,7 +358,7 @@ public class DdzCore {
      * @param card 牌
      * @return 点数
      */
-    private static int obtainCardValue(String card) {
+    public static int obtainCardValue(String card) {
         int cardValue = Integer.valueOf(card.split("-")[1]);
         // A或2
         if (cardValue==DdzConstant.DDZ_CARD_NUM_ONE||cardValue==DdzConstant.DDZ_CARD_NUM_TWO) {
@@ -431,9 +431,9 @@ public class DdzCore {
             minLength = 6;
             beginIndex = 3;
         }
-        if ((beginIndex > 0) && (minLength > 0) && (distinctCards.size() > minLength)) {
+        if (beginIndex > 0 && distinctCards.size() > minLength) {
             // 取顺子间隔1 取连对间隔2 取飞机不带间隔3
-            for (int i = 0; i < (distinctCards.size() - minLength); i += num) {
+            for (int i = 0; i < (distinctCards.size() - minLength + 1); i += num) {
                 for (int j = i+beginIndex; j < ((distinctCards.size() - num) + 1); j += num) {
                     List<String> list = distinctCards.subList(i, j+num);
                     if (obtainCardValue(distinctCards.get(j))<15&&obtainCardValue(distinctCards.get(j))-obtainCardValue(distinctCards.get(i))==(j-i)/num) {
@@ -445,7 +445,7 @@ public class DdzCore {
             }
         }
         // 长度刚好为最小长度判断该牌是否符合条件
-        if (beginIndex>0&&minLength>0&&distinctCards.size()==minLength) {
+        if (beginIndex > 0 && distinctCards.size() == minLength) {
             if (num==1&&isStraight(distinctCards)) {
                 cardList.add(distinctCards);
             }
@@ -487,7 +487,7 @@ public class DdzCore {
     public static List<List<String>> obtainDoubleJokerList(List<String> cards) {
         List<List<String>> list = new ArrayList<>();
         sortCard(cards);
-        if (list.size()>=2) {
+        if (cards.size()>=2) {
             // 取排序后最大的两张牌
             List<String> maxList = cards.subList(cards.size()-2,cards.size());
             if (isDoubleJoker(maxList)) {
@@ -658,29 +658,107 @@ public class DdzCore {
         return list;
     }
 
+    /**
+     * 根据长度排序
+     * @param cardList 牌
+     * @return 根据长度从大到小排序
+     */
+    private static List<List<String>> sortByCardSize(List<List<String>> cardList){
+        Collections.sort(cardList, new Comparator<List<String>>() {
+            @Override
+            public int compare(List<String> o1, List<String> o2) {
+                return o2.size()-o1.size();
+            }
+        });
+        return cardList;
+    }
+
+    /**
+     * 机器人出牌
+     * @param lastCard 上一次出的牌
+     * @param robotPai 手牌
+     * @return 所有可出的牌
+     */
+    public static List<List<String>> obtainRobotCard(List<String> lastCard, List<String> robotPai) {
+        List<List<String>> robotCard = new ArrayList<>();
+        if (lastCard.size()==0) {
+            // 所有的炸弹、王炸
+            List<List<String>> allBomb = obtainRepeatList(robotPai,4,false);
+            List<List<String>> doubleJokerList = obtainDoubleJokerList(robotPai);
+            List<String> myPai = new ArrayList<>();
+            myPai.addAll(robotPai);
+            // 去掉所有的炸弹和王炸
+            for (List<String> bomb : allBomb) {
+                myPai.removeAll(bomb);
+            }
+            for (List<String> doubleJoker : doubleJokerList) {
+                myPai.removeAll(doubleJoker);
+            }
+            // 连对
+            List<List<String>> allDoubleStraight = sortByCardSize(obtainStraightList(myPai,2));
+            if (allDoubleStraight.size()>0) {
+                robotCard.add(allDoubleStraight.get(0));
+            }
+            // 顺子
+            List<List<String>> allStraight = sortByCardSize(obtainStraightList(myPai,1));
+            if (allStraight.size()>0) {
+                robotCard.add(allStraight.get(0));
+            }
+            // 飞机带单牌
+            List<List<String>> allPlane = obtainStraightList(myPai, 3);
+            // 三带一
+            List<List<String>> allThree = obtainRepeatList(myPai, 3, false);
+            if (allPlane.size()>0||allThree.size()>0) {
+                List<List<String>> temp = new ArrayList<>();
+                temp.addAll(allPlane);
+                temp.addAll(allThree);
+                List<List<String>> allThreeOrPlaneWithOne = joinCardList(temp, myPai, 1, 3);
+                if (allThreeOrPlaneWithOne.size()>0) {
+                    robotCard.add(allThreeOrPlaneWithOne.get(0));
+                }else if (allPlane.size()>0){
+                    robotCard.add(allPlane.get(0));
+                }else if (allThree.size()>0) {
+                    robotCard.add(allThree.get(0));
+                }
+            }
+            // 没有连对、顺子、三带按提示出
+            List<List<String>> allChoice = obtainAllCard(new ArrayList<String>(), myPai);
+            for (List<String> list : allChoice) {
+                robotCard.add(list);
+            }
+            // 最后出炸弹
+            for (List<String> bomb : allBomb) {
+                robotCard.add(bomb);
+            }
+        }else {
+            List<List<String>> allChoice = obtainAllCard(lastCard, robotPai);
+            for (List<String> list : allChoice) {
+                robotCard.add(list);
+            }
+        }
+        return robotCard;
+    }
+
 
     public static void main(String[] args) {
         long start = System.currentTimeMillis();
-        List<String> oldList = new ArrayList<>();
-        oldList.add("1-3");
-        oldList.add("2-3");
-        oldList.add("3-3");
-        oldList.add("1-4");
-        oldList.add("2-4");
-        oldList.add("3-4");
-        oldList.add("1-5");
-        oldList.add("2-6");
-        List<String> myPai = new ArrayList<>();
-        myPai.add("1-13");
-        myPai.add("2-13");
-        myPai.add("3-13");
-        myPai.add("1-1");
-        myPai.add("2-1");
-        myPai.add("3-1");
-        myPai.add("1-7");
-        myPai.add("2-8");
-        myPai.add("1-8");
-        System.out.println(obtainAllCard(oldList,myPai));
+        List<List<String>> list = shuffleAndDeal();
+        System.out.println(list.get(0));
+        System.out.println(obtainRobotCard(new ArrayList<String>(),list.get(0)));
+        System.out.println(list.get(1));
+        System.out.println(obtainRobotCard(new ArrayList<String>(),list.get(1)));
+        System.out.println(list.get(2));
+        System.out.println(obtainRobotCard(new ArrayList<String>(),list.get(2)));
+        List<String> list1 = new ArrayList<>();
+        list1.add("1-3");
+        list1.add("2-3");
+        list1.add("3-3");
+        list1.add("4-4");
+        list1.add("1-4");
+        list1.add("2-4");
+        list1.add("1-5");
+        list1.add("2-6");
+        System.out.println(obtainRobotCard(new ArrayList<String>(),list1));
         long end = System.currentTimeMillis();
         System.out.println(end-start);
     }

@@ -120,6 +120,14 @@ public class CommonConstant {
      */
     public static final int BASE_GAME_EVENT_CHECK_IP = 26;
     /**
+     * 公共游戏事件-代开房间
+     */
+    public static final int BASE_GAME_EVENT_GET_PROXY_ROOM_LIST = 27;
+    /**
+     * 公共游戏事件-代开房间解散
+     */
+    public static final int BASE_GAME_EVENT_DISSOLVE_PROXY_ROOM = 28;
+    /**
      * 游戏公共部分
      */
     public static final int GAME_BASE = 0;
