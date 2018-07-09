@@ -168,6 +168,10 @@ public class SwConstant {
      */
     public static final int SW_TYPE_TEN_ELEVEN = 2;
     /**
+     * 1赔11.5
+     */
+    public static final int SW_TYPE_TEN_ELEVEN_POINT_FIVE = 3;
+    /**
      * 押宝倒计时
      */
     public static final int SW_TIME_HIDE_TREASURE = 60;

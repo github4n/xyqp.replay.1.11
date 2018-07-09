@@ -1305,6 +1305,9 @@ public class BaseEventDeal {
             case SwConstant.SW_TYPE_TEN_ELEVEN:
                 room.setRatio(11);
                 break;
+            case SwConstant.SW_TYPE_TEN_ELEVEN_POINT_FIVE:
+                room.setRatio(11.5);
+                break;
             default:
                 room.setRatio(10);
                 break;
