@@ -2607,9 +2607,9 @@ public class QZMJGameEventDeal {
                 }
             }
 
-            // 补一次花延迟1500ms，让补花动画播完
+            // 补一次花延迟800ms，让补花动画播完
             try {
-                Thread.sleep(1500 * buhuaCount);
+                Thread.sleep(800 * buhuaCount);
             } catch (InterruptedException e1) {
                 e1.printStackTrace();
             }
