@@ -2114,6 +2114,9 @@ public class BaseEventDeal {
                 if (payType==CommonConstant.PAY_TYPE_OWNER) {
                     roomCard = single*player;
                 }
+                if (baseInfo.getInt("roomType") == CommonConstant.ROOM_TYPE_DK) {
+                    roomCard = single*player;
+                }
             }
         }
         return roomCard;

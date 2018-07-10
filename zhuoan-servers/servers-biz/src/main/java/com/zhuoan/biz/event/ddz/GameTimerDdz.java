@@ -63,7 +63,7 @@ public class GameTimerDdz {
                     break;
                 }
                 // 倒计时到了之后执行事件
-                if (i==0&&room.getRoomType()!=CommonConstant.ROOM_TYPE_FK) {
+                if (i==0&&room.getRoomType()!=CommonConstant.ROOM_TYPE_FK&&room.getRoomType()!=CommonConstant.ROOM_TYPE_DK) {
                     JSONObject data = new JSONObject();
                     data.put(CommonConstant.DATA_KEY_ROOM_NO,roomNo);
                     data.put(CommonConstant.DATA_KEY_ACCOUNT,nextAccount);

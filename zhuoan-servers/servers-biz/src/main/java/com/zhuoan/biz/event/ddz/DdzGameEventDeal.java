@@ -172,7 +172,7 @@ public class DdzGameEventDeal {
         // 抢地主翻倍
         if (type==DdzConstant.DDZ_BE_LANDLORD_TYPE_ROB&&isChoice==CommonConstant.GLOBAL_YES) {
             room.setMultiple(room.getMultiple()*2);
-            if (room.getRoomType()==CommonConstant.ROOM_TYPE_FK) {
+            if (room.getRoomType()==CommonConstant.ROOM_TYPE_FK || room.getRoomType() == CommonConstant.ROOM_TYPE_DK) {
                 room.getUserPacketMap().get(account).setCallNum(room.getUserPacketMap().get(account).getCallNum()+1);
             }
         }
@@ -463,7 +463,7 @@ public class DdzGameEventDeal {
                 room.getGameStatus() == DdzConstant.DDZ_GAME_STATUS_SUMMARY) {// 初始及准备阶段可以退出
                 canExit = true;
             }
-        }else if (room.getRoomType() == CommonConstant.ROOM_TYPE_FK) {
+        }else if (room.getRoomType() == CommonConstant.ROOM_TYPE_FK || room.getRoomType() == CommonConstant.ROOM_TYPE_DK) {
             // 总结算之后可以退出房间
             if (room.getGameStatus() == DdzConstant.DDZ_GAME_STATUS_FINAL_SUMMARY) {
                 canExit = true;
@@ -482,7 +482,7 @@ public class DdzGameEventDeal {
             // 更新数据库
             JSONObject roomInfo = new JSONObject();
             roomInfo.put("room_no", room.getRoomNo());
-            if (room.getRoomType()!=CommonConstant.ROOM_TYPE_FK) {
+            if (room.getRoomType()!=CommonConstant.ROOM_TYPE_FK && room.getRoomType() != CommonConstant.ROOM_TYPE_DK) {
                 roomInfo.put("user_id" + room.getPlayerMap().get(account).getMyIndex(), 0);
             }
             // 移除数据
@@ -816,7 +816,7 @@ public class DdzGameEventDeal {
         }
         room.setGameStatus(DdzConstant.DDZ_GAME_STATUS_SUMMARY);
         // 房卡场
-        if (room.getRoomType()==CommonConstant.ROOM_TYPE_FK) {
+        if (room.getRoomType()==CommonConstant.ROOM_TYPE_FK || room.getRoomType() == CommonConstant.ROOM_TYPE_DK) {
             for (String account : obtainAllPlayerAccount(roomNo)) {
                 // 游戏局数+1
                 room.getUserPacketMap().get(account).setPlayTimes(room.getUserPacketMap().get(account).getPlayTimes()+1);
@@ -852,24 +852,32 @@ public class DdzGameEventDeal {
         DdzGameRoom room = (DdzGameRoom) RoomManage.gameRoomMap.get(roomNo);
         JSONArray array = new JSONArray();
         int roomCardCount = 0;
-        for (String account : obtainAllPlayerAccount(roomNo)) {
-            if (room.getUserPacketMap().get(account).getStatus()> DdzConstant.DDZ_USER_STATUS_INIT) {
-                // 房主支付
-                if (room.getPayType()==CommonConstant.PAY_TYPE_OWNER) {
-                    if (account.equals(room.getOwner())&&room.getUserPacketMap().get(account).getPlayTimes()==1) {
+        if (room.getRoomType() == CommonConstant.ROOM_TYPE_FK) {
+            for (String account : obtainAllPlayerAccount(roomNo)) {
+                if (room.getUserPacketMap().get(account).getStatus()> DdzConstant.DDZ_USER_STATUS_INIT) {
+                    // 房主支付
+                    if (room.getPayType()==CommonConstant.PAY_TYPE_OWNER) {
+                        if (account.equals(room.getOwner())&&room.getUserPacketMap().get(account).getPlayTimes()==1) {
+                            // 参与第一局需要扣房卡
+                            roomCardCount = room.getPlayerCount()*room.getSinglePayNum();
+                            array.add(room.getPlayerMap().get(room.getOwner()).getId());
+                        }
+                    }
+                    // 房费AA
+                    if (room.getPayType()==CommonConstant.PAY_TYPE_AA) {
                         // 参与第一局需要扣房卡
-                        roomCardCount = room.getPlayerCount()*room.getSinglePayNum();
-                        array.add(room.getPlayerMap().get(room.getOwner()).getId());
+                        if (room.getUserPacketMap().get(account).getPlayTimes()==1) {
+                            array.add(room.getPlayerMap().get(account).getId());
+                            roomCardCount = room.getSinglePayNum();
+                        }
                     }
                 }
-                // 房费AA
-                if (room.getPayType()==CommonConstant.PAY_TYPE_AA) {
-                    // 参与第一局需要扣房卡
-                    if (room.getUserPacketMap().get(account).getPlayTimes()==1) {
-                        array.add(room.getPlayerMap().get(account).getId());
-                        roomCardCount = room.getSinglePayNum();
-                    }
-                }
+            }
+        }else if (room.getRoomType() == CommonConstant.ROOM_TYPE_DK && room.getGameIndex() == 1) {
+            JSONObject userInfo = userBiz.getUserByAccount(room.getOwner());
+            if (!Dto.isObjNull(userInfo)) {
+                roomCardCount = room.getPlayerCount()*room.getSinglePayNum();
+                array.add(userInfo.getLong("id"));
             }
         }
         if (array.size()>0) {
