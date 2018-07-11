@@ -1334,6 +1334,14 @@ public class DdzGameEventDeal {
             obj.put("sex", player.getSex());
             obj.put("ip", player.getIp());
             obj.put("vip", player.getVip());
+            if (room.isRobot() && room.getRobotList().contains(account) && Dto.stringIsNULL(player.getLocation())) {
+                int jwIndex =  RandomUtils.nextInt(CommonConstant.jwdList.size());
+                if (jwIndex > CommonConstant.jwdList.size()-1) {
+                    player.setLocation(CommonConstant.jwdList.get(0));
+                }else {
+                    player.setLocation(CommonConstant.jwdList.get(jwIndex));
+                }
+            }
             obj.put("location", player.getLocation());
             obj.put("area", player.getArea());
             obj.put("score", player.getScore());

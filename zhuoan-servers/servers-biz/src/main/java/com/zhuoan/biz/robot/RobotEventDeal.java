@@ -6,10 +6,8 @@ import com.zhuoan.biz.game.biz.RoomBiz;
 import com.zhuoan.biz.model.RoomManage;
 import com.zhuoan.biz.model.ddz.DdzGameRoom;
 import com.zhuoan.biz.model.nn.NNGameRoomNew;
-import com.zhuoan.constant.CommonConstant;
-import com.zhuoan.constant.DdzConstant;
-import com.zhuoan.constant.NNConstant;
-import com.zhuoan.constant.SSSConstant;
+import com.zhuoan.biz.model.qzmj.QZMJGameRoom;
+import com.zhuoan.constant.*;
 import com.zhuoan.queue.Messages;
 import com.zhuoan.service.jms.ProducerService;
 import com.zhuoan.util.Dto;
@@ -49,6 +47,9 @@ public class RobotEventDeal {
     private Destination nnQueueDestination;
 
     @Resource
+    private Destination qzmjQueueDestination;
+
+    @Resource
     private ProducerService producerService;
 
     @Resource
@@ -73,6 +74,9 @@ public class RobotEventDeal {
                                             break;
                                         case CommonConstant.GAME_ID_DDZ:
                                             playDdz(robotAccount);
+                                            break;
+                                        case CommonConstant.GAME_ID_QZMJ:
+                                            playQzMj(robotAccount);
                                             break;
                                         default:
                                             break;
@@ -131,6 +135,9 @@ public class RobotEventDeal {
                     break;
                 case CommonConstant.GAME_ID_DDZ:
                     robotInfo.setActionType(DdzConstant.DDZ_GAME_EVENT_READY);
+                    break;
+                case CommonConstant.GAME_ID_QZMJ:
+                    robotInfo.setActionType(QZMJConstant.QZMJ_GAME_EVENT_READY);
                     break;
                 default:
                     break;
@@ -397,6 +404,42 @@ public class RobotEventDeal {
             }
         }
         return false;
+    }
+
+    /**
+     * 泉州麻将
+     * @param robotAccount
+     */
+    public void playQzMj(String robotAccount) {
+        if (checkRobotAccount(robotAccount)) {
+            RobotInfo robotInfo = robots.get(robotAccount);
+            JSONObject obj = new JSONObject();
+            obj.put(CommonConstant.DATA_KEY_ROOM_NO,robotInfo.getPlayRoomNo());
+            obj.put(CommonConstant.DATA_KEY_ACCOUNT,robotAccount);
+            // 准备
+            if (robotInfo.getActionType() == QZMJConstant.QZMJ_GAME_EVENT_READY) {
+                if (robotInfo.getOutTimes() < 0) {
+                    robotInfo.setActionType(QZMJConstant.QZMJ_GAME_EVENT_EXIT_ROOM);
+                }else {
+                    obj.put("type",QZMJConstant.GAME_READY_TYPE_READY);
+                }
+            }
+            // 过
+            if (robotInfo.getActionType() == QZMJConstant.QZMJ_GAME_EVENT_ROBOT_GUO) {
+                obj.put("type",1);
+                robotInfo.setActionType(QZMJConstant.QZMJ_GAME_EVENT_IN);
+            }
+            // 出牌
+            if (robotInfo.getActionType() == QZMJConstant.QZMJ_GAME_EVENT_CP) {
+                obj.put("pai",obtainRobotChuQzMj(robotInfo.getPlayRoomNo(),robotAccount));
+            }
+            producerService.sendMessage(qzmjQueueDestination, new Messages(null, obj, CommonConstant.GAME_ID_QZMJ, robotInfo.getActionType()));
+        }
+    }
+
+    private int obtainRobotChuQzMj(String roomNo, String robotAccount) {
+        QZMJGameRoom room = (QZMJGameRoom) RoomManage.gameRoomMap.get(roomNo);
+        return room.getLastMoPai();
     }
 
     /**

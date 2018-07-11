@@ -11,6 +11,7 @@ import com.zhuoan.biz.model.qzmj.DontMovePai;
 import com.zhuoan.biz.model.qzmj.KaiJuModel;
 import com.zhuoan.biz.model.qzmj.QZMJGameRoom;
 import com.zhuoan.biz.model.qzmj.UserPacketQZMJ;
+import com.zhuoan.biz.robot.RobotEventDeal;
 import com.zhuoan.constant.CommonConstant;
 import com.zhuoan.constant.DaoTypeConstant;
 import com.zhuoan.constant.QZMJConstant;
@@ -20,6 +21,7 @@ import com.zhuoan.util.Dto;
 import com.zhuoan.util.thread.ThreadPoolHelper;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
+import org.apache.commons.lang.math.RandomUtils;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
@@ -56,6 +58,9 @@ public class QZMJGameEventDeal {
 
     @Resource
     private UserBiz userBiz;
+
+    @Resource
+    private RobotEventDeal robotEventDeal;
 
     /**
      * 创建房间
@@ -1308,6 +1313,15 @@ public class QZMJGameEventDeal {
                 if (gamePlay.getRoomType()==CommonConstant.ROOM_TYPE_FK||gamePlay.getRoomType() == CommonConstant.ROOM_TYPE_DK) {
                     updateRoomCard(roomNo);
                 }
+                if (gamePlay.isRobot()) {
+                    for (String account : gamePlay.getUserPacketMap().keySet()) {
+                        if (gamePlay.getUserPacketMap().containsKey(account) && gamePlay.getUserPacketMap().get(account)!=null
+                            && gamePlay.getRobotList().contains(account)) {
+                            int delayTime = RandomUtils.nextInt(3)+2;
+                            robotEventDeal.changeRobotActionDetail(account,QZMJConstant.QZMJ_GAME_EVENT_READY,delayTime);
+                        }
+                    }
+                }
             }
         }
     }
@@ -1565,6 +1579,10 @@ public class QZMJGameEventDeal {
             obj.put("roominfo2",String.valueOf(roomInfo2));
         }
         obj.put("roominfo",String.valueOf(roomInfo));
+        JSONArray timeArray = new JSONArray();
+        timeArray.add(0);
+        timeArray.add(20);
+        obj.put("timeArray",timeArray);
         return obj;
     }
 
@@ -3194,120 +3212,127 @@ public class QZMJGameEventDeal {
                 back.put(QZMJConstant.zgindex,zgindex);
                 back.put(QZMJConstant.lastType,lastType);
                 back.put(QZMJConstant.lastValue,lastValue);
-                if(client!=null){
-                    if(next.equals(zhuaID)){
-                        // 返回事件询问类型
-                        if(type==3&&gangType>0){
-                            back.put(QZMJConstant.type,new int[]{type, gangType});
-                        }else if(type==1&&gangType>0){
-                            back.put(QZMJConstant.type,new int[]{gangType});
-                        }else{
-                            back.put(QZMJConstant.type,new int[]{type});
-                        }
-                        if(!back.containsKey(QZMJConstant.lastValue)){
-                            back.put(QZMJConstant.lastValue,lastAnValue);
-                        }
-                        // 胡牌类型
-                        if(type==3){
-                            Playerinfo player = room.getPlayerMap().get(zhuaID);
-                            UserPacketQZMJ userPacketQZMJ = room.getUserPacketMap().get(zhuaID);
-                            if(userPacketQZMJ.getMyPai().contains(room.getJin())){
-
-                                int huType=MaJiangCore.huPaiHasJin(userPacketQZMJ.getMyPai(), 0, room.getJin());
-                                // 满足双、三游条件
-                                int canYouJin = 0;
-                                // 当玩家有游金时判断是几游
-                                if(huType==QZMJConstant.HU_TYPE_YJ){
-
-                                    if(userPacketQZMJ.getYouJin()==1){
-                                        huType = QZMJConstant.HU_TYPE_YJ;
-                                        if(mopai== room.getJin() || MaJiangCore.shuangSanYouPanDing(userPacketQZMJ.getMyPai(), 0, room.getJin())){
-                                            // 可以开始双游
-                                            canYouJin = 2;
-                                        }
-                                    }else if(userPacketQZMJ.getYouJin()==2){
-                                        huType = QZMJConstant.HU_TYPE_SHY;
-                                        if(mopai== room.getJin() || MaJiangCore.shuangSanYouPanDing(userPacketQZMJ.getMyPai(), 0, room.getJin())){
-                                            // 可以开始三游
-                                            canYouJin = 3;
-                                        }
-                                    }else if(userPacketQZMJ.getYouJin()==3){
-                                        huType = QZMJConstant.HU_TYPE_SY;
-                                    }else{
-                                        // 三金倒
-                                        if(userPacketQZMJ.getPlayerJinCount(room.getJin())==3){
-                                            huType = QZMJConstant.HU_TYPE_SJD;
-                                        }else{
-                                            huType = QZMJConstant.HU_TYPE_ZM;
-                                        }
-                                    }
-                                }
-
-                                // 判断是否是天胡
-                                if(huType == QZMJConstant.HU_TYPE_ZM){
-
-                                    List<KaiJuModel> paiJuList = room.getKaiJuList();
-                                    // 摸牌次数
-                                    int moPaiConut = 0;
-                                    if(paiJuList!=null&&paiJuList.size()<10){
-                                        for (KaiJuModel kaiJu : paiJuList) {
-                                            if(kaiJu.getType()==1){
-                                                moPaiConut ++;
-                                            }
-                                        }
-                                        if(moPaiConut<=1){
-                                            huType = QZMJConstant.HU_TYPE_TH;
-                                        }
-                                    }
-                                }
-
-                                back.put("huType", huType);
-                                back.put("youjin", canYouJin);
-
-                            }else{
-                                back.put("huType",QZMJConstant.HU_TYPE_ZM);
-                                back.put("youjin", 0);
-                            }
-                        }
-                        // 出牌或者胡
-                        if(type==1||type==3){
-                            // 牌局中剩余牌数（包含其他玩家手牌）
-                            List<Integer> shengyuList = new ArrayList<Integer>(Dto.arrayToList(room.getPai(), room.getIndex()));
-                            for(String uuid: room.getPlayerMap().keySet()) {
-                                if (room.getUserPacketMap().containsKey(uuid)&&room.getUserPacketMap().get(uuid)!=null) {
-                                    if(!zhuaID.equals(uuid)){
-                                        shengyuList.addAll(room.getUserPacketMap().get(uuid).getMyPai());
-                                    }
-                                }
-                            }
-
-                            // 出牌提示
-                            JSONArray tingTip = MaJiangCore.tingPaiTip(room.getUserPacketMap().get(zhuaID).getMyPai(), room.getJin(), shengyuList);
-                            back.put("tingTip",tingTip);
-                        }
-                        back.put(QZMJConstant.gangvalue,anvalue);
-                        back.put(QZMJConstant.value, new int[]{mopai});
-
-                        // 补花触发事件
-                        if(buhuaData!=null){
-                            back.put("lastType", -10);
-                            back.put("huaCount", buhuaData.get("huaCount"));
-                            back.put("huaValue", buhuaData.get("huaValue"));
-                            back.put("lastValue", buhuaData.get("lastValue"));
-                        }
-                        if(anvalue!=null&&anvalue.length>0){
-                            CommonConstant.sendMsgEventToSingle(client,String.valueOf(back),"gameActionPush");
-                        }else{
-                            CommonConstant.sendMsgEventToSingle(client,String.valueOf(back),"gameChupaiPush");
-                        }
-
+                if(next.equals(zhuaID)){
+                    // 返回事件询问类型
+                    if(type==3&&gangType>0){
+                        back.put(QZMJConstant.type,new int[]{type, gangType});
+                    }else if(type==1&&gangType>0){
+                        back.put(QZMJConstant.type,new int[]{gangType});
                     }else{
-                        back.put(QZMJConstant.gangvalue,zhuagangvalue);
-                        back.put(QZMJConstant.type,new int[]{1});
-                        back.put(QZMJConstant.value, null);
-                        back.put(QZMJConstant.lastValue,lastValue);
-                        CommonConstant.sendMsgEventToSingle(client,String.valueOf(back),"gameChupaiPush");
+                        back.put(QZMJConstant.type,new int[]{type});
                     }
+                    if(!back.containsKey(QZMJConstant.lastValue)){
+                        back.put(QZMJConstant.lastValue,lastAnValue);
+                    }
+                    // 胡牌类型
+                    if(type==3){
+                        Playerinfo player = room.getPlayerMap().get(zhuaID);
+                        UserPacketQZMJ userPacketQZMJ = room.getUserPacketMap().get(zhuaID);
+                        if(userPacketQZMJ.getMyPai().contains(room.getJin())){
+
+                            int huType=MaJiangCore.huPaiHasJin(userPacketQZMJ.getMyPai(), 0, room.getJin());
+                            // 满足双、三游条件
+                            int canYouJin = 0;
+                            // 当玩家有游金时判断是几游
+                            if(huType==QZMJConstant.HU_TYPE_YJ){
+
+                                if(userPacketQZMJ.getYouJin()==1){
+                                    huType = QZMJConstant.HU_TYPE_YJ;
+                                    if(mopai== room.getJin() || MaJiangCore.shuangSanYouPanDing(userPacketQZMJ.getMyPai(), 0, room.getJin())){
+                                        // 可以开始双游
+                                        canYouJin = 2;
+                                    }
+                                }else if(userPacketQZMJ.getYouJin()==2){
+                                    huType = QZMJConstant.HU_TYPE_SHY;
+                                    if(mopai== room.getJin() || MaJiangCore.shuangSanYouPanDing(userPacketQZMJ.getMyPai(), 0, room.getJin())){
+                                        // 可以开始三游
+                                        canYouJin = 3;
+                                    }
+                                }else if(userPacketQZMJ.getYouJin()==3){
+                                    huType = QZMJConstant.HU_TYPE_SY;
+                                }else{
+                                    // 三金倒
+                                    if(userPacketQZMJ.getPlayerJinCount(room.getJin())==3){
+                                        huType = QZMJConstant.HU_TYPE_SJD;
+                                    }else{
+                                        huType = QZMJConstant.HU_TYPE_ZM;
+                                    }
+                                }
+                            }
+
+                            // 判断是否是天胡
+                            if(huType == QZMJConstant.HU_TYPE_ZM){
+
+                                List<KaiJuModel> paiJuList = room.getKaiJuList();
+                                // 摸牌次数
+                                int moPaiConut = 0;
+                                if(paiJuList!=null&&paiJuList.size()<10){
+                                    for (KaiJuModel kaiJu : paiJuList) {
+                                        if(kaiJu.getType()==1){
+                                            moPaiConut ++;
+                                        }
+                                    }
+                                    if(moPaiConut<=1){
+                                        huType = QZMJConstant.HU_TYPE_TH;
+                                    }
+                                }
+                            }
+
+                            back.put("huType", huType);
+                            back.put("youjin", canYouJin);
+
+                        }else{
+                            back.put("huType",QZMJConstant.HU_TYPE_ZM);
+                            back.put("youjin", 0);
+                        }
+                    }
+                    // 出牌或者胡
+                    if(type==1||type==3){
+                        // 牌局中剩余牌数（包含其他玩家手牌）
+                        List<Integer> shengyuList = new ArrayList<Integer>(Dto.arrayToList(room.getPai(), room.getIndex()));
+                        for(String uuid: room.getPlayerMap().keySet()) {
+                            if (room.getUserPacketMap().containsKey(uuid)&&room.getUserPacketMap().get(uuid)!=null) {
+                                if(!zhuaID.equals(uuid)){
+                                    shengyuList.addAll(room.getUserPacketMap().get(uuid).getMyPai());
+                                }
+                            }
+                        }
+
+                        // 出牌提示
+                        JSONArray tingTip = MaJiangCore.tingPaiTip(room.getUserPacketMap().get(zhuaID).getMyPai(), room.getJin(), shengyuList);
+                        back.put("tingTip",tingTip);
+                    }
+                    back.put(QZMJConstant.gangvalue,anvalue);
+                    back.put(QZMJConstant.value, new int[]{mopai});
+
+                    // 补花触发事件
+                    if(buhuaData!=null){
+                        back.put("lastType", -10);
+                        back.put("huaCount", buhuaData.get("huaCount"));
+                        back.put("huaValue", buhuaData.get("huaValue"));
+                        back.put("lastValue", buhuaData.get("lastValue"));
+                    }
+                    if(anvalue!=null&&anvalue.length>0){
+                        if (room.isRobot() && room.getRobotList().contains(next)) {
+                            int delayTime = RandomUtils.nextInt(3)+2;
+                            robotEventDeal.changeRobotActionDetail(next,QZMJConstant.QZMJ_GAME_EVENT_ROBOT_GUO,delayTime);
+                        }else {
+                            CommonConstant.sendMsgEventToSingle(client,String.valueOf(back),"gameActionPush");
+                        }
+                    }else{
+                        CommonConstant.sendMsgEventToSingle(client,String.valueOf(back),"gameChupaiPush");
+                        if (room.isRobot() && room.getRobotList().contains(next) && !hasHua) {
+                            int delayTime = RandomUtils.nextInt(3)+2;
+                            robotEventDeal.changeRobotActionDetail(next,QZMJConstant.QZMJ_GAME_EVENT_CP,delayTime);
+                        }
+                    }
+
+                }else{
+                    back.put(QZMJConstant.gangvalue,zhuagangvalue);
+                    back.put(QZMJConstant.type,new int[]{1});
+                    back.put(QZMJConstant.value, null);
+                    back.put(QZMJConstant.lastValue,lastValue);
+                    CommonConstant.sendMsgEventToSingle(client,String.valueOf(back),"gameChupaiPush");
                 }
                 next= room.getNextPlayer(next);
             } while (!zhuaID.equals(next));
@@ -3391,7 +3416,12 @@ public class QZMJGameEventDeal {
                 }
                 result.put(QZMJConstant.type, types);
             }
-            CommonConstant.sendMsgEventToSingle(room.getPlayerMap().get(thisask).getUuid(),String.valueOf(result),"gameActionPush");
+            if (room.isRobot() && room.getRobotList().contains(thisask)) {
+                int delayTime = RandomUtils.nextInt(3)+2;
+                robotEventDeal.changeRobotActionDetail(thisask,QZMJConstant.QZMJ_GAME_EVENT_ROBOT_GUO,delayTime);
+            }else {
+                CommonConstant.sendMsgEventToSingle(room.getPlayerMap().get(thisask).getUuid(),String.valueOf(result),"gameActionPush");
+            }
         }
         return true;
     }
@@ -3431,27 +3461,52 @@ public class QZMJGameEventDeal {
             //胡 询问事件
             JSONObject ishu=obj;
             ishu.put(QZMJConstant.huvalue, jieguo[2]);
-            CommonConstant.sendMsgEventToSingle(room.getPlayerMap().get(thisask).getUuid(),String.valueOf(ishu),"gameActionPush");
+            if (room.isRobot() && room.getRobotList().contains(thisask)) {
+                int delayTime = RandomUtils.nextInt(3)+2;
+                robotEventDeal.changeRobotActionDetail(thisask,QZMJConstant.QZMJ_GAME_EVENT_ROBOT_GUO,delayTime);
+            }else {
+                CommonConstant.sendMsgEventToSingle(room.getPlayerMap().get(thisask).getUuid(),String.valueOf(ishu),"gameActionPush");
+            }
         }else if(type==6){
             //杠  询问事件
             JSONObject isgang=obj;
             isgang.put(QZMJConstant.gangvalue,  new Object[]{jieguo[2],jieguo[2],jieguo[2],jieguo[2]});
-            CommonConstant.sendMsgEventToSingle(room.getPlayerMap().get(thisask).getUuid(),String.valueOf(isgang),"gameActionPush");
+            if (room.isRobot() && room.getRobotList().contains(thisask)) {
+                int delayTime = RandomUtils.nextInt(3)+2;
+                robotEventDeal.changeRobotActionDetail(thisask,QZMJConstant.QZMJ_GAME_EVENT_ROBOT_GUO,delayTime);
+            }else {
+                CommonConstant.sendMsgEventToSingle(room.getPlayerMap().get(thisask).getUuid(),String.valueOf(isgang),"gameActionPush");
+            }
         }else if(type==5){
             //碰  询问事件
             JSONObject ispeng=obj;
             ispeng.put(QZMJConstant.pengvalue, new Object[]{jieguo[2],jieguo[2],jieguo[2]});
-            CommonConstant.sendMsgEventToSingle(room.getPlayerMap().get(thisask).getUuid(),String.valueOf(ispeng),"gameActionPush");
+            if (room.isRobot() && room.getRobotList().contains(thisask)) {
+                int delayTime = RandomUtils.nextInt(3)+2;
+                robotEventDeal.changeRobotActionDetail(thisask,QZMJConstant.QZMJ_GAME_EVENT_ROBOT_GUO,delayTime);
+            }else {
+                CommonConstant.sendMsgEventToSingle(room.getPlayerMap().get(thisask).getUuid(),String.valueOf(ispeng),"gameActionPush");
+            }
         }else if(type==4){
             //吃  询问事件
             JSONObject ischi=obj;
             ischi.put(QZMJConstant.chivalue, jieguo[2]);
-            CommonConstant.sendMsgEventToSingle(room.getPlayerMap().get(thisask).getUuid(),String.valueOf(ischi),"gameActionPush");
+            if (room.isRobot() && room.getRobotList().contains(thisask)) {
+                int delayTime = RandomUtils.nextInt(3)+2;
+                robotEventDeal.changeRobotActionDetail(thisask,QZMJConstant.QZMJ_GAME_EVENT_ROBOT_GUO,delayTime);
+            }else {
+                CommonConstant.sendMsgEventToSingle(room.getPlayerMap().get(thisask).getUuid(),String.valueOf(ischi),"gameActionPush");
+            }
         }else if(type==2){
             //询问暗杠
             JSONObject ischi=obj;
             ischi.put(QZMJConstant.gangvalue, new int[]{(Integer) jieguo[2],(Integer) jieguo[2],(Integer) jieguo[2],(Integer) jieguo[2]});
-            CommonConstant.sendMsgEventToSingle(room.getPlayerMap().get(thisask).getUuid(),String.valueOf(ischi),"gameActionPush");
+            if (room.isRobot() && room.getRobotList().contains(thisask)) {
+                int delayTime = RandomUtils.nextInt(3)+2;
+                robotEventDeal.changeRobotActionDetail(thisask,QZMJConstant.QZMJ_GAME_EVENT_ROBOT_GUO,delayTime);
+            }else {
+                CommonConstant.sendMsgEventToSingle(room.getPlayerMap().get(thisask).getUuid(),String.valueOf(ischi),"gameActionPush");
+            }
         }else if(type==9){
             //询问抓杠
             JSONObject ischi=obj;
@@ -3459,7 +3514,12 @@ public class QZMJGameEventDeal {
             //获取抓杠位置
             int zgindex = room.getUserPacketMap().get(thisask).buGangIndex((Integer)jieguo[2]);
             ischi.put(QZMJConstant.zgindex, zgindex);
-            CommonConstant.sendMsgEventToSingle(room.getPlayerMap().get(thisask).getUuid(),String.valueOf(ischi),"gameActionPush");
+            if (room.isRobot() && room.getRobotList().contains(thisask)) {
+                int delayTime = RandomUtils.nextInt(3)+2;
+                robotEventDeal.changeRobotActionDetail(thisask,QZMJConstant.QZMJ_GAME_EVENT_ROBOT_GUO,delayTime);
+            }else {
+                CommonConstant.sendMsgEventToSingle(room.getPlayerMap().get(thisask).getUuid(),String.valueOf(ischi),"gameActionPush");
+            }
         }else if(type==10){
             //触发多事件询问
             JSONObject result=obj;
@@ -3479,7 +3539,12 @@ public class QZMJGameEventDeal {
                 types[i] = data.getInt("type");
             }
             result.put(QZMJConstant.type, types);
-            CommonConstant.sendMsgEventToSingle(room.getPlayerMap().get(thisask).getUuid(),String.valueOf(result),"gameActionPush");
+            if (room.isRobot() && room.getRobotList().contains(thisask)) {
+                int delayTime = RandomUtils.nextInt(3)+2;
+                robotEventDeal.changeRobotActionDetail(thisask,QZMJConstant.QZMJ_GAME_EVENT_ROBOT_GUO,delayTime);
+            }else {
+                CommonConstant.sendMsgEventToSingle(room.getPlayerMap().get(thisask).getUuid(),String.valueOf(result),"gameActionPush");
+            }
         }else if(type==1){
             // 出牌或下家抓牌
             if(thisask!=null&&jieguo[2]!=null){
@@ -3683,6 +3748,10 @@ public class QZMJGameEventDeal {
                             data.put("difen", 5);
                         }
                         array.add(data);
+                        if (room.isRobot() && room.getRobotList().contains(account)) {
+                            int delayTime = RandomUtils.nextInt(3)+2;
+                            robotEventDeal.changeRobotActionDetail(account,QZMJConstant.QZMJ_GAME_EVENT_READY,delayTime);
+                        }
                     }
                 }
                 // 返回数据
