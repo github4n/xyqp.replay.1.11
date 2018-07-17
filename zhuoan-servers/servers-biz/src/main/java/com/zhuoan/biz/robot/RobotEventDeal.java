@@ -453,4 +453,19 @@ public class RobotEventDeal {
         }
         return false;
     }
+
+    /**
+     * 添加机器人
+     * @param account
+     * @param roomNo
+     * @param gameId
+     */
+    public void addRobotInfo(String account, String roomNo, int gameId) {
+        // 设置机器人信息
+        RobotInfo robotInfo = new RobotInfo();
+        robotInfo.setRobotAccount(account);
+        robotInfo.setPlayRoomNo(roomNo);
+        robotInfo.setPlayGameId(gameId);
+        robots.put(account,robotInfo);
+    }
 }

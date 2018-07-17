@@ -92,6 +92,10 @@ public class Playerinfo implements Serializable{
      * 冻结资金id
      */
     private long assetsId;
+    /**
+     * 比赛场排名
+     */
+    private int myRank;
 
     public int getRoomCardNum() {
         return roomCardNum;
@@ -226,6 +230,14 @@ public class Playerinfo implements Serializable{
 
     public void setAssetsId(long assetsId) {
         this.assetsId = assetsId;
+    }
+
+    public int getMyRank() {
+        return myRank;
+    }
+
+    public void setMyRank(int myRank) {
+        this.myRank = myRank;
     }
 
     /**

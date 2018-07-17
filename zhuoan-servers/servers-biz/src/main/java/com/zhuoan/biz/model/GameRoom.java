@@ -191,6 +191,14 @@ public class GameRoom {
      * 是否是资金盘
      */
     private boolean isFund = false;
+    /**
+     * 比赛场编号
+     */
+    private String matchNum;
+    /**
+     * 比赛场总人数
+     */
+    private int totalNum;
 
     public int getLastIndex() {
         return lastIndex;
@@ -534,6 +542,22 @@ public class GameRoom {
 
     public void setFund(boolean fund) {
         isFund = fund;
+    }
+
+    public String getMatchNum() {
+        return matchNum;
+    }
+
+    public void setMatchNum(String matchNum) {
+        this.matchNum = matchNum;
+    }
+
+    public int getTotalNum() {
+        return totalNum;
+    }
+
+    public void setTotalNum(int totalNum) {
+        this.totalNum = totalNum;
     }
 
     /**

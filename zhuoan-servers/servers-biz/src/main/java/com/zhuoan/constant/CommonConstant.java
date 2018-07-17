@@ -132,6 +132,10 @@ public class CommonConstant {
      */
     public static final int GAME_BASE = 0;
     /**
+     * 比赛场
+     */
+    public static final int GAME_MATCH = 100;
+    /**
      * 游戏id-牛牛
      */
     public static final int GAME_ID_NN = 1;
@@ -191,6 +195,10 @@ public class CommonConstant {
      * 房间类型-竞技场
      */
     public static final int ROOM_TYPE_COMPETITIVE = 4;
+    /**
+     * 房间类型-比赛场
+     */
+    public static final int ROOM_TYPE_MATCH = 5;
 
     /**
      * 全局-是

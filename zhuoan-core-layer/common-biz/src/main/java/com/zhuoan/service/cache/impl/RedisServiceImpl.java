@@ -161,6 +161,7 @@ public class RedisServiceImpl implements RedisService {
      * @param item 项 不能为null
      * @return 值
      */
+    @Override
     public Object hget(String key, String item) {
         return redisTemplate.opsForHash().get(key, item);
     }
@@ -171,6 +172,7 @@ public class RedisServiceImpl implements RedisService {
      * @param key 键
      * @return 对应的多个键值
      */
+    @Override
     public Map<Object, Object> hmget(String key) {
         return redisTemplate.opsForHash().entries(key);
     }
@@ -221,12 +223,13 @@ public class RedisServiceImpl implements RedisService {
      * @param value 值
      * @return true 成功 false失败
      */
+    @Override
     public boolean hset(String key, String item, Object value) {
         try {
             redisTemplate.opsForHash().put(key, item, value);
             return true;
         } catch (Exception e) {
-            logger.error("",e);
+            logger.error("向Redis中添加数据发生异常key=[" + key + "]", e);
             return false;
         }
     }
@@ -259,6 +262,7 @@ public class RedisServiceImpl implements RedisService {
      * @param key  键 不能为null
      * @param item 项 可以使多个 不能为null
      */
+    @Override
     public void hdel(String key, Object... item) {
         redisTemplate.opsForHash().delete(key, item);
     }
@@ -322,6 +326,7 @@ public class RedisServiceImpl implements RedisService {
      * @param value 值
      * @return true 存在 false不存在
      */
+    @Override
     public boolean sHasKey(String key, Object value) {
         try {
             return redisTemplate.opsForSet().isMember(key, value);
@@ -338,6 +343,7 @@ public class RedisServiceImpl implements RedisService {
      * @param values 值 可以是多个
      * @return 成功个数
      */
+    @Override
     public long sSet(String key, Object... values) {
         try {
             return redisTemplate.opsForSet().add(key, values);
@@ -390,6 +396,7 @@ public class RedisServiceImpl implements RedisService {
      * @param values 值 可以是多个
      * @return 移除的个数
      */
+    @Override
     public long setRemove(String key, Object... values) {
         try {
             Long count = redisTemplate.opsForSet().remove(key, values);
@@ -428,7 +435,7 @@ public class RedisServiceImpl implements RedisService {
         try {
             return redisTemplate.opsForList().size(key);
         } catch (Exception e) {
-            logger.error("",e);
+            logger.error("从Redis中获取指定key数据key=[" + key + "]" ,e);
             return 0;
         }
     }
@@ -482,7 +489,7 @@ public class RedisServiceImpl implements RedisService {
             }
             return true;
         } catch (Exception e) {
-            logger.error("",e);
+            logger.error("向Redis中添加数据发生异常key=[" + key + "]" ,e);
             return false;
         }
     }

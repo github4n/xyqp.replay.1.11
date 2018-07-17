@@ -320,7 +320,7 @@ public class TimeUtil {
 		calendar.add(Calendar.YEAR, addCount);
 		return ymdhms.format(calendar.getTime());
 	}
-	
+
 	/**
 	 * 在指定日期基础上加n个月
 	 * @param Time
@@ -333,7 +333,7 @@ public class TimeUtil {
 		calendar.add(Calendar.MONTH, addCount);
 		return ymdhms.format(calendar.getTime());
 	}
-	
+
 	/**
 	 * 在指定日期基础上加任意天数
 	 * @param Time
@@ -343,11 +343,11 @@ public class TimeUtil {
 	 */
 	public static String addDaysBaseOnNowTime(String Time,int addCount,String format){
 		calendar.setTime(Timestamp.valueOf(Time));
-		calendar.set(Calendar.DATE, calendar.get(Calendar.DATE) + addCount); 
+		calendar.set(Calendar.DATE, calendar.get(Calendar.DATE) + addCount);
 		SimpleDateFormat sdf=new SimpleDateFormat(format);
 		return sdf.format(calendar.getTime());
 	}
-	
+
 	/**
 	 * 在指定日期基础上加任意小时数
 	 * @param Time

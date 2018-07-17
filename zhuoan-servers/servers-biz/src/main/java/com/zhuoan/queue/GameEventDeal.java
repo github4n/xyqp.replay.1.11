@@ -5,6 +5,7 @@ import com.zhuoan.biz.event.BaseEventDeal;
 import com.zhuoan.biz.event.bdx.BDXGameEventDealNew;
 import com.zhuoan.biz.event.ddz.DdzGameEventDeal;
 import com.zhuoan.biz.event.gppj.GPPJGameEventDeal;
+import com.zhuoan.biz.event.match.MatchEventDeal;
 import com.zhuoan.biz.event.nn.NNGameEventDealNew;
 import com.zhuoan.biz.event.qzmj.QZMJGameEventDeal;
 import com.zhuoan.biz.event.sss.SSSGameEventDealNew;
@@ -63,6 +64,9 @@ public class GameEventDeal {
 
     @Resource
     private DdzGameEventDeal ddzGameEventDeal;
+
+    @Resource
+    private MatchEventDeal matchEventDeal;
 
     @Resource
     private SocketIoManagerService socketIoManagerService;
@@ -409,6 +413,28 @@ public class GameEventDeal {
                         break;
                     case DdzConstant.DDZ_GAME_EVENT_AUTO_PLAY:
                         ddzGameEventDeal.gameAutoPlay(client,data);
+                        break;
+                    default:
+                        break;
+                }
+                break;
+            case CommonConstant.GAME_MATCH:
+                // 比赛场
+                switch (sorts) {
+                    case MatchConstant.MATCH_EVENT_GET_MATCH_SETTING:
+                        matchEventDeal.obtainMatchInfo(client,data);
+                        break;
+                    case MatchConstant.MATCH_EVENT_SIGN_UP:
+                        matchEventDeal.matchSignUp(client,data);
+                        break;
+                    case MatchConstant.MATCH_EVENT_UPDATE_MATCH_COUNT:
+                        matchEventDeal.updateMatchCount(client,data);
+                        break;
+                    case MatchConstant.MATCH_EVENT_CANCEL_SIGN:
+                        matchEventDeal.matchCancelSign(client,data);
+                        break;
+                    case MatchConstant.MATCH_EVENT_GET_WINNING_RECORD:
+                        matchEventDeal.getWinningRecord(client,data);
                         break;
                     default:
                         break;

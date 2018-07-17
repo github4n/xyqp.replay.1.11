@@ -314,8 +314,15 @@ public class BaseEventDeal {
         // 设置房间属性
         gameRoom.setRoomType(baseInfo.getInt("roomType"));
         gameRoom.setGid(postData.getInt("gid"));
-        gameRoom.setPort(postData.getInt("port"));
-        gameRoom.setIp(postData.getString("ip"));
+        if (postData.containsKey("port")) {
+            gameRoom.setPort(postData.getInt("port"));
+        }
+        if (postData.containsKey("ip")) {
+            gameRoom.setIp(postData.getString("ip"));
+        }
+        if (postData.containsKey("match_num")&&gameRoom.getRoomType()==CommonConstant.ROOM_TYPE_MATCH) {
+            gameRoom.setMatchNum(postData.getString("match_num"));
+        }
         gameRoom.setRoomNo(roomNo);
         gameRoom.setRoomInfo(baseInfo);
         gameRoom.setCreateTime(String.valueOf(new Date()));
@@ -495,7 +502,7 @@ public class BaseEventDeal {
             // 组织数据，插入数据库
             addGameRoom(gameRoom,playerinfo);
             // 开启机器人
-            if (gameRoom.isRobot()) {
+            if (gameRoom.isRobot() && gameRoom.getRoomType()!=CommonConstant.ROOM_TYPE_MATCH) {
                 robotEventDeal.robotJoin(roomNo);
             }
             // 是否是资金盘
@@ -802,6 +809,10 @@ public class BaseEventDeal {
         if (myIndex<gameRoom.getUserIdList().size()) {
             gameRoom.getUserIdList().set(myIndex, userInfo.getLong("id"));
         }
+        if (gameRoom.getRoomType()==CommonConstant.ROOM_TYPE_MATCH&&userInfo.containsKey("openid")&&"0".equals(userInfo.getString("openid"))) {
+            gameRoom.getRobotList().add(userInfo.getString("account"));
+            robotEventDeal.addRobotInfo(userInfo.getString("account"),roomNo,gameRoom.getGid());
+        }
         RoomManage.gameRoomMap.put(roomNo, gameRoom);
         // 获取用户信息
         JSONObject obtainPlayerInfoData = new JSONObject();
@@ -815,6 +826,9 @@ public class BaseEventDeal {
         obtainPlayerInfoData.put("room_type", gameRoom.getRoomType());
         if (postData.containsKey("location")) {
             obtainPlayerInfoData.put("location", postData.getString("location"));
+        }
+        if (postData.containsKey("my_rank")) {
+            obtainPlayerInfoData.put("my_rank", postData.getInt("my_rank"));
         }
         Playerinfo playerinfo = obtainPlayerInfo(obtainPlayerInfoData);
         // 麻将一刻设置底分
@@ -834,7 +848,7 @@ public class BaseEventDeal {
             joinData.put("isReconnect", CommonConstant.GLOBAL_YES);
         } else {
             // 更新数据库
-            if (myIndex<10) {
+            if (myIndex<10 && gameRoom.getRoomType()!=CommonConstant.ROOM_TYPE_MATCH) {
                 JSONObject roomInfo = new JSONObject();
                 roomInfo.put("room_no", gameRoom.getRoomNo());
                 roomInfo.put("user_id" + myIndex, playerinfo.getId());
@@ -978,6 +992,9 @@ public class BaseEventDeal {
         // 保存用户坐标
         if (data.containsKey("location")) {
             playerinfo.setLocation(data.getString("location"));
+        }
+        if (data.containsKey("my_rank")) {
+            playerinfo.setMyRank(data.getInt("my_rank"));
         }
         // 设置幸运值
         if (userInfo.containsKey("luck")) {

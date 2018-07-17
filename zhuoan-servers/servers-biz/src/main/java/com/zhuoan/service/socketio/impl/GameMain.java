@@ -8,6 +8,7 @@ import com.zhuoan.biz.event.BaseGameEvent;
 import com.zhuoan.biz.event.bdx.BDXGameEvent;
 import com.zhuoan.biz.event.ddz.DdzGameEvent;
 import com.zhuoan.biz.event.gppj.GPPJGameEvent;
+import com.zhuoan.biz.event.match.MatchEvent;
 import com.zhuoan.biz.event.nn.NNGameEvent;
 import com.zhuoan.biz.event.qzmj.QZMJGameEvent;
 import com.zhuoan.biz.event.sss.SSSGameEvent;
@@ -104,6 +105,9 @@ public class GameMain implements SocketIoManagerService {
 
     @Resource
     private DdzGameEvent ddzGameEvent;
+
+    @Resource
+    private MatchEvent matchEvent;
 
     @Resource
     private RobotEventDeal robotEventDeal;
@@ -330,6 +334,9 @@ public class GameMain implements SocketIoManagerService {
 
         /* 斗地主 */
         ddzGameEvent.listenerDDZGameEvent(server);
+
+        /* 比赛场 */
+        matchEvent.listenerMatchGameEvent(server);
 
     }
 }

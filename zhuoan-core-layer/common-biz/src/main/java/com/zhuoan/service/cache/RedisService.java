@@ -1,5 +1,7 @@
 package com.zhuoan.service.cache;
 
+import java.util.Map;
+
 /**
  * RedisService  todo  String Map Set List 封装可以参考实现类
  *
@@ -42,5 +44,67 @@ public interface RedisService {
 
 
     long incr(String key, long delta);
+
+    /**
+     * 向一张hash表中放入数据,如果不存在将创建
+     *
+     * @param key   键
+     * @param item  项
+     * @param value 值
+     * @return true 成功 false失败
+     */
+    boolean hset(String key, String item, Object value);
+
+    /**
+     * 获取hashKey对应的所有键值
+     *
+     * @param key 键
+     * @return 对应的多个键值
+     */
+    Map<Object, Object> hmget(String key);
+
+    /**
+     * HashGet
+     *
+     * @param key  键 不能为null
+     * @param item 项 不能为null
+     * @return 值
+     */
+    Object hget(String key, String item);
+
+    /**
+     * 删除hash表中的值
+     *
+     * @param key  键 不能为null
+     * @param item 项 可以使多个 不能为null
+     */
+    void hdel(String key, Object... item);
+
+    /**
+     * 根据value从一个set中查询,是否存在
+     *
+     * @param key   键
+     * @param value 值
+     * @return true 存在 false不存在
+     */
+    boolean sHasKey(String key, Object value);
+
+    /**
+     * 将数据放入set缓存
+     *
+     * @param key    键
+     * @param values 值 可以是多个
+     * @return 成功个数
+     */
+    long sSet(String key, Object... values);
+
+    /**
+     * 移除值为value的
+     *
+     * @param key    键
+     * @param values 值 可以是多个
+     * @return 移除的个数
+     */
+    long setRemove(String key, Object... values);
 
 }
