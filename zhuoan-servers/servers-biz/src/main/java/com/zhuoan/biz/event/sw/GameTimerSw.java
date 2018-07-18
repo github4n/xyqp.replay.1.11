@@ -76,10 +76,12 @@ public class GameTimerSw {
                 room.setTimeLeft(i);
                 // 游戏已经开始
                 if (room.getGameStatus() == SwConstant.SW_GAME_STATUS_BET) {
+                    room.setTimeLeft(0);
                     break;
                 }
                 // 庄家不在或者换人
                 if (Dto.stringIsNULL(room.getBanker()) || !account.equals(room.getBanker())) {
+                    room.setTimeLeft(0);
                     break;
                 }
                 // 倒计时到了之后执行事件

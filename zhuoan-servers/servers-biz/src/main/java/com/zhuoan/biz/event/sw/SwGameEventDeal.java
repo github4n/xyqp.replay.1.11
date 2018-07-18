@@ -62,7 +62,7 @@ public class SwGameEventDeal {
         JSONObject postData = JSONObject.fromObject(data);
         String account = postData.getString(CommonConstant.DATA_KEY_ACCOUNT);
         String roomNo = postData.getString(CommonConstant.DATA_KEY_ROOM_NO);
-        if (RoomManage.gameRoomMap.containsKey(roomNo) && RoomManage.gameRoomMap.get(roomNo)!=null) {
+        if (!postData.containsKey("is_join") && RoomManage.gameRoomMap.containsKey(roomNo) && RoomManage.gameRoomMap.get(roomNo)!=null) {
             RoomManage.gameRoomMap.get(roomNo).setTimeLeft(SwConstant.SW_TIME_START);
         }
         JSONObject roomData = obtainRoomData(roomNo, account);
@@ -979,6 +979,7 @@ public class SwGameEventDeal {
         room.getBetArray().clear();
         room.getSummaryArray().clear();
         room.setGameStatus(SwConstant.SW_GAME_STATUS_CHOICE_BANKER);
+        room.setTimeLeft(0);
         changeGameStatus(roomNo);
     }
 

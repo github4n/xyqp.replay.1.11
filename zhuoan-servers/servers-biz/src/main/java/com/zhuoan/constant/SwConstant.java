@@ -190,7 +190,7 @@ public class SwConstant {
     /**
      * 展示押宝倒计时
      */
-    public static final int SW_TIME_START = 5;
+    public static final int SW_TIME_START = 90;
     /**
      * 结算动画倒计时
      */
