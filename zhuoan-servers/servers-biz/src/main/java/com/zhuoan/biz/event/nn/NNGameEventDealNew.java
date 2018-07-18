@@ -1640,6 +1640,22 @@ public class NNGameEventDealNew {
                 }
             }
         }
+        if (!Dto.stringIsNULL(winUUID) && room.getUserPacketMap().containsKey(winUUID) && room.getUserPacketMap().get(winUUID)!=null) {
+            int winType = room.getUserPacketMap().get(winUUID).getType();
+            if (room.getRatio().containsKey(winType) && room.getRatio().get(winType)!=null) {
+                // 赢家赔率
+                int winRatio = room.getRatio().get(winType);
+                if (winRatio > 1) {
+                    for (String account : room.getUserPacketMap().keySet()) {
+                        // 需要额外增加的分数
+                        double extraScore = room.getUserPacketMap().get(account).getScore() * (winRatio-1);
+                        // 更改玩家分数
+                        room.getUserPacketMap().get(account).setScore(Dto.add(room.getUserPacketMap().get(account).getScore(), extraScore));
+                        room.getPlayerMap().get(account).setScore(Dto.add(room.getPlayerMap().get(account).getScore(), extraScore));
+                    }
+                }
+            }
+        }
         return winUUID;
     }
 }

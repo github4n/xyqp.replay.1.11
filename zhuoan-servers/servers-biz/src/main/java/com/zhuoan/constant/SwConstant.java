@@ -188,6 +188,10 @@ public class SwConstant {
      */
     public static final int SW_TIME_SHOW = 10;
     /**
+     * 展示押宝倒计时
+     */
+    public static final int SW_TIME_START = 5;
+    /**
      * 结算动画倒计时
      */
     public static final int SW_TIME_SUMMARY_ANIMATION = 4;
@@ -195,6 +199,10 @@ public class SwConstant {
      * 玩家列表每页条数
      */
     public static final int SW_USER_SIZE_PER_PAGE = 30;
+    /**
+     * 连续未下注次数站起
+     */
+    public static final int UN_BET_TIME = 3;
 
     public static final String SW_DATA_KEY_TREASURE = "treasure";
     public static final String SW_DATA_KEY_PLACE = "place";

@@ -111,6 +111,7 @@ public class QZMJGameEventDeal {
             obj.put("ghName", player.getGhName());
             obj.put("introduction", player.getSignature());
             obj.put("userStatus", room.getUserPacketMap().get(account).getStatus());
+            obj.put("isTrustee", room.getUserPacketMap().get(account).getIsTrustee());
             // 通知玩家
             CommonConstant.sendMsgEventToAll(room.getAllUUIDList(account), obj.toString(), "playerEnterPush");
         }
@@ -418,6 +419,38 @@ public class QZMJGameEventDeal {
         //玩家抓牌
         JSONArray mjieguo = moPai(roomNo, account);
         detailDataByZhuaPai(mjieguo, room, null);
+    }
+
+    /**
+     * 托管
+     * @param client
+     * @param data
+     */
+    public void gameTrustee(SocketIOClient client,Object data) {
+        JSONObject postData = JSONObject.fromObject(data);
+        // 不满足准备条件直接忽略
+        if (!CommonConstant.checkEvent(postData, QZMJConstant.QZ_GAME_STATUS_ING, client)) {
+            return;
+        }
+        // 房间号
+        String roomNo = postData.getString(CommonConstant.DATA_KEY_ROOM_NO);
+        QZMJGameRoom room = (QZMJGameRoom) RoomManage.gameRoomMap.get(roomNo);
+        // 玩家账号
+        String account = postData.getString(CommonConstant.DATA_KEY_ACCOUNT);
+        if (!postData.containsKey("type")) {
+            return;
+        }
+        // 改变玩家托管状态
+        int trustee = postData.getInt("type");
+        room.getUserPacketMap().get(account).setIsTrustee(trustee);
+        JSONObject result = new JSONObject();
+        result.put("index",room.getPlayerMap().get(account).getMyIndex());
+        result.put("type",trustee);
+        CommonConstant.sendMsgEventToAll(room.getAllUUIDList(),String.valueOf(result),"gameTrusteePush");
+        // 自己出牌托管需要出牌
+        if (trustee==CommonConstant.GLOBAL_YES&&room.getPlayerMap().get(account).getMyIndex()==room.getFocusIndex()) {
+
+        }
     }
 
     /**
@@ -772,6 +805,7 @@ public class QZMJGameEventDeal {
                 user.put("location",game.getPlayerMap().get(cliTag).getLocation());
                 user.put("score",game.getPlayerMap().get(cliTag).getScore());
                 user.put("status",game.getPlayerMap().get(cliTag).getStatus());
+                user.put("isTrustee", game.getUserPacketMap().get(cliTag).getIsTrustee());
 
                 int yjtype = game.getUserPacketMap().get(cliTag).getYouJinIng();
                 // 光游时直接返回游金类型
@@ -973,15 +1007,22 @@ public class QZMJGameEventDeal {
             result.put(CommonConstant.RESULT_KEY_CODE, CommonConstant.GLOBAL_YES);
             result.put("gameStatus",room.getGameStatus());
             result.put("users",room.getAllPlayer());
+            result.put("showTimer",CommonConstant.GLOBAL_NO);
         }else if (room.getGameStatus()==QZMJConstant.QZ_GAME_STATUS_ING) {
             result = obtainIngReconnectData(roomNo,account);
             result.put(CommonConstant.RESULT_KEY_CODE, CommonConstant.GLOBAL_YES);
             result.put("gameStatus",room.getGameStatus());
+            result.put("showTimer",CommonConstant.GLOBAL_NO);
+            if (room.getTimeLeft()>0) {
+                result.put("showTimer",CommonConstant.GLOBAL_YES);
+                result.put("time",room.getTimeLeft());
+            }
         }else if (room.getGameStatus()==QZMJConstant.QZ_GAME_STATUS_SUMMARY||room.getGameStatus()==QZMJConstant.QZ_GAME_STATUS_FINAL_SUMMARY) {
             result = obtainSummaryObject(roomNo);
             result.put("gameStatus",room.getGameStatus());
             result.put("users",room.getAllPlayer());
             result.put(CommonConstant.RESULT_KEY_CODE, CommonConstant.GLOBAL_YES);
+            result.put("showTimer",CommonConstant.GLOBAL_NO);
         }
         if (room.getJieSanTime() > 0 && room.getGameStatus()!=QZMJConstant.QZ_GAME_STATUS_FINAL_SUMMARY) {
             result.put("jiesan", CommonConstant.GLOBAL_YES);
@@ -1581,7 +1622,11 @@ public class QZMJGameEventDeal {
         obj.put("roominfo",String.valueOf(roomInfo));
         JSONArray timeArray = new JSONArray();
         timeArray.add(0);
-        timeArray.add(20);
+        if (room.getSetting().containsKey("gameEventTime")) {
+            timeArray.add(room.getSetting().getInt("gameEventTime"));
+        } else {
+            timeArray.add(20);
+        }
         obj.put("timeArray",timeArray);
         return obj;
     }
@@ -3313,17 +3358,14 @@ public class QZMJGameEventDeal {
                         back.put("lastValue", buhuaData.get("lastValue"));
                     }
                     if(anvalue!=null&&anvalue.length>0){
-                        if (room.isRobot() && room.getRobotList().contains(next)) {
-                            int delayTime = RandomUtils.nextInt(3)+2;
-                            robotEventDeal.changeRobotActionDetail(next,QZMJConstant.QZMJ_GAME_EVENT_ROBOT_GUO,delayTime);
-                        }else {
-                            CommonConstant.sendMsgEventToSingle(client,String.valueOf(back),"gameActionPush");
-                        }
+                        sendGameEventResult(room, next, back, 1);
                     }else{
                         CommonConstant.sendMsgEventToSingle(client,String.valueOf(back),"gameChupaiPush");
                         if (room.isRobot() && room.getRobotList().contains(next) && !hasHua) {
                             int delayTime = RandomUtils.nextInt(3)+2;
                             robotEventDeal.changeRobotActionDetail(next,QZMJConstant.QZMJ_GAME_EVENT_CP,delayTime);
+                        }else if (!hasHua) {
+                            beginGameEventTimer(room.getRoomNo(), next, 0, QZMJConstant.QZ_MJ_TIMER_TYPE_CP);
                         }
                     }
 
@@ -3416,12 +3458,7 @@ public class QZMJGameEventDeal {
                 }
                 result.put(QZMJConstant.type, types);
             }
-            if (room.isRobot() && room.getRobotList().contains(thisask)) {
-                int delayTime = RandomUtils.nextInt(3)+2;
-                robotEventDeal.changeRobotActionDetail(thisask,QZMJConstant.QZMJ_GAME_EVENT_ROBOT_GUO,delayTime);
-            }else {
-                CommonConstant.sendMsgEventToSingle(room.getPlayerMap().get(thisask).getUuid(),String.valueOf(result),"gameActionPush");
-            }
+            sendGameEventResult(room, thisask, result, 1);
         }
         return true;
     }
@@ -3461,52 +3498,26 @@ public class QZMJGameEventDeal {
             //胡 询问事件
             JSONObject ishu=obj;
             ishu.put(QZMJConstant.huvalue, jieguo[2]);
-            if (room.isRobot() && room.getRobotList().contains(thisask)) {
-                int delayTime = RandomUtils.nextInt(3)+2;
-                robotEventDeal.changeRobotActionDetail(thisask,QZMJConstant.QZMJ_GAME_EVENT_ROBOT_GUO,delayTime);
-            }else {
-                CommonConstant.sendMsgEventToSingle(room.getPlayerMap().get(thisask).getUuid(),String.valueOf(ishu),"gameActionPush");
-            }
+            sendGameEventResult(room, thisask, ishu, type);
         }else if(type==6){
             //杠  询问事件
             JSONObject isgang=obj;
             isgang.put(QZMJConstant.gangvalue,  new Object[]{jieguo[2],jieguo[2],jieguo[2],jieguo[2]});
-            if (room.isRobot() && room.getRobotList().contains(thisask)) {
-                int delayTime = RandomUtils.nextInt(3)+2;
-                robotEventDeal.changeRobotActionDetail(thisask,QZMJConstant.QZMJ_GAME_EVENT_ROBOT_GUO,delayTime);
-            }else {
-                CommonConstant.sendMsgEventToSingle(room.getPlayerMap().get(thisask).getUuid(),String.valueOf(isgang),"gameActionPush");
-            }
+            sendGameEventResult(room, thisask, isgang, 1);
         }else if(type==5){
             //碰  询问事件
             JSONObject ispeng=obj;
             ispeng.put(QZMJConstant.pengvalue, new Object[]{jieguo[2],jieguo[2],jieguo[2]});
-            if (room.isRobot() && room.getRobotList().contains(thisask)) {
-                int delayTime = RandomUtils.nextInt(3)+2;
-                robotEventDeal.changeRobotActionDetail(thisask,QZMJConstant.QZMJ_GAME_EVENT_ROBOT_GUO,delayTime);
-            }else {
-                CommonConstant.sendMsgEventToSingle(room.getPlayerMap().get(thisask).getUuid(),String.valueOf(ispeng),"gameActionPush");
-            }
+            sendGameEventResult(room, thisask, ispeng, 1);
         }else if(type==4){
             //吃  询问事件
             JSONObject ischi=obj;
             ischi.put(QZMJConstant.chivalue, jieguo[2]);
-            if (room.isRobot() && room.getRobotList().contains(thisask)) {
-                int delayTime = RandomUtils.nextInt(3)+2;
-                robotEventDeal.changeRobotActionDetail(thisask,QZMJConstant.QZMJ_GAME_EVENT_ROBOT_GUO,delayTime);
-            }else {
-                CommonConstant.sendMsgEventToSingle(room.getPlayerMap().get(thisask).getUuid(),String.valueOf(ischi),"gameActionPush");
-            }
+            sendGameEventResult(room, thisask, ischi, 1);
         }else if(type==2){
             //询问暗杠
             JSONObject ischi=obj;
-            ischi.put(QZMJConstant.gangvalue, new int[]{(Integer) jieguo[2],(Integer) jieguo[2],(Integer) jieguo[2],(Integer) jieguo[2]});
-            if (room.isRobot() && room.getRobotList().contains(thisask)) {
-                int delayTime = RandomUtils.nextInt(3)+2;
-                robotEventDeal.changeRobotActionDetail(thisask,QZMJConstant.QZMJ_GAME_EVENT_ROBOT_GUO,delayTime);
-            }else {
-                CommonConstant.sendMsgEventToSingle(room.getPlayerMap().get(thisask).getUuid(),String.valueOf(ischi),"gameActionPush");
-            }
+            sendGameEventResult(room, thisask, ischi, 1);
         }else if(type==9){
             //询问抓杠
             JSONObject ischi=obj;
@@ -3514,12 +3525,7 @@ public class QZMJGameEventDeal {
             //获取抓杠位置
             int zgindex = room.getUserPacketMap().get(thisask).buGangIndex((Integer)jieguo[2]);
             ischi.put(QZMJConstant.zgindex, zgindex);
-            if (room.isRobot() && room.getRobotList().contains(thisask)) {
-                int delayTime = RandomUtils.nextInt(3)+2;
-                robotEventDeal.changeRobotActionDetail(thisask,QZMJConstant.QZMJ_GAME_EVENT_ROBOT_GUO,delayTime);
-            }else {
-                CommonConstant.sendMsgEventToSingle(room.getPlayerMap().get(thisask).getUuid(),String.valueOf(ischi),"gameActionPush");
-            }
+            sendGameEventResult(room, thisask, ischi, 1);
         }else if(type==10){
             //触发多事件询问
             JSONObject result=obj;
@@ -3539,12 +3545,7 @@ public class QZMJGameEventDeal {
                 types[i] = data.getInt("type");
             }
             result.put(QZMJConstant.type, types);
-            if (room.isRobot() && room.getRobotList().contains(thisask)) {
-                int delayTime = RandomUtils.nextInt(3)+2;
-                robotEventDeal.changeRobotActionDetail(thisask,QZMJConstant.QZMJ_GAME_EVENT_ROBOT_GUO,delayTime);
-            }else {
-                CommonConstant.sendMsgEventToSingle(room.getPlayerMap().get(thisask).getUuid(),String.valueOf(result),"gameActionPush");
-            }
+            sendGameEventResult(room, thisask, result, 1);
         }else if(type==1){
             // 出牌或下家抓牌
             if(thisask!=null&&jieguo[2]!=null){
@@ -3564,11 +3565,24 @@ public class QZMJGameEventDeal {
                 // 出牌提示
                 JSONArray tingTip = MaJiangCore.tingPaiTip(room.getUserPacketMap().get(thisask).getMyPai(), room.getJin(), shengyuList);
                 chupai.put("tingTip",tingTip);
+                beginGameEventTimer(roomNo,thisask,0,QZMJConstant.QZ_MJ_TIMER_TYPE_CP);
                 CommonConstant.sendMsgEventToSingle(room.getPlayerMap().get(thisask).getUuid(),String.valueOf(chupai),"gameActionPush");
             }else{
                 //下家抓牌事件，并通知所有人
                 JSONArray mjieguo=moPai(roomNo, room.getThisAccount());
                 detailDataByZhuaPai(mjieguo, room, null);
+            }
+        }
+    }
+
+    private void sendGameEventResult(QZMJGameRoom room, String thisAsk, JSONObject result, int type) {
+        if (room.isRobot() && room.getRobotList().contains(thisAsk)) {
+            int delayTime = RandomUtils.nextInt(3)+2;
+            robotEventDeal.changeRobotActionDetail(thisAsk, QZMJConstant.QZMJ_GAME_EVENT_ROBOT_GUO,delayTime);
+        }else {
+            beginGameEventTimer(room.getRoomNo(), thisAsk, type,QZMJConstant.QZ_MJ_TIMER_TYPE_EVENT);
+            if (room.getUserPacketMap().get(thisAsk).getIsTrustee() != CommonConstant.GLOBAL_YES) {
+                CommonConstant.sendMsgEventToSingle(room.getPlayerMap().get(thisAsk).getUuid(),String.valueOf(result),"gameActionPush");
             }
         }
     }
@@ -3602,6 +3616,7 @@ public class QZMJGameEventDeal {
                 objAnGang.put(QZMJConstant.lastType,-2);
                 objAnGang.put(QZMJConstant.lastGangvalue,new int[]{value[1],value[1],value[1],value[1]});
                 CommonConstant.sendMsgEventToAll(room.getAllUUIDList(),String.valueOf(objAnGang),"gameActReultPush");
+                beginGameEventTimer(room.getRoomNo(), clientId, 0, QZMJConstant.QZ_MJ_TIMER_TYPE_CP);
                 break;
             case -3:
                 // -3：自摸结果事件
@@ -3640,6 +3655,7 @@ public class QZMJGameEventDeal {
                     }
                     CommonConstant.sendMsgEventToSingle(room.getPlayerMap().get(uuid).getUuid(),String.valueOf(objchi),"gameActReultPush");
                 }
+                beginGameEventTimer(room.getRoomNo(), clientId, 0, QZMJConstant.QZ_MJ_TIMER_TYPE_CP);
                 break;
             case -5:
                 // -5：碰结果事件
@@ -3669,6 +3685,7 @@ public class QZMJGameEventDeal {
                         CommonConstant.sendMsgEventToSingle(room.getPlayerMap().get(uuid).getUuid(),String.valueOf(objpeng),"gameActReultPush");
                     }
                 }
+                beginGameEventTimer(room.getRoomNo(), clientId, 0, QZMJConstant.QZ_MJ_TIMER_TYPE_CP);
                 break;
             case -6:
                 // -6：明杠结果事件
@@ -3678,6 +3695,7 @@ public class QZMJGameEventDeal {
                 objMingGang.put(QZMJConstant.lastGangvalue,new int[]{value[1],value[1],value[1],value[1]});
                 objMingGang.put(QZMJConstant.lastValue,new int[]{lastpai});
                 CommonConstant.sendMsgEventToAll(room.getAllUUIDList(),String.valueOf(objMingGang),"gameActReultPush");
+                beginGameEventTimer(room.getRoomNo(), clientId, 0, QZMJConstant.QZ_MJ_TIMER_TYPE_CP);
                 break;
             case -7:
                 // -7：胡  结果事件
@@ -3697,6 +3715,7 @@ public class QZMJGameEventDeal {
                 int zgindex = room.getUserPacketMap().get(clientId).buGangIndex(value[1]);
                 objZhuangGang.put(QZMJConstant.lastzgindex,zgindex);
                 CommonConstant.sendMsgEventToAll(room.getAllUUIDList(),String.valueOf(objZhuangGang),"gameActReultPush");
+                beginGameEventTimer(room.getRoomNo(), clientId, 0, QZMJConstant.QZ_MJ_TIMER_TYPE_CP);
                 break;
             default:
                 break;
@@ -3727,7 +3746,7 @@ public class QZMJGameEventDeal {
                         data.put("isWinner", 0);
                         data.put("fan", 0);
                         data.put("fanDetail", userPacketQZMJ.getFanDetail(userPacketQZMJ.getMyPai(),room,account));
-                        data.put("score", player.getScore());
+                        data.put("score", userPacketQZMJ.getScore());
                         data.put("player", player.getName());
                         data.put("headimg", player.getRealHeadimg());
                         data.put("hua", userPacketQZMJ.getHuaList().size());
@@ -4032,6 +4051,34 @@ public class QZMJGameEventDeal {
             ((QZMJGameRoom)RoomManage.gameRoomMap.get(roomNo)).setNextAskType(thisAskType);
             //设置下一次询问的人
             ((QZMJGameRoom)RoomManage.gameRoomMap.get(roomNo)).setNextAskAccount(nextAsk);
+        }
+    }
+
+    /**
+     * 开始定时器
+     * @param roomNo
+     */
+    private void beginGameEventTimer(final String roomNo, final String nextPlayerAccount, final int type, final int timerType) {
+        QZMJGameRoom room = (QZMJGameRoom) RoomManage.gameRoomMap.get(roomNo);
+        if (room.getRoomType() == CommonConstant.ROOM_TYPE_YB) {
+            if (!room.getSetting().containsKey("gameEventTime")||room.getSetting().getInt("gameEventTime")>0) {
+                final int timeLeft;
+                if (room.getSetting().containsKey("gameEventTime")) {
+                    timeLeft = room.getSetting().getInt("gameEventTime");
+                } else {
+                    timeLeft = 20;
+                }
+                ThreadPoolHelper.executorService.submit(new Runnable() {
+                    @Override
+                    public void run() {
+                        if (timerType == QZMJConstant.QZ_MJ_TIMER_TYPE_EVENT) {
+                            gameTimerQZMJ.gameEventOverTime(roomNo,nextPlayerAccount,timeLeft,type);
+                        }else if (timerType == QZMJConstant.QZMJ_GAME_EVENT_CP) {
+                            gameTimerQZMJ.cpOverTime(roomNo,nextPlayerAccount,timeLeft);
+                        }
+                    }
+                });
+            }
         }
     }
 }

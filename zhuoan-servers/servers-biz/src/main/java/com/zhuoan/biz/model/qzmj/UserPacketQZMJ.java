@@ -84,6 +84,10 @@ public class UserPacketQZMJ {
 	 * 参与游戏局数
 	 */
 	private int playTimes;
+    /**
+     * 是否托管
+     */
+    private int isTrustee;
 
     public List<Integer> getMyPai() {
         return myPai;
@@ -237,6 +241,14 @@ public class UserPacketQZMJ {
         this.playTimes = playTimes;
     }
 
+    public int getIsTrustee() {
+        return isTrustee;
+    }
+
+    public void setIsTrustee(int isTrustee) {
+        this.isTrustee = isTrustee;
+    }
+
     public void initUserPacket(){
         this.playTimes ++;
         // 番数
@@ -250,6 +262,7 @@ public class UserPacketQZMJ {
         //不可出的牌，可用来杠
         this.historyPai = new ArrayList<DontMovePai>();
         this.myPai.clear();
+        this.isTrustee = 0;
 	}
 	
 	/**

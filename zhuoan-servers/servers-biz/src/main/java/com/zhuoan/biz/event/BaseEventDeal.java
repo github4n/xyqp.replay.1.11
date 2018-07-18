@@ -1258,6 +1258,9 @@ public class BaseEventDeal {
         }else{
             room.isCanOver = false;
         }
+        JSONObject setting = getGameInfoById(CommonConstant.GAME_ID_QZMJ);
+        // 设置房间信息
+        room.setSetting(setting);
         // 庄家
         room.setBanker(account);
         // 房主
@@ -1648,6 +1651,10 @@ public class BaseEventDeal {
                     obj.put("iszs", 0);
                     obj.put("player", gameRoom.getPlayerCount());
                     obj.put("renshu", gameRoom.getPlayerMap().size());
+                    if (gameRoom.getGid() == CommonConstant.GAME_ID_SW && gameRoom instanceof SwGameRoom) {
+                        double ratio = ((SwGameRoom)gameRoom).getRatio();
+                        obj.put("ratio", "1赔"+ratio);
+                    }
                     if (type==0||(type==1&&gameRoom.getPlayerMap().size()<gameRoom.getPlayerCount())) {
                         allRoom.add(obj);
                     }
@@ -1909,8 +1916,7 @@ public class BaseEventDeal {
             }else if (set.getString("xipaiObj").equals("3")) {
                 result.element("obj",sysSet.getString("yuanbaoname"));
             }
-            JSONObject userInfo = userBiz.getUserByAccount(account);
-            int size=userInfo.getInt("pumpVal");
+            int size=0;
             if (size<set.getInt("xipaiLayer")) {
                 String[] count=set.getString("xipaiCount").substring(1, set.getString("xipaiCount").length()-1).split("\\$");
                 if (count.length>size) {
@@ -2420,6 +2426,12 @@ public class BaseEventDeal {
                 ratio = 10;
             }else if (baseInfo.getInt("type")==SwConstant.SW_TYPE_TEN_POINT_FIVE) {
                 ratio = 10.5;
+            }else if (baseInfo.getInt("type")==SwConstant.SW_TYPE_TEN_ELEVEN) {
+                ratio = 11;
+            }else if (baseInfo.getInt("type")==SwConstant.SW_TYPE_TEN_ELEVEN_POINT_FIVE) {
+                ratio = 11.5;
+            }else if (baseInfo.getInt("type")==SwConstant.SW_TYPE_TEN_TWELVE) {
+                ratio = 12;
             }
             minScore = noBankerNum*3*baseInfo.getDouble("yuanbao")*ratio;
         }

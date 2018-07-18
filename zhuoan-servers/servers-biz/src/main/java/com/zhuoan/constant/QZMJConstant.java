@@ -403,11 +403,20 @@ public class QZMJConstant {
     public static final int QZMJ_GAME_EVENT_ROBOT_CHI = 11;
     public static final int QZMJ_GAME_EVENT_ROBOT_GUO = 12;
     public static final int QZMJ_GAME_EVENT_ROBOT_SUMMARY = 13;
+    /**
+     * 游戏事件-重连
+     */
+    public static final int QZMJ_GAME_EVENT_TRUSTEE = 14;
 
 
     public static final int QZMJ_RECONNECT_TYPE_READY = 888;
     public static final int QZMJ_RECONNECT_TYPE_FINAL_SUMMARY = 666;
 
+    /**
+     * 托管类别
+     */
+    public static final int QZ_MJ_TIMER_TYPE_EVENT = 1;
+    public static final int QZ_MJ_TIMER_TYPE_CP = 2;
 
 
 	/**

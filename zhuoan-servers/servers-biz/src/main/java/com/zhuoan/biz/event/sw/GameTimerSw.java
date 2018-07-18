@@ -3,6 +3,7 @@ package com.zhuoan.biz.event.sw;
 import com.zhuoan.biz.model.RoomManage;
 import com.zhuoan.biz.model.sw.SwGameRoom;
 import com.zhuoan.constant.SwConstant;
+import com.zhuoan.util.Dto;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
@@ -55,6 +56,42 @@ public class GameTimerSw {
                     logger.error("",e);
                 }
             }else {
+                break;
+            }
+        }
+    }
+
+    /**
+     * 开始游戏超时事件
+     * @param roomNo
+     * @param account
+     * @param timeLeft
+     */
+    public void startOverTime(String roomNo, String account, int timeLeft) {
+        for (int i = timeLeft; i >= 0; i--) {
+            // 房间存在
+            if (RoomManage.gameRoomMap.containsKey(roomNo) && RoomManage.gameRoomMap.get(roomNo) != null) {
+                SwGameRoom room = (SwGameRoom) RoomManage.gameRoomMap.get(roomNo);
+                // 设置倒计时
+                room.setTimeLeft(i);
+                // 游戏已经开始
+                if (room.getGameStatus() == SwConstant.SW_GAME_STATUS_BET) {
+                    break;
+                }
+                // 庄家不在或者换人
+                if (Dto.stringIsNULL(room.getBanker()) || !account.equals(room.getBanker())) {
+                    break;
+                }
+                // 倒计时到了之后执行事件
+                if (i == 0) {
+                    swGameEventDeal.choiceBanker(roomNo);
+                }
+                try {
+                    Thread.sleep(1000);
+                } catch (Exception e) {
+                    logger.error("", e);
+                }
+            } else {
                 break;
             }
         }

@@ -303,6 +303,9 @@ public class GameEventDeal {
                     case QZMJConstant.QZMJ_GAME_EVENT_RECONNECT:
                         qzmjGameEventDeal.reconnectGame(client,data);
                         break;
+                    case QZMJConstant.QZMJ_GAME_EVENT_TRUSTEE:
+                        qzmjGameEventDeal.gameTrustee(client,data);
+                        break;
                     default:
                         break;
                 }

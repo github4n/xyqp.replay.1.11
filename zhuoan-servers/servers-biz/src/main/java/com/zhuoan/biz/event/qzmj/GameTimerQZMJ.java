@@ -268,4 +268,114 @@ public class GameTimerQZMJ {
             }
         }
     }
+
+    /**
+     * 询问超时
+     * @param roomNo
+     * @param nextAccount
+     * @param timeLeft
+     */
+    public void gameEventOverTime(String roomNo,String nextAccount,int timeLeft,int type){
+        for (int i = timeLeft; i >= 0; i--) {
+            // 房间存在
+            if (RoomManage.gameRoomMap.containsKey(roomNo)&&RoomManage.gameRoomMap.get(roomNo)!=null) {
+                QZMJGameRoom room = (QZMJGameRoom) RoomManage.gameRoomMap.get(roomNo);
+                // 非操作
+                if (!nextAccount.equals(room.getNextAskAccount())) {
+                    break;
+                }
+                if (nextAccount.equals(room.getThisAccount())&&room.getNextAskType()!=QZMJConstant.ASK_TYPE_GANG_AN) {
+                    break;
+                }
+                // 设置倒计时
+                room.setTimeLeft(i);
+                // 托管状态自动执行事件
+                if (i==timeLeft-1&&room.getUserPacketMap().get(nextAccount).getIsTrustee()==CommonConstant.GLOBAL_YES) {
+                    JSONObject data = getAutoEventData(roomNo, nextAccount, type);
+                    producerService.sendMessage(qzmjQueueDestination, new Messages(null, data, CommonConstant.GAME_ID_QZMJ, QZMJConstant.QZMJ_GAME_EVENT_IN));
+                    break;
+                }
+                // 倒计时到了之后执行事件
+                if (i==0&&room.getRoomType()!=CommonConstant.ROOM_TYPE_FK) {
+                    JSONObject autoEventData = getAutoEventData(roomNo, nextAccount, type);
+                    producerService.sendMessage(qzmjQueueDestination, new Messages(null, autoEventData, CommonConstant.GAME_ID_QZMJ, QZMJConstant.QZMJ_GAME_EVENT_IN));
+                    JSONObject trusteeData = getTrusteeData(roomNo, nextAccount);
+                    producerService.sendMessage(qzmjQueueDestination, new Messages(null, trusteeData, CommonConstant.GAME_ID_QZMJ, QZMJConstant.QZMJ_GAME_EVENT_TRUSTEE));
+                }
+                try {
+                    Thread.sleep(1000);
+                } catch (Exception e) {
+                    logger.error("",e);
+                }
+            }else {
+                break;
+            }
+        }
+    }
+
+    private JSONObject getAutoEventData(String roomNo, String nextAccount, int type) {
+        JSONObject data = new JSONObject();
+        data.put(CommonConstant.DATA_KEY_ROOM_NO,roomNo);
+        data.put(CommonConstant.DATA_KEY_ACCOUNT,nextAccount);
+        data.put("type",type);
+        return data;
+    }
+
+    private JSONObject getTrusteeData(String roomNo, String nextAccount) {
+        JSONObject data = new JSONObject();
+        data.put(CommonConstant.DATA_KEY_ROOM_NO,roomNo);
+        data.put(CommonConstant.DATA_KEY_ACCOUNT,nextAccount);
+        data.put("type",CommonConstant.GLOBAL_YES);
+        return data;
+    }
+
+    /**
+     * 询问超时
+     * @param roomNo
+     * @param nextAccount
+     * @param timeLeft
+     */
+    public void cpOverTime(String roomNo,String nextAccount,int timeLeft){
+        for (int i = timeLeft; i >= 0; i--) {
+            // 房间存在
+            if (RoomManage.gameRoomMap.containsKey(roomNo)&&RoomManage.gameRoomMap.get(roomNo)!=null) {
+                QZMJGameRoom room = (QZMJGameRoom) RoomManage.gameRoomMap.get(roomNo);
+                // 非操作或已经出完牌
+                if (room.getFocusIndex()!=room.getPlayerMap().get(nextAccount).getMyIndex()||nextAccount.equals(room.getLastAccount())) {
+                    break;
+                }
+                // 设置倒计时
+                room.setTimeLeft(i);
+                // 托管状态自动执行事件
+                if (i==timeLeft-1&&room.getUserPacketMap().get(nextAccount).getIsTrustee()==CommonConstant.GLOBAL_YES) {
+                    JSONObject cpData = getCpData(roomNo, nextAccount);
+                    producerService.sendMessage(qzmjQueueDestination, new Messages(null, cpData, CommonConstant.GAME_ID_QZMJ, QZMJConstant.QZMJ_GAME_EVENT_CP));
+                    break;
+                }
+                // 倒计时到了之后执行事件
+                if (i==0&&room.getRoomType()!=CommonConstant.ROOM_TYPE_FK) {
+                    JSONObject cpData = getCpData(roomNo, nextAccount);
+                    producerService.sendMessage(qzmjQueueDestination, new Messages(null, cpData, CommonConstant.GAME_ID_QZMJ, QZMJConstant.QZMJ_GAME_EVENT_CP));
+                    JSONObject trusteeData = getTrusteeData(roomNo, nextAccount);
+                    producerService.sendMessage(qzmjQueueDestination, new Messages(null, trusteeData, CommonConstant.GAME_ID_QZMJ, QZMJConstant.QZMJ_GAME_EVENT_TRUSTEE));
+                }
+                try {
+                    Thread.sleep(1000);
+                } catch (Exception e) {
+                    logger.error("",e);
+                }
+            }else {
+                break;
+            }
+        }
+    }
+
+    private JSONObject getCpData(String roomNo, String nextAccount) {
+        JSONObject data = new JSONObject();
+        data.put(CommonConstant.DATA_KEY_ROOM_NO,roomNo);
+        data.put(CommonConstant.DATA_KEY_ACCOUNT,nextAccount);
+        QZMJGameRoom room = (QZMJGameRoom) RoomManage.gameRoomMap.get(roomNo);
+        data.put("pai",room.getUserPacketMap().get(nextAccount).getMyPai().get(room.getUserPacketMap().get(nextAccount).getMyPai().size()-1));
+        return data;
+    }
 }

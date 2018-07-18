@@ -62,6 +62,9 @@ public class SwGameEventDeal {
         JSONObject postData = JSONObject.fromObject(data);
         String account = postData.getString(CommonConstant.DATA_KEY_ACCOUNT);
         String roomNo = postData.getString(CommonConstant.DATA_KEY_ROOM_NO);
+        if (RoomManage.gameRoomMap.containsKey(roomNo) && RoomManage.gameRoomMap.get(roomNo)!=null) {
+            RoomManage.gameRoomMap.get(roomNo).setTimeLeft(SwConstant.SW_TIME_START);
+        }
         JSONObject roomData = obtainRoomData(roomNo, account);
         // 数据不为空
         if (!Dto.isObjNull(roomData)) {
@@ -70,6 +73,10 @@ public class SwGameEventDeal {
             result.put("data", roomData);
             // 通知自己
             CommonConstant.sendMsgEventToSingle(client, String.valueOf(result), "enterRoomPush_SW");
+            // 开始游戏定时器
+            if (!postData.containsKey("is_join")) {
+                beginStartTimer(roomNo,account);
+            }
         }
     }
 
@@ -79,9 +86,11 @@ public class SwGameEventDeal {
      * @param data
      */
     public void joinRoom(SocketIOClient client, Object data) {
-        // 进入房间通知自己
-        createRoom(client, data);
         JSONObject joinData = JSONObject.fromObject(data);
+        // 区分创建 加入房间
+        joinData.put("is_join",1);
+        // 进入房间通知自己
+        createRoom(client, joinData);
         // 非重连通知其他玩家
         if (joinData.containsKey("isReconnect") && joinData.getInt("isReconnect") == 0) {
             String account = joinData.getString(CommonConstant.DATA_KEY_ACCOUNT);
@@ -295,8 +304,12 @@ public class SwGameEventDeal {
         room.getUserIdList().set(0,room.getPlayerMap().get(account).getId());
         // 设置游戏状态
         room.setGameStatus(SwConstant.SW_GAME_STATUS_READY);
+        // 设置倒计时
+        room.setTimeLeft(SwConstant.SW_TIME_START);
         // 通知玩家
         changeGameStatus(roomNo);
+        // 开始游戏定时器
+        beginStartTimer(roomNo,account);
     }
 
     /**
@@ -472,17 +485,15 @@ public class SwGameEventDeal {
         if (!postData.containsKey(SwConstant.SW_DATA_KEY_INDEX)) {
             return;
         }
+        // 目标座位
         int index = postData.getInt(SwConstant.SW_DATA_KEY_INDEX);
-        // 目标座位不合法
-        if (index<SwConstant.SW_MIN_SEAT_NUM||index>SwConstant.SW_MAX_SEAT_NUM) {
-            return;
-        }
+        // 房间号
         String roomNo = postData.getString(CommonConstant.DATA_KEY_ROOM_NO);
         SwGameRoom room = (SwGameRoom) RoomManage.gameRoomMap.get(roomNo);
         String account = postData.getString(CommonConstant.DATA_KEY_ACCOUNT);
         JSONObject result = new JSONObject();
         // 庄家无法换坐
-        if (account.equals(room.getBanker())) {
+        if (client!=null && account.equals(room.getBanker())) {
             result.put(CommonConstant.RESULT_KEY_CODE,CommonConstant.GLOBAL_NO);
             result.put(CommonConstant.RESULT_KEY_MSG,"庄家无法换座");
             CommonConstant.sendMsgEventToSingle(client, String.valueOf(result), "gameChangeSeatPush_SW");
@@ -510,7 +521,9 @@ public class SwGameEventDeal {
         }
         room.getPlayerMap().get(account).setMyIndex(index);
         // 设置座位号
-        room.getUserIdList().set(index,room.getPlayerMap().get(account).getId());
+        if (index >= SwConstant.SW_MIN_SEAT_NUM && index <= SwConstant.SW_MAX_SEAT_NUM) {
+            room.getUserIdList().set(index, room.getPlayerMap().get(account).getId());
+        }
         result.put("user",obtainPlayerInfo(roomNo,account));
         for (String uuid : room.getPlayerMap().keySet()) {
             if (room.getPlayerMap().containsKey(uuid)&&room.getPlayerMap().get(uuid)!=null) {
@@ -650,8 +663,10 @@ public class SwGameEventDeal {
             return;
         }
         room.setGameStatus(SwConstant.SW_GAME_STATUS_SHOW);
+        // 是否有人下注，无人下注不抽水
+        boolean isBet = isBet(roomNo, room);
         // 是否抽水
-        if (room.getFee() > 0) {
+        if (room.getFee() > 0 && isBet) {
             JSONArray array = new JSONArray();
             for (String account : room.getPlayerMap().keySet()) {
                 if (room.getPlayerMap().containsKey(account)&&room.getPlayerMap().get(account)!=null) {
@@ -675,6 +690,23 @@ public class SwGameEventDeal {
                 gameTimerSw.gameOverTime(roomNo, SwConstant.SW_TIME_SHOW,SwConstant.SW_GAME_STATUS_SHOW);
             }
         });
+    }
+
+    /**
+     * 是否有人下注
+     * @param roomNo
+     * @param room
+     * @return
+     */
+    private boolean isBet(String roomNo, SwGameRoom room) {
+        for (String account : room.getPlayerMap().keySet()) {
+            if (room.getPlayerMap().containsKey(account) && room.getPlayerMap().get(account) != null) {
+                if (!Dto.isObjNull(obtainLastBetRecord(roomNo, account))) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     /**
@@ -713,6 +745,17 @@ public class SwGameEventDeal {
                     myResult.put("index", room.getPlayerMap().get(account).getMyIndex());
                     myResult.put("score", mySum);
                     room.getSummaryArray().add(myResult);
+                    // 记录玩家是否下注
+                    if (Dto.isObjNull(obtainLastBetRecord(roomNo, account)) && room.getPlayerMap().get(account).getMyIndex() >= SwConstant.SW_MIN_SEAT_NUM &&
+                        room.getPlayerMap().get(account).getMyIndex() <= SwConstant.SW_MAX_SEAT_NUM) {
+                        if (room.getUserUnBetTime().containsKey(account)) {
+                            room.getUserUnBetTime().put(account, room.getUserUnBetTime().get(account) + 1);
+                        } else {
+                            room.getUserUnBetTime().put(account, 1);
+                        }
+                    } else {
+                        room.getUserUnBetTime().remove(account);
+                    }
                 }
             }
         }
@@ -723,16 +766,36 @@ public class SwGameEventDeal {
         bankerResult.put("index", room.getPlayerMap().get(room.getBanker()).getMyIndex());
         bankerResult.put("score", bankerSum);
         room.getSummaryArray().add(bankerResult);
-        // 更新玩家分数
-        updateUserScore(roomNo);
-        // 添加战绩
-        addUserGameLog(roomNo,room.getTreasure());
-        // 添加输赢记录
-        saveUserDeduction(roomNo);
+        boolean isBet = isBet(roomNo,room);
+        // 有人下注更新分数
+        if (isBet) {
+            // 更新玩家分数
+            updateUserScore(roomNo);
+            // 添加战绩
+            addUserGameLog(roomNo,room.getTreasure());
+            // 添加输赢记录
+            saveUserDeduction(roomNo);
+        }
         // 添加走势图记录
         updateBankerTreasureHistory(room.getBanker(),room.getTreasure());
+        // 设置倒计时
+        if (room.getPlayerMap().get(room.getBanker()).getScore() >= room.getMinBankerScore()) {
+            room.setTimeLeft(SwConstant.SW_TIME_START);
+        }
         // 通知玩家
         changeGameStatus(roomNo);
+        // 超过次数的玩家站起
+        for (String account : room.getUserUnBetTime().keySet()) {
+            if (room.getPlayerMap().containsKey(account) && room.getPlayerMap().get(account) != null
+                && room.getUserUnBetTime().get(account) >= SwConstant.UN_BET_TIME) {
+                JSONObject obj = new JSONObject();
+                obj.put(CommonConstant.DATA_KEY_ACCOUNT, account);
+                obj.put(CommonConstant.DATA_KEY_ROOM_NO, roomNo);
+                obj.put(SwConstant.SW_DATA_KEY_INDEX, room.getLastIndex());
+                room.setLastIndex(room.getLastIndex() + 1);
+                gameChangeSeat(null, obj);
+            }
+        }
         // 分数不够重置庄家
         if (room.getPlayerMap().get(room.getBanker()).getScore()<room.getMinBankerScore()) {
             ThreadPoolHelper.executorService.submit(new Runnable() {
@@ -741,6 +804,9 @@ public class SwGameEventDeal {
                     gameTimerSw.gameOverTime(roomNo, SwConstant.SW_TIME_SUMMARY_ANIMATION,SwConstant.SW_GAME_STATUS_SUMMARY);
                 }
             });
+        }else {
+            // 开始游戏定时器
+            beginStartTimer(roomNo,room.getBanker());
         }
     }
 
@@ -901,8 +967,12 @@ public class SwGameEventDeal {
         SwGameRoom room = (SwGameRoom) RoomManage.gameRoomMap.get(roomNo);
         // 更换庄家位置
         if (!Dto.stringIsNULL(room.getBanker())) {
-            room.getPlayerMap().get(room.getBanker()).setMyIndex(room.getLastIndex());
-            room.setLastIndex(room.getLastIndex()+1);
+            JSONObject obj = new JSONObject();
+            obj.put(CommonConstant.DATA_KEY_ACCOUNT, room.getBanker());
+            obj.put(CommonConstant.DATA_KEY_ROOM_NO, roomNo);
+            obj.put(SwConstant.SW_DATA_KEY_INDEX, room.getLastIndex());
+            room.setLastIndex(room.getLastIndex() + 1);
+            gameChangeSeat(null, obj);
             // 清空庄家
             room.setBanker(null);
         }
@@ -1459,6 +1529,20 @@ public class SwGameEventDeal {
         betList.add(SwConstant.TREASURE_RED_MANDARIN);
         betList.add(SwConstant.TREASURE_RED_KING);
         return betList;
+    }
+
+    /**
+     * 开始游戏定时器
+     * @param roomNo
+     * @param account
+     */
+    private void beginStartTimer(final String roomNo, final String account) {
+        ThreadPoolHelper.executorService.submit(new Runnable() {
+            @Override
+            public void run() {
+                gameTimerSw.startOverTime(roomNo, account,SwConstant.SW_TIME_START);
+            }
+        });
     }
 
 }

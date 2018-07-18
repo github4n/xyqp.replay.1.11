@@ -98,5 +98,15 @@ public class QZMJGameEvent {
                 producerService.sendMessage(qzmjQueueDestination, new Messages(client, data, CommonConstant.GAME_ID_QZMJ, QZMJConstant.QZMJ_GAME_EVENT_RECONNECT));
             }
         });
+
+        /**
+         * 托管
+         */
+        server.addEventListener("gameTrustee", Object.class, new DataListener<Object>() {
+            @Override
+            public void onData(SocketIOClient client, Object data, AckRequest ackSender) {
+                producerService.sendMessage(qzmjQueueDestination, new Messages(client, data, CommonConstant.GAME_ID_QZMJ, QZMJConstant.QZMJ_GAME_EVENT_TRUSTEE));
+            }
+        });
     }
 }

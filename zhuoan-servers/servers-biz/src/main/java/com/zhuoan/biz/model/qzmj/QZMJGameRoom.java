@@ -738,6 +738,7 @@ public class QZMJGameRoom extends GameRoom{
                 obj.put("ghName", player.getGhName());
                 obj.put("introduction", player.getSignature());
                 obj.put("userStatus", up.getStatus());
+                obj.put("isTrustee", up.getIsTrustee());
                 array.add(obj);
             }
         }

@@ -3,6 +3,9 @@ package com.zhuoan.biz.model.sw;
 import com.zhuoan.biz.model.GameRoom;
 import net.sf.json.JSONArray;
 
+import java.util.HashMap;
+import java.util.Map;
+
 /**
  * @author wqm
  * @DESCRIPTION
@@ -34,6 +37,10 @@ public class SwGameRoom extends GameRoom{
      * 单子上限
      */
     private int singleMax = 0;
+    /**
+     * 玩家未下注局数
+     */
+    private Map<String,Integer> userUnBetTime = new HashMap<>();
 
     public JSONArray getBaseNum() {
         return baseNum;
@@ -81,5 +88,13 @@ public class SwGameRoom extends GameRoom{
 
     public void setSingleMax(int singleMax) {
         this.singleMax = singleMax;
+    }
+
+    public Map<String, Integer> getUserUnBetTime() {
+        return userUnBetTime;
+    }
+
+    public void setUserUnBetTime(Map<String, Integer> userUnBetTime) {
+        this.userUnBetTime = userUnBetTime;
     }
 }
