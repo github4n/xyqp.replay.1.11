@@ -455,15 +455,22 @@ public class QZMJGameEventDeal {
         }
         // 改变玩家托管状态
         int trustee = postData.getInt("type");
+        if (trustee == CommonConstant.GLOBAL_NO && room.getUserPacketMap().get(account).getCancelTrusteeTime() >= QZMJConstant.MAX_CANCEL_TIME) {
+            JSONObject obj = new JSONObject();
+            obj.put("type", CommonConstant.SHOW_MSG_TYPE_NORMAL);
+            obj.put("msg", "已达单局取消托管上限");
+            CommonConstant.sendMsgEventToSingle(client, String.valueOf(obj), "tipMsgPush");
+            return;
+        }
         room.getUserPacketMap().get(account).setIsTrustee(trustee);
+        // 取消托管增加取消次数
+        if (trustee == CommonConstant.GLOBAL_NO) {
+            room.getUserPacketMap().get(account).setCancelTrusteeTime(room.getUserPacketMap().get(account).getCancelTrusteeTime() + 1);
+        }
         JSONObject result = new JSONObject();
         result.put("index",room.getPlayerMap().get(account).getMyIndex());
         result.put("type",trustee);
         CommonConstant.sendMsgEventToAll(room.getAllUUIDList(),String.valueOf(result),"gameTrusteePush");
-        // 自己出牌托管需要出牌
-        if (trustee==CommonConstant.GLOBAL_YES&&room.getPlayerMap().get(account).getMyIndex()==room.getFocusIndex()) {
-
-        }
     }
 
     /**
@@ -817,6 +824,7 @@ public class QZMJGameEventDeal {
                 user.put("sex",game.getPlayerMap().get(cliTag).getSex());
                 user.put("ip",game.getPlayerMap().get(cliTag).getIp());
                 user.put("location",game.getPlayerMap().get(cliTag).getLocation());
+                user.put("ghName",game.getPlayerMap().get(cliTag).getGhName());
                 user.put("score",game.getPlayerMap().get(cliTag).getScore());
                 user.put("status",game.getPlayerMap().get(cliTag).getStatus());
                 user.put("isTrustee", game.getUserPacketMap().get(cliTag).getIsTrustee());

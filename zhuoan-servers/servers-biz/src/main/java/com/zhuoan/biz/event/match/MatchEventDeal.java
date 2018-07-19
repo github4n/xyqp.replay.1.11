@@ -56,31 +56,44 @@ public class MatchEventDeal {
 
     @Scheduled(cron = "0/10 * * * * ?")
     public void startTimeMatch() {
-        // 场次配置
-        JSONArray matchSettings = getMatchSettingByType(MatchConstant.MATCH_TYPE_TIME);
+        // 更新满人开赛场次信息
+        JSONArray countMatchSettings = getMatchSettingByType(MatchConstant.MATCH_TYPE_COUNT);
         // 更新场次配置
-        JSONArray newMatchSettings = new JSONArray();
+        JSONArray newCountMatchSettings = new JSONArray();
+        for (Object object : countMatchSettings) {
+            JSONObject matchSetting = JSONObject.fromObject(object);
+            matchSetting.put("online_num",matchSetting.getInt("online_num")+RandomUtils.nextInt(10));
+            newCountMatchSettings.add(matchSetting);
+        }
+        StringBuffer countKey = new StringBuffer();
+        countKey.append("match_setting_");
+        countKey.append(MatchConstant.MATCH_TYPE_COUNT);
+        redisService.insertKey(String.valueOf(countKey), String.valueOf(newCountMatchSettings), null);
+        // 场次配置
+        JSONArray timeMatchSettings = getMatchSettingByType(MatchConstant.MATCH_TYPE_TIME);
+        // 更新实时场次配置
+        JSONArray newTimeMatchSettings = new JSONArray();
         // 实时时间
         String nowTime = TimeUtil.getNowDate();
-        for (Object object : matchSettings) {
+        for (Object object : timeMatchSettings) {
             JSONObject matchSetting = JSONObject.fromObject(object);
             String difference = TimeUtil.getDaysBetweenTwoTime(matchSetting.getString("create_time"), nowTime, 1000L);
             // 需要自动开赛
             if ("0".equals(difference)) {
                 matchSetting.put("create_time", TimeUtil.addSecondBaseOnNowTime(nowTime, matchSetting.getInt("time_interval")));
-                matchSetting.put("match_name", TimeUtil.addSecondBaseOnNowTime(nowTime, matchSetting.getInt("time_interval"))+"开赛");
+                matchSetting.put("description", TimeUtil.addSecondBaseOnNowTime(nowTime, matchSetting.getInt("time_interval"))+"开赛");
                 JSONObject unFullMatch = matchBiz.getMatchInfoByMatchId(matchSetting.getLong("id"), 0, 0);
                 if (!Dto.isObjNull(unFullMatch)) {
                     startBeginTimer(matchSetting,unFullMatch.getString("match_num"));
                 }
             }
             matchSetting.put("online_num",matchSetting.getInt("online_num")+RandomUtils.nextInt(10));
-            newMatchSettings.add(matchSetting);
+            newTimeMatchSettings.add(matchSetting);
         }
-        StringBuffer key = new StringBuffer();
-        key.append("match_setting_");
-        key.append(MatchConstant.MATCH_TYPE_TIME);
-        redisService.insertKey(String.valueOf(key), String.valueOf(newMatchSettings), null);
+        StringBuffer timeKey = new StringBuffer();
+        timeKey.append("match_setting_");
+        timeKey.append(MatchConstant.MATCH_TYPE_TIME);
+        redisService.insertKey(String.valueOf(timeKey), String.valueOf(newTimeMatchSettings), null);
     }
 
 

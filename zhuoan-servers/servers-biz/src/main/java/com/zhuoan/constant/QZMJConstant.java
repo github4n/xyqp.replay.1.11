@@ -129,6 +129,10 @@ public class QZMJConstant {
      * 准备消息类型-准备
      */
 	public static final int GAME_READY_TYPE_READY = 2;
+    /**
+     * 单局取消托管次数上限
+     */
+    public static final int MAX_CANCEL_TIME = 2;
 
 
 

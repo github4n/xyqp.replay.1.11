@@ -135,6 +135,28 @@ public class DdzGameEventDeal {
         if (room.getUserPacketMap().get(account).getStatus() == DdzConstant.DDZ_USER_STATUS_READY) {
             return;
         }
+        // 金币场判断金币
+        if (room.getRoomType() == CommonConstant.ROOM_TYPE_JB){
+            JSONObject result = new JSONObject();
+            result.put("type",CommonConstant.SHOW_MSG_TYPE_BIG);
+            boolean exit = false;
+            // 金币不足
+            if (room.getPlayerMap().get(account).getScore() < room.getEnterScore()) {
+                exit = true;
+                result.put(CommonConstant.RESULT_KEY_MSG,"金币不足");
+            }else if (room.getPlayerMap().get(account).getScore() > room.getLeaveScore()){
+                exit = true;
+                result.put(CommonConstant.RESULT_KEY_MSG,"金币超出该房间上限");
+            }
+            // 金币不足或金币超出房间上限无法继续游戏退出房间
+            if (exit) {
+                postData.put("notSend",CommonConstant.GLOBAL_YES);
+                postData.put("notSendToMe",CommonConstant.GLOBAL_YES);
+                exitRoom(client,postData);
+                CommonConstant.sendMsgEventToSingle(client,result.toString(),"tipMsgPush");
+                return;
+            }
+        }
         // 设置玩家准备状态
         room.getUserPacketMap().get(account).setStatus(DdzConstant.DDZ_USER_STATUS_READY);
         // 设置房间准备状态

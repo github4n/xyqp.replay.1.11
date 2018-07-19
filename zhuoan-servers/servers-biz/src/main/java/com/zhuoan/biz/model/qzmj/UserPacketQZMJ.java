@@ -88,6 +88,10 @@ public class UserPacketQZMJ {
      * 是否托管
      */
     private int isTrustee;
+    /**
+     * 取消托管次数
+     */
+    private int cancelTrusteeTime = 0;
 
     public List<Integer> getMyPai() {
         return myPai;
@@ -249,6 +253,14 @@ public class UserPacketQZMJ {
         this.isTrustee = isTrustee;
     }
 
+    public int getCancelTrusteeTime() {
+        return cancelTrusteeTime;
+    }
+
+    public void setCancelTrusteeTime(int cancelTrusteeTime) {
+        this.cancelTrusteeTime = cancelTrusteeTime;
+    }
+
     public void initUserPacket(){
         this.playTimes ++;
         // 番数
@@ -262,7 +274,9 @@ public class UserPacketQZMJ {
         //不可出的牌，可用来杠
         this.historyPai = new ArrayList<DontMovePai>();
         this.myPai.clear();
+        // 初始化托管信息
         this.isTrustee = 0;
+        this.cancelTrusteeTime = 0;
 	}
 	
 	/**

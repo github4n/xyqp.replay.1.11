@@ -287,6 +287,9 @@ public class GameTimerQZMJ {
                 if (nextAccount.equals(room.getThisAccount())&&room.getNextAskType()!=QZMJConstant.ASK_TYPE_GANG_AN) {
                     break;
                 }
+                if (room.getGameStatus() != QZMJConstant.QZ_GAME_STATUS_ING) {
+                    break;
+                }
                 // 设置倒计时
                 room.setTimeLeft(i);
                 // 托管状态自动执行事件
@@ -342,6 +345,9 @@ public class GameTimerQZMJ {
                 QZMJGameRoom room = (QZMJGameRoom) RoomManage.gameRoomMap.get(roomNo);
                 // 非操作或已经出完牌
                 if (room.getFocusIndex()!=room.getPlayerMap().get(nextAccount).getMyIndex()||nextAccount.equals(room.getLastAccount())) {
+                    break;
+                }
+                if (room.getGameStatus() != QZMJConstant.QZ_GAME_STATUS_ING) {
                     break;
                 }
                 // 设置倒计时

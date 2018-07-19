@@ -147,24 +147,33 @@ public class BaseEventDeal {
                 CommonConstant.sendMsgEventToSingle(client, String.valueOf(result), "enterRoomPush_NN");
                 return;
             }
-        } else if (baseInfo.getInt("roomType") == CommonConstant.ROOM_TYPE_JB && userInfo.containsKey("coins")
-            && userInfo.getDouble("coins") < baseInfo.getDouble("goldCoinEnter")) {
-            // 金币不足
-            result.element(CommonConstant.RESULT_KEY_CODE, CommonConstant.GLOBAL_NO);
-            result.element(CommonConstant.RESULT_KEY_MSG, "金币不足");
-            CommonConstant.sendMsgEventToSingle(client, String.valueOf(result), "enterRoomPush_NN");
-            return;
-        } else if ((baseInfo.getInt("roomType") == CommonConstant.ROOM_TYPE_FK||baseInfo.getInt("roomType") == CommonConstant.ROOM_TYPE_DK)
-            && userInfo.containsKey("roomcard")) {
-            int roomCard = getRoomCardPayInfo(baseInfo);
-            if (baseInfo.getInt("roomType") == CommonConstant.ROOM_TYPE_DK) {
-                roomCard += obtainProxyRoomCard(account);
-            }
-            if (userInfo.getInt("roomcard")<roomCard) {
+        } else if (baseInfo.getInt("roomType") == CommonConstant.ROOM_TYPE_JB && userInfo.containsKey("coins")) {
+            if (userInfo.getDouble("coins") < baseInfo.getDouble("goldCoinEnter")) {
+                // 金币不足
                 result.element(CommonConstant.RESULT_KEY_CODE, CommonConstant.GLOBAL_NO);
-                result.element(CommonConstant.RESULT_KEY_MSG, "房卡不足");
+                result.element(CommonConstant.RESULT_KEY_MSG, "金币不足");
                 CommonConstant.sendMsgEventToSingle(client, String.valueOf(result), "enterRoomPush_NN");
                 return;
+            }else if (baseInfo.getDouble("goldCoinEnter") != baseInfo.getDouble("goldCoinLeave") &&
+                userInfo.getDouble("coins") > baseInfo.getDouble("goldCoinLeave")) {
+                // 金币过多
+                result.element(CommonConstant.RESULT_KEY_CODE, CommonConstant.GLOBAL_NO);
+                result.element(CommonConstant.RESULT_KEY_MSG, "金币超该场次限制");
+                CommonConstant.sendMsgEventToSingle(client, String.valueOf(result), "enterRoomPush_NN");
+                return;
+            }
+        } else if (baseInfo.getInt("roomType") == CommonConstant.ROOM_TYPE_FK||baseInfo.getInt("roomType") == CommonConstant.ROOM_TYPE_DK) {
+            if (userInfo.containsKey("roomcard")) {
+                int roomCard = getRoomCardPayInfo(baseInfo);
+                if (baseInfo.getInt("roomType") == CommonConstant.ROOM_TYPE_DK) {
+                    roomCard += obtainProxyRoomCard(account);
+                }
+                if (userInfo.getInt("roomcard")<roomCard) {
+                    result.element(CommonConstant.RESULT_KEY_CODE, CommonConstant.GLOBAL_NO);
+                    result.element(CommonConstant.RESULT_KEY_MSG, "房卡不足");
+                    CommonConstant.sendMsgEventToSingle(client, String.valueOf(result), "enterRoomPush_NN");
+                    return;
+                }
             }
         } else if (baseInfo.getInt("roomType") == CommonConstant.ROOM_TYPE_COMPETITIVE && userInfo.containsKey("roomcard")
             && userInfo.getDouble("roomcard") < baseInfo.getDouble("goldCoinEnter")) {
@@ -734,13 +743,20 @@ public class BaseEventDeal {
                 result.element(CommonConstant.RESULT_KEY_MSG, "元宝不足");
                 CommonConstant.sendMsgEventToSingle(client, String.valueOf(result), "enterRoomPush_NN");
                 return;
-            } else if (room.getRoomType() == CommonConstant.ROOM_TYPE_JB && userInfo.containsKey("coins")
-                && userInfo.getDouble("coins") < room.getEnterScore()) {
-                // 元宝不足
-                result.element(CommonConstant.RESULT_KEY_CODE, CommonConstant.GLOBAL_NO);
-                result.element(CommonConstant.RESULT_KEY_MSG, "金币不足");
-                CommonConstant.sendMsgEventToSingle(client, String.valueOf(result), "enterRoomPush_NN");
-                return;
+            } else if (room.getRoomType() == CommonConstant.ROOM_TYPE_JB && userInfo.containsKey("coins")) {
+                if (userInfo.getDouble("coins") < room.getEnterScore()) {
+                    // 金币不足
+                    result.element(CommonConstant.RESULT_KEY_CODE, CommonConstant.GLOBAL_NO);
+                    result.element(CommonConstant.RESULT_KEY_MSG, "金币不足");
+                    CommonConstant.sendMsgEventToSingle(client, String.valueOf(result), "enterRoomPush_NN");
+                    return;
+                }else if (room.getEnterScore() != room.getLeaveScore() && userInfo.getDouble("coins") > room.getLeaveScore()) {
+                    // 金币过多
+                    result.element(CommonConstant.RESULT_KEY_CODE, CommonConstant.GLOBAL_NO);
+                    result.element(CommonConstant.RESULT_KEY_MSG, "金币超出该场次限定");
+                    CommonConstant.sendMsgEventToSingle(client, String.valueOf(result), "enterRoomPush_NN");
+                    return;
+                }
             } else if (room.getRoomType() == CommonConstant.ROOM_TYPE_FK && userInfo.containsKey("roomcard")) {
                 if (userInfo.getInt("roomcard") < room.getEnterScore()) {
                     result.element(CommonConstant.RESULT_KEY_CODE, CommonConstant.GLOBAL_NO);
@@ -2153,10 +2169,24 @@ public class BaseEventDeal {
     public void joinCoinRoom(SocketIOClient client, Object data) {
         JSONObject postData = JSONObject.fromObject(data);
         int gameId = postData.getInt("gid");
-        JSONObject option = postData.getJSONObject("option");
+        JSONObject option = new JSONObject();
+        if (postData.containsKey("option")) {
+            option = postData.getJSONObject("option");
+        }else {
+            JSONObject object = new JSONObject();
+            object.put("gameId",gameId);
+            object.put("platform","YQWDDZ");
+            JSONArray array = getGoldSettingByGameIdAndPlatform(object);
+            if (array.size() > 0) {
+                option = array.getJSONObject(0).getJSONObject("option");
+            }
+        }
         postData.put("base_info",option);
         String account = postData.getString(CommonConstant.DATA_KEY_ACCOUNT);
         if (Dto.stringIsNULL(account)) {
+            return;
+        }
+        if (Dto.isObjNull(option)) {
             return;
         }
         List<String> roomNoList = new ArrayList<String>();
