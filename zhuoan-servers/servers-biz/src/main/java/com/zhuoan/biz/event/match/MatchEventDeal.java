@@ -68,6 +68,7 @@ public class MatchEventDeal {
             // 需要自动开赛
             if ("0".equals(difference)) {
                 matchSetting.put("create_time", TimeUtil.addSecondBaseOnNowTime(nowTime, matchSetting.getInt("time_interval")));
+                matchSetting.put("match_name", TimeUtil.addSecondBaseOnNowTime(nowTime, matchSetting.getInt("time_interval"))+"开赛");
                 JSONObject unFullMatch = matchBiz.getMatchInfoByMatchId(matchSetting.getLong("id"), 0, 0);
                 if (!Dto.isObjNull(unFullMatch)) {
                     startBeginTimer(matchSetting,unFullMatch.getString("match_num"));
@@ -207,6 +208,10 @@ public class MatchEventDeal {
                         result.put("type", matchSetting.getInt("type"));
                         result.put("match_id", matchSetting.getLong("id"));
                         result.put("match_name", matchSetting.getString("match_name"));
+                        if (matchSetting.getInt("type") == MatchConstant.MATCH_TYPE_TIME) {
+                            String difference = TimeUtil.getDaysBetweenTwoTime(matchSetting.getString("create_time"), TimeUtil.getNowDate(), 1000L);
+                            result.put("timeLeft", difference);
+                        }
                     }
                 } else {
                     result.put(CommonConstant.RESULT_KEY_CODE, CommonConstant.GLOBAL_NO);

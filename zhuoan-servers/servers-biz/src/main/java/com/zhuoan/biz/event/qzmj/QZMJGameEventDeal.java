@@ -14,6 +14,7 @@ import com.zhuoan.biz.model.qzmj.UserPacketQZMJ;
 import com.zhuoan.biz.robot.RobotEventDeal;
 import com.zhuoan.constant.CommonConstant;
 import com.zhuoan.constant.DaoTypeConstant;
+import com.zhuoan.constant.NNConstant;
 import com.zhuoan.constant.QZMJConstant;
 import com.zhuoan.service.jms.ProducerService;
 import com.zhuoan.service.socketio.impl.GameMain;
@@ -185,6 +186,18 @@ public class QZMJGameEventDeal {
                 JSONObject result = new JSONObject();
                 result.put("type",CommonConstant.SHOW_MSG_TYPE_BIG);
                 result.put(CommonConstant.RESULT_KEY_MSG,"余额不足");
+                CommonConstant.sendMsgEventToSingle(client,result.toString(),"tipMsgPush");
+                return;
+            }
+        }
+        if (room.getRoomType()==CommonConstant.ROOM_TYPE_COMPETITIVE){
+            if (room.getPlayerMap().get(account).getRoomCardNum()<room.getLeaveScore()) {
+                postData.put("notSend",CommonConstant.GLOBAL_YES);
+                postData.put("notSendToMe",CommonConstant.GLOBAL_YES);
+                exitRoom(client,postData);
+                JSONObject result = new JSONObject();
+                result.put("type",CommonConstant.SHOW_MSG_TYPE_BIG);
+                result.put(CommonConstant.RESULT_KEY_MSG,"钻石不足");
                 CommonConstant.sendMsgEventToSingle(client,result.toString(),"tipMsgPush");
                 return;
             }
@@ -469,7 +482,8 @@ public class QZMJGameEventDeal {
         if (!Dto.stringIsNULL(account) && room.getUserPacketMap().containsKey(account) && room.getUserPacketMap().get(account) != null) {
             boolean canExit = false;
             // 金币场、元宝场
-            if (room.getRoomType() == CommonConstant.ROOM_TYPE_JB || room.getRoomType() == CommonConstant.ROOM_TYPE_YB) {
+            if (room.getRoomType() == CommonConstant.ROOM_TYPE_JB || room.getRoomType() == CommonConstant.ROOM_TYPE_YB ||
+                room.getRoomType() == CommonConstant.ROOM_TYPE_COMPETITIVE) {
                 // 未参与游戏可以自由退出
                 if (room.getUserPacketMap().get(account).getStatus() == QZMJConstant.QZ_USER_STATUS_INIT) {
                     canExit = true;
@@ -1345,7 +1359,9 @@ public class QZMJGameEventDeal {
                 // 保存结算记录
                 gamePlay.addKaijuList(-1, 8, new int[]{});
                 updateUserScore(roomNo);
-                if (gamePlay.getRoomType()!=CommonConstant.ROOM_TYPE_JB) {
+                // 竞技场更新分数
+                updateCompetitiveUserScore(roomNo);
+                if (gamePlay.getRoomType()!=CommonConstant.ROOM_TYPE_JB && gamePlay.getRoomType()!=CommonConstant.ROOM_TYPE_COMPETITIVE) {
                     saveGameLog(roomNo);
                 }
                 if (gamePlay.getRoomType()==CommonConstant.ROOM_TYPE_YB) {
@@ -1749,7 +1765,7 @@ public class QZMJGameEventDeal {
                                 UserPacketQZMJ userPacketQZMJ1 = room.getUserPacketMap().get(uid);
                                 int score = userPacketQZMJ.getFan();
 
-                                if(!room.isCanOver){
+                                if(!room.isCanOver && room.getRoomType()!= CommonConstant.ROOM_TYPE_COMPETITIVE){
 
                                     // 牌局为1课或元宝场金币场
                                     if(room.getGameCount()==999||room.getGameCount()==9999){
@@ -1805,7 +1821,7 @@ public class QZMJGameEventDeal {
                         score = (int) (score*room.getScore());
                     }
 
-                    if(!room.isCanOver){
+                    if(!room.isCanOver && room.getRoomType()!= CommonConstant.ROOM_TYPE_COMPETITIVE){
 
                         // 牌局为1课或元宝场金币场
                         if(room.getGameCount()==999||room.getGameCount()==9999){
@@ -1918,6 +1934,47 @@ public class QZMJGameEventDeal {
         if (array.size()>0) {
             // 更新玩家分数
             producerService.sendMessage(daoQueueDestination, new PumpDao(DaoTypeConstant.UPDATE_SCORE, room.getPumpObject(array)));
+        }
+    }
+
+    /**
+     * 竞技场结算
+     * @param roomNo
+     */
+    public void updateCompetitiveUserScore(String roomNo) {
+        QZMJGameRoom room = (QZMJGameRoom) RoomManage.gameRoomMap.get(roomNo);
+        if (room.getRoomType() == CommonConstant.ROOM_TYPE_COMPETITIVE) {
+            JSONArray array = new JSONArray();
+            JSONArray userIds = new JSONArray();
+            for (String uuid : room.getUserPacketMap().keySet()) {
+                if (room.getUserPacketMap().containsKey(uuid)&&room.getUserPacketMap().get(uuid)!=null) {
+                    if (room.getUserPacketMap().get(uuid).getStatus() > NNConstant.NN_USER_STATUS_INIT) {
+                        room.getPlayerMap().get(uuid).setRoomCardNum(room.getPlayerMap().get(uuid).getRoomCardNum()-room.getSinglePayNum());
+                        if (room.getPlayerMap().get(uuid).getRoomCardNum()<0) {
+                            room.getPlayerMap().get(uuid).setRoomCardNum(0);
+                        }
+                        JSONObject obj = new JSONObject();
+                        obj.put("total", 3);
+                        obj.put("fen", room.getUserPacketMap().get(uuid).getScore());
+                        obj.put("id", room.getPlayerMap().get(uuid).getId());
+                        array.add(obj);
+                        userIds.add(room.getPlayerMap().get(uuid).getId());
+                        JSONObject object = new JSONObject();
+                        object.put("userId",room.getPlayerMap().get(uuid).getId());
+                        object.put("score",room.getUserPacketMap().get(uuid).getScore());
+                        object.put("type",2);
+                        producerService.sendMessage(daoQueueDestination, new PumpDao(DaoTypeConstant.ADD_OR_UPDATE_USER_COINS_REC,object));
+                    }
+                }
+            }
+            JSONObject jsonObject = new JSONObject();
+            jsonObject.put("array",array);
+            jsonObject.put("updateType","score");
+            // 更新玩家分数
+            if (array.size()>0 && userIds.size()>0) {
+                producerService.sendMessage(daoQueueDestination, new PumpDao(DaoTypeConstant.UPDATE_SCORE, jsonObject));
+                producerService.sendMessage(daoQueueDestination, new PumpDao(DaoTypeConstant.PUMP, room.getRoomCardChangeObject(userIds,room.getSinglePayNum())));
+            }
         }
     }
 
@@ -3793,7 +3850,9 @@ public class QZMJGameEventDeal {
                 room.setSummaryData(result);
                 CommonConstant.sendMsgEventToAll(room.getAllUUIDList(),String.valueOf(result),"gameLiuJuPush");
                 updateUserScore(roomNo);
-                if (room.getRoomType()!=CommonConstant.ROOM_TYPE_JB) {
+                // 竞技场更新分数
+                updateCompetitiveUserScore(roomNo);
+                if (room.getRoomType()!=CommonConstant.ROOM_TYPE_JB&&room.getRoomType()!=CommonConstant.ROOM_TYPE_COMPETITIVE) {
                     saveGameLog(roomNo);
                 }
                 if (room.getRoomType()==CommonConstant.ROOM_TYPE_YB) {
