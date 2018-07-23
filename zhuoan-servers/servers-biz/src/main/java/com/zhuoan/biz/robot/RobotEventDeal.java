@@ -15,6 +15,8 @@ import com.zhuoan.util.thread.ThreadPoolHelper;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 import org.apache.commons.lang.math.RandomUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
@@ -31,6 +33,8 @@ import java.util.concurrent.ConcurrentHashMap;
  **/
 @Component
 public class RobotEventDeal {
+
+    private final static Logger logger = LoggerFactory.getLogger(RobotEventDeal.class);
 
     ConcurrentHashMap<String,RobotInfo> robots = new ConcurrentHashMap<String, RobotInfo>();
 
@@ -439,7 +443,27 @@ public class RobotEventDeal {
 
     private int obtainRobotChuQzMj(String roomNo, String robotAccount) {
         QZMJGameRoom room = (QZMJGameRoom) RoomManage.gameRoomMap.get(roomNo);
-        return room.getLastMoPai();
+        try {
+            JSONObject special = new JSONObject();
+            special.put("mj_count", 34);
+            List<Integer> indexList = MaJiangAI.getMaJiangIndex(room.getUserPacketMap().get(robotAccount).getMyPai(), special);
+            int[] paiIndex = new int[indexList.size()];
+            for (int i = 0; i < indexList.size(); i++) {
+                paiIndex[i] = indexList.get(i);
+            }
+            int jin = -1;
+            for (int i = 0; i < QZMJConstant.ALL_CAN_HU_PAI.length; i++) {
+                if (room.getJin() == QZMJConstant.ALL_CAN_HU_PAI[i]) {
+                    jin = i;
+                    break;
+                }
+            }
+            int index = MaJiangAI.getRobotChupai(paiIndex, special, jin);
+            return QZMJConstant.ALL_CAN_HU_PAI[index];
+        }catch (Exception e) {
+            logger.error("",e);
+            return room.getUserPacketMap().get(robotAccount).getMyPai().get(0);
+        }
     }
 
     /**
