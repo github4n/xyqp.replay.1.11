@@ -138,6 +138,7 @@ public class NNGameEventDealNew {
         obj.put("roomType", room.getRoomType());
         obj.put("game_count", room.getGameCount());
         obj.put("di", room.getScore());
+        obj.put("banker_type", room.getBankerType());
         // 元宝场
         if (room.getRoomType() == CommonConstant.ROOM_TYPE_YB) {
             StringBuffer roomInfo = new StringBuffer();

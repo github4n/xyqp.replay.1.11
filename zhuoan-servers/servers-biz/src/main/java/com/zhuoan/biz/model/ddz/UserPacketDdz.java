@@ -46,6 +46,10 @@ public class UserPacketDdz {
      * 是否同意解散房间
      */
     private int isCloseRoom;
+    /**
+     * 记牌器结束时间
+     */
+    private String jpqEndTime;
 
     public int getStatus() {
         return status;
@@ -117,5 +121,13 @@ public class UserPacketDdz {
 
     public void setIsCloseRoom(int isCloseRoom) {
         this.isCloseRoom = isCloseRoom;
+    }
+
+    public String getJpqEndTime() {
+        return jpqEndTime;
+    }
+
+    public void setJpqEndTime(String jpqEndTime) {
+        this.jpqEndTime = jpqEndTime;
     }
 }

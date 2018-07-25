@@ -31,7 +31,7 @@ public interface AchievementBiz {
      * 获取用户成就信息
      *
      * @param account 玩家账号
-     * @param gameId 游戏id
+     * @param gameId  游戏id
      * @return JSONArray
      */
     JSONObject getUserAchievementByAccountAndGameId(String account, int gameId);
@@ -39,10 +39,19 @@ public interface AchievementBiz {
     /**
      * 添加用户成就信息
      *
-     * @param account 玩家账号
+     * @param account          玩家账号
      * @param achievementScore 成就分数
-     * @param gameId 游戏id
+     * @param gameId           游戏id
      * @return JSONObject
      */
     JSONObject addOrUpdateUserAchievement(String account, int gameId, int achievementScore);
+
+    /**
+     * 获取成就排行榜
+     *
+     * @param limit  获取条数
+     * @param gameId 游戏id
+     * @return JSONArray
+     */
+    JSONArray getAchievementRank(int limit, int gameId);
 }

@@ -31,7 +31,7 @@ public interface AchievementDao {
      * 获取用户成就信息
      *
      * @param account 玩家账号
-     * @param gameId 游戏id
+     * @param gameId  游戏id
      * @return JSONArray
      */
     JSONObject getUserAchievementByAccountAndGameId(String account, int gameId);
@@ -42,4 +42,13 @@ public interface AchievementDao {
      * @param userAchievement 用户成就信息
      */
     void addOrUpdateUserAchievement(JSONObject userAchievement);
+
+    /**
+     * 获取成就排行榜
+     *
+     * @param limit  获取条数
+     * @param gameId 游戏id
+     * @return JSONArray
+     */
+    JSONArray getAchievementRank(int limit, int gameId);
 }

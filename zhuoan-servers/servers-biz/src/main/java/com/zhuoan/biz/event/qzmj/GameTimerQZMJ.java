@@ -19,6 +19,7 @@ import javax.annotation.Resource;
 import javax.jms.Destination;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 /**
  * @author wqm
@@ -383,5 +384,64 @@ public class GameTimerQZMJ {
         QZMJGameRoom room = (QZMJGameRoom) RoomManage.gameRoomMap.get(roomNo);
         data.put("pai",room.getUserPacketMap().get(nextAccount).getMyPai().get(room.getUserPacketMap().get(nextAccount).getMyPai().size()-1));
         return data;
+    }
+
+    /**
+     * 准备超时
+     * @param roomNo
+     * @param timeLeft
+     */
+    public void readyOverTime(String roomNo,int timeLeft){
+        for (int i = timeLeft; i >= 0; i--) {
+            // 房间存在
+            if (RoomManage.gameRoomMap.containsKey(roomNo)&&RoomManage.gameRoomMap.get(roomNo)!=null) {
+                QZMJGameRoom room = (QZMJGameRoom) RoomManage.gameRoomMap.get(roomNo);
+                if (room.getRoomType() != CommonConstant.ROOM_TYPE_YB) {
+                    break;
+                }
+                // 非准备状态
+                if (room.getGameStatus() != QZMJConstant.QZ_GAME_STATUS_READY) {
+                    sendReadyTimer(0, room.getAllUUIDList());
+                    break;
+                }
+                // 人数未满
+                if (room.getUserPacketMap().size() != room.getPlayerCount()) {
+                    sendReadyTimer(0, room.getAllUUIDList());
+                    break;
+                }
+                sendReadyTimer(i, room.getAllUUIDList());
+                // 设置倒计时
+                room.setTimeLeft(i);
+                // 倒计时到了之后执行事件
+                if (i==0) {
+                    for (String account : room.getUserPacketMap().keySet()) {
+                        if (room.getUserPacketMap().get(account).getStatus() != QZMJConstant.QZ_USER_STATUS_READY) {
+                            JSONObject data = new JSONObject();
+                            data.put(CommonConstant.DATA_KEY_ACCOUNT, account);
+                            data.put(CommonConstant.DATA_KEY_ROOM_NO, roomNo);
+                            producerService.sendMessage(qzmjQueueDestination, new Messages(null, data, CommonConstant.GAME_ID_QZMJ, QZMJConstant.QZMJ_GAME_EVENT_EXIT_ROOM));
+                        }
+                    }
+                }
+                try {
+                    Thread.sleep(1000);
+                } catch (Exception e) {
+                    logger.error("",e);
+                }
+            }else {
+                break;
+            }
+        }
+    }
+
+    /**
+     * 发送准备倒计时
+     * @param time
+     * @param uuidList
+     */
+    private void sendReadyTimer(int time, List<UUID> uuidList) {
+        JSONObject result = new JSONObject();
+        result.put("readyTimerPush",time);
+        CommonConstant.sendMsgEventToAll(uuidList,String.valueOf(result),"readyTimerPush");
     }
 }

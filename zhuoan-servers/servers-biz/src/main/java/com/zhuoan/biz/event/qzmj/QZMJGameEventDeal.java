@@ -115,6 +115,12 @@ public class QZMJGameEventDeal {
             obj.put("isTrustee", room.getUserPacketMap().get(account).getIsTrustee());
             // 通知玩家
             CommonConstant.sendMsgEventToAll(room.getAllUUIDList(account), obj.toString(), "playerEnterPush");
+            // 开始准备定时器
+            if (room.getRoomType() == CommonConstant.ROOM_TYPE_YB) {
+                if (isFullAndReady(room.getRoomNo())) {
+                    beginReadyTimer(room.getRoomNo());
+                }
+            }
         }
     }
 
@@ -229,6 +235,12 @@ public class QZMJGameEventDeal {
             }
             result.put("data",array);
             CommonConstant.sendMsgEventToAll(room.getAllUUIDList(), result.toString(), "gameReadyPush");
+            // 开始准备定时器
+            if (room.getRoomType() == CommonConstant.ROOM_TYPE_YB) {
+                if (isFullAndReady(room.getRoomNo())) {
+                    beginReadyTimer(room.getRoomNo());
+                }
+            }
         }
     }
 
@@ -4165,5 +4177,45 @@ public class QZMJGameEventDeal {
                 });
             }
         }
+    }
+
+    /**
+     * 准备定时
+     * @param roomNo
+     */
+    private void beginReadyTimer(final String roomNo) {
+        QZMJGameRoom room = (QZMJGameRoom) RoomManage.gameRoomMap.get(roomNo);
+        if (room.getRoomType() == CommonConstant.ROOM_TYPE_YB) {
+            if (!room.getSetting().containsKey("gameReadyTime")||room.getSetting().getInt("gameReadyTime")>0) {
+                final int timeLeft;
+                if (room.getSetting().containsKey("gameReadyTime")) {
+                    timeLeft = room.getSetting().getInt("gameReadyTime");
+                } else {
+                    timeLeft = 15;
+                }
+                ThreadPoolHelper.executorService.submit(new Runnable() {
+                    @Override
+                    public void run() {
+                        gameTimerQZMJ.readyOverTime(roomNo, timeLeft);
+                    }
+                });
+            }
+        }
+    }
+
+    private boolean isFullAndReady(String roomNo) {
+        QZMJGameRoom room = (QZMJGameRoom) RoomManage.gameRoomMap.get(roomNo);
+        if (room.getUserPacketMap().size() == room.getPlayerCount()) {
+            int readyCount = 0;
+            for (String account : room.getUserPacketMap().keySet()) {
+                if (room.getUserPacketMap().get(account).getStatus() == QZMJConstant.QZ_USER_STATUS_READY) {
+                    readyCount ++;
+                }
+            }
+            if (readyCount == 1) {
+                return true;
+            }
+        }
+        return false;
     }
 }

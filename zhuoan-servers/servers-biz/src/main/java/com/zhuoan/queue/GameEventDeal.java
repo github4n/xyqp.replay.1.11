@@ -171,6 +171,15 @@ public class GameEventDeal {
                     case CommonConstant.BASE_GAME_EVENT_GET_USER_ACHIEVEMENT_INFO:
                         baseEventDeal.getUserAchievementInfo(client, data);
                         break;
+                    case CommonConstant.BASE_GAME_EVENT_GET_PROPS_INFO:
+                        baseEventDeal.getPropsInfo(client, data);
+                        break;
+                    case CommonConstant.BASE_GAME_EVENT_USER_PURCHASE:
+                        baseEventDeal.userPurchase(client, data);
+                        break;
+                    case CommonConstant.BASE_GAME_EVENT_GET_ACHIEVEMENT_RANK:
+                        baseEventDeal.getAchievementRank(client, data);
+                        break;
                     default:
                         break;
                 }

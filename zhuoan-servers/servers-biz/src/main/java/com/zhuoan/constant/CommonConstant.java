@@ -132,6 +132,18 @@ public class CommonConstant {
      */
     public static final int BASE_GAME_EVENT_GET_USER_ACHIEVEMENT_INFO = 29;
     /**
+     * 公共游戏事件-获取单据详情
+     */
+    public static final int BASE_GAME_EVENT_GET_PROPS_INFO = 30;
+    /**
+     * 公共游戏事件-用户购买道具
+     */
+    public static final int BASE_GAME_EVENT_USER_PURCHASE = 31;
+    /**
+     * 公共游戏事件-成就排行榜
+     */
+    public static final int BASE_GAME_EVENT_GET_ACHIEVEMENT_RANK = 32;
+    /**
      * 游戏公共部分
      */
     public static final int GAME_BASE = 0;
@@ -303,6 +315,11 @@ public class CommonConstant {
      * 房卡场正常结束
      */
     public static final int CLOSE_ROOM_TYPE_FINISH = -2;
+
+    /**
+     * 道具类型-记牌器
+     */
+    public static final int PROPS_TYPE_JPQ = 1;
 
     public static final String DATA_KEY_ROOM_NO = "room_no";
     public static final String DATA_KEY_ACCOUNT = "account";

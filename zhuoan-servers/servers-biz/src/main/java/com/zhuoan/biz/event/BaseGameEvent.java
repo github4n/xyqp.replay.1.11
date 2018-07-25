@@ -338,6 +338,33 @@ public class BaseGameEvent {
                 producerService.sendMessage(baseQueueDestination, new Messages(client, object, CommonConstant.GAME_BASE, CommonConstant.BASE_GAME_EVENT_GET_USER_ACHIEVEMENT_INFO));
             }
         });
+        /**
+         *  获取道具商城
+         */
+        server.addEventListener("getPropsInfo", Object.class, new DataListener<Object>() {
+            @Override
+            public void onData(SocketIOClient client, Object object, AckRequest ackSender) {
+                producerService.sendMessage(baseQueueDestination, new Messages(client, object, CommonConstant.GAME_BASE, CommonConstant.BASE_GAME_EVENT_GET_PROPS_INFO));
+            }
+        });
+        /**
+         *  玩家购买道具
+         */
+        server.addEventListener("userPurchase", Object.class, new DataListener<Object>() {
+            @Override
+            public void onData(SocketIOClient client, Object object, AckRequest ackSender) {
+                producerService.sendMessage(baseQueueDestination, new Messages(client, object, CommonConstant.GAME_BASE, CommonConstant.BASE_GAME_EVENT_USER_PURCHASE));
+            }
+        });
+        /**
+         *  成就排行榜
+         */
+        server.addEventListener("getAchievementRank", Object.class, new DataListener<Object>() {
+            @Override
+            public void onData(SocketIOClient client, Object object, AckRequest ackSender) {
+                producerService.sendMessage(baseQueueDestination, new Messages(client, object, CommonConstant.GAME_BASE, CommonConstant.BASE_GAME_EVENT_GET_ACHIEVEMENT_RANK));
+            }
+        });
 
     }
 

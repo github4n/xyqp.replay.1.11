@@ -24,14 +24,14 @@ public class AchievementDaoImpl implements AchievementDao{
 
     @Override
     public JSONArray getUserAchievementByAccount(String account) {
-        String sql = "select id,user_account,game_id,achievement_score,reward_level,achievement_id," +
+        String sql = "select id,user_account,user_img,user_name,user_sign,game_id,achievement_score,reward_level,achievement_id," +
             "achievement_name from za_user_achievement where user_account=?";
         return DBUtil.getObjectListBySQL(sql,new Object[]{account});
     }
 
     @Override
     public JSONObject getUserAchievementByAccountAndGameId(String account, int gameId) {
-        String sql = "select id,user_account,game_id,achievement_score,reward_level,achievement_id," +
+        String sql = "select id,user_account,user_img,user_name,user_sign,game_id,achievement_score,reward_level,achievement_id," +
             "achievement_name from za_user_achievement where user_account=? and game_id=?";
         return DBUtil.getObjectBySQL(sql,new Object[]{account,gameId});
     }
@@ -39,5 +39,12 @@ public class AchievementDaoImpl implements AchievementDao{
     @Override
     public void addOrUpdateUserAchievement(JSONObject userAchievement) {
         DBJsonUtil.saveOrUpdate(userAchievement,"za_user_achievement");
+    }
+
+    @Override
+    public JSONArray getAchievementRank(int limit ,int gameId) {
+        String sql = "select user_account,user_img,user_name,user_sign,achievement_score,achievement_name from za_user_achievement where game_id=? " +
+            "order by achievement_score DESC limit 0,?";
+        return DBUtil.getObjectListBySQL(sql,new Object[]{gameId,limit});
     }
 }

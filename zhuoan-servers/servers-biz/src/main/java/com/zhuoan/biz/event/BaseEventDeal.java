@@ -79,6 +79,9 @@ public class BaseEventDeal {
     private AchievementBiz achievementBiz;
 
     @Resource
+    private PropsBiz propsBiz;
+
+    @Resource
     private NNGameEventDealNew nnGameEventDealNew;
 
     @Resource
@@ -2741,5 +2744,123 @@ public class BaseEventDeal {
             }
         }
         return null;
+    }
+
+    /**
+     * 获取道具商城详情
+     * @param client
+     * @param data
+     */
+    public void getPropsInfo(SocketIOClient client, Object data) {
+        JSONObject postData = JSONObject.fromObject(data);
+        int type = postData.getInt("type");
+        String platform = postData.getString("platform");
+        JSONArray props = propsBiz.getPropsInfoByPlatform(platform);
+        JSONObject result = new JSONObject();
+        result.put("data", props);
+        CommonConstant.sendMsgEventToSingle(client,String.valueOf(result),"getPropsInfoPush");
+    }
+
+    /**
+     * 用户购买道具
+     * @param client
+     * @param data
+     */
+    public void userPurchase(SocketIOClient client, Object data) {
+        JSONObject postData = JSONObject.fromObject(data);
+        String account = postData.getString("account");
+        String uuid = postData.getString("uuid");
+        long propsId = postData.getLong("props_id");
+        // 当前时间
+        String nowTime = TimeUtil.getNowDate();
+        // 道具信息
+        JSONObject propsInfo = propsBiz.getPropsInfoById(propsId);
+        // 通知前端
+        JSONObject result = new JSONObject();
+        if (!Dto.isObjNull(propsInfo)) {
+            JSONObject userInfo = userBiz.getUserByAccount(account);
+            // 支付类型
+            String costType = propsInfo.getString("cost_type");
+            // 价格
+            int propsPrice = propsInfo.getInt("props_price");
+            // 持续时间(小时)
+            int duration = propsInfo.getInt("duration");
+            // 道具类型
+            int propsType = propsInfo.getInt("props_type");
+            if (!Dto.isObjNull(userInfo) && userInfo.containsKey(costType) && userInfo.getInt(costType) > propsPrice) {
+                if (!Dto.stringIsNULL(uuid) && uuid.equals(userInfo.getString("uuid"))) {
+                    JSONObject userProps = propsBiz.getUserPropsByType(account,propsType);
+                    JSONObject props = new JSONObject();
+                    String endTime;
+                    if (Dto.isObjNull(userProps)) {
+                        endTime = TimeUtil.addHoursBaseOnNowTime(nowTime,duration,"yyyy-MM-dd HH:mm:ss");
+                        props.put("user_account", account);
+                        props.put("game_id", propsInfo.getInt("game_id"));
+                        props.put("props_type", propsInfo.getInt("props_type"));
+                        props.put("props_name", propsInfo.getString("props_name"));
+                        props.put("end_time", endTime);
+                    }else {
+                        // 当前是否过期
+                        if (TimeUtil.isLatter(nowTime,userProps.getString("end_time"))) {
+                            endTime = TimeUtil.addHoursBaseOnNowTime(nowTime,duration,"yyyy-MM-dd HH:mm:ss");
+                        }else {
+                            endTime = TimeUtil.addHoursBaseOnNowTime(userProps.getString("end_time"),duration,"yyyy-MM-dd HH:mm:ss");
+                        }
+                        props.put("id", userProps.getString("id"));
+                        props.put("end_time", endTime);
+                    }
+                    propsBiz.addOrUpdateUserProps(props);
+                    // 扣除玩家金币房卡
+                    JSONArray array = new JSONArray();
+                    JSONObject obj = new JSONObject();
+                    obj.put("id", userInfo.getLong("id"));
+                    obj.put("total", userInfo.getInt(costType));
+                    obj.put("fen", -propsPrice);
+                    array.add(obj);
+                    JSONObject jsonObject = new JSONObject();
+                    jsonObject.put("array",array);
+                    jsonObject.put("updateType",costType);
+                    producerService.sendMessage(daoQueueDestination, new PumpDao(DaoTypeConstant.UPDATE_SCORE, jsonObject));
+                    result.put(CommonConstant.RESULT_KEY_CODE, CommonConstant.GLOBAL_YES);
+                    result.put(CommonConstant.RESULT_KEY_MSG, "购买成功");
+                    if (costType.equals("roomcard")) {
+                        result.put("roomcard", userInfo.getInt("roomcard")-propsPrice);
+                    }else {
+                        result.put("roomcard", userInfo.getInt("roomcard"));
+                    }
+                    if (costType.equals("coins")) {
+                        result.put("coins", userInfo.getInt("coins")-propsPrice);
+                    }else {
+                        result.put("coins", userInfo.getInt("coins"));
+                    }
+                    result.put("end_time", endTime);
+                }else {
+                    result.put(CommonConstant.RESULT_KEY_CODE, CommonConstant.GLOBAL_NO);
+                    result.put(CommonConstant.RESULT_KEY_MSG, "信息不正确");
+                }
+            }else {
+                result.put(CommonConstant.RESULT_KEY_CODE, CommonConstant.GLOBAL_NO);
+                result.put(CommonConstant.RESULT_KEY_MSG, "余额不足");
+            }
+        }else {
+            result.put(CommonConstant.RESULT_KEY_CODE, CommonConstant.GLOBAL_NO);
+            result.put(CommonConstant.RESULT_KEY_MSG, "道具不存在");
+        }
+        CommonConstant.sendMsgEventToSingle(client, String.valueOf(result), "userPurchasePush");
+    }
+
+    /**
+     * 获取成就排行榜
+     * @param client
+     * @param data
+     */
+    public void getAchievementRank(SocketIOClient client, Object data) {
+        JSONObject postData = JSONObject.fromObject(data);
+        int gameId = postData.getInt("game_id");
+        int limit = postData.getInt("limit");
+        JSONArray achievementRank = achievementBiz.getAchievementRank(limit, gameId);
+        JSONObject result = new JSONObject();
+        result.put("data", achievementRank);
+        CommonConstant.sendMsgEventToSingle(client, String.valueOf(result), "getAchievementRankPush");
     }
  }

@@ -4,6 +4,7 @@ import com.corundumstudio.socketio.SocketIOClient;
 import com.zhuoan.biz.core.ddz.DdzCore;
 import com.zhuoan.biz.event.match.MatchEventDeal;
 import com.zhuoan.biz.game.biz.AchievementBiz;
+import com.zhuoan.biz.game.biz.PropsBiz;
 import com.zhuoan.biz.game.biz.RoomBiz;
 import com.zhuoan.biz.game.biz.UserBiz;
 import com.zhuoan.biz.model.Playerinfo;
@@ -18,6 +19,7 @@ import com.zhuoan.constant.DdzConstant;
 import com.zhuoan.service.cache.RedisService;
 import com.zhuoan.service.jms.ProducerService;
 import com.zhuoan.util.Dto;
+import com.zhuoan.util.TimeUtil;
 import com.zhuoan.util.thread.ThreadPoolHelper;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
@@ -48,6 +50,9 @@ public class DdzGameEventDeal {
 
     @Resource
     private AchievementBiz achievementBiz;
+
+    @Resource
+    private PropsBiz propsBiz;
 
     @Resource
     private Destination daoQueueDestination;
@@ -251,6 +256,7 @@ public class DdzGameEventDeal {
         result.put("gameStatus",room.getGameStatus());
         for (String player : obtainAllPlayerAccount(roomNo)) {
             result.put("myPai",room.getUserPacketMap().get(player).getMyPai());
+            result.put("leftArray",getLeftArray(roomNo, player));
             CommonConstant.sendMsgEventToSingle(room.getPlayerMap().get(player).getUuid(),String.valueOf(result),"gameLandlordPush_DDZ");
         }
     }
@@ -1752,29 +1758,43 @@ public class DdzGameEventDeal {
      * @return
      */
     private List<Integer> getLeftArray(String roomNo, String account) {
-        List<Integer> leftArray = new ArrayList<>();
-        // 初始化
-        for (int i = 0; i < 15; i++) {
-            leftArray.add(0);
-        }
         DdzGameRoom room = (DdzGameRoom) RoomManage.gameRoomMap.get(roomNo);
-        // 取所有手牌
-        List<String> allCard = new ArrayList<>();
-        for (String player : obtainAllPlayerAccount(roomNo)) {
-            if (!player.equals(account)) {
-                allCard.addAll(room.getUserPacketMap().get(player).getMyPai());
+        if (Dto.stringIsNULL(room.getUserPacketMap().get(account).getJpqEndTime())) {
+            JSONObject userProps = propsBiz.getUserPropsByType(account,CommonConstant.PROPS_TYPE_JPQ);
+            // 没有记录设置当前时间之前的时间
+            if (Dto.isObjNull(userProps)) {
+                room.getUserPacketMap().get(account).setJpqEndTime(TimeUtil.addYearBaseOnNowTime(TimeUtil.getNowDate(),-1));
+            }else {
+                room.getUserPacketMap().get(account).setJpqEndTime(userProps.getString("end_time"));
             }
         }
-        if (room.getGameStatus() == DdzConstant.DDZ_GAME_STATUS_CHOICE_LANDLORD) {
-            allCard.addAll(room.getLandlordCard());
-        }
-        // 取剩余手牌数
-        for (String card : allCard) {
-            int cardValue = DdzCore.obtainCardValue(card);
-            int cardCount = leftArray.get(cardValue-3) + 1;
-            leftArray.set(cardValue-3,cardCount);
-        }
+        List<Integer> leftArray = new ArrayList<>();
+        // 结束时间必须在当前时间之后
+        if (room.getRoomType() == CommonConstant.ROOM_TYPE_JB && room.getSetting().containsKey("props_jpq")) {
+            if (TimeUtil.isLatter(room.getUserPacketMap().get(account).getJpqEndTime(),TimeUtil.getNowDate())) {
+                // 初始化
+                for (int i = 0; i < 15; i++) {
+                    leftArray.add(0);
+                }
 
+                // 取所有手牌
+                List<String> allCard = new ArrayList<>();
+                for (String player : obtainAllPlayerAccount(roomNo)) {
+                    if (!player.equals(account)) {
+                        allCard.addAll(room.getUserPacketMap().get(player).getMyPai());
+                    }
+                }
+                if (room.getGameStatus() == DdzConstant.DDZ_GAME_STATUS_CHOICE_LANDLORD) {
+                    allCard.addAll(room.getLandlordCard());
+                }
+                // 取剩余手牌数
+                for (String card : allCard) {
+                    int cardValue = DdzCore.obtainCardValue(card);
+                    int cardCount = leftArray.get(cardValue-3) + 1;
+                    leftArray.set(cardValue-3,cardCount);
+                }
+            }
+        }
         return leftArray;
     }
 

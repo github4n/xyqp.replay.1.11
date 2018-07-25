@@ -2,6 +2,7 @@ package com.zhuoan.biz.game.biz.impl;
 
 import com.zhuoan.biz.game.biz.AchievementBiz;
 import com.zhuoan.biz.game.dao.AchievementDao;
+import com.zhuoan.biz.game.dao.GameDao;
 import com.zhuoan.service.cache.RedisService;
 import com.zhuoan.util.Dto;
 import net.sf.json.JSONArray;
@@ -24,6 +25,9 @@ public class AchievementBizImpl implements AchievementBiz {
 
     @Resource
     private AchievementDao achievementDao;
+
+    @Resource
+    private GameDao gameDao;
 
     @Override
     public JSONArray getAchievementInfoByGameId(int gameId) {
@@ -65,6 +69,18 @@ public class AchievementBizImpl implements AchievementBiz {
             obj.put("id", userAchievement.getLong("id"));
             achievementScore += userAchievement.getLong("achievement_score");
         }
+        JSONObject userInfo = gameDao.getUserByAccount(account);
+        if (!Dto.isObjNull(userInfo)) {
+            if (userInfo.containsKey("name")) {
+                obj.put("user_name", userInfo.getLong("name"));
+            }
+            if (userInfo.containsKey("headimg")) {
+                obj.put("user_img", userInfo.getString("headimg"));
+            }
+            if (userInfo.containsKey("sign")) {
+                obj.put("user_sign", userInfo.getString("sign"));
+            }
+        }
         obj.put("user_account", account);
         obj.put("game_id", gameId);
         obj.put("achievement_score", achievementScore);
@@ -80,5 +96,10 @@ public class AchievementBizImpl implements AchievementBiz {
         }
         achievementDao.addOrUpdateUserAchievement(obj);
         return levelUp;
+    }
+
+    @Override
+    public JSONArray getAchievementRank(int limit, int gameId) {
+        return achievementDao.getAchievementRank(limit, gameId);
     }
 }
