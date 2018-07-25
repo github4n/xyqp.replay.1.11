@@ -10,10 +10,7 @@ import com.zhuoan.biz.event.qzmj.QZMJGameEventDeal;
 import com.zhuoan.biz.event.sss.SSSGameEventDealNew;
 import com.zhuoan.biz.event.sw.SwGameEventDeal;
 import com.zhuoan.biz.event.zjh.ZJHGameEventDealNew;
-import com.zhuoan.biz.game.biz.GameLogBiz;
-import com.zhuoan.biz.game.biz.PublicBiz;
-import com.zhuoan.biz.game.biz.RoomBiz;
-import com.zhuoan.biz.game.biz.UserBiz;
+import com.zhuoan.biz.game.biz.*;
 import com.zhuoan.biz.model.GameRoom;
 import com.zhuoan.biz.model.Playerinfo;
 import com.zhuoan.biz.model.RoomManage;
@@ -77,6 +74,9 @@ public class BaseEventDeal {
 
     @Resource
     private GameLogBiz gameLogBiz;
+
+    @Resource
+    private AchievementBiz achievementBiz;
 
     @Resource
     private NNGameEventDealNew nnGameEventDealNew;
@@ -722,9 +722,11 @@ public class BaseEventDeal {
             CommonConstant.sendMsgEventToSingle(client, String.valueOf(result), "enterRoomPush_NN");
             return;
         }
-        if (!userInfo.containsKey("uuid")||Dto.stringIsNULL(userInfo.getString("uuid"))||
-            !userInfo.getString("uuid").equals(postData.getString("uuid"))) {
-            return;
+        if (client != null) {
+            if (!userInfo.containsKey("uuid")||Dto.stringIsNULL(userInfo.getString("uuid"))||
+                !userInfo.getString("uuid").equals(postData.getString("uuid"))) {
+                return;
+            }
         }
         // 添加工会信息
         if (!Dto.isObjNull(userInfo)&&userInfo.containsKey("gulidId")&&userInfo.getInt("gulidId")>0&&
@@ -2153,7 +2155,7 @@ public class BaseEventDeal {
                 if (payType==CommonConstant.PAY_TYPE_OWNER) {
                     roomCard = single*player;
                 }
-                if (baseInfo.getInt("roomType") == CommonConstant.ROOM_TYPE_DK) {
+                if (baseInfo.containsKey("roomType") && baseInfo.getInt("roomType") == CommonConstant.ROOM_TYPE_DK) {
                     roomCard = single*player;
                 }
             }
@@ -2286,7 +2288,12 @@ public class BaseEventDeal {
                 result.put(CommonConstant.RESULT_KEY_CODE,CommonConstant.GLOBAL_YES);
                 String yesterday = TimeUtil.addDaysBaseOnNowTime(nowTime,-1,"yyyy-MM-dd HH:mm:ss");
                 if (TimeUtil.isLatter(signInfo.getString("createtime"),yesterday)) {
-                    int reward = (signInfo.getInt("singnum")+1)*minReward;
+                    int signDay = signInfo.getInt("singnum")+1;
+                    // 一周签到模式
+                    if (CommonConstant.weekSignPlatformList.contains(platform) && signDay == 7) {
+                        signDay = 1;
+                    }
+                    int reward = signDay * minReward;
                     if (reward>maxReward) {
                         reward = maxReward;
                     }
@@ -2388,8 +2395,13 @@ public class BaseEventDeal {
                 return;
             }
             if (TimeUtil.isLatter(signInfo.getString("createtime"),yesterday)) {
-                object.put("singnum",signInfo.getInt("singnum")+1);
-                reward = (signInfo.getInt("singnum")+1)*getCoinsSignMinReward(platform);
+                int signDay = signInfo.getInt("singnum") + 1;
+                // 一周签到模式
+                if (CommonConstant.weekSignPlatformList.contains(platform) && signDay == 7) {
+                    signDay = 1;
+                }
+                object.put("singnum", signDay);
+                reward = (signDay) * getCoinsSignMinReward(platform);
                 int maxReward = getCoinsSignMaxReward(platform);
                 if (reward>maxReward) {
                     reward = maxReward;
@@ -2672,5 +2684,62 @@ public class BaseEventDeal {
             }
         }
         return roomCard;
+    }
+
+    /**
+     * 获取用户成就信息
+     * @param client
+     * @param data
+     */
+    public void getUserAchievementInfo(SocketIOClient client, Object data) {
+        JSONObject postData = JSONObject.fromObject(data);
+        String account = postData.getString(CommonConstant.DATA_KEY_ACCOUNT);
+        // 所要获取的游戏id
+        JSONArray idList = postData.getJSONArray("id_list");
+        // 用户成就信息
+        JSONArray userAchievements = achievementBiz.getUserAchievementByAccount(account);
+        // 组织数据，通知前端
+        JSONObject result = new JSONObject();
+        result.put(CommonConstant.RESULT_KEY_CODE, CommonConstant.GLOBAL_YES);
+        // 成就详情
+        JSONArray achievementArray = new JSONArray();
+        for (int i = 0; i < idList.size(); i++) {
+            int gameId = idList.getInt(i);
+            JSONObject userAchievement = getAchievementByGameId(userAchievements,gameId);
+            JSONObject achievement = new JSONObject();
+            achievement.put("game_id",gameId);
+            // 有存在取数据库，不存在取默认
+            if (!Dto.isObjNull(userAchievement)) {
+                achievement.put("score",userAchievement.getInt("achievement_score"));
+                achievement.put("name",userAchievement.getString("achievement_name"));
+            } else {
+                achievement.put("score",0);
+                JSONArray achievementInfo = achievementBiz.getAchievementInfoByGameId(gameId);
+                if (achievementInfo.size() > 0) {
+                    achievement.put("name",achievementInfo.getJSONObject(0).getString("achievement_name"));
+                } else {
+                    achievement.put("name","未设置");
+                }
+            }
+            achievementArray.add(achievement);
+        }
+        result.put("data", achievementArray);
+        CommonConstant.sendMsgEventToSingle(client, String.valueOf(result), "getUserAchievementInfoPush");
+    }
+
+    /**
+     * 判断用户成就信息是否存在
+     * @param userAchievements
+     * @param gameId
+     * @return
+     */
+    private JSONObject getAchievementByGameId(JSONArray userAchievements, int gameId) {
+        for (Object obj : userAchievements) {
+            JSONObject userAchievement = JSONObject.fromObject(obj);
+            if (userAchievement.containsKey("game_id") && userAchievement.getInt("game_id") == gameId) {
+                return userAchievement;
+            }
+        }
+        return null;
     }
  }

@@ -19,16 +19,22 @@ public class MatchDaoImpl implements MatchDao {
 
     @Override
     public JSONArray getMatchSettingByType(int type) {
-        String sql = "select id,type,game_id,match_name,per_count,player_count,total_round,description,time_interval,online_num,match_cost," +
-            "reward_info,match_info,rule,promotion,is_use,create_time,platform,memo from za_match_setting where type=?";
-        return TimeUtil.transTimestamp(DBUtil.getObjectListBySQL(sql, new Object[]{type}), "create_time","yyyy-MM-dd HH:mm:ss");
+        String sql = "select id,type,game_id,match_name,per_count,player_count,total_round,is_auto,must_full,description,time_interval,online_num,match_cost," +
+            "cost_type,reward_info,match_info,rule,promotion,is_use,create_time,platform,memo from za_match_setting where type=?";
+        return TimeUtil.transTimestamp(DBUtil.getObjectListBySQL(sql, new Object[]{type}), "create_time", "yyyy-MM-dd HH:mm:ss");
     }
 
     @Override
     public JSONObject getMatchSettingById(long matchId, long gameId) {
-        String sql = "select id,type,game_id,match_name,per_count,player_count,total_round,description,online_num,match_cost," +
-            "reward_info,match_info,rule,promotion,is_use,create_time,platform,memo,reward_detail from za_match_setting where id=? and game_id=?";
-        return TimeUtil.transTimeStamp(DBUtil.getObjectBySQL(sql, new Object[]{matchId, gameId}),"yyyy-MM-dd HH:mm:ss","create_time");
+        String sql = "select id,type,game_id,match_name,per_count,player_count,total_round,is_auto,must_full,description,online_num,match_cost," +
+            "cost_type,reward_info,match_info,rule,promotion,is_use,create_time,platform,memo,reward_detail from za_match_setting where id=? and game_id=?";
+        return TimeUtil.transTimeStamp(DBUtil.getObjectBySQL(sql, new Object[]{matchId, gameId}), "yyyy-MM-dd HH:mm:ss", "create_time");
+    }
+
+    @Override
+    public void updateMatchSettingById(long matchId, String createTime) {
+        String sql = "update za_match_setting set create_time=? where id=?";
+        DBUtil.executeUpdateBySQL(sql, new Object[]{createTime, matchId});
     }
 
     @Override
@@ -56,9 +62,9 @@ public class MatchDaoImpl implements MatchDao {
     }
 
     @Override
-    public void updateUserCoinsAndScoreByAccount(String account, int coins, int score) {
-        String sql = "update za_users set coins=coins+?,score=score+? where account=?";
-        DBUtil.executeUpdateBySQL(sql, new Object[]{coins, score, account});
+    public void updateUserCoinsAndScoreByAccount(String account, int coins, int score, int roomCard) {
+        String sql = "update za_users set coins=coins+?,score=score+?,roomcard=roomcard+? where account=?";
+        DBUtil.executeUpdateBySQL(sql, new Object[]{coins, score, roomCard, account});
     }
 
     @Override

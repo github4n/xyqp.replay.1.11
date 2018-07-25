@@ -128,6 +128,10 @@ public class CommonConstant {
      */
     public static final int BASE_GAME_EVENT_DISSOLVE_PROXY_ROOM = 28;
     /**
+     * 公共游戏事件-获取玩家成就信息
+     */
+    public static final int BASE_GAME_EVENT_GET_USER_ACHIEVEMENT_INFO = 29;
+    /**
      * 游戏公共部分
      */
     public static final int GAME_BASE = 0;
@@ -309,6 +313,7 @@ public class CommonConstant {
     public static String SECRET_KEY_ZOB = "zhoan";
 
     public static List<String> fundPlatformList = Arrays.asList("ZOBQP");
+    public static List<String> weekSignPlatformList = Arrays.asList("YQWDDZ");
 
     public static List<String> jwdList = Arrays.asList("24.8939108980,118.6029052734",
         "24.9711199276,118.8391113281","24.6969342264,118.7155151367","25.5176574300,118.4655761719",

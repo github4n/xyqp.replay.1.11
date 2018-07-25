@@ -29,6 +29,14 @@ public interface MatchBiz {
     JSONObject getMatchSettingById(long matchId, long gameId);
 
     /**
+     * 更新场次信息
+     *
+     * @param matchId
+     * @param createTime
+     */
+    void updateMatchSettingById(long matchId, String createTime);
+
+    /**
      * 获取当前未开赛的场次
      *
      * @param matchId 场次id
@@ -67,8 +75,9 @@ public interface MatchBiz {
      * @param account
      * @param coins
      * @param score
+     * @param roomCard
      */
-    void updateUserCoinsAndScoreByAccount(String account, int coins, int score);
+    void updateUserCoinsAndScoreByAccount(String account, int coins, int score, int roomCard);
 
     /**
      * 获取玩家获奖记录
@@ -77,10 +86,11 @@ public interface MatchBiz {
      * @param gameId
      * @return
      */
-    JSONObject getUserWinningRecord(String account,int gameId);
+    JSONObject getUserWinningRecord(String account, int gameId);
 
     /**
      * 添加用户获奖记录
+     *
      * @param winningRecord
      */
     void addOrUpdateUserWinningRecord(JSONObject winningRecord);

@@ -29,6 +29,14 @@ public interface MatchDao {
     JSONObject getMatchSettingById(long matchId, long gameId);
 
     /**
+     * 更新场次信息
+     *
+     * @param matchId
+     * @param createTime
+     */
+    void updateMatchSettingById(long matchId, String createTime);
+
+    /**
      * 获取当前未开赛的场次
      *
      * @param matchId 场次id
@@ -67,8 +75,9 @@ public interface MatchDao {
      * @param account
      * @param coins
      * @param score
+     * @param roomCard
      */
-    void updateUserCoinsAndScoreByAccount(String account, int coins, int score);
+    void updateUserCoinsAndScoreByAccount(String account, int coins, int score, int roomCard);
 
     /**
      * 获取玩家获奖记录

@@ -407,6 +407,7 @@ public class QZMJConstant {
     public static final int QZMJ_GAME_EVENT_ROBOT_CHI = 11;
     public static final int QZMJ_GAME_EVENT_ROBOT_GUO = 12;
     public static final int QZMJ_GAME_EVENT_ROBOT_SUMMARY = 13;
+    public static final int QZMJ_GAME_EVENT_ROBOT_ZM = 14;
     /**
      * 游戏事件-重连
      */

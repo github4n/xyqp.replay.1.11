@@ -326,16 +326,16 @@ public class BaseGameEvent {
         server.addEventListener("dissolveProxyRoom", Object.class, new DataListener<Object>() {
             @Override
             public void onData(SocketIOClient client, Object object, AckRequest ackSender) {
-                producerService.sendMessage(baseQueueDestination, new Messages(client, object, CommonConstant.GAME_BASE, CommonConstant.BASE_GAME_EVENT_GET_PROXY_ROOM_LIST));
+                producerService.sendMessage(baseQueueDestination, new Messages(client, object, CommonConstant.GAME_BASE, CommonConstant.BASE_GAME_EVENT_DISSOLVE_PROXY_ROOM));
             }
         });
         /**
-         *  获取代开房间列表
+         *  获取玩家成就信息
          */
-        server.addEventListener("dissolveProxyRoom", Object.class, new DataListener<Object>() {
+        server.addEventListener("getUserAchievementInfo", Object.class, new DataListener<Object>() {
             @Override
             public void onData(SocketIOClient client, Object object, AckRequest ackSender) {
-                producerService.sendMessage(baseQueueDestination, new Messages(client, object, CommonConstant.GAME_BASE, CommonConstant.BASE_GAME_EVENT_DISSOLVE_PROXY_ROOM));
+                producerService.sendMessage(baseQueueDestination, new Messages(client, object, CommonConstant.GAME_BASE, CommonConstant.BASE_GAME_EVENT_GET_USER_ACHIEVEMENT_INFO));
             }
         });
 

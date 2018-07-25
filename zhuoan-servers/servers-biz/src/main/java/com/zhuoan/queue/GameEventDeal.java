@@ -168,6 +168,9 @@ public class GameEventDeal {
                     case CommonConstant.BASE_GAME_EVENT_DISSOLVE_PROXY_ROOM:
                         baseEventDeal.dissolveProxyRoom(client, data);
                         break;
+                    case CommonConstant.BASE_GAME_EVENT_GET_USER_ACHIEVEMENT_INFO:
+                        baseEventDeal.getUserAchievementInfo(client, data);
+                        break;
                     default:
                         break;
                 }

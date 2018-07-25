@@ -432,6 +432,12 @@ public class RobotEventDeal {
             if (robotInfo.getActionType() == QZMJConstant.QZMJ_GAME_EVENT_ROBOT_GUO) {
                 obj.put("type",1);
                 robotInfo.setActionType(QZMJConstant.QZMJ_GAME_EVENT_IN);
+            }else if (robotInfo.getActionType() == QZMJConstant.QZMJ_GAME_EVENT_ROBOT_ZM) {
+                obj.put("type",11);
+                robotInfo.setActionType(QZMJConstant.QZMJ_GAME_EVENT_IN);
+            }else if (robotInfo.getActionType() == QZMJConstant.QZMJ_GAME_EVENT_ROBOT_HU) {
+                obj.put("type",7);
+                robotInfo.setActionType(QZMJConstant.QZMJ_GAME_EVENT_IN);
             }
             // 出牌
             if (robotInfo.getActionType() == QZMJConstant.QZMJ_GAME_EVENT_CP) {

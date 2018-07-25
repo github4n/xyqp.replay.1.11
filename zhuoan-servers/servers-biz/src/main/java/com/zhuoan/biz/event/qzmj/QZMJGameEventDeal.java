@@ -357,6 +357,10 @@ public class QZMJGameEventDeal {
                     int hu=hu(roomNo, account, 7);
                     if(hu>0){
                         detailDataByChiGangPengHu(roomNo, -7, account, null);
+                        if (room.isRobot() && room.getRobotList().contains(account)) {
+                            //结算事件，返回结算处理结果
+                            sendSummaryData(roomNo);
+                        }
                     }
                     break;
                 case -8:
@@ -404,6 +408,10 @@ public class QZMJGameEventDeal {
                         int zimo=hu(roomNo, account, 3);
                         if(zimo>0){
                             detailDataByChiGangPengHu(roomNo, -3, account, null);
+                            if (room.isRobot() && room.getRobotList().contains(account)) {
+                                //结算事件，返回结算处理结果
+                                sendSummaryData(roomNo);
+                            }
                         }
                         break;
                     }
@@ -3627,6 +3635,10 @@ public class QZMJGameEventDeal {
                     }
                 }
 
+                if (room.isRobot() && room.getRobotList().contains(thisask)) {
+                    int delayTime = RandomUtils.nextInt(3)+2;
+                    robotEventDeal.changeRobotActionDetail(thisask,QZMJConstant.QZMJ_GAME_EVENT_CP,delayTime);
+                }
                 // 出牌提示
                 JSONArray tingTip = MaJiangCore.tingPaiTip(room.getUserPacketMap().get(thisask).getMyPai(), room.getJin(), shengyuList);
                 chupai.put("tingTip",tingTip);
@@ -3643,7 +3655,13 @@ public class QZMJGameEventDeal {
     private void sendGameEventResult(QZMJGameRoom room, String thisAsk, JSONObject result, int type) {
         if (room.isRobot() && room.getRobotList().contains(thisAsk)) {
             int delayTime = RandomUtils.nextInt(3)+2;
-            robotEventDeal.changeRobotActionDetail(thisAsk, QZMJConstant.QZMJ_GAME_EVENT_ROBOT_GUO,delayTime);
+            if (result.getJSONArray("type").getInt(0) == 3) {
+                robotEventDeal.changeRobotActionDetail(thisAsk, QZMJConstant.QZMJ_GAME_EVENT_ROBOT_ZM,delayTime);
+            } else if (result.getJSONArray("type").getInt(0) == 7) {
+                robotEventDeal.changeRobotActionDetail(thisAsk, QZMJConstant.QZMJ_GAME_EVENT_ROBOT_HU,delayTime);
+            } else {
+                robotEventDeal.changeRobotActionDetail(thisAsk, QZMJConstant.QZMJ_GAME_EVENT_ROBOT_GUO,delayTime);
+            }
         }else {
             beginGameEventTimer(room.getRoomNo(), thisAsk, type,QZMJConstant.QZ_MJ_TIMER_TYPE_EVENT);
             if (room.getUserPacketMap().get(thisAsk).getIsTrustee() != CommonConstant.GLOBAL_YES) {

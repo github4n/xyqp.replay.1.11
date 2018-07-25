@@ -56,19 +56,13 @@ public class MatchEventDeal {
 
     @Scheduled(cron = "0/10 * * * * ?")
     public void startTimeMatch() {
-        // 更新满人开赛场次信息
-        JSONArray countMatchSettings = getMatchSettingByType(MatchConstant.MATCH_TYPE_COUNT);
-        // 更新场次配置
-        JSONArray newCountMatchSettings = new JSONArray();
-        for (Object object : countMatchSettings) {
-            JSONObject matchSetting = JSONObject.fromObject(object);
-            matchSetting.put("online_num",matchSetting.getInt("online_num")+RandomUtils.nextInt(10));
-            newCountMatchSettings.add(matchSetting);
-        }
-        StringBuffer countKey = new StringBuffer();
-        countKey.append("match_setting_");
-        countKey.append(MatchConstant.MATCH_TYPE_COUNT);
-        redisService.insertKey(String.valueOf(countKey), String.valueOf(newCountMatchSettings), null);
+        // 更新满人开赛配置
+        updateCountMatchSettings();
+        // 更新实时红包赛配置
+        updateTimeMatchSettings();
+    }
+
+    private void updateTimeMatchSettings() {
         // 场次配置
         JSONArray timeMatchSettings = getMatchSettingByType(MatchConstant.MATCH_TYPE_TIME);
         // 更新实时场次配置
@@ -81,19 +75,39 @@ public class MatchEventDeal {
             // 需要自动开赛
             if ("0".equals(difference)) {
                 matchSetting.put("create_time", TimeUtil.addSecondBaseOnNowTime(nowTime, matchSetting.getInt("time_interval")));
-                matchSetting.put("description", TimeUtil.addSecondBaseOnNowTime(nowTime, matchSetting.getInt("time_interval"))+"开赛");
+                matchSetting.put("description", TimeUtil.addSecondBaseOnNowTime(nowTime, matchSetting.getInt("time_interval")) + "开赛");
                 JSONObject unFullMatch = matchBiz.getMatchInfoByMatchId(matchSetting.getLong("id"), 0, 0);
                 if (!Dto.isObjNull(unFullMatch)) {
-                    startBeginTimer(matchSetting,unFullMatch.getString("match_num"));
+                    if (matchSetting.getInt("must_full") != CommonConstant.GLOBAL_YES ||
+                        matchSetting.getInt("player_count") <= unFullMatch.getInt("current_count")) {
+                        startBeginTimer(matchSetting, unFullMatch.getString("match_num"));
+                    }
                 }
+                matchBiz.updateMatchSettingById(matchSetting.getLong("id"), matchSetting.getString("create_time"));
             }
-            matchSetting.put("online_num",matchSetting.getInt("online_num")+RandomUtils.nextInt(10));
+            matchSetting.put("online_num", matchSetting.getInt("online_num") + RandomUtils.nextInt(10));
             newTimeMatchSettings.add(matchSetting);
         }
         StringBuffer timeKey = new StringBuffer();
         timeKey.append("match_setting_");
         timeKey.append(MatchConstant.MATCH_TYPE_TIME);
         redisService.insertKey(String.valueOf(timeKey), String.valueOf(newTimeMatchSettings), null);
+    }
+
+    private void updateCountMatchSettings() {
+        // 更新满人开赛场次信息
+        JSONArray countMatchSettings = getMatchSettingByType(MatchConstant.MATCH_TYPE_COUNT);
+        // 更新场次配置
+        JSONArray newCountMatchSettings = new JSONArray();
+        for (Object object : countMatchSettings) {
+            JSONObject matchSetting = JSONObject.fromObject(object);
+            matchSetting.put("online_num", matchSetting.getInt("online_num") + RandomUtils.nextInt(10));
+            newCountMatchSettings.add(matchSetting);
+        }
+        StringBuffer countKey = new StringBuffer();
+        countKey.append("match_setting_");
+        countKey.append(MatchConstant.MATCH_TYPE_COUNT);
+        redisService.insertKey(String.valueOf(countKey), String.valueOf(newCountMatchSettings), null);
     }
 
 
@@ -178,57 +192,88 @@ public class MatchEventDeal {
         int gameId = postData.getInt("gid");
         // 场次id
         int matchId = postData.getInt("match_id");
+        // 消耗类型
+        String type = postData.getString("type");
+        // 获取场次信息
         JSONObject matchSetting = matchBiz.getMatchSettingById(matchId, gameId);
         JSONObject result = new JSONObject();
+        Map<String, JSONObject> beginMap = new HashMap<>();
         if (!Dto.isObjNull(matchSetting)) {
             // 是否已报名该场次
             boolean isSignUp = redisService.sHasKey("match_sign_up_" + matchSetting.getInt("id"), account);
             if (!isSignUp) {
-                JSONObject userInfo = userBiz.getUserByAccount(account);
-                if (!Dto.isObjNull(userInfo) && userInfo.containsKey("coins") &&
-                    userInfo.getInt("coins") > matchSetting.getInt("match_cost")) {
-                    // 所有未满场次
-                    JSONObject unFullMatch = matchBiz.getMatchInfoByMatchId(matchId, 0, 0);
-                    // 没有未满场次创建，有未满场次加入
-                    if (client != null) {
-                        String matchNum;
-                        if (Dto.isObjNull(unFullMatch)) {
-                            // 场次编号
-                            matchNum = randomMatchNum();
-                            // 创建场次
-                            createMatch(client, account, matchId, matchSetting, matchNum);
-                            // 开始倒计时
-                            if (matchSetting.getInt("type") == MatchConstant.MATCH_TYPE_COUNT) {
-                                startBeginTimer(matchSetting, matchNum);
+                // 消耗类型
+                int costFee = -1;
+                JSONArray costType = matchSetting.getJSONArray("cost_type");
+                for (Object costObj : costType) {
+                    if (type.equals(JSONObject.fromObject(costObj).getString("type"))) {
+                        costFee = JSONObject.fromObject(costObj).getInt("value");
+                        break;
+                    }
+                }
+                if (costFee > 0) {
+                    JSONObject userInfo = userBiz.getUserByAccount(account);
+                    if (!Dto.isObjNull(userInfo) && userInfo.containsKey(type) && userInfo.getInt(type) > costFee) {
+                        // 所有未满场次
+                        JSONObject unFullMatch = matchBiz.getMatchInfoByMatchId(matchId, 0, 0);
+                        // 没有未满场次创建，有未满场次加入
+                        if (client != null) {
+                            String matchNum;
+                            if (Dto.isObjNull(unFullMatch)) {
+                                // 场次编号
+                                matchNum = randomMatchNum();
+                                // 创建场次
+                                createMatch(userInfo.getString("uuid"), client, account, matchId, matchSetting, matchNum, type);
+                                // 开始倒计时
+                                if (matchSetting.getInt("type") == MatchConstant.MATCH_TYPE_COUNT &&
+                                    matchSetting.getInt("is_auto") == CommonConstant.GLOBAL_YES) {
+                                    startBeginTimer(matchSetting, matchNum);
+                                }
+                            } else {
+                                // 加入
+                                joinMatch(userInfo.getString("uuid"), client, account, matchSetting, unFullMatch, type);
+                                // 场次编号
+                                matchNum = unFullMatch.getString("match_num");
+                                // 最后一人报名开始游戏
+                                if (matchSetting.getInt("type") == MatchConstant.MATCH_TYPE_COUNT && !Dto.isObjNull(unFullMatch) &&
+                                    unFullMatch.getInt("current_count") + 1 >= matchSetting.getInt("player_count")) {
+                                    beginMap.put(matchNum, matchSetting);
+                                }
                             }
-                        } else {
-                            // 加入
-                            joinMatch(client, account, matchSetting, unFullMatch);
-                            // 场次编号
-                            matchNum = unFullMatch.getString("match_num");
+                            // 存入缓存
+                            redisService.sSet("match_sign_up_" + matchSetting.getInt("id"), account);
+                            // 扣除金币
+                            int coins = 0;
+                            int roomCard = 0;
+                            if ("coins".equals(type)) {
+                                coins = -costFee;
+                            }
+                            if ("roomcard".equals(type)) {
+                                roomCard = -costFee;
+                            }
+                            matchBiz.updateUserCoinsAndScoreByAccount(account, coins, 0, roomCard);
+                            JSONObject matchInfo = getMatchInfoByNumFromRedis(matchNum);
+                            // 通知前端
+                            result.put(CommonConstant.RESULT_KEY_CODE, CommonConstant.GLOBAL_YES);
+                            result.put(CommonConstant.RESULT_KEY_MSG, "报名成功");
+                            result.put("matchNum", matchNum);
+                            result.put("signCount", matchInfo.getInt("sign_count"));
+                            result.put("totalCount", matchSetting.getInt("player_count"));
+                            result.put("type", matchSetting.getInt("type"));
+                            result.put("match_id", matchSetting.getLong("id"));
+                            result.put("match_name", matchSetting.getString("match_name"));
+                            if (matchSetting.getInt("type") == MatchConstant.MATCH_TYPE_TIME) {
+                                String difference = TimeUtil.getDaysBetweenTwoTime(matchSetting.getString("create_time"), TimeUtil.getNowDate(), 1000L);
+                                result.put("timeLeft", difference);
+                            }
                         }
-                        // 存入缓存
-                        redisService.sSet("match_sign_up_" + matchSetting.getInt("id"), account);
-                        // 扣除金币
-                        matchBiz.updateUserCoinsAndScoreByAccount(account, -matchSetting.getInt("match_cost"), 0);
-                        JSONObject matchInfo = getMatchInfoByNumFromRedis(matchNum);
-                        // 通知前端
-                        result.put(CommonConstant.RESULT_KEY_CODE, CommonConstant.GLOBAL_YES);
-                        result.put(CommonConstant.RESULT_KEY_MSG, "报名成功");
-                        result.put("matchNum", matchNum);
-                        result.put("signCount", matchInfo.getInt("sign_count"));
-                        result.put("totalCount", matchSetting.getInt("player_count"));
-                        result.put("type", matchSetting.getInt("type"));
-                        result.put("match_id", matchSetting.getLong("id"));
-                        result.put("match_name", matchSetting.getString("match_name"));
-                        if (matchSetting.getInt("type") == MatchConstant.MATCH_TYPE_TIME) {
-                            String difference = TimeUtil.getDaysBetweenTwoTime(matchSetting.getString("create_time"), TimeUtil.getNowDate(), 1000L);
-                            result.put("timeLeft", difference);
-                        }
+                    } else {
+                        result.put(CommonConstant.RESULT_KEY_CODE, CommonConstant.GLOBAL_NO);
+                        result.put(CommonConstant.RESULT_KEY_MSG, "余额不足");
                     }
                 } else {
                     result.put(CommonConstant.RESULT_KEY_CODE, CommonConstant.GLOBAL_NO);
-                    result.put(CommonConstant.RESULT_KEY_MSG, "金币不足");
+                    result.put(CommonConstant.RESULT_KEY_MSG, "支付类型错误");
                 }
             } else {
                 result.put(CommonConstant.RESULT_KEY_CODE, CommonConstant.GLOBAL_NO);
@@ -239,6 +284,10 @@ public class MatchEventDeal {
             result.put(CommonConstant.RESULT_KEY_MSG, "场次信息不正确");
         }
         CommonConstant.sendMsgEventToSingle(client, String.valueOf(result), "matchSignUpPush");
+        // 开始游戏
+        for (String matchNum : beginMap.keySet()) {
+            initRank(beginMap.get(matchNum), matchNum);
+        }
     }
 
     /**
@@ -273,20 +322,48 @@ public class MatchEventDeal {
                     if (allPlayerInfo == null || allPlayerInfo.size() == 0) {
                         redisService.deleteByKey("match_info_" + matchNum);
                         obj.put("is_full", 1);
+                    } else {
+                        // 更改缓存
+                        JSONObject matchInfo = getMatchInfoByNumFromRedis(unFullMatch.getString("match_num"));
+                        if (!Dto.isObjNull(matchInfo)) {
+                            matchInfo.put("sign_count", matchInfo.getInt("sign_count") - 1);
+                            addMatchInfoIntoRedis(unFullMatch.getString("match_num"), matchInfo);
+                        }
                     }
+                    // 玩家信息
                     JSONArray playerArray = unFullMatch.getJSONArray("player_array");
                     List<String> playerList = new ArrayList<>();
+                    JSONObject playerObj = new JSONObject();
                     for (Object player : playerArray) {
-                        playerList.add(String.valueOf(player));
+                        if (!account.equals(JSONObject.fromObject(player).getString("account"))) {
+                            playerList.add(String.valueOf(player));
+                        } else {
+                            playerObj = JSONObject.fromObject(player);
+                        }
                     }
-                    playerList.remove(account);
                     obj.put("id", unFullMatch.getLong("id"));
                     obj.put("player_array", String.valueOf(playerList));
                     obj.put("current_count", unFullMatch.getInt("current_count") - 1);
                     // 更新数据库
                     matchBiz.addOrUpdateMatchInfo(obj);
                     // 返还金币
-                    matchBiz.updateUserCoinsAndScoreByAccount(account, matchSetting.getInt("match_cost"), 0);
+                    int costFee = 0;
+                    JSONArray costType = matchSetting.getJSONArray("cost_type");
+                    for (Object costObj : costType) {
+                        if (playerObj.getString("type").equals(JSONObject.fromObject(costObj).getString("type"))) {
+                            costFee = JSONObject.fromObject(costObj).getInt("value");
+                            break;
+                        }
+                    }
+                    int coins = 0;
+                    int roomCard = 0;
+                    if ("coins".equals(playerObj.getString("type"))) {
+                        coins = costFee;
+                    }
+                    if ("roomcard".equals(playerObj.getString("type"))) {
+                        roomCard = costFee;
+                    }
+                    matchBiz.updateUserCoinsAndScoreByAccount(account, coins, 0, roomCard);
                     result.put(CommonConstant.RESULT_KEY_CODE, CommonConstant.GLOBAL_YES);
                     result.put(CommonConstant.RESULT_KEY_MSG, "退赛成功");
                     result.put("type", matchSetting.getInt("type"));
@@ -389,16 +466,30 @@ public class MatchEventDeal {
                 }
                 // 更改状态
                 matchBiz.updateMatchInfoByMatchNum(matchNum, 1);
-                // 所有玩家
-                Map<Object, Object> allPlayerInfo = redisService.hmget("player_info_" + matchNum);
-                int leftNum = matchSetting.getInt("player_count") - allPlayerInfo.size();
-                JSONArray robotArray = matchBiz.getRobotList(leftNum);
-                for (int i = 0; i < robotArray.size(); i++) {
-                    initRankList(robotArray.getJSONObject(i).getString("account"), matchNum);
-                }
-                startMatch(matchNum);
+                // 初始化排行榜
+                initRank(matchSetting, matchNum);
             }
         });
+    }
+
+    /**
+     * 初始化排行榜
+     *
+     * @param matchSetting
+     * @param matchNum
+     */
+    private void initRank(JSONObject matchSetting, String matchNum) {
+        if (matchSetting.getInt("is_auto") == CommonConstant.GLOBAL_YES) {
+            // 所有玩家
+            Map<Object, Object> allPlayerInfo = redisService.hmget("player_info_" + matchNum);
+            int leftNum = matchSetting.getInt("player_count") - allPlayerInfo.size();
+            JSONArray robotArray = matchBiz.getRobotList(leftNum);
+            for (int i = 0; i < robotArray.size(); i++) {
+                initRankList(robotArray.getJSONObject(i).getString("account"), matchNum);
+            }
+        }
+        // 开始匹配
+        startMatch(matchNum);
     }
 
     /**
@@ -419,15 +510,17 @@ public class MatchEventDeal {
         // 当前总人数
         int totalNum = promotion.getInt(curRound);
         Map<Object, Object> allPlayerInfo = redisService.hmget("player_info_" + matchNum);
-        // 机器人人数
-        int robotNum = getRobotNum(allPlayerInfo.size(), curRound, totalRound, perCount, totalNum);
         // 所有玩家
         List<String> allPlayerList = new ArrayList<>();
         for (Object o : allPlayerInfo.keySet()) {
             allPlayerList.add(String.valueOf(o));
         }
-        for (int i = 0; i < robotNum; i++) {
-            allPlayerList.add("0");
+        // 机器人人数
+        if (matchInfo.getInt("is_auto") == CommonConstant.GLOBAL_YES) {
+            int robotNum = getRobotNum(allPlayerInfo.size(), curRound, totalRound, perCount, totalNum);
+            for (int i = 0; i < robotNum; i++) {
+                allPlayerList.add("0");
+            }
         }
         // 打乱排序
         Collections.shuffle(allPlayerList);
@@ -441,7 +534,9 @@ public class MatchEventDeal {
         // 根据匹配结果加入房间
         matchJoinRoom(matchNum, matchInfo, perCount, mateResult);
         // 开始改变玩家分数
-        startChangeUserScore(matchNum, curRound, perCount);
+        if (matchInfo.getInt("is_auto") == CommonConstant.GLOBAL_YES) {
+            startChangeUserScore(matchNum, curRound, perCount);
+        }
     }
 
     /**
@@ -616,7 +711,7 @@ public class MatchEventDeal {
                         }
                     }
                     // 更新数据库
-                    matchBiz.updateUserCoinsAndScoreByAccount(account, coins, score);
+                    matchBiz.updateUserCoinsAndScoreByAccount(account, coins, score, 0);
                     // 添加获奖记录
                     JSONObject winningRecord = matchBiz.getUserWinningRecord(account, matchInfo.getInt("game_id"));
                     JSONObject object = new JSONObject();
@@ -826,12 +921,11 @@ public class MatchEventDeal {
                     JSONObject obj = new JSONObject();
                     obj.put("room_no", roomNo);
                     obj.put("account", realPlayerList.get(i));
-                    JSONObject userInfo = userBiz.getUserByAccount(realPlayerList.get(i));
-                    obj.put("uuid", userInfo.getString("uuid"));
                     if (i < realSize) {
                         obj.put("my_rank", getUserRank(matchNum, realPlayerList.get(i)));
                         Object o = redisService.hget("player_info_" + matchNum, realPlayerList.get(i));
                         JSONObject playerInfo = JSONObject.fromObject(o);
+                        obj.put("uuid", playerInfo.getString("uuid"));
                         SocketIOClient client = GameMain.server.getClient(UUID.fromString(playerInfo.getString("sessionId")));
                         producerService.sendMessage(baseQueueDestination, new Messages(client, obj, CommonConstant.GAME_BASE, CommonConstant.BASE_GAME_EVENT_JOIN_ROOM));
                     } else {
@@ -910,7 +1004,7 @@ public class MatchEventDeal {
         // 更改分数
         for (JSONObject userDetail : userDetails) {
             changeRobotInfo(matchNum, userDetail.getString("account"), userDetail.getInt("score"), userDetail.getInt("round"));
-            changePlayerInfo(matchNum, null, userDetail.getString("account"), userDetail.getInt("score"), userDetail.getInt("round"));
+            changePlayerInfo(matchNum, null, null, userDetail.getString("account"), userDetail.getInt("score"), userDetail.getInt("round"));
         }
         JSONObject matchInfo = getMatchInfoByNumFromRedis(matchNum);
         if (!Dto.isObjNull(matchInfo)) {
@@ -1035,7 +1129,7 @@ public class MatchEventDeal {
      * @param score
      * @param round
      */
-    public void changePlayerInfo(String matchNum, String sessionId, String account, int score, int round) {
+    public void changePlayerInfo(String matchNum, String sessionId, String uuid, String account, int score, int round) {
         Object o = redisService.hget("player_info_" + matchNum, account);
         if (!Dto.isNull(o)) {
             JSONObject playerInfo = JSONObject.fromObject(o);
@@ -1043,6 +1137,9 @@ public class MatchEventDeal {
             playerInfo.put("round", playerInfo.getInt("round") + round);
             if (!Dto.stringIsNULL(sessionId)) {
                 playerInfo.put("sessionId", sessionId);
+            }
+            if (!Dto.stringIsNULL(uuid)) {
+                playerInfo.put("uuid", uuid);
             }
             redisService.hset("player_info_" + matchNum, account, String.valueOf(playerInfo));
         }
@@ -1090,34 +1187,55 @@ public class MatchEventDeal {
      * @param matchId
      * @param matchSetting
      * @param matchNum
+     * @param type
      */
-    private void createMatch(SocketIOClient client, String account, int matchId, JSONObject matchSetting, String matchNum) {
+    private void createMatch(String uuid, SocketIOClient client, String account, int matchId, JSONObject matchSetting, String matchNum, String type) {
         // 添加缓存
         JSONObject cacheInfo = new JSONObject();
         cacheInfo.put("match_id", matchId);
         cacheInfo.put("match_name", matchSetting.getString("match_name"));
         cacheInfo.put("game_id", matchSetting.getInt("game_id"));
-        cacheInfo.put("sign_count", RandomUtils.nextInt(matchSetting.getInt("player_count") / matchSetting.getInt("per_count")));
+        if (matchSetting.getInt("is_auto") == CommonConstant.GLOBAL_YES) {
+            cacheInfo.put("sign_count", RandomUtils.nextInt(matchSetting.getInt("player_count") / matchSetting.getInt("per_count")));
+        } else {
+            cacheInfo.put("sign_count", 1);
+        }
         cacheInfo.put("total_count", matchSetting.getInt("player_count"));
         cacheInfo.put("promotion", matchSetting.getJSONArray("promotion"));
         cacheInfo.put("cur_round", 0);
+        cacheInfo.put("is_auto", matchSetting.getInt("is_auto"));
         cacheInfo.put("total_round", matchSetting.getInt("total_round"));
         cacheInfo.put("per_count", matchSetting.getInt("per_count"));
         cacheInfo.put("reward_detail", matchSetting.getJSONArray("reward_detail"));
         addMatchInfoIntoRedis(matchNum, cacheInfo);
         // 添加玩家信息
-        addPlayerInfo(account, matchNum, String.valueOf(client.getSessionId()), 1000, 0);
+        addPlayerInfo(account, matchNum, uuid, String.valueOf(client.getSessionId()), 1000, 0);
         // 添加数据库信息
         JSONObject obj = new JSONObject();
         obj.put("match_num", matchNum);
         obj.put("match_id", matchId);
         obj.put("type", matchSetting.getInt("type"));
         obj.put("create_time", TimeUtil.getNowDate());
-        List<String> playerList = new ArrayList<>();
-        playerList.add(account);
+        List<JSONObject> playerList = new ArrayList<>();
+        JSONObject playerObj = getSignPlayerObj(account, type);
+        playerList.add(playerObj);
         obj.put("player_array", String.valueOf(playerList));
         obj.put("total_round", matchSetting.getInt("total_round"));
         matchBiz.addOrUpdateMatchInfo(obj);
+    }
+
+    /**
+     * 获取报名用户信息
+     *
+     * @param account
+     * @param type
+     * @return
+     */
+    private JSONObject getSignPlayerObj(String account, String type) {
+        JSONObject playerObj = new JSONObject();
+        playerObj.put("account", account);
+        playerObj.put("type", type);
+        return playerObj;
     }
 
     /**
@@ -1126,12 +1244,14 @@ public class MatchEventDeal {
      * @param account
      * @param matchNum
      * @param uuid
+     * @param sessionId
      * @param score
      * @param round
      */
-    private void addPlayerInfo(String account, String matchNum, String uuid, int score, int round) {
+    private void addPlayerInfo(String account, String matchNum, String uuid, String sessionId, int score, int round) {
         JSONObject playerInfo = new JSONObject();
-        playerInfo.put("sessionId", uuid);
+        playerInfo.put("uuid", uuid);
+        playerInfo.put("sessionId", sessionId);
         playerInfo.put("score", score);
         playerInfo.put("round", round);
         redisService.hset("player_info_" + matchNum, account, String.valueOf(playerInfo));
@@ -1140,18 +1260,21 @@ public class MatchEventDeal {
     /**
      * 加入比赛场
      *
+     * @param uuid
      * @param client
      * @param account
      * @param matchSetting
      * @param unFullMatch
+     * @param type
      */
-    private void joinMatch(SocketIOClient client, String account, JSONObject matchSetting, JSONObject unFullMatch) {
+    private void joinMatch(String uuid, SocketIOClient client, String account, JSONObject matchSetting, JSONObject unFullMatch, String type) {
         // 添加数据库
-        List<String> playerList = new ArrayList<>();
+        List<JSONObject> playerList = new ArrayList<>();
         playerList.addAll(unFullMatch.getJSONArray("player_array"));
-        playerList.add(account);
+        JSONObject playerObj = getSignPlayerObj(account, type);
+        playerList.add(playerObj);
         int isFull = 0;
-        if (unFullMatch.getInt("current_count") + 1 >= matchSetting.getInt("player_count")) {
+        if (unFullMatch.getInt("type") == MatchConstant.MATCH_TYPE_COUNT && unFullMatch.getInt("current_count") + 1 >= matchSetting.getInt("player_count")) {
             isFull = 1;
         }
         JSONObject obj = new JSONObject();
@@ -1164,7 +1287,9 @@ public class MatchEventDeal {
         JSONObject matchInfo = getMatchInfoByNumFromRedis(unFullMatch.getString("match_num"));
         if (!Dto.isObjNull(matchInfo)) {
             // 添加玩家信息
-            addPlayerInfo(account, unFullMatch.getString("match_num"), String.valueOf(client.getSessionId()), 1000, 0);
+            addPlayerInfo(account, unFullMatch.getString("match_num"), uuid, String.valueOf(client.getSessionId()), 1000, 0);
+            matchInfo.put("sign_count", matchInfo.getInt("sign_count") + 1);
+            addMatchInfoIntoRedis(unFullMatch.getString("match_num"), matchInfo);
         }
     }
 

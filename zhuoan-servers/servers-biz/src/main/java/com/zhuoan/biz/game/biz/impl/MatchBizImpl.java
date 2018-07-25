@@ -31,6 +31,11 @@ public class MatchBizImpl implements MatchBiz {
     }
 
     @Override
+    public void updateMatchSettingById(long matchId, String createTime) {
+        matchDao.updateMatchSettingById(matchId, createTime);
+    }
+
+    @Override
     public JSONObject getMatchInfoByMatchId(long matchId, int isFull, int isEnd) {
         return matchDao.getMatchInfoByMatchId(matchId, isFull, isEnd);
     }
@@ -51,8 +56,8 @@ public class MatchBizImpl implements MatchBiz {
     }
 
     @Override
-    public void updateUserCoinsAndScoreByAccount(String account, int coins, int score) {
-        matchDao.updateUserCoinsAndScoreByAccount(account, coins, score);
+    public void updateUserCoinsAndScoreByAccount(String account, int coins, int score, int roomCard) {
+        matchDao.updateUserCoinsAndScoreByAccount(account, coins, score, roomCard);
     }
 
     @Override

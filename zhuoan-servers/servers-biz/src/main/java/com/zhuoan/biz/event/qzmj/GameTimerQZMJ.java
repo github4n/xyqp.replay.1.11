@@ -203,7 +203,7 @@ public class GameTimerQZMJ {
     private void dingJin(String roomNo) {
         changeStartStatus(roomNo,QZMJConstant.QZ_START_STATUS_KJ);
         try {
-            Thread.sleep(1250);
+            Thread.sleep(1750);
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
