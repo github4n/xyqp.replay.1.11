@@ -84,4 +84,10 @@ public interface UserBiz {
      */
     public void updateUserPump(String account, String type, double sum);
 
+    /**
+     * 添加券操作记录
+     * @param ticketRec
+     */
+    void addUserTicketRec(JSONObject ticketRec);
+
 }

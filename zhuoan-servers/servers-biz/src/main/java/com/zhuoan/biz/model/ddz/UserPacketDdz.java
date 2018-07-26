@@ -50,6 +50,10 @@ public class UserPacketDdz {
      * 记牌器结束时间
      */
     private String jpqEndTime;
+    /**
+     * 连胜次数
+     */
+    private int winStreakTime;
 
     public int getStatus() {
         return status;
@@ -129,5 +133,13 @@ public class UserPacketDdz {
 
     public void setJpqEndTime(String jpqEndTime) {
         this.jpqEndTime = jpqEndTime;
+    }
+
+    public int getWinStreakTime() {
+        return winStreakTime;
+    }
+
+    public void setWinStreakTime(int winStreakTime) {
+        this.winStreakTime = winStreakTime;
     }
 }

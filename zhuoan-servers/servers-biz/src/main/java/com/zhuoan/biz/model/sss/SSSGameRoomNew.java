@@ -705,6 +705,12 @@ public class SSSGameRoomNew extends GameRoom{
                 }
             }
         }
+        Collections.sort(array, new Comparator() {
+            @Override
+            public int compare(Object o1, Object o2) {
+                return JSONObject.fromObject(o2).getInt("score") - JSONObject.fromObject(o1).getInt("score");
+            }
+        });
         setFinalSummaryData(array);
         return array;
     }

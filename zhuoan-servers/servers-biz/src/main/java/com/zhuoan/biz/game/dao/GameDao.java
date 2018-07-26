@@ -356,4 +356,10 @@ public interface GameDao {
      */
     public void addOrUpdateUserGameInfo(JSONObject obj);
 
+    /**
+     * 添加券操作记录
+     * @param ticketRec
+     */
+    void addUserTicketRec(JSONObject ticketRec);
+
 }

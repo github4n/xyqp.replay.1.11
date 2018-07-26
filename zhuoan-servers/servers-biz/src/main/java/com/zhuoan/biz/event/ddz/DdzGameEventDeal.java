@@ -757,11 +757,12 @@ public class DdzGameEventDeal {
     private void changeGameStatus(String roomNo) {
         DdzGameRoom room = (DdzGameRoom) RoomManage.gameRoomMap.get(roomNo);
         JSONObject result = new JSONObject();
-        result.put("gameStatus",room.getGameStatus());
-        if (room.getGameStatus()==DdzConstant.DDZ_GAME_STATUS_FINAL_SUMMARY) {
-            result.put("endData",obtainFinalSummaryData(roomNo));
+        result.put("gameStatus", room.getGameStatus());
+        result.put("users", obtainAllPlayer(roomNo));
+        if (room.getGameStatus() == DdzConstant.DDZ_GAME_STATUS_FINAL_SUMMARY) {
+            result.put("endData", obtainFinalSummaryData(roomNo));
         }
-        CommonConstant.sendMsgEventToAll(room.getAllUUIDList(),String.valueOf(result),"changeGameStatusPush_DDZ");
+        CommonConstant.sendMsgEventToAll(room.getAllUUIDList(), String.valueOf(result), "changeGameStatusPush_DDZ");
     }
 
     /**
@@ -803,6 +804,23 @@ public class DdzGameEventDeal {
         for (String account : accountList) {
             room.getUserPacketMap().get(account).setMyPai(cardList.get(cardIndex));
             cardIndex++;
+        }
+        if (room.getFee()>0) {
+            JSONArray array = new JSONArray();
+            for (String account : obtainAllPlayerAccount(roomNo)) {
+                // 更新实体类数据
+                Playerinfo playerinfo = RoomManage.gameRoomMap.get(room.getRoomNo()).getPlayerMap().get(account);
+                RoomManage.gameRoomMap.get(room.getRoomNo()).getPlayerMap().get(account).setScore(Dto.sub(playerinfo.getScore(), room.getFee()));
+                // 负数清零
+                if (RoomManage.gameRoomMap.get(room.getRoomNo()).getPlayerMap().get(account).getScore() < 0) {
+                    RoomManage.gameRoomMap.get(room.getRoomNo()).getPlayerMap().get(account).setScore(0);
+                }
+                array.add(playerinfo.getId());
+            }
+            // 抽水
+            producerService.sendMessage(daoQueueDestination, new PumpDao(DaoTypeConstant.PUMP, room.getJsonObject(array)));
+            // 通知玩家
+            changeGameStatus(roomNo);
         }
         // 设置地主牌
         room.setLandlordCard(cardList.get(cardIndex));
@@ -949,22 +967,58 @@ public class DdzGameEventDeal {
      * @param room
      */
     private void updateUserStreakWinReward(String roomNo, DdzGameRoom room) {
-        if (room.getSetting().containsKey("win_streak_time") && room.getSetting().containsKey("win_streak_reward") && room.getSetting().containsKey("win_streak_type")) {
+//        if (room.getSetting().containsKey("win_streak_time") && room.getSetting().containsKey("win_streak_reward") && room.getSetting().containsKey("win_streak_type")) {
+//            for (String player : obtainAllPlayerAccount(roomNo)) {
+//                if (room.getUserPacketMap().get(player).getScore() > 0) {
+//                    int winTime = 1;
+//                    Object playerInfo = redisService.hget("win_streak_player_info",player);
+//                    if (!Dto.isNull(playerInfo)) {
+//                        winTime = Integer.valueOf(String.valueOf(playerInfo)) + 1;
+//                    }
+//                    redisService.hset("win_streak_player_info", player, String.valueOf(winTime));
+//                    if (winTime == room.getSetting().getInt("win_streak_time")) {
+//                        updateUserInfo(room, player, room.getSetting().getDouble("win_streak_reward"), room.getSetting().getString("win_streak_type"));
+//                    }
+//                }
+//            }
+//        }
+        if (!Dto.isObjNull(room.getWinStreakObj())) {
+            JSONObject winStreakObj = room.getWinStreakObj();
+            // 次数
+            int time = winStreakObj.getInt("time");
+            // 是否需要连胜
+            int mustWin = winStreakObj.getInt("mustWin");
+            // 奖励金额
+            double reward = winStreakObj.getDouble("reward");
+            // 奖励类型
+            String rewardType = winStreakObj.getString("rewardType");
+            // 场次id
+            String baseInfoId = winStreakObj.getString("id");
+            // 设置连胜次数
             for (String player : obtainAllPlayerAccount(roomNo)) {
-                if (room.getUserPacketMap().get(player).getScore() > 0) {
-                    int winTime = 1;
-                    Object playerInfo = redisService.hget("win_streak_player_info",player);
-                    if (!Dto.isNull(playerInfo)) {
-                        winTime = Integer.valueOf(String.valueOf(playerInfo)) + 1;
-                    }
-                    redisService.hset("win_streak_player_info", player, String.valueOf(winTime));
-                    if (winTime == room.getSetting().getInt("win_streak_time")) {
-                        updateUserInfo(room, player, room.getSetting().getDouble("win_streak_reward"), room.getSetting().getString("win_streak_type"));
+                if (mustWin == CommonConstant.GLOBAL_NO || room.getUserPacketMap().get(player).getScore() > 0) {
+                    room.getUserPacketMap().get(player).setWinStreakTime(room.getUserPacketMap().get(player).getWinStreakTime() + 1);
+                    if (room.getUserPacketMap().get(player).getWinStreakTime() == time) {
+                        if (!redisService.sHasKey("win_streak_player_info_" + baseInfoId, player)) {
+                            // 更新奖励
+                            updateUserInfo(room, player, reward, rewardType);
+                            // 添加缓存数据
+                            redisService.sSet("win_streak_player_info_" + baseInfoId, player);
+                            // 添加记录
+                            JSONObject ticketRec = new JSONObject();
+                            ticketRec.put("user_account", player);
+                            ticketRec.put("game_id", room.getGid());
+                            ticketRec.put("ticket_type", CommonConstant.TICKET_TYPE_MONEY);
+                            ticketRec.put("money", reward);
+                            ticketRec.put("coins_id", baseInfoId);
+                            ticketRec.put("create_time", TimeUtil.getNowDate());
+                            userBiz.addUserTicketRec(ticketRec);
+                        }
                     }
                 }
             }
         }
-    }
+     }
 
     /**
      * 更新成就信息

@@ -63,12 +63,12 @@ public class MatchEventDeal {
     }
 
     private void updateTimeMatchSettings() {
-        // 场次配置
-        JSONArray timeMatchSettings = getMatchSettingByType(MatchConstant.MATCH_TYPE_TIME);
         // 更新实时场次配置
         JSONArray newTimeMatchSettings = new JSONArray();
         // 实时时间
         String nowTime = TimeUtil.getNowDate();
+        // 场次配置
+        JSONArray timeMatchSettings = getMatchSettingByType(MatchConstant.MATCH_TYPE_TIME, nowTime);
         for (Object object : timeMatchSettings) {
             JSONObject matchSetting = JSONObject.fromObject(object);
             String difference = TimeUtil.getDaysBetweenTwoTime(matchSetting.getString("create_time"), nowTime, 1000L);
@@ -96,7 +96,7 @@ public class MatchEventDeal {
 
     private void updateCountMatchSettings() {
         // 更新满人开赛场次信息
-        JSONArray countMatchSettings = getMatchSettingByType(MatchConstant.MATCH_TYPE_COUNT);
+        JSONArray countMatchSettings = getMatchSettingByType(MatchConstant.MATCH_TYPE_COUNT, null);
         // 更新场次配置
         JSONArray newCountMatchSettings = new JSONArray();
         for (Object object : countMatchSettings) {
@@ -122,10 +122,13 @@ public class MatchEventDeal {
         // 玩家账号
         String account = postData.getString("account");
         int type = postData.getInt("type");
-        JSONArray matchSettings = getMatchSettingByType(type);
+        String createTime = null;
+        if (type == MatchConstant.MATCH_TYPE_TIME) {
+            createTime = TimeUtil.getNowDate();
+        }
+        JSONArray matchSettings = getMatchSettingByType(type, createTime);
         JSONObject result = new JSONObject();
         // 数据是否存在
-        if (matchSettings.size() > 0) {
             result.put(CommonConstant.RESULT_KEY_CODE, CommonConstant.GLOBAL_YES);
             // 判断是否报名，是否需要倒计时
             for (int i = 0; i < matchSettings.size(); i++) {
@@ -145,10 +148,7 @@ public class MatchEventDeal {
                 matchSetting.remove("reward_detail");
             }
             result.put("data", matchSettings);
-        } else {
-            result.put(CommonConstant.RESULT_KEY_CODE, CommonConstant.GLOBAL_NO);
-            result.put(CommonConstant.RESULT_KEY_MSG, "获取失败");
-        }
+
         CommonConstant.sendMsgEventToSingle(client, String.valueOf(result), "getMatchInfoPush");
     }
 
@@ -156,9 +156,10 @@ public class MatchEventDeal {
      * 获取场次信息配置，存入缓存
      *
      * @param type
+     * @param createTime
      * @return
      */
-    private JSONArray getMatchSettingByType(int type) {
+    private JSONArray getMatchSettingByType(int type, String createTime) {
         JSONArray matchSettings;
         try {
             StringBuffer key = new StringBuffer();
@@ -168,12 +169,12 @@ public class MatchEventDeal {
             if (object != null) {
                 matchSettings = JSONArray.fromObject(redisService.queryValueByKey(String.valueOf(key)));
             } else {
-                matchSettings = matchBiz.getMatchSettingByType(type);
+                matchSettings = matchBiz.getMatchSettingByType(type, createTime);
                 redisService.insertKey(String.valueOf(key), String.valueOf(matchSettings), null);
             }
         } catch (Exception e) {
             logger.error("请启动REmote DIctionary Server");
-            matchSettings = matchBiz.getMatchSettingByType(type);
+            matchSettings = matchBiz.getMatchSettingByType(type, createTime);
         }
         return matchSettings;
     }
@@ -737,6 +738,18 @@ public class MatchEventDeal {
                         object.put("win_score", winningRecord.getLong("win_score") + score);
                     }
                     matchBiz.addOrUpdateUserWinningRecord(object);
+                    if (score > 0) {
+                        // 添加记录
+                        JSONObject ticketRec = new JSONObject();
+                        ticketRec.put("user_account", account);
+                        ticketRec.put("game_id", matchInfo.getInt("game_id"));
+                        ticketRec.put("ticket_type", CommonConstant.TICKET_TYPE_THING);
+                        ticketRec.put("money", score);
+                        ticketRec.put("match_id", matchInfo.getInt("match_id"));
+                        ticketRec.put("create_time", TimeUtil.getNowDate());
+                        userBiz.addUserTicketRec(ticketRec);
+                    }
+
                     return rewardInfo.getString("name");
                 }
             }

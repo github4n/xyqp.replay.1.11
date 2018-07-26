@@ -321,6 +321,15 @@ public class CommonConstant {
      */
     public static final int PROPS_TYPE_JPQ = 1;
 
+    /**
+     * 红包券
+     */
+    public static final int TICKET_TYPE_MONEY = 0;
+    /**
+     * 实物券
+     */
+    public static final int TICKET_TYPE_THING = 1;
+
     public static final String DATA_KEY_ROOM_NO = "room_no";
     public static final String DATA_KEY_ACCOUNT = "account";
 

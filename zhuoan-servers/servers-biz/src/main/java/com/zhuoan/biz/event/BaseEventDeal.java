@@ -1389,6 +1389,16 @@ public class BaseEventDeal {
             room.getUserPacketMap().put(account,new UserPacketDdz());
         }
         JSONObject setting = getGameInfoById(CommonConstant.GAME_ID_DDZ);
+        if (baseInfo.containsKey("win_streak")) {
+            JSONArray winStreakArray = setting.getJSONArray("win_streak_array");
+            for (Object winStreak : winStreakArray) {
+                JSONObject winStreakObj = JSONObject.fromObject(winStreak);
+                if (winStreakObj.getInt("di") == winStreakObj.getInt("di")) {
+                    room.setWinStreakObj(winStreakObj);
+                    break;
+                }
+            }
+        }
         // 设置房间信息
         room.setSetting(setting);
         // 最大倍数
@@ -2174,6 +2184,10 @@ public class BaseEventDeal {
     public void joinCoinRoom(SocketIOClient client, Object data) {
         JSONObject postData = JSONObject.fromObject(data);
         int gameId = postData.getInt("gid");
+        String account = postData.getString(CommonConstant.DATA_KEY_ACCOUNT);
+        if (Dto.stringIsNULL(account)) {
+            return;
+        }
         JSONObject option = new JSONObject();
         if (postData.containsKey("option")) {
             option = postData.getJSONObject("option");
@@ -2182,15 +2196,26 @@ public class BaseEventDeal {
             object.put("gameId",gameId);
             object.put("platform","YQWDDZ");
             JSONArray array = getGoldSettingByGameIdAndPlatform(object);
-            if (array.size() > 0) {
-                option = array.getJSONObject(0).getJSONObject("option");
+            JSONObject userInfo = userBiz.getUserByAccount(account);
+            if (!Dto.isObjNull(userInfo) && userInfo.containsKey("coins")) {
+                int userCoins = userInfo.getInt("coins");
+                // 取符合场次要求的场次信息
+                for (int i = 0; i < array.size(); i++) {
+                    JSONObject obj = array.getJSONObject(i).getJSONObject("option");
+                    if (obj.getInt("goldCoinEnter") < userCoins && obj.getInt("goldCoinLeave") >= userCoins) {
+                        option = obj;
+                        break;
+                    }else if (obj.getInt("goldCoinEnter") == obj.getInt("goldCoinLeave") && obj.getInt("goldCoinEnter") < userCoins) {
+                        option = obj;
+                        break;
+                    }
+                }
+                if (Dto.isObjNull(option) && array.size() > 0) {
+                    option = array.getJSONObject(0).getJSONObject("option");
+                }
             }
         }
         postData.put("base_info",option);
-        String account = postData.getString(CommonConstant.DATA_KEY_ACCOUNT);
-        if (Dto.stringIsNULL(account)) {
-            return;
-        }
         if (Dto.isObjNull(option)) {
             return;
         }
@@ -2293,7 +2318,7 @@ public class BaseEventDeal {
                 if (TimeUtil.isLatter(signInfo.getString("createtime"),yesterday)) {
                     int signDay = signInfo.getInt("singnum")+1;
                     // 一周签到模式
-                    if (CommonConstant.weekSignPlatformList.contains(platform) && signDay == 7) {
+                    if (CommonConstant.weekSignPlatformList.contains(platform) && signDay >= 8) {
                         signDay = 1;
                     }
                     int reward = signDay * minReward;
@@ -2400,7 +2425,7 @@ public class BaseEventDeal {
             if (TimeUtil.isLatter(signInfo.getString("createtime"),yesterday)) {
                 int signDay = signInfo.getInt("singnum") + 1;
                 // 一周签到模式
-                if (CommonConstant.weekSignPlatformList.contains(platform) && signDay == 7) {
+                if (CommonConstant.weekSignPlatformList.contains(platform) && signDay >= 8) {
                     signDay = 1;
                 }
                 object.put("singnum", signDay);
@@ -2856,10 +2881,11 @@ public class BaseEventDeal {
      */
     public void getAchievementRank(SocketIOClient client, Object data) {
         JSONObject postData = JSONObject.fromObject(data);
-        int gameId = postData.getInt("game_id");
+        int gameId = postData.getInt("gameId");
         int limit = postData.getInt("limit");
         JSONArray achievementRank = achievementBiz.getAchievementRank(limit, gameId);
         JSONObject result = new JSONObject();
+        result.put(CommonConstant.RESULT_KEY_CODE, CommonConstant.GLOBAL_YES);
         result.put("data", achievementRank);
         CommonConstant.sendMsgEventToSingle(client, String.valueOf(result), "getAchievementRankPush");
     }

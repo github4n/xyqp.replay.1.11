@@ -21,8 +21,8 @@ public class MatchBizImpl implements MatchBiz {
     private MatchDao matchDao;
 
     @Override
-    public JSONArray getMatchSettingByType(int type) {
-        return matchDao.getMatchSettingByType(type);
+    public JSONArray getMatchSettingByType(int type, String createTime) {
+        return matchDao.getMatchSettingByType(type, createTime);
     }
 
     @Override

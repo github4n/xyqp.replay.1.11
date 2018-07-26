@@ -14,25 +14,26 @@ public interface MatchDao {
     /**
      * 获取比赛场配置
      *
-     * @param type 1-满人开赛  2-定时开赛
-     * @return 比赛场配置
+     * @param type       1-满人开赛  2-定时开赛
+     * @param createTime 创建时间
+     * @return JSONArray
      */
-    JSONArray getMatchSettingByType(int type);
+    JSONArray getMatchSettingByType(int type, String createTime);
 
     /**
      * 获取比赛场信息
      *
      * @param matchId 场次id
      * @param gameId  游戏id
-     * @return 比赛场信息
+     * @return JSONObject
      */
     JSONObject getMatchSettingById(long matchId, long gameId);
 
     /**
      * 更新场次信息
      *
-     * @param matchId
-     * @param createTime
+     * @param matchId    场次id
+     * @param createTime 创建时间
      */
     void updateMatchSettingById(long matchId, String createTime);
 
@@ -42,7 +43,7 @@ public interface MatchDao {
      * @param matchId 场次id
      * @param isFull  是否满人
      * @param isEnd   是否结束
-     * @return 当前未开赛的场次
+     * @return JSONObject
      */
     JSONObject getMatchInfoByMatchId(long matchId, int isFull, int isEnd);
 
@@ -56,8 +57,8 @@ public interface MatchDao {
     /**
      * 更改状态
      *
-     * @param matchNum
-     * @param isFull
+     * @param matchNum 场次编号
+     * @param isFull   是否满人
      */
     void updateMatchInfoByMatchNum(String matchNum, int isFull);
 
@@ -65,32 +66,33 @@ public interface MatchDao {
      * 获取机器人
      *
      * @param count 人数
-     * @return 列表
+     * @return JSONArray
      */
     JSONArray getRobotList(int count);
 
     /**
      * 更新玩家金币
      *
-     * @param account
-     * @param coins
-     * @param score
-     * @param roomCard
+     * @param account  玩家账号
+     * @param coins    金币
+     * @param score    积分
+     * @param roomCard 房卡
      */
     void updateUserCoinsAndScoreByAccount(String account, int coins, int score, int roomCard);
 
     /**
      * 获取玩家获奖记录
      *
-     * @param account
-     * @param gameId
-     * @return
+     * @param account 玩家账号
+     * @param gameId  游戏id
+     * @return JSONObject
      */
-    JSONObject getUserWinningRecord(String account,int gameId);
+    JSONObject getUserWinningRecord(String account, int gameId);
 
     /**
      * 添加用户获奖记录
-     * @param winningRecord
+     *
+     * @param winningRecord 获奖记录
      */
     void addOrUpdateUserWinningRecord(JSONObject winningRecord);
 

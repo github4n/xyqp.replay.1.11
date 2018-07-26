@@ -200,6 +200,8 @@ public class GameRoom {
      */
     private int totalNum;
 
+    private JSONObject winStreakObj = new JSONObject();
+
     public int getLastIndex() {
         return lastIndex;
     }
@@ -558,6 +560,14 @@ public class GameRoom {
 
     public void setTotalNum(int totalNum) {
         this.totalNum = totalNum;
+    }
+
+    public JSONObject getWinStreakObj() {
+        return winStreakObj;
+    }
+
+    public void setWinStreakObj(JSONObject winStreakObj) {
+        this.winStreakObj = winStreakObj;
     }
 
     /**

@@ -144,4 +144,9 @@ public class UserBizImpl implements UserBiz {
     public void updateUserPump(String account, String type, double sum) {
         gameDao.updateUserPump(account,type,sum);
     }
+
+    @Override
+    public void addUserTicketRec(JSONObject ticketRec) {
+        gameDao.addUserTicketRec(ticketRec);
+    }
 }

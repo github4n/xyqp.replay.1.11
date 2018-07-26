@@ -3,6 +3,7 @@ package com.zhuoan.biz.game.dao.impl;
 import com.zhuoan.biz.game.dao.MatchDao;
 import com.zhuoan.dao.DBJsonUtil;
 import com.zhuoan.dao.DBUtil;
+import com.zhuoan.util.Dto;
 import com.zhuoan.util.TimeUtil;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
@@ -18,9 +19,12 @@ import org.springframework.stereotype.Component;
 public class MatchDaoImpl implements MatchDao {
 
     @Override
-    public JSONArray getMatchSettingByType(int type) {
+    public JSONArray getMatchSettingByType(int type, String createTime) {
         String sql = "select id,type,game_id,match_name,per_count,player_count,total_round,is_auto,must_full,description,time_interval,online_num,match_cost," +
             "cost_type,reward_info,match_info,rule,promotion,is_use,create_time,platform,memo from za_match_setting where type=?";
+        if (!Dto.stringIsNULL(createTime)) {
+            sql += " and create_time>'" + createTime + "'";
+        }
         return TimeUtil.transTimestamp(DBUtil.getObjectListBySQL(sql, new Object[]{type}), "create_time", "yyyy-MM-dd HH:mm:ss");
     }
 
