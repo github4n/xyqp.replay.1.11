@@ -1894,7 +1894,7 @@ public class BaseEventDeal {
                 noticeInfo = JSONObject.fromObject(redisService.queryValueByKey(String.valueOf(sb)));
             }else {
                 noticeInfo = publicBiz.getNoticeByPlatform(platform);
-                redisService.insertKey(String.valueOf(sb), String.valueOf(noticeInfo), null);
+                redisService.insertKey(String.valueOf(sb), String.valueOf(noticeInfo), 300);
             }
         } catch (Exception e) {
             logger.error("请启动REmote DIctionary Server");
