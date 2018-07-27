@@ -684,8 +684,11 @@ public class SSSGameEventDealNew {
             footPai.add(myPai[i]);
         }
         int mid = SSSComputeCards.isSameFlower(midPai);
+        int mid1 = SSSComputeCards.isFlushByFlower(midPai);
         int foot = SSSComputeCards.isSameFlower(footPai);
-        if (mid==5&&foot==5) {
+        int foot1 = SSSComputeCards.isFlushByFlower(footPai);
+        // 都是同花且不是同花顺
+        if (mid == 5 && foot == 5 && mid1 == -1 && foot1 == -1) {
             int result = SSSComputeCards.compareSameFlower(midPai,footPai);
             if (result==1) {
                 String[] pai = new String[myPai.length];
