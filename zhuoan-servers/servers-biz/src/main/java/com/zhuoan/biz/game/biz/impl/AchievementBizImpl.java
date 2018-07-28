@@ -72,7 +72,7 @@ public class AchievementBizImpl implements AchievementBiz {
         JSONObject userInfo = gameDao.getUserByAccount(account);
         if (!Dto.isObjNull(userInfo)) {
             if (userInfo.containsKey("name")) {
-                obj.put("user_name", userInfo.getLong("name"));
+                obj.put("user_name", userInfo.getString("name"));
             }
             if (userInfo.containsKey("headimg")) {
                 obj.put("user_img", userInfo.getString("headimg"));

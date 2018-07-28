@@ -2194,6 +2194,7 @@ public class BaseEventDeal {
         }else {
             JSONObject object = new JSONObject();
             object.put("gameId",gameId);
+            // TODO: 2018/7/27
             object.put("platform","YQWDDZ");
             JSONArray array = getGoldSettingByGameIdAndPlatform(object);
             JSONObject userInfo = userBiz.getUserByAccount(account);
@@ -2282,9 +2283,9 @@ public class BaseEventDeal {
         JSONArray goldSettings = getGoldSettingByGameIdAndPlatform(obj);
         for (int i = 0; i < goldSettings.size(); i++) {
             JSONObject goldSetting = goldSettings.getJSONObject(i);
-            goldSetting.put("online",goldSetting.getInt("online")+1);
-            goldSetting.put("enter",goldSetting.getJSONObject("option").getInt("goldCoinEnter"));
-            goldSetting.put("leave",goldSetting.getJSONObject("option").getInt("goldCoinLeave"));
+            goldSetting.put("online", goldSetting.getInt("online") + RandomUtils.nextInt(goldSetting.getInt("online")));
+            goldSetting.put("enter", goldSetting.getJSONObject("option").getInt("goldCoinEnter"));
+            goldSetting.put("leave", goldSetting.getJSONObject("option").getInt("goldCoinLeave"));
         }
         JSONObject result = new JSONObject();
         result.put(CommonConstant.RESULT_KEY_CODE,CommonConstant.GLOBAL_YES);
@@ -2335,6 +2336,12 @@ public class BaseEventDeal {
                 result.put(CommonConstant.RESULT_KEY_CODE,CommonConstant.GLOBAL_NO);
             }
         }
+        // 签到奖励数组
+        JSONArray array = new JSONArray();
+        for (int i = 1; i <= 7; i++) {
+            array.add(minReward*i);
+        }
+        result.put("array",array);
         CommonConstant.sendMsgEventToSingle(client,String.valueOf(result),"checkSignInPush");
     }
 

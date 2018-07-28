@@ -129,6 +129,7 @@ public class DdzConstant {
     public static final int DDZ_GAME_EVENT_AUTO_PLAY = 10;
     public static final int DDZ_GAME_EVENT_ROBOT_CALL = 11;
     public static final int DDZ_GAME_EVENT_ROBOT_ROB = 12;
+    public static final int DDZ_GAME_EVENT_GET_OUT_INFO = 13;
 
     public static final int DDZ_RECONNECT_NODE_READY = 0;
     public static final int DDZ_RECONNECT_NODE_CALL = 1;

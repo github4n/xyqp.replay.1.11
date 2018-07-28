@@ -60,6 +60,8 @@ public class UserPacket {
      * 参与游戏局数
      */
     private int playTimes = 0;
+
+    private int luck;
 	
 	public Integer[] getPai() {
 		return pai;
@@ -122,6 +124,14 @@ public class UserPacket {
 
     public void setPlayTimes(int playTimes) {
         this.playTimes = playTimes;
+    }
+
+    public int getLuck() {
+        return luck;
+    }
+
+    public void setLuck(int luck) {
+        this.luck = luck;
     }
 
     /**

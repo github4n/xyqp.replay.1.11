@@ -20,8 +20,8 @@ public class MatchDaoImpl implements MatchDao {
 
     @Override
     public JSONArray getMatchSettingByType(int type, String createTime) {
-        String sql = "select id,type,game_id,match_name,per_count,player_count,total_round,is_auto,must_full,description,time_interval,online_num,match_cost," +
-            "cost_type,reward_info,match_info,rule,promotion,is_use,create_time,platform,memo from za_match_setting where type=?";
+        String sql = "select id,type,game_id,match_name,per_count,player_count,total_round,is_auto,robot_level,must_full,description,time_interval," +
+            "online_num,match_cost,cost_type,reward_info,match_info,rule,promotion,is_use,create_time,platform,memo from za_match_setting where type=?";
         if (!Dto.stringIsNULL(createTime)) {
             sql += " and create_time>'" + createTime + "'";
         }
@@ -30,7 +30,7 @@ public class MatchDaoImpl implements MatchDao {
 
     @Override
     public JSONObject getMatchSettingById(long matchId, long gameId) {
-        String sql = "select id,type,game_id,match_name,per_count,player_count,total_round,is_auto,must_full,description,online_num,match_cost," +
+        String sql = "select id,type,game_id,match_name,per_count,player_count,total_round,is_auto,robot_level,must_full,description,online_num,match_cost," +
             "cost_type,reward_info,match_info,rule,promotion,is_use,create_time,platform,memo,reward_detail from za_match_setting where id=? and game_id=?";
         return TimeUtil.transTimeStamp(DBUtil.getObjectBySQL(sql, new Object[]{matchId, gameId}), "yyyy-MM-dd HH:mm:ss", "create_time");
     }
@@ -80,6 +80,12 @@ public class MatchDaoImpl implements MatchDao {
     @Override
     public void addOrUpdateUserWinningRecord(JSONObject winningRecord) {
         DBJsonUtil.saveOrUpdate(winningRecord, "za_match_winning_record");
+    }
+
+    @Override
+    public void updateRobotStatus(String account, int status) {
+        String sql = "update za_users set status=? where account=?";
+        DBUtil.executeUpdateBySQL(sql, new Object[]{status, account});
     }
 
 }

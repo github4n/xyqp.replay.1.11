@@ -104,6 +104,8 @@ public class Player implements Serializable{
      */
     private int xzTimes = 0;
 
+    private int luck;
+
 
     public static long getSerialVersionUID() {
         return serialVersionUID;
@@ -283,6 +285,14 @@ public class Player implements Serializable{
 
     public void setXzTimes(int xzTimes) {
         this.xzTimes = xzTimes;
+    }
+
+    public int getLuck() {
+        return luck;
+    }
+
+    public void setLuck(int luck) {
+        this.luck = luck;
     }
 
     /**

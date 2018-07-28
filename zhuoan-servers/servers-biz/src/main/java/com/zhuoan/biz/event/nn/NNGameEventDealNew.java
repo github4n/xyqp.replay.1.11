@@ -25,6 +25,7 @@ import net.sf.json.JSONObject;
 import org.apache.commons.lang.math.RandomUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.aop.framework.AopContext;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
@@ -335,10 +336,8 @@ public class NNGameEventDealNew {
      * @param room
      */
     public void startGameMp(final NNGameRoomNew room) {
-        // 洗牌
-        NiuNiuServer.xiPai(room.getRoomNo());
-        // 发牌
-        NiuNiuServer.faPai(room.getRoomNo());
+        ((NNGameEventDealNew) AopContext.currentProxy()).shuffleAndFp(room);
+
         JSONArray gameProcessFP = new JSONArray();
         // 设置玩家手牌
         for (String uuid : room.getUserPacketMap().keySet()) {
@@ -364,6 +363,13 @@ public class NNGameEventDealNew {
                 gameTimerNiuNiu.gameOverTime(room.getRoomNo(), NNConstant.NN_GAME_STATUS_QZ,0);
             }
         });
+    }
+
+    public void shuffleAndFp(NNGameRoomNew room) {
+        // 洗牌
+        NiuNiuServer.xiPai(room.getRoomNo());
+        // 发牌
+        NiuNiuServer.faPai(room.getRoomNo());
     }
 
     /**

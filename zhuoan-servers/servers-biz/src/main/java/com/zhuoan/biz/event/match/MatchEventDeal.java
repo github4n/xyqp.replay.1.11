@@ -11,6 +11,7 @@ import com.zhuoan.constant.MatchConstant;
 import com.zhuoan.queue.Messages;
 import com.zhuoan.service.cache.RedisService;
 import com.zhuoan.service.jms.ProducerService;
+import com.zhuoan.service.socketio.SocketIoManagerService;
 import com.zhuoan.service.socketio.impl.GameMain;
 import com.zhuoan.util.Dto;
 import com.zhuoan.util.MathDelUtil;
@@ -53,6 +54,9 @@ public class MatchEventDeal {
 
     @Resource
     private ProducerService producerService;
+
+    @Resource
+    private SocketIoManagerService socketIoManagerService;
 
     @Scheduled(cron = "0/10 * * * * ?")
     public void startTimeMatch() {
@@ -129,25 +133,25 @@ public class MatchEventDeal {
         JSONArray matchSettings = getMatchSettingByType(type, createTime);
         JSONObject result = new JSONObject();
         // 数据是否存在
-            result.put(CommonConstant.RESULT_KEY_CODE, CommonConstant.GLOBAL_YES);
-            // 判断是否报名，是否需要倒计时
-            for (int i = 0; i < matchSettings.size(); i++) {
-                JSONObject matchSetting = matchSettings.getJSONObject(i);
-                // 是否报名
-                boolean isSignUp = redisService.sHasKey("match_sign_up_" + matchSetting.getInt("id"), account);
-                if (isSignUp) {
-                    matchSetting.put("is_sign", CommonConstant.GLOBAL_YES);
-                } else {
-                    matchSetting.put("is_sign", CommonConstant.GLOBAL_NO);
-                }
-                // 是否需要倒计时
-                if (matchSetting.getInt("type") == MatchConstant.MATCH_TYPE_TIME) {
-                    String difference = TimeUtil.getDaysBetweenTwoTime(matchSetting.getString("create_time"), TimeUtil.getNowDate(), 1000L);
-                    matchSetting.put("timeLeft", difference);
-                }
-                matchSetting.remove("reward_detail");
+        result.put(CommonConstant.RESULT_KEY_CODE, CommonConstant.GLOBAL_YES);
+        // 判断是否报名，是否需要倒计时
+        for (int i = 0; i < matchSettings.size(); i++) {
+            JSONObject matchSetting = matchSettings.getJSONObject(i);
+            // 是否报名
+            boolean isSignUp = redisService.sHasKey("match_sign_up_" + matchSetting.getInt("id"), account);
+            if (isSignUp) {
+                matchSetting.put("is_sign", CommonConstant.GLOBAL_YES);
+            } else {
+                matchSetting.put("is_sign", CommonConstant.GLOBAL_NO);
             }
-            result.put("data", matchSettings);
+            // 是否需要倒计时
+            if (matchSetting.getInt("type") == MatchConstant.MATCH_TYPE_TIME) {
+                String difference = TimeUtil.getDaysBetweenTwoTime(matchSetting.getString("create_time"), TimeUtil.getNowDate(), 1000L);
+                matchSetting.put("timeLeft", difference);
+            }
+            matchSetting.remove("reward_detail");
+        }
+        result.put("data", matchSettings);
 
         CommonConstant.sendMsgEventToSingle(client, String.valueOf(result), "getMatchInfoPush");
     }
@@ -487,6 +491,7 @@ public class MatchEventDeal {
             JSONArray robotArray = matchBiz.getRobotList(leftNum);
             for (int i = 0; i < robotArray.size(); i++) {
                 initRankList(robotArray.getJSONObject(i).getString("account"), matchNum);
+                matchBiz.updateRobotStatus(robotArray.getJSONObject(i).getString("account"), 1);
             }
         }
         // 开始匹配
@@ -572,6 +577,10 @@ public class MatchEventDeal {
                             result.put("myRank", rank);
                             result.put("rewardInfo", rewardInfo);
                             CommonConstant.sendMsgEventToSingle(allPlayerUUID.get(account), String.valueOf(result), "matchSummaryResultPush");
+                            // 发送冠军通知
+                            if (rank == 1) {
+                                sendWinnerInfoToAll(matchNum, account, rank);
+                            }
                             // 清除缓存
                             redisService.setRemove("match_sign_up_" + matchInfo.getInt("match_id"), account);
                         }
@@ -579,6 +588,8 @@ public class MatchEventDeal {
                         redisService.deleteByKey("match_info_" + matchNum);
                         redisService.deleteByKey("robot_info_" + matchNum);
                         redisService.deleteByKey("player_info_" + matchNum);
+                        // 更新机器人状态
+                        updateAllRobotStatus(matchNum, 0);
                     } else {
                         // 当前总人数
                         int totalNum = promotion.getInt(curRound);
@@ -602,6 +613,15 @@ public class MatchEventDeal {
                             // 继续下一轮
                             startMatch(matchNum);
                         } else {
+                            // 取出所有本轮未操作的玩家
+                            Map<Object, Object> allRobotInfo = redisService.hmget("robot_info_" + matchNum);
+                            for (Object robot : allRobotInfo.keySet()) {
+                                // 发送冠军通知
+                                sendWinnerInfoToAll(matchNum, String.valueOf(robot), 1);
+                                break;
+                            }
+                            // 更新机器人状态
+                            updateAllRobotStatus(matchNum, 0);
                             // 移除缓存
                             redisService.deleteByKey("match_info_" + matchNum);
                             redisService.deleteByKey("robot_info_" + matchNum);
@@ -610,6 +630,51 @@ public class MatchEventDeal {
                 }
             }
         });
+    }
+
+    /**
+     * 赢家奖励通知
+     *
+     * @param matchNum
+     * @param account
+     * @param rank
+     */
+    private void sendWinnerInfoToAll(String matchNum, String account, int rank) {
+        JSONObject matchInfo = getMatchInfoByNumFromRedis(matchNum);
+        if (!Dto.isObjNull(matchInfo)) {
+            JSONObject rewardInfo = new JSONObject();
+            JSONArray rewardDetails = matchInfo.getJSONArray("reward_detail");
+            // 获取第一名奖励
+            for (Object rewardDetail : rewardDetails) {
+                JSONObject obj = JSONObject.fromObject(rewardDetail);
+                JSONArray rankArray = obj.getJSONArray("name");
+                // 排名落在指定区间
+                if (rank > rankArray.getInt(0) && rank <= rankArray.getInt(1)) {
+                    // 奖励详情
+                    rewardInfo = obj.getJSONObject("value");
+                }
+            }
+            if (!Dto.isObjNull(rewardInfo)) {
+                JSONObject obj = new JSONObject();
+                obj.put(CommonConstant.RESULT_KEY_CODE, CommonConstant.GLOBAL_YES);
+                obj.put("type", CommonConstant.NOTICE_TYPE_ALL);
+                obj.put("content", "恭喜" + account + "在" + matchInfo.getString("match_name") + "中获得第" + rank + "名,奖励" + rewardInfo.getString("name"));
+                socketIoManagerService.sendMessageToAllClient("getMessagePush", String.valueOf(obj));
+            }
+        }
+    }
+
+    /**
+     * 更改机器人状态
+     *
+     * @param matchNum
+     * @param status
+     */
+    private void updateAllRobotStatus(String matchNum, int status) {
+        Map<Object, Object> allRobotInfo = redisService.hmget("robot_info_" + matchNum);
+        for (Object robot : allRobotInfo.keySet()) {
+            matchBiz.updateRobotStatus(String.valueOf(robot), status);
+        }
     }
 
     /**
@@ -655,6 +720,7 @@ public class MatchEventDeal {
         List<Map.Entry<Object, Object>> outList = sortList.subList(totalNum, sortList.size());
         for (int i = 0; i < outList.size(); i++) {
             if (allRobotInfo.containsKey(outList.get(i).getKey())) {
+                matchBiz.updateRobotStatus(String.valueOf(outList.get(i).getKey()), 0);
                 redisService.hdel("robot_info_" + matchNum, String.valueOf(outList.get(i).getKey()));
             } else if (allPlayerInfo.containsKey(outList.get(i).getKey())) {
                 // 当前排名 淘汰下标+未淘汰人数+1
@@ -852,10 +918,16 @@ public class MatchEventDeal {
                         if (i == time - 1) {
                             count = robotList.size() / perCount;
                         }
+                        JSONObject matchInfo = getMatchInfoByNumFromRedis(matchNum);
                         for (int j = 0; j < count; j++) {
                             int landlordWin = RandomUtils.nextInt(2);
+                            // 最大倍数
+                            int maxMultiple = matchInfo.getInt("robot_level");
+                            if (maxMultiple < 0) {
+                                maxMultiple = 0;
+                            }
                             // 生成随机倍数
-                            int multiple = RandomUtils.nextInt(5) + 1;
+                            int multiple = RandomUtils.nextInt(maxMultiple) + 1;
                             // 计算分数
                             int score = 1;
                             for (int k = 0; k < multiple; k++) {
@@ -990,7 +1062,9 @@ public class MatchEventDeal {
         room.setPlayerCount(perCount);
         room.setScore(1);
         room.setRobot(true);
-        room.setSetting(new JSONObject());
+        JSONObject setting = new JSONObject();
+        setting.put("trustee_pass", CommonConstant.GLOBAL_YES);
+        room.setSetting(setting);
         List<Long> idList = new ArrayList<Long>();
         for (int j = 0; j < perCount; j++) {
             idList.add(0L);
@@ -1217,6 +1291,7 @@ public class MatchEventDeal {
         cacheInfo.put("promotion", matchSetting.getJSONArray("promotion"));
         cacheInfo.put("cur_round", 0);
         cacheInfo.put("is_auto", matchSetting.getInt("is_auto"));
+        cacheInfo.put("robot_level", matchSetting.getInt("robot_level"));
         cacheInfo.put("total_round", matchSetting.getInt("total_round"));
         cacheInfo.put("per_count", matchSetting.getInt("per_count"));
         cacheInfo.put("reward_detail", matchSetting.getJSONArray("reward_detail"));

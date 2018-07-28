@@ -429,6 +429,9 @@ public class GameEventDeal {
                     case DdzConstant.DDZ_GAME_EVENT_AUTO_PLAY:
                         ddzGameEventDeal.gameAutoPlay(client,data);
                         break;
+                    case DdzConstant.DDZ_GAME_EVENT_GET_OUT_INFO:
+                        ddzGameEventDeal.getOutInfo(client,data);
+                        break;
                     default:
                         break;
                 }

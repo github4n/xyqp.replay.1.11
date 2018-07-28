@@ -70,4 +70,9 @@ public class MatchBizImpl implements MatchBiz {
         matchDao.addOrUpdateUserWinningRecord(winningRecord);
     }
 
+    @Override
+    public void updateRobotStatus(String account, int status) {
+        matchDao.updateRobotStatus(account, status);
+    }
+
 }

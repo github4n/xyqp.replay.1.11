@@ -96,4 +96,12 @@ public interface MatchBiz {
      */
     void addOrUpdateUserWinningRecord(JSONObject winningRecord);
 
+    /**
+     * 更新机器人状态
+     *
+     * @param account 机器人账号
+     * @param status  状态
+     */
+    void updateRobotStatus(String account, int status);
+
 }

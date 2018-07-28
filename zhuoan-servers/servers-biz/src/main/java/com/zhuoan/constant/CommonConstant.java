@@ -272,6 +272,10 @@ public class CommonConstant {
      */
     public static final int NOTICE_TYPE_GAME = 2;
     /**
+     * 公告类型-所有
+     */
+    public static final int NOTICE_TYPE_ALL = 3;
+    /**
      * 提示消息类型-普通提示
      */
     public static final int SHOW_MSG_TYPE_NORMAL = 0;

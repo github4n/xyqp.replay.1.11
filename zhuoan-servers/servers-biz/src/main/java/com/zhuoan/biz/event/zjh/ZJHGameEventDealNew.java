@@ -20,6 +20,7 @@ import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.aop.framework.AopContext;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
@@ -195,10 +196,8 @@ public class ZJHGameEventDealNew {
         redisService.insertKey("summaryTimes_zjh"+room.getRoomNo(),"0",null);
         // 初始化房间信息
         room.initGame();
-        // 洗牌
-        room.xiPai();
-        // 发牌
-        room.faPai();
+        ((ZJHGameEventDealNew)AopContext.currentProxy()).shuffleAndFp(room);
+
         if (room.getFee() > 0) {
             JSONArray array = new JSONArray();
             for (String account : room.getPlayerMap().keySet()) {
@@ -251,6 +250,13 @@ public class ZJHGameEventDealNew {
         JSONObject result = obtainStartData(room,player);
         // 通知玩家
         CommonConstant.sendMsgEventToAll(room.getAllUUIDList(),result.toString(),"gameStartPush_ZJH");
+    }
+
+    public void shuffleAndFp(ZJHGameRoomNew room) {
+        // 洗牌
+        room.xiPai();
+        // 发牌
+        room.faPai();
     }
 
     public void gameEvent(SocketIOClient client, Object data) {

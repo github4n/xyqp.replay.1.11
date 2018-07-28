@@ -26,6 +26,7 @@ import net.sf.json.JSONObject;
 import org.apache.commons.lang.math.RandomUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.aop.framework.AopContext;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
@@ -281,10 +282,8 @@ public class SSSGameEventDealNew {
 
     public void startGameCommon(String roomNo) {
         final SSSGameRoomNew room = (SSSGameRoomNew) RoomManage.gameRoomMap.get(roomNo);
-        // 洗牌
-        room.shufflePai(room.getUserPacketMap().size(), room.getColor());
-        // 发牌
-        room.faPai();
+        ((SSSGameEventDealNew) AopContext.currentProxy()).shuffleAndFp(room);
+
         // 设置房间状态(配牌)
         room.setGameStatus(SSSConstant.SSS_GAME_STATUS_GAME_EVENT);
         // 设置玩家手牌
@@ -317,6 +316,13 @@ public class SSSGameEventDealNew {
             }
         });
 
+    }
+
+    public void shuffleAndFp(SSSGameRoomNew room) {
+        // 洗牌
+        room.shufflePai(room.getUserPacketMap().size(), room.getColor());
+        // 发牌
+        room.faPai();
     }
 
 
