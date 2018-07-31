@@ -2194,8 +2194,7 @@ public class BaseEventDeal {
         }else {
             JSONObject object = new JSONObject();
             object.put("gameId",gameId);
-            // TODO: 2018/7/27
-            object.put("platform","YQWDDZ");
+            object.put("platform",postData.getString("platform"));
             JSONArray array = getGoldSettingByGameIdAndPlatform(object);
             JSONObject userInfo = userBiz.getUserByAccount(account);
             if (!Dto.isObjNull(userInfo) && userInfo.containsKey("coins")) {
@@ -2866,6 +2865,22 @@ public class BaseEventDeal {
                         result.put("coins", userInfo.getInt("coins"));
                     }
                     result.put("end_time", endTime);
+                    result.put("account", account);
+                    if (postData.containsKey("room_no")) {
+                        String roomNo = postData.getString("room_no");
+                        if (RoomManage.gameRoomMap.containsKey(roomNo) && RoomManage.gameRoomMap.get(roomNo) != null) {
+                            GameRoom room = RoomManage.gameRoomMap.get(roomNo);
+                            if (room.getPlayerMap().containsKey(account) && room.getPlayerMap().get(account) != null) {
+                                if (room instanceof DdzGameRoom) {
+                                    if (room.getRoomType() == CommonConstant.ROOM_TYPE_JB) {
+                                        room.getPlayerMap().get(account).setScore(result.getInt("coins"));
+                                    }
+                                    ((DdzGameRoom) room).getUserPacketMap().get(account).setJpqEndTime(endTime);
+                                    CommonConstant.sendMsgEventToAll(room.getAllUUIDList(account),String.valueOf(result),"userPurchasePush");
+                                }
+                            }
+                        }
+                    }
                 }else {
                     result.put(CommonConstant.RESULT_KEY_CODE, CommonConstant.GLOBAL_NO);
                     result.put(CommonConstant.RESULT_KEY_MSG, "信息不正确");
@@ -2895,5 +2910,114 @@ public class BaseEventDeal {
         result.put(CommonConstant.RESULT_KEY_CODE, CommonConstant.GLOBAL_YES);
         result.put("data", achievementRank);
         CommonConstant.sendMsgEventToSingle(client, String.valueOf(result), "getAchievementRankPush");
+    }
+
+    /**
+     * 获取抽奖信息
+     * @param client
+     * @param data
+     */
+    public void getDrawInfo(SocketIOClient client, Object data) {
+        JSONObject postData = JSONObject.fromObject(data);
+        if (!CommonConstant.checkEvent(postData,CommonConstant.CHECK_GAME_STATUS_NO,client)) {
+            return;
+        }
+        String roomNo = postData.getString(CommonConstant.DATA_KEY_ROOM_NO);
+        String account = postData.getString(CommonConstant.DATA_KEY_ACCOUNT);
+        GameRoom room = RoomManage.gameRoomMap.get(roomNo);
+        JSONObject result = new JSONObject();
+        if (!Dto.isObjNull(room.getWinStreakObj())) {
+            JSONObject winStreakObj = room.getWinStreakObj();
+            // 次数
+            int time = winStreakObj.getInt("time");
+            // 是否需要连胜
+            int mustWin = winStreakObj.getInt("mustWin");
+            if (!redisService.sHasKey("win_streak_player_info_" + winStreakObj.getLong("id"), account)) {
+                int winStreakTime = 0;
+                if (room instanceof DdzGameRoom) {
+                    winStreakTime = ((DdzGameRoom) room).getUserPacketMap().get(account).getWinStreakTime();
+                }
+                if (winStreakTime >= time) {
+                    result.put(CommonConstant.RESULT_KEY_CODE, CommonConstant.GLOBAL_YES);
+                    result.put("cardNum",6);
+                }else {
+                    result.put(CommonConstant.RESULT_KEY_CODE, CommonConstant.GLOBAL_NO);
+                    if (mustWin == CommonConstant.GLOBAL_YES) {
+                        result.put(CommonConstant.RESULT_KEY_MSG, "再连胜" + (time-winStreakTime) + "场可拆红包");
+                    }else {
+                        result.put(CommonConstant.RESULT_KEY_MSG, "再赢" + (time-winStreakTime) + "场可拆红包");
+                    }
+                }
+            }else {
+                result.put(CommonConstant.RESULT_KEY_CODE, CommonConstant.GLOBAL_NO);
+                result.put(CommonConstant.RESULT_KEY_MSG, "今日已抽奖");
+            }
+        }else {
+            result.put(CommonConstant.RESULT_KEY_CODE, CommonConstant.GLOBAL_NO);
+            result.put(CommonConstant.RESULT_KEY_MSG, "当前房间不可拆红包");
+        }
+        CommonConstant.sendMsgEventToSingle(client, String.valueOf(result),"getDrawInfoPush");
+    }
+
+    public void gameDraw(SocketIOClient client,Object data) {
+        JSONObject postData = JSONObject.fromObject(data);
+        if (!CommonConstant.checkEvent(postData, CommonConstant.CHECK_GAME_STATUS_NO, client)) {
+            return;
+        }
+        String roomNo = postData.getString(CommonConstant.DATA_KEY_ROOM_NO);
+        String account = postData.getString(CommonConstant.DATA_KEY_ACCOUNT);
+        GameRoom room = RoomManage.gameRoomMap.get(roomNo);
+        int winStreakTime = 0;
+        if (room instanceof DdzGameRoom) {
+            winStreakTime = ((DdzGameRoom) room).getUserPacketMap().get(account).getWinStreakTime();
+        }
+        if (!Dto.isObjNull(room.getWinStreakObj())) {
+            JSONObject winStreakObj = room.getWinStreakObj();
+            // 次数
+            int time = winStreakObj.getInt("time");
+            // 是否需要连胜
+            int mustWin = winStreakObj.getInt("mustWin");
+            // 奖励金额
+            double reward = winStreakObj.getDouble("reward");
+            // 奖励类型
+            String rewardType = winStreakObj.getString("rewardType");
+            // 场次id
+            String baseInfoId = winStreakObj.getString("id");
+            if (winStreakTime == time) {
+                if (!redisService.sHasKey("win_streak_player_info_" + baseInfoId, account)) {
+                    // 更新奖励
+                    JSONArray array = new JSONArray();
+                    JSONObject obj = new JSONObject();
+                    obj.put("total", room.getPlayerMap().get(account).getScore());
+                    obj.put("fen", reward);
+                    obj.put("id", room.getPlayerMap().get(account).getId());
+                    array.add(obj);
+                    JSONObject jsonObject = new JSONObject();
+                    jsonObject.put("array",array);
+                    jsonObject.put("updateType",rewardType);
+                    producerService.sendMessage(daoQueueDestination, new PumpDao(DaoTypeConstant.UPDATE_SCORE, jsonObject));
+                    // 添加缓存数据
+                    redisService.sSet("win_streak_player_info_" + baseInfoId, account);
+                    if (!redisService.sHasKey("win_streak_baseInfo_id",baseInfoId)) {
+                        redisService.sSet("win_streak_baseInfo_id", baseInfoId);
+                    }
+                    // 添加记录
+                    JSONObject ticketRec = new JSONObject();
+                    ticketRec.put("user_account", account);
+                    ticketRec.put("game_id", room.getGid());
+                    ticketRec.put("ticket_type", CommonConstant.TICKET_TYPE_MONEY);
+                    ticketRec.put("money", reward);
+                    ticketRec.put("coins_id", baseInfoId);
+                    ticketRec.put("create_time", TimeUtil.getNowDate());
+                    userBiz.addUserTicketRec(ticketRec);
+                    // 通知
+                    JSONObject result = new JSONObject();
+                    result.put("num", postData.getInt("num"));
+                    result.put("reward", reward+ "红包券");
+                    result.put("drawInfo", "今日已抽奖");
+                    CommonConstant.sendMsgEventToSingle(client, String.valueOf(result), "gameDrawPush");
+                }
+            }
+        }
     }
  }

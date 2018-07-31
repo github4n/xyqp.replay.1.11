@@ -144,6 +144,14 @@ public class CommonConstant {
      */
     public static final int BASE_GAME_EVENT_GET_ACHIEVEMENT_RANK = 32;
     /**
+     * 公共游戏事件-获取抽奖信息
+     */
+    public static final int BASE_GAME_EVENT_GET_DRAW_INFO = 33;
+    /**
+     * 公共游戏事件-抽奖
+     */
+    public static final int BASE_GAME_EVENT_GAME_DRAW = 34;
+    /**
      * 游戏公共部分
      */
     public static final int GAME_BASE = 0;

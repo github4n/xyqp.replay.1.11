@@ -1,6 +1,7 @@
 package com.zhuoan.service.cache;
 
 import java.util.Map;
+import java.util.Set;
 
 /**
  * RedisService  todo  String Map Set List 封装可以参考实现类
@@ -106,5 +107,13 @@ public interface RedisService {
      * @return 移除的个数
      */
     long setRemove(String key, Object... values);
+
+    /**
+     * 根据key获取Set中的所有值
+     *
+     * @param key 键
+     * @return
+     */
+    Set<Object> sGet(String key);
 
 }

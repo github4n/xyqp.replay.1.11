@@ -58,6 +58,15 @@ public class MatchEventDeal {
     @Resource
     private SocketIoManagerService socketIoManagerService;
 
+    @Scheduled(cron = "0 0 0 * * ?")
+    public void clearRewardInfo() {
+        // 清除奖励信息
+        Set<Object> idSet = redisService.sGet("win_streak_baseInfo_id");
+        for (Object o : idSet) {
+            redisService.deleteByKey("win_streak_player_info_"+String.valueOf(o));
+        }
+    }
+
     @Scheduled(cron = "0/10 * * * * ?")
     public void startTimeMatch() {
         // 更新满人开赛配置

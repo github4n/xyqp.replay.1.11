@@ -180,6 +180,12 @@ public class GameEventDeal {
                     case CommonConstant.BASE_GAME_EVENT_GET_ACHIEVEMENT_RANK:
                         baseEventDeal.getAchievementRank(client, data);
                         break;
+                    case CommonConstant.BASE_GAME_EVENT_GET_DRAW_INFO:
+                        baseEventDeal.getDrawInfo(client, data);
+                        break;
+                    case CommonConstant.BASE_GAME_EVENT_GAME_DRAW:
+                        baseEventDeal.gameDraw(client, data);
+                        break;
                     default:
                         break;
                 }

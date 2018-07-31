@@ -365,6 +365,24 @@ public class BaseGameEvent {
                 producerService.sendMessage(baseQueueDestination, new Messages(client, object, CommonConstant.GAME_BASE, CommonConstant.BASE_GAME_EVENT_GET_ACHIEVEMENT_RANK));
             }
         });
+        /**
+         *  获取抽奖信息
+         */
+        server.addEventListener("getDrawInfo", Object.class, new DataListener<Object>() {
+            @Override
+            public void onData(SocketIOClient client, Object object, AckRequest ackSender) {
+                producerService.sendMessage(baseQueueDestination, new Messages(client, object, CommonConstant.GAME_BASE, CommonConstant.BASE_GAME_EVENT_GET_DRAW_INFO));
+            }
+        });
+        /**
+         *  抽奖
+         */
+        server.addEventListener("gameDraw", Object.class, new DataListener<Object>() {
+            @Override
+            public void onData(SocketIOClient client, Object object, AckRequest ackSender) {
+                producerService.sendMessage(baseQueueDestination, new Messages(client, object, CommonConstant.GAME_BASE, CommonConstant.BASE_GAME_EVENT_GAME_DRAW));
+            }
+        });
 
     }
 

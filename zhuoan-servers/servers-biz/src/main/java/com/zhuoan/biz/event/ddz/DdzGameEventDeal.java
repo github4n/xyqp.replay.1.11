@@ -1048,29 +1048,29 @@ public class DdzGameEventDeal {
             for (String player : obtainAllPlayerAccount(roomNo)) {
                 if (mustWin == CommonConstant.GLOBAL_NO || room.getUserPacketMap().get(player).getScore() > 0) {
                     room.getUserPacketMap().get(player).setWinStreakTime(room.getUserPacketMap().get(player).getWinStreakTime() + 1);
-                    if (room.getUserPacketMap().get(player).getWinStreakTime() == time) {
-                        if (!redisService.sHasKey("win_streak_player_info_" + baseInfoId, player)) {
-                            // 更新奖励
-                            updateUserInfo(room, player, reward, rewardType);
-                            // 添加缓存数据
-                            redisService.sSet("win_streak_player_info_" + baseInfoId, player);
-                            // 添加记录
-                            JSONObject ticketRec = new JSONObject();
-                            ticketRec.put("user_account", player);
-                            ticketRec.put("game_id", room.getGid());
-                            ticketRec.put("ticket_type", CommonConstant.TICKET_TYPE_MONEY);
-                            ticketRec.put("money", reward);
-                            ticketRec.put("coins_id", baseInfoId);
-                            ticketRec.put("create_time", TimeUtil.getNowDate());
-                            userBiz.addUserTicketRec(ticketRec);
-                            // 通知
-                            JSONObject result = new JSONObject();
-                            result.put("type", CommonConstant.SHOW_MSG_TYPE_SMALL);
-                            String msg = "恭喜获得" + reward + "红包券";
-                            result.put(CommonConstant.RESULT_KEY_MSG, msg);
-                            CommonConstant.sendMsgEventToSingle(room.getPlayerMap().get(player).getUuid(), String.valueOf(result), "tipMsgPush");
-                        }
-                    }
+//                    if (room.getUserPacketMap().get(player).getWinStreakTime() == time) {
+//                        if (!redisService.sHasKey("win_streak_player_info_" + baseInfoId, player)) {
+//                            // 更新奖励
+//                            updateUserInfo(room, player, reward, rewardType);
+//                            // 添加缓存数据
+//                            redisService.sSet("win_streak_player_info_" + baseInfoId, player);
+//                            // 添加记录
+//                            JSONObject ticketRec = new JSONObject();
+//                            ticketRec.put("user_account", player);
+//                            ticketRec.put("game_id", room.getGid());
+//                            ticketRec.put("ticket_type", CommonConstant.TICKET_TYPE_MONEY);
+//                            ticketRec.put("money", reward);
+//                            ticketRec.put("coins_id", baseInfoId);
+//                            ticketRec.put("create_time", TimeUtil.getNowDate());
+//                            userBiz.addUserTicketRec(ticketRec);
+//                            // 通知
+//                            JSONObject result = new JSONObject();
+//                            result.put("type", CommonConstant.SHOW_MSG_TYPE_SMALL);
+//                            String msg = "恭喜获得" + reward + "红包券";
+//                            result.put(CommonConstant.RESULT_KEY_MSG, msg);
+//                            CommonConstant.sendMsgEventToSingle(room.getPlayerMap().get(player).getUuid(), String.valueOf(result), "tipMsgPush");
+//                        }
+//                    }
                 }else {
                     room.getUserPacketMap().get(player).setWinStreakTime(0);
                 }
@@ -1559,6 +1559,12 @@ public class DdzGameEventDeal {
         }
         obj.put("timeArray",timeArray);
         obj.put("leftArray",getLeftArray(roomNo,account));
+        obj.put("drawInfo", "还剩" + room.getUserPacketMap().get(account).getWinStreakTime() + "局");
+        if (!Dto.isObjNull(room.getWinStreakObj())) {
+            if (redisService.sHasKey("win_streak_player_info_" + room.getWinStreakObj().getLong("id"), account)) {
+                obj.put("drawInfo", "今日已抽奖");
+            }
+        }
         return obj;
     }
 
