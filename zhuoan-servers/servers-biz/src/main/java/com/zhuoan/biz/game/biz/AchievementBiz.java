@@ -14,10 +14,19 @@ public interface AchievementBiz {
     /**
      * 获取成就信息
      *
-     * @param gameId 游戏id
+     * @param gameId   游戏id
+     * @param platform 平台标识
      * @return JSONArray
      */
-    JSONArray getAchievementInfoByGameId(int gameId);
+    JSONArray getAchievementInfoByGameId(int gameId, String platform);
+
+    /**
+     * 获取成就信息
+     *
+     * @param id id
+     * @return JSONObject
+     */
+    JSONObject getAchievementInfoById(long id);
 
     /**
      * 获取用户成就信息
@@ -54,4 +63,11 @@ public interface AchievementBiz {
      * @return JSONArray
      */
     JSONArray getAchievementRank(int limit, int gameId);
+
+    /**
+     * 更新用户成就信息
+     *
+     * @param userAchievement          奖励信息
+     */
+    void updateUserAchievement(JSONObject userAchievement);
 }

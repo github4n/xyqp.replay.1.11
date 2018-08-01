@@ -951,7 +951,8 @@ public class DdzGameEventDeal {
             farmerScore *= 2;
         }
         List<String> trusteeFarmer = new ArrayList<>();
-        if (room.getRoomType() == CommonConstant.ROOM_TYPE_MATCH) {
+        if (!Dto.isObjNull(room.getSetting()) && room.getSetting().containsKey("trustee_lose") &&
+            room.getSetting().getInt("trustee_lose") == CommonConstant.GLOBAL_YES) {
             for (String account : obtainAllPlayerAccount(roomNo)) {
                 if (!account.equals(room.getLandlordAccount()) && room.getUserPacketMap().get(account).getIsTrustee() == CommonConstant.GLOBAL_YES) {
                     trusteeFarmer.add(account);

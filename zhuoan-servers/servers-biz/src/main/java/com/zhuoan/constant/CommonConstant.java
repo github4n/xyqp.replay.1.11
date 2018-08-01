@@ -152,6 +152,14 @@ public class CommonConstant {
      */
     public static final int BASE_GAME_EVENT_GAME_DRAW = 34;
     /**
+     * 公共游戏事件-抽奖
+     */
+    public static final int BASE_GAME_EVENT_GET_ACHIEVEMENT_DETAIL = 35;
+    /**
+     * 公共游戏事件-抽奖
+     */
+    public static final int BASE_GAME_EVENT_DRAW_ACHIEVEMENT_REWARD = 36;
+    /**
      * 游戏公共部分
      */
     public static final int GAME_BASE = 0;
@@ -341,6 +349,21 @@ public class CommonConstant {
      * 实物券
      */
     public static final int TICKET_TYPE_THING = 1;
+
+    /**
+     * 签到信息事件类型-大厅检查
+     */
+    public static final int SIGN_INFO_EVENT_TYPE_HALL = 0;
+    /**
+     * 签到信息事件类型-点击
+     */
+    public static final int SIGN_INFO_EVENT_TYPE_CLICK = 1;
+
+    public static final int CURRENCY_TYPE_ROOM_CARD = 1;
+    public static final int CURRENCY_TYPE_COINS = 2;
+    public static final int CURRENCY_TYPE_SCORE = 3;
+    public static final int CURRENCY_TYPE_YB = 4;
+
 
     public static final String DATA_KEY_ROOM_NO = "room_no";
     public static final String DATA_KEY_ACCOUNT = "account";

@@ -30,8 +30,10 @@ public class AchievementBizImpl implements AchievementBiz {
     private GameDao gameDao;
 
     @Override
-    public JSONArray getAchievementInfoByGameId(int gameId) {
+    public JSONArray getAchievementInfoByGameId(int gameId, String platform) {
         StringBuffer key = new StringBuffer("achievement_info_");
+        key.append(platform);
+        key.append("_");
         key.append(gameId);
         JSONArray achievementInfo;
         try {
@@ -39,13 +41,18 @@ public class AchievementBizImpl implements AchievementBiz {
             if (object != null) {
                 achievementInfo = JSONArray.fromObject(object);
             } else {
-                achievementInfo = achievementDao.getAchievementInfoByGameId(gameId);
+                achievementInfo = achievementDao.getAchievementInfoByGameId(gameId, platform);
                 redisService.insertKey(String.valueOf(key), String.valueOf(achievementInfo), null);
             }
         } catch (Exception e) {
-            achievementInfo = achievementDao.getAchievementInfoByGameId(gameId);
+            achievementInfo = achievementDao.getAchievementInfoByGameId(gameId, platform);
         }
         return achievementInfo;
+    }
+
+    @Override
+    public JSONObject getAchievementInfoById(long id) {
+        return achievementDao.getAchievementInfoById(id);
     }
 
     @Override
@@ -61,16 +68,15 @@ public class AchievementBizImpl implements AchievementBiz {
     @Override
     public JSONObject addOrUpdateUserAchievement(String account, int gameId, int achievementScore) {
         JSONObject levelUp = new JSONObject();
-        JSONArray achievementInfo = getAchievementInfoByGameId(gameId);
-        // 是否存在记录
-        JSONObject userAchievement = achievementDao.getUserAchievementByAccountAndGameId(account, gameId);
-        JSONObject obj = new JSONObject();
-        if (!Dto.isObjNull(userAchievement)) {
-            obj.put("id", userAchievement.getLong("id"));
-            achievementScore += userAchievement.getLong("achievement_score");
-        }
         JSONObject userInfo = gameDao.getUserByAccount(account);
         if (!Dto.isObjNull(userInfo)) {
+            // 是否存在记录
+            JSONObject userAchievement = achievementDao.getUserAchievementByAccountAndGameId(account, gameId);
+            JSONObject obj = new JSONObject();
+            if (!Dto.isObjNull(userAchievement)) {
+                obj.put("id", userAchievement.getLong("id"));
+                achievementScore += userAchievement.getLong("achievement_score");
+            }
             if (userInfo.containsKey("name")) {
                 obj.put("user_name", userInfo.getString("name"));
             }
@@ -80,26 +86,42 @@ public class AchievementBizImpl implements AchievementBiz {
             if (userInfo.containsKey("sign")) {
                 obj.put("user_sign", userInfo.getString("sign"));
             }
-        }
-        obj.put("user_account", account);
-        obj.put("game_id", gameId);
-        obj.put("achievement_score", achievementScore);
-        // 取得对应的成就信息
-        for (int i = 0; i < achievementInfo.size(); i++) {
-            JSONObject achievement = achievementInfo.getJSONObject(i);
-            if (achievement.getInt("min_score") == achievementScore) {
-                obj.put("achievement_id", achievement.getLong("id"));
-                obj.put("achievement_name", achievement.getString("achievement_name"));
-                levelUp = achievement;
-                break;
+            obj.put("user_account", account);
+            obj.put("game_id", gameId);
+            obj.put("achievement_score", achievementScore);
+            // 取得对应的成就信息
+            JSONArray achievementInfo = getAchievementInfoByGameId(gameId, userInfo.getString("platform"));
+            for (int i = 0; i < achievementInfo.size(); i++) {
+                JSONObject achievement = achievementInfo.getJSONObject(i);
+                if (achievement.getInt("min_score") == achievementScore) {
+                    obj.put("achievement_id", achievement.getLong("id"));
+                    obj.put("achievement_name", achievement.getString("achievement_name"));
+                    if (!Dto.isObjNull(userAchievement)) {
+                        JSONArray rewardArray = userAchievement.getJSONArray("reward_array");
+                        rewardArray.add(achievement.getLong("id"));
+                        obj.put("reward_array", rewardArray);
+                    }else {
+                        JSONArray rewardArray = new JSONArray();
+                        rewardArray.add(achievement.getLong("id"));
+                        obj.put("reward_array", rewardArray);
+                        obj.put("draw_array", new JSONArray());
+                    }
+                    levelUp = achievement;
+                    break;
+                }
             }
+            achievementDao.addOrUpdateUserAchievement(obj);
         }
-        achievementDao.addOrUpdateUserAchievement(obj);
         return levelUp;
     }
 
     @Override
     public JSONArray getAchievementRank(int limit, int gameId) {
         return achievementDao.getAchievementRank(limit, gameId);
+    }
+
+    @Override
+    public void updateUserAchievement(JSONObject userAchievement) {
+        achievementDao.addOrUpdateUserAchievement(userAchievement);
     }
 }

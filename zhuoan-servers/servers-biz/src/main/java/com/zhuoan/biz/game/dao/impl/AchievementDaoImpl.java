@@ -16,23 +16,30 @@ import org.springframework.stereotype.Component;
 @Component
 public class AchievementDaoImpl implements AchievementDao{
     @Override
-    public JSONArray getAchievementInfoByGameId(int gameId) {
-        String sql = "select id,game_id,achievement_name,achievement_level,min_score,reward,reward_type from " +
-            "za_achievement_info where game_id=? order by achievement_level";
-        return DBUtil.getObjectListBySQL(sql, new Object[]{gameId});
+    public JSONArray getAchievementInfoByGameId(int gameId, String platform) {
+        String sql = "select id,game_id,achievement_name,achievement_level,min_score,reward,reward_type,platform from " +
+            "za_achievement_info where game_id=? and platform=? order by achievement_level";
+        return DBUtil.getObjectListBySQL(sql, new Object[]{gameId,platform});
+    }
+
+    @Override
+    public JSONObject getAchievementInfoById(long id) {
+        String sql = "select id,game_id,achievement_name,achievement_level,min_score,reward,reward_type,platform from " +
+            "za_achievement_info where id=?";
+        return DBUtil.getObjectBySQL(sql, new Object[]{id});
     }
 
     @Override
     public JSONArray getUserAchievementByAccount(String account) {
         String sql = "select id,user_account,user_img,user_name,user_sign,game_id,achievement_score,reward_level,achievement_id," +
-            "achievement_name from za_user_achievement where user_account=?";
+            "achievement_name,reward_array,draw_array from za_user_achievement where user_account=?";
         return DBUtil.getObjectListBySQL(sql,new Object[]{account});
     }
 
     @Override
     public JSONObject getUserAchievementByAccountAndGameId(String account, int gameId) {
         String sql = "select id,user_account,user_img,user_name,user_sign,game_id,achievement_score,reward_level,achievement_id," +
-            "achievement_name from za_user_achievement where user_account=? and game_id=?";
+            "achievement_name,reward_array,draw_array from za_user_achievement where user_account=? and game_id=?";
         return DBUtil.getObjectBySQL(sql,new Object[]{account,gameId});
     }
 

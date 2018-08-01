@@ -383,6 +383,24 @@ public class BaseGameEvent {
                 producerService.sendMessage(baseQueueDestination, new Messages(client, object, CommonConstant.GAME_BASE, CommonConstant.BASE_GAME_EVENT_GAME_DRAW));
             }
         });
+        /**
+         *  成就详情
+         */
+        server.addEventListener("getAchievementDetail", Object.class, new DataListener<Object>() {
+            @Override
+            public void onData(SocketIOClient client, Object object, AckRequest ackSender) {
+                producerService.sendMessage(baseQueueDestination, new Messages(client, object, CommonConstant.GAME_BASE, CommonConstant.BASE_GAME_EVENT_GET_ACHIEVEMENT_DETAIL));
+            }
+        });
+        /**
+         *  成就领取
+         */
+        server.addEventListener("drawAchievementReward", Object.class, new DataListener<Object>() {
+            @Override
+            public void onData(SocketIOClient client, Object object, AckRequest ackSender) {
+                producerService.sendMessage(baseQueueDestination, new Messages(client, object, CommonConstant.GAME_BASE, CommonConstant.BASE_GAME_EVENT_DRAW_ACHIEVEMENT_REWARD));
+            }
+        });
 
     }
 

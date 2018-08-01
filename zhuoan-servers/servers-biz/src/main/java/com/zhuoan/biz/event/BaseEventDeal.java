@@ -2301,6 +2301,10 @@ public class BaseEventDeal {
         JSONObject postData = JSONObject.fromObject(data);
         long userId = postData.getLong("userId");
         String platform = postData.getString("platform");
+        int type = CommonConstant.SIGN_INFO_EVENT_TYPE_HALL;
+        if (postData.containsKey("type")) {
+            type = postData.getInt("type");
+        }
         // 当前日期
         String nowTime = TimeUtil.getNowDateymd()+" 00:00:00";
         JSONObject signInfo = publicBiz.getUserSignInfo(platform,userId);
@@ -2311,9 +2315,11 @@ public class BaseEventDeal {
             result.put(CommonConstant.RESULT_KEY_CODE,CommonConstant.GLOBAL_YES);
             result.put("reward",minReward);
             result.put("days",0);
+            result.put("isSign", CommonConstant.GLOBAL_NO);
         }else {
             if (!TimeUtil.isLatter(signInfo.getString("createtime"),nowTime)) {
                 result.put(CommonConstant.RESULT_KEY_CODE,CommonConstant.GLOBAL_YES);
+                result.put("isSign", CommonConstant.GLOBAL_NO);
                 String yesterday = TimeUtil.addDaysBaseOnNowTime(nowTime,-1,"yyyy-MM-dd HH:mm:ss");
                 if (TimeUtil.isLatter(signInfo.getString("createtime"),yesterday)) {
                     int signDay = signInfo.getInt("singnum")+1;
@@ -2332,7 +2338,14 @@ public class BaseEventDeal {
                     result.put("days",0);
                 }
             }else {
-                result.put(CommonConstant.RESULT_KEY_CODE,CommonConstant.GLOBAL_NO);
+                // 已经签到过了判断是否是用户主动请求
+                if (type == CommonConstant.SIGN_INFO_EVENT_TYPE_CLICK) {
+                    result.put(CommonConstant.RESULT_KEY_CODE,CommonConstant.GLOBAL_YES);
+                    result.put("days",signInfo.getInt("singnum") - 1);
+                    result.put("isSign", CommonConstant.GLOBAL_YES);
+                }else {
+                    result.put(CommonConstant.RESULT_KEY_CODE,CommonConstant.GLOBAL_NO);
+                }
             }
         }
         // 签到奖励数组
@@ -2730,6 +2743,7 @@ public class BaseEventDeal {
         String account = postData.getString(CommonConstant.DATA_KEY_ACCOUNT);
         // 所要获取的游戏id
         JSONArray idList = postData.getJSONArray("id_list");
+        String platform = postData.getString("platform");
         // 用户成就信息
         JSONArray userAchievements = achievementBiz.getUserAchievementByAccount(account);
         // 组织数据，通知前端
@@ -2748,7 +2762,7 @@ public class BaseEventDeal {
                 achievement.put("name",userAchievement.getString("achievement_name"));
             } else {
                 achievement.put("score",0);
-                JSONArray achievementInfo = achievementBiz.getAchievementInfoByGameId(gameId);
+                JSONArray achievementInfo = achievementBiz.getAchievementInfoByGameId(gameId, platform);
                 if (achievementInfo.size() > 0) {
                     achievement.put("name",achievementInfo.getJSONObject(0).getString("achievement_name"));
                 } else {
@@ -3019,5 +3033,105 @@ public class BaseEventDeal {
                 }
             }
         }
+    }
+
+    public void getAchievementDetail(SocketIOClient client, Object data) {
+        JSONObject postData = JSONObject.fromObject(data);
+        String account = postData.getString(CommonConstant.DATA_KEY_ACCOUNT);
+        String platform = postData.getString("platform");
+        int gameId = postData.getInt("game_id");
+        JSONObject result = new JSONObject();
+        // 所有成就
+        JSONArray achievementArray = achievementBiz.getAchievementInfoByGameId(gameId,platform);
+        // 玩家当前成就
+        JSONObject userAchievement = achievementBiz.getUserAchievementByAccountAndGameId(account,gameId);
+        JSONArray array = new JSONArray();
+        for (Object obj : achievementArray) {
+            JSONObject achievement = JSONObject.fromObject(obj);
+            // 可以领取 已经领取 不能领
+            if (!Dto.isObjNull(userAchievement) && userAchievement.getJSONArray("reward_array").contains(achievement.getLong("id"))) {
+                achievement.put("status",1);
+            }else if (!Dto.isObjNull(userAchievement) && userAchievement.getJSONArray("draw_array").contains(achievement.getLong("id"))) {
+                achievement.put("status",0);
+            }else {
+                achievement.put("status",2);
+            }
+            array.add(achievement);
+        }
+        result.put("achievement_array",array);
+        CommonConstant.sendMsgEventToSingle(client,String.valueOf(result),"getAchievementDetailPush");
+    }
+
+    public void drawAchievementReward(SocketIOClient client,Object data) {
+        JSONObject postData = JSONObject.fromObject(data);
+        String account = postData.getString(CommonConstant.DATA_KEY_ACCOUNT);
+        int userId = postData.getInt("user_id");
+        JSONObject result = new JSONObject();
+        // 成就详情
+        int achievementId = postData.getInt("achievement_id");
+        JSONObject achievementInfo = achievementBiz.getAchievementInfoById(achievementId);
+        if (!Dto.isObjNull(achievementInfo)) {
+            // 用户成就
+            JSONObject userAchievement = achievementBiz.getUserAchievementByAccountAndGameId(account,achievementInfo.getInt("game_id"));
+            if (!Dto.isObjNull(userAchievement) && userAchievement.getJSONArray("reward_array").contains(achievementId)) {
+                double reward = achievementInfo.getDouble("reward");
+                String rewardType = null;
+                if (achievementInfo.getInt("reward_type") == CommonConstant.CURRENCY_TYPE_COINS) {
+                    rewardType = "coins";
+                }
+                if (!Dto.stringIsNULL(rewardType)) {
+                    // 更新成就信息
+                    JSONObject newUserAchievement = new JSONObject();
+                    newUserAchievement.put("id",userAchievement.getLong("id"));
+                    JSONArray rewardArray = new JSONArray();
+                    JSONArray drawArray = userAchievement.getJSONArray("draw_array");
+                    for (int i = 0; i < userAchievement.getJSONArray("reward_array").size(); i++) {
+                        if (userAchievement.getJSONArray("reward_array").getInt(i) == achievementId) {
+                            drawArray.add(achievementId);
+                        }else {
+                            rewardArray.add(userAchievement.getJSONArray("reward_array").getInt(i));
+                        }
+                    }
+                    newUserAchievement.put("reward_array",rewardArray);
+                    newUserAchievement.put("draw_array",drawArray);
+                    achievementBiz.updateUserAchievement(newUserAchievement);
+                    // 更新奖励
+                    JSONArray array = new JSONArray();
+                    JSONObject obj = new JSONObject();
+                    obj.put("total", 1);
+                    obj.put("fen", reward);
+                    obj.put("id", userId);
+                    array.add(obj);
+                    JSONObject jsonObject = new JSONObject();
+                    jsonObject.put("array",array);
+                    jsonObject.put("updateType",rewardType);
+                    producerService.sendMessage(daoQueueDestination, new PumpDao(DaoTypeConstant.UPDATE_SCORE, jsonObject));
+                    // 通知前端
+                    result.put(CommonConstant.RESULT_KEY_CODE, CommonConstant.GLOBAL_YES);
+                    result.put(CommonConstant.RESULT_KEY_MSG, "领取成功");
+                    // 刷新成就
+                    JSONArray achievementArray = achievementBiz.getAchievementInfoByGameId(achievementInfo.getInt("game_id"),achievementInfo.getString("platform"));
+                    JSONArray arr = new JSONArray();
+                    for (Object o : achievementArray) {
+                        JSONObject achievement = JSONObject.fromObject(o);
+                        // 可以领取 已经领取 不能领
+                        if (rewardArray.contains(achievement.getLong("id"))) {
+                            achievement.put("status",1);
+                        }else if (drawArray.contains(achievement.getLong("id"))) {
+                            achievement.put("status",0);
+                        }else {
+                            achievement.put("status",2);
+                        }
+                        arr.add(achievement);
+                    }
+                    result.put("achievement_array",arr);
+                    CommonConstant.sendMsgEventToSingle(client, String.valueOf(result),"drawAchievementRewardPush");
+                    return;
+                }
+            }
+        }
+        result.put(CommonConstant.RESULT_KEY_CODE, CommonConstant.GLOBAL_NO);
+        result.put(CommonConstant.RESULT_KEY_MSG, "领取失败");
+        CommonConstant.sendMsgEventToSingle(client, String.valueOf(result),"drawAchievementRewardPush");
     }
  }

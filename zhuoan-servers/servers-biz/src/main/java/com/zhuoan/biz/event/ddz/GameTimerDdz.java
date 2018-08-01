@@ -1,6 +1,7 @@
 package com.zhuoan.biz.event.ddz;
 
 import com.corundumstudio.socketio.SocketIOClient;
+import com.zhuoan.biz.core.ddz.DdzCore;
 import com.zhuoan.biz.model.RoomManage;
 import com.zhuoan.biz.model.ddz.DdzGameRoom;
 import com.zhuoan.constant.CommonConstant;
@@ -54,6 +55,24 @@ public class GameTimerDdz {
                 }
                 // 设置倒计时
                 room.setTimeLeft(i);
+                if (i == timeLeft && room.getSetting().containsKey("auto_last") && room.getSetting().getInt("auto_last") == CommonConstant.GLOBAL_YES) {
+                    List<String> lastCard = room.getLastCard();
+                    if (room.getLastCard().size() == 0 || nextAccount.equals(room.getLastOperateAccount())) {
+                        lastCard.clear();
+                    }
+                    if (DdzCore.checkCard(lastCard, room.getUserPacketMap().get(nextAccount).getMyPai())) {
+                        int cardType = DdzCore.obtainCardType(room.getUserPacketMap().get(nextAccount).getMyPai());
+                        if (cardType != DdzConstant.DDZ_CARD_TYPE_BOMB_WITH_SINGLE && cardType != DdzConstant.DDZ_CARD_TYPE_BOMB_WITH_PARIS) {
+                            JSONObject data = new JSONObject();
+                            data.put(CommonConstant.DATA_KEY_ROOM_NO, roomNo);
+                            data.put(CommonConstant.DATA_KEY_ACCOUNT, nextAccount);
+                            data.put(DdzConstant.DDZ_DATA_KEY_PAI_LIST, room.getUserPacketMap().get(nextAccount).getMyPai());
+                            data.put(DdzConstant.DDZ_DATA_KEY_TYPE, DdzConstant.DDZ_GAME_EVENT_TYPE_YES);
+                            producerService.sendMessage(ddzQueueDestination, new Messages(null, data, CommonConstant.GAME_ID_DDZ, DdzConstant.DDZ_GAME_EVENT_GAME_IN));
+                            break;
+                        }
+                    }
+                }
                 // 托管状态自动出牌
                 if (i==timeLeft-1&&room.getUserPacketMap().get(nextAccount).getIsTrustee()==CommonConstant.GLOBAL_YES) {
                     JSONObject data = new JSONObject();

@@ -565,6 +565,11 @@ public class MatchEventDeal {
             public void run() {
                 JSONObject matchInfo = getMatchInfoByNumFromRedis(matchNum);
                 if (!Dto.isObjNull(matchInfo)) {
+                    try {
+                        Thread.sleep(2000);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
                     // 清除上一轮数据
                     clearLastRoundRoom(matchNum);
                     // 增加游戏轮数
@@ -668,7 +673,9 @@ public class MatchEventDeal {
                 obj.put(CommonConstant.RESULT_KEY_CODE, CommonConstant.GLOBAL_YES);
                 obj.put("type", CommonConstant.NOTICE_TYPE_ALL);
                 obj.put("content", "恭喜" + account + "在" + matchInfo.getString("match_name") + "中获得第" + rank + "名,奖励" + rewardInfo.getString("name"));
-                socketIoManagerService.sendMessageToAllClient("getMessagePush", String.valueOf(obj));
+                for (SocketIOClient client : GameMain.server.getAllClients()) {
+                    CommonConstant.sendMsgEventToSingle(client, String.valueOf(obj), "getMessagePush");
+                }
             }
         }
     }
@@ -1025,6 +1032,11 @@ public class MatchEventDeal {
                     } else {
                         producerService.sendMessage(baseQueueDestination, new Messages(null, obj, CommonConstant.GAME_BASE, CommonConstant.BASE_GAME_EVENT_JOIN_ROOM));
                     }
+                    try {
+                        Thread.sleep(1);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
                 }
             }
         }
@@ -1073,6 +1085,9 @@ public class MatchEventDeal {
         room.setRobot(true);
         JSONObject setting = new JSONObject();
         setting.put("trustee_pass", CommonConstant.GLOBAL_YES);
+        setting.put("trustee_lose", CommonConstant.GLOBAL_YES);
+        setting.put("auto_last", CommonConstant.GLOBAL_YES);
+        setting.put("re_shuffle", CommonConstant.GLOBAL_YES);
         room.setSetting(setting);
         List<Long> idList = new ArrayList<Long>();
         for (int j = 0; j < perCount; j++) {

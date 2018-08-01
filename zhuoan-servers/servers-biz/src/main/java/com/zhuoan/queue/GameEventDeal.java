@@ -186,6 +186,12 @@ public class GameEventDeal {
                     case CommonConstant.BASE_GAME_EVENT_GAME_DRAW:
                         baseEventDeal.gameDraw(client, data);
                         break;
+                    case CommonConstant.BASE_GAME_EVENT_GET_ACHIEVEMENT_DETAIL:
+                        baseEventDeal.getAchievementDetail(client, data);
+                        break;
+                    case CommonConstant.BASE_GAME_EVENT_DRAW_ACHIEVEMENT_REWARD:
+                        baseEventDeal.drawAchievementReward(client, data);
+                        break;
                     default:
                         break;
                 }
