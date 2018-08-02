@@ -964,9 +964,19 @@ public class DdzGameEventDeal {
             if (account.equals(room.getLandlordAccount())) {
                 room.getUserPacketMap().get(account).setScore(Dto.mul(-2,farmerScore));
             } else if (trusteeFarmer.size() == 1 && trusteeFarmer.contains(account)) {
-                room.getUserPacketMap().get(account).setScore(Dto.mul(2,farmerScore));
+                // 只有当前农民托管胜利不算积分，失败算双倍积分
+                if (farmerScore > 0) {
+                    room.getUserPacketMap().get(account).setScore(0);
+                }else {
+                    room.getUserPacketMap().get(account).setScore(Dto.mul(2,farmerScore));
+                }
             } else if (trusteeFarmer.size() == 1 && !trusteeFarmer.contains(account)) {
-                room.getUserPacketMap().get(account).setScore(0);
+                // 有农民托管且不是当前用户胜利算双倍积分，失败不算积分
+                if (farmerScore > 0) {
+                    room.getUserPacketMap().get(account).setScore(Dto.mul(2,farmerScore));
+                }else {
+                    room.getUserPacketMap().get(account).setScore(0);
+                }
             } else{
                 room.getUserPacketMap().get(account).setScore(farmerScore);
             }
@@ -1094,12 +1104,9 @@ public class DdzGameEventDeal {
                         if (reward > 0) {
                             JSONObject result = new JSONObject();
                             result.put("type",CommonConstant.SHOW_MSG_TYPE_SMALL);
-                            String msg = "已晋升为"+levelUp.getString("achievement_name")+",奖励"+reward+"金币";
+                            String msg = "已晋升为"+levelUp.getString("achievement_name");
                             result.put(CommonConstant.RESULT_KEY_MSG,msg);
                             CommonConstant.sendMsgEventToSingle(room.getPlayerMap().get(account).getUuid(),String.valueOf(result),"tipMsgPush");
-                            room.getPlayerMap().get(account).setScore(Dto.add(room.getPlayerMap().get(account).getScore(),reward));
-                            // 更新奖励
-                            updateUserInfo(room, account, reward, "coins");
                         }
                     }
                 }
@@ -1560,8 +1567,8 @@ public class DdzGameEventDeal {
         }
         obj.put("timeArray",timeArray);
         obj.put("leftArray",getLeftArray(roomNo,account));
-        obj.put("drawInfo", "还剩" + room.getUserPacketMap().get(account).getWinStreakTime() + "局");
         if (!Dto.isObjNull(room.getWinStreakObj())) {
+            obj.put("drawInfo", "还剩" + (room.getWinStreakObj().getInt("time") - room.getUserPacketMap().get(account).getWinStreakTime()) + "局");
             if (redisService.sHasKey("win_streak_player_info_" + room.getWinStreakObj().getLong("id"), account)) {
                 obj.put("drawInfo", "今日已抽奖");
             }

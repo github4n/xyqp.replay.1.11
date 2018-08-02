@@ -35,6 +35,13 @@ public class MatchConstant {
 
     public static final int MATCH_WINNING_RECORD_SIZE = 5;
 
+    /**
+     * 信息类别 1-开始条件 2-比赛时长 3-消耗 4-报名条件
+     */
+    public static final int MATCH_INFO_TYPE_BEGIN_CONDITION = 1;
+    public static final int MATCH_INFO_TYPE_TIME = 2;
+    public static final int MATCH_INFO_TYPE_COST = 3;
+    public static final int MATCH_INFO_TYPE_SIGN_CONDITION = 4;
 
 }
 

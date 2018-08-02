@@ -2200,7 +2200,7 @@ public class BaseEventDeal {
             if (!Dto.isObjNull(userInfo) && userInfo.containsKey("coins")) {
                 int userCoins = userInfo.getInt("coins");
                 // 取符合场次要求的场次信息
-                for (int i = 0; i < array.size(); i++) {
+                for (int i = array.size() - 1; i >= 0; i--) {
                     JSONObject obj = array.getJSONObject(i).getJSONObject("option");
                     if (obj.getInt("goldCoinEnter") < userCoins && obj.getInt("goldCoinLeave") >= userCoins) {
                         option = obj;

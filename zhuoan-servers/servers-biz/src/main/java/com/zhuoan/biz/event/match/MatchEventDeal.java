@@ -87,8 +87,17 @@ public class MatchEventDeal {
             String difference = TimeUtil.getDaysBetweenTwoTime(matchSetting.getString("create_time"), nowTime, 1000L);
             // 需要自动开赛
             if ("0".equals(difference)) {
-                matchSetting.put("create_time", TimeUtil.addSecondBaseOnNowTime(nowTime, matchSetting.getInt("time_interval")));
-                matchSetting.put("description", TimeUtil.addSecondBaseOnNowTime(nowTime, matchSetting.getInt("time_interval")) + "开赛");
+                String nextTime = TimeUtil.addSecondBaseOnNowTime(nowTime, matchSetting.getInt("time_interval"));
+                matchSetting.put("create_time", nextTime);
+                matchSetting.put("description", nextTime + "开赛");
+                JSONArray matchInfoArr = matchSetting.getJSONArray("match_info");
+                for (int i = 0; i < matchInfoArr.size(); i++) {
+                    if (matchInfoArr.getJSONObject(i).getInt("type") == MatchConstant.MATCH_INFO_TYPE_BEGIN_CONDITION) {
+                        matchInfoArr.getJSONObject(i).put("value", nextTime);
+                        continue;
+                    }
+                }
+                matchSetting.put("match_info",matchInfoArr);
                 JSONObject unFullMatch = matchBiz.getMatchInfoByMatchId(matchSetting.getLong("id"), 0, 0);
                 if (!Dto.isObjNull(unFullMatch)) {
                     if (matchSetting.getInt("must_full") != CommonConstant.GLOBAL_YES ||
@@ -116,6 +125,11 @@ public class MatchEventDeal {
             JSONObject matchSetting = JSONObject.fromObject(object);
             matchSetting.put("online_num", matchSetting.getInt("online_num") + RandomUtils.nextInt(10));
             newCountMatchSettings.add(matchSetting);
+
+            int flag = RandomUtils.nextInt(10);
+            if (flag % 3 == 0) {
+                sendWinnerInfoToAll(String.valueOf(RandomUtils.nextInt(99999999)),1,matchSetting.getJSONArray("reward_detail"),matchSetting.getString("match_name"));
+            }
         }
         StringBuffer countKey = new StringBuffer();
         countKey.append("match_setting_");
@@ -277,6 +291,13 @@ public class MatchEventDeal {
                             result.put("match_id", matchSetting.getLong("id"));
                             result.put("match_name", matchSetting.getString("match_name"));
                             if (matchSetting.getInt("type") == MatchConstant.MATCH_TYPE_TIME) {
+                                JSONArray matchInfoArr = matchSetting.getJSONArray("match_info");
+                                for (int i = 0; i < matchInfoArr.size(); i++) {
+                                    if (matchInfoArr.getJSONObject(i).getInt("type") == MatchConstant.MATCH_INFO_TYPE_TIME) {
+                                        result.put("totalTime", matchInfoArr.getJSONObject(i).getString("value"));
+                                        break;
+                                    }
+                                }
                                 String difference = TimeUtil.getDaysBetweenTwoTime(matchSetting.getString("create_time"), TimeUtil.getNowDate(), 1000L);
                                 result.put("timeLeft", difference);
                             }
@@ -656,23 +677,31 @@ public class MatchEventDeal {
     private void sendWinnerInfoToAll(String matchNum, String account, int rank) {
         JSONObject matchInfo = getMatchInfoByNumFromRedis(matchNum);
         if (!Dto.isObjNull(matchInfo)) {
-            JSONObject rewardInfo = new JSONObject();
             JSONArray rewardDetails = matchInfo.getJSONArray("reward_detail");
-            // 获取第一名奖励
-            for (Object rewardDetail : rewardDetails) {
-                JSONObject obj = JSONObject.fromObject(rewardDetail);
-                JSONArray rankArray = obj.getJSONArray("name");
-                // 排名落在指定区间
-                if (rank > rankArray.getInt(0) && rank <= rankArray.getInt(1)) {
-                    // 奖励详情
-                    rewardInfo = obj.getJSONObject("value");
-                }
+            String matchName = matchInfo.getString("match_name");
+            sendWinnerInfoToAll(account, rank, rewardDetails, matchName);
+
+        }
+    }
+
+    private void sendWinnerInfoToAll(String account, int rank, JSONArray rewardDetails, String matchName) {
+        JSONObject rewardInfo = new JSONObject();
+        // 获取第一名奖励
+        for (Object rewardDetail : rewardDetails) {
+            JSONObject obj = JSONObject.fromObject(rewardDetail);
+            JSONArray rankArray = obj.getJSONArray("name");
+            // 排名落在指定区间
+            if (rank > rankArray.getInt(0) && rank <= rankArray.getInt(1)) {
+                // 奖励详情
+                rewardInfo = obj.getJSONObject("value");
             }
-            if (!Dto.isObjNull(rewardInfo)) {
-                JSONObject obj = new JSONObject();
-                obj.put(CommonConstant.RESULT_KEY_CODE, CommonConstant.GLOBAL_YES);
-                obj.put("type", CommonConstant.NOTICE_TYPE_ALL);
-                obj.put("content", "恭喜" + account + "在" + matchInfo.getString("match_name") + "中获得第" + rank + "名,奖励" + rewardInfo.getString("name"));
+        }
+        if (!Dto.isObjNull(rewardInfo)) {
+            JSONObject obj = new JSONObject();
+            obj.put(CommonConstant.RESULT_KEY_CODE, CommonConstant.GLOBAL_YES);
+            obj.put("type", CommonConstant.NOTICE_TYPE_ALL);
+            obj.put("content", "恭喜" + account + "在" + matchName + "中获得第" + rank + "名,奖励" + rewardInfo.getString("name"));
+            if (GameMain.server != null) {
                 for (SocketIOClient client : GameMain.server.getAllClients()) {
                     CommonConstant.sendMsgEventToSingle(client, String.valueOf(obj), "getMessagePush");
                 }
