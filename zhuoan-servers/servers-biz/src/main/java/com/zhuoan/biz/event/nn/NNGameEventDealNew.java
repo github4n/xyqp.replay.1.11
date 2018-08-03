@@ -441,10 +441,7 @@ public class NNGameEventDealNew {
      * @param room
      */
     public void startGameTb(final NNGameRoomNew room) {
-        // 洗牌
-        NiuNiuServer.xiPai(room.getRoomNo());
-        // 发牌
-        NiuNiuServer.faPai(room.getRoomNo());
+        ((NNGameEventDealNew) AopContext.currentProxy()).shuffleAndFp(room);
         // 设置房间状态(下注)
         room.setGameStatus(NNConstant.NN_GAME_STATUS_XZ);
         changeGameStatus(room);
@@ -722,10 +719,7 @@ public class NNGameEventDealNew {
                 if (room.isAllXiaZhu()) {
                     // 明牌抢庄已发牌
                     if (room.getBankerType() != NNConstant.NN_BANKER_TYPE_MP) {
-                        // 洗牌
-                        NiuNiuServer.xiPai(room.getRoomNo());
-                        // 发牌
-                        NiuNiuServer.faPai(room.getRoomNo());
+                        ((NNGameEventDealNew) AopContext.currentProxy()).shuffleAndFp(room);
                     }
                     // 设置游戏状态
                     room.setGameStatus(NNConstant.NN_GAME_STATUS_LP);

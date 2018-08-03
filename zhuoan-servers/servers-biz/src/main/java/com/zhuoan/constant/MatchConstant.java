@@ -43,6 +43,8 @@ public class MatchConstant {
     public static final int MATCH_INFO_TYPE_COST = 3;
     public static final int MATCH_INFO_TYPE_SIGN_CONDITION = 4;
 
+    public static final String MATCH_SIGN_UP_KEY = "match_sign_up_list";
+
 }
 
 

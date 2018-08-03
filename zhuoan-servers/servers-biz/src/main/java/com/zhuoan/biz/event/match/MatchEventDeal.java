@@ -11,7 +11,6 @@ import com.zhuoan.constant.MatchConstant;
 import com.zhuoan.queue.Messages;
 import com.zhuoan.service.cache.RedisService;
 import com.zhuoan.service.jms.ProducerService;
-import com.zhuoan.service.socketio.SocketIoManagerService;
 import com.zhuoan.service.socketio.impl.GameMain;
 import com.zhuoan.util.Dto;
 import com.zhuoan.util.MathDelUtil;
@@ -54,9 +53,6 @@ public class MatchEventDeal {
 
     @Resource
     private ProducerService producerService;
-
-    @Resource
-    private SocketIoManagerService socketIoManagerService;
 
     @Scheduled(cron = "0 0 0 * * ?")
     public void clearRewardInfo() {
@@ -228,7 +224,7 @@ public class MatchEventDeal {
         Map<String, JSONObject> beginMap = new HashMap<>();
         if (!Dto.isObjNull(matchSetting)) {
             // 是否已报名该场次
-            boolean isSignUp = redisService.sHasKey("match_sign_up_" + matchSetting.getInt("id"), account);
+            boolean isSignUp = checkUserSign(account);
             if (!isSignUp) {
                 // 消耗类型
                 int costFee = -1;
@@ -312,7 +308,7 @@ public class MatchEventDeal {
                 }
             } else {
                 result.put(CommonConstant.RESULT_KEY_CODE, CommonConstant.GLOBAL_NO);
-                result.put(CommonConstant.RESULT_KEY_MSG, "已报名该场次");
+                result.put(CommonConstant.RESULT_KEY_MSG, "已报名比赛场");
             }
         } else {
             result.put(CommonConstant.RESULT_KEY_CODE, CommonConstant.GLOBAL_NO);
@@ -323,6 +319,22 @@ public class MatchEventDeal {
         for (String matchNum : beginMap.keySet()) {
             initRank(beginMap.get(matchNum), matchNum);
         }
+    }
+
+    private boolean checkUserSign(String account) {
+        JSONArray timeMatchSettings = getMatchSettingByType(MatchConstant.MATCH_TYPE_TIME, TimeUtil.getNowDate());
+        JSONArray countMatchSettings = getMatchSettingByType(MatchConstant.MATCH_TYPE_COUNT, null);
+        JSONArray matchSettings = new JSONArray();
+        matchSettings.addAll(timeMatchSettings);
+        matchSettings.addAll(countMatchSettings);
+        for (int i = 0; i < matchSettings.size(); i++) {
+            long matchId = matchSettings.getJSONObject(i).getLong("id");
+            if (redisService.sHasKey("match_sign_up_" + matchId, account)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**
