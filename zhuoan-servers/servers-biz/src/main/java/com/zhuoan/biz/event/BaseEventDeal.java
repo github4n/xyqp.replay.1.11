@@ -1793,6 +1793,9 @@ public class BaseEventDeal {
                         case CommonConstant.GAME_ID_ZJH:
                             ZJHGameEventDealNew.GAME_ZJH = value;
                             break;
+                        case CommonConstant.GAME_ID_QZMJ:
+                            QZMJGameEventDeal.GAME_QZMJ = value;
+                            break;
                         default:
                             break;
                     }

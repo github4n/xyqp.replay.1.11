@@ -827,5 +827,26 @@ public class MaJiangCore {
 
 		return false;
 	}
+
+	public static List<Integer> getCompensateList(List<Integer> myPai, int jin, JSONArray tingList) {
+        List<Integer> compensateList = new ArrayList<>();
+        // 有听打无听
+        if (tingList.size() > 0) {
+            // 所有听的牌
+            List<Integer> allTing = new ArrayList<>();
+            for (int i = 0; i < tingList.size(); i++) {
+                allTing.add(tingList.getJSONObject(i).getInt("pai"));
+            }
+            for (Integer pai : myPai) {
+                if (!allTing.contains(pai)) {
+                    compensateList.add(pai);
+                }
+            }
+        }
+
+
+
+        return compensateList;
+    }
 	
 }

@@ -42,6 +42,18 @@ public class RobotInfo {
      * 最小退出分数
      */
     private double minOutScore;
+    /**
+     * 累计分数
+     */
+    private int totalScore;
+    /**
+     * 最大胜利分数
+     */
+    private int maxWinScore = 100;
+    /**
+     * 最大失败分数
+     */
+    private int maxLoseScore = -100;
 
     public String getRobotAccount() {
         return robotAccount;
@@ -107,6 +119,30 @@ public class RobotInfo {
         this.minOutScore = minOutScore;
     }
 
+    public int getTotalScore() {
+        return totalScore;
+    }
+
+    public void setTotalScore(int totalScore) {
+        this.totalScore = totalScore;
+    }
+
+    public int getMaxWinScore() {
+        return maxWinScore;
+    }
+
+    public void setMaxWinScore(int maxWinScore) {
+        this.maxWinScore = maxWinScore;
+    }
+
+    public int getMaxLoseScore() {
+        return maxLoseScore;
+    }
+
+    public void setMaxLoseScore(int maxLoseScore) {
+        this.maxLoseScore = maxLoseScore;
+    }
+
     public void subDelayTime() {
         this.delayTime--;
     }
@@ -114,4 +150,9 @@ public class RobotInfo {
     public void subOutTimes() {
         this.outTimes--;
     }
+
+    public void addTotalScore(int score) {
+        this.totalScore += score;
+    }
+
 }

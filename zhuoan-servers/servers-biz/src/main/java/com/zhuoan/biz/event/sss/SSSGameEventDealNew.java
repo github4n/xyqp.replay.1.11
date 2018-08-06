@@ -14,6 +14,7 @@ import com.zhuoan.biz.model.dao.PumpDao;
 import com.zhuoan.biz.model.sss.Player;
 import com.zhuoan.biz.model.sss.SSSGameRoomNew;
 import com.zhuoan.biz.robot.RobotEventDeal;
+import com.zhuoan.biz.robot.RobotInfo;
 import com.zhuoan.constant.CommonConstant;
 import com.zhuoan.constant.DaoTypeConstant;
 import com.zhuoan.constant.SSSConstant;
@@ -323,6 +324,100 @@ public class SSSGameEventDealNew {
         room.shufflePai(room.getUserPacketMap().size(), room.getColor());
         // 发牌
         room.faPai();
+
+        changeRobotCard(room);
+
+    }
+
+    private void changeRobotCard(SSSGameRoomNew room) {
+        int maxLose = 0;
+        int maxWin = 0;
+        String maxWinAccount = null;
+        String maxLoseAccount = null;
+        for (String robotAccount : room.getRobotList()) {
+            if (RobotEventDeal.robots.containsKey(robotAccount) && RobotEventDeal.robots.get(robotAccount) != null) {
+                RobotInfo robot = RobotEventDeal.robots.get(robotAccount);
+                if (robot.getTotalScore() > maxWin) {
+                    maxWin = robot.getTotalScore();
+                    maxWinAccount = robotAccount;
+                } else if (robot.getTotalScore() < maxLose) {
+                    maxLose = robot.getTotalScore();
+                    maxLoseAccount = robotAccount;
+                }
+            }
+        }
+        int playerCount = 0;
+        for (String account : room.getUserPacketMap().keySet()) {
+            if (room.getUserPacketMap().containsKey(account) && room.getUserPacketMap().get(account) != null) {
+                if (room.getUserPacketMap().get(account).getStatus() > SSSConstant.SSS_USER_STATUS_INIT) {
+                    playerCount++;
+                }
+            }
+        }
+        Set<Object> set = redisService.sGet("card_library_" + playerCount);
+        List<JSONArray> winList = new ArrayList<>();
+        List<JSONArray> loseList = new ArrayList<>();
+        if (set.size() > 0) {
+            List<Object> list = new ArrayList<>(set);
+            int libraryIndex = RandomUtils.nextInt(set.size());
+            for (Object o : JSONArray.fromObject(list.get(libraryIndex))) {
+                if (JSONObject.fromObject(o).getInt("score") > 0) {
+                    winList.add(JSONObject.fromObject(o).getJSONArray("card"));
+                } else if (JSONObject.fromObject(o).getInt("score") < 0) {
+                    loseList.add(JSONObject.fromObject(o).getJSONArray("card"));
+                }
+            }
+            if (!Dto.stringIsNULL(maxLoseAccount)) {
+                int loseFlag = RandomUtils.nextInt(-RobotEventDeal.robots.get(maxLoseAccount).getMaxLoseScore());
+                if (-loseFlag > maxLose) {
+                    changeRobotCard(room, maxLoseAccount, winList, loseList);
+                }
+            } else if (!Dto.stringIsNULL(maxWinAccount)) {
+                int winFlag = RandomUtils.nextInt(RobotEventDeal.robots.get(maxWinAccount).getMaxWinScore());
+                if (winFlag < maxWin) {
+                    changeRobotCard(room, maxWinAccount, loseList, winList);
+                }
+            }
+        }
+    }
+
+    private void changeRobotCard(SSSGameRoomNew room, String maxAccount, List<JSONArray> list1, List<JSONArray> list2) {
+        List<JSONArray> allList = new ArrayList<>();
+        int index = RandomUtils.nextInt(list1.size());
+        if (index < list1.size()) {
+            JSONArray arr = list1.get(index);
+            list1.remove(index);
+            allList.addAll(list1);
+            allList.addAll(list2);
+            Collections.shuffle(allList);
+            int cardIndex = 0;
+            for (String account : room.getUserPacketMap().keySet()) {
+                if (room.getUserPacketMap().containsKey(account) && room.getUserPacketMap().get(account) != null) {
+                    if (room.getUserPacketMap().get(account).getStatus() > SSSConstant.SSS_USER_STATUS_INIT) {
+                        if (account.equals(maxAccount)) {
+                            String[] p = new String[arr.size()];
+                            for (int i = 0; i < p.length; i++) {
+                                p[i] = arr.getString(i);
+                            }
+                            // 设置玩家手牌
+                            room.getUserPacketMap().get(account).setPai(p);
+                            // 设置玩家牌型
+                            room.getUserPacketMap().get(account).setPaiType(SSSSpecialCards.isSpecialCards(p, room.getSetting()));
+                        } else {
+                            String[] p = new String[allList.get(cardIndex).size()];
+                            for (int i = 0; i < p.length; i++) {
+                                p[i] = allList.get(cardIndex).getString(i);
+                            }
+                            // 设置玩家手牌
+                            room.getUserPacketMap().get(account).setPai(SSSGameRoomNew.sortPaiDesc(p));
+                            // 设置玩家牌型
+                            room.getUserPacketMap().get(account).setPaiType(SSSSpecialCards.isSpecialCards(p, room.getSetting()));
+                            cardIndex++;
+                        }
+                    }
+                }
+            }
+        }
     }
 
 
@@ -614,6 +709,15 @@ public class SSSGameEventDealNew {
                                     for (String uuid : room.getUserPacketMap().keySet()) {
                                         if (room.getUserPacketMap().containsKey(uuid)&&room.getUserPacketMap().get(uuid)!=null) {
                                             room.getUserPacketMap().get(uuid).setStatus(SSSConstant.SSS_TIMER_INIT);
+                                        }
+                                    }
+                                }
+                            }
+                            for (String account : room.getUserPacketMap().keySet()) {
+                                if (room.getUserPacketMap().containsKey(account) && room.getUserPacketMap().get(account) != null) {
+                                    if (room.getUserPacketMap().get(account).getStatus() != SSSConstant.SSS_USER_STATUS_INIT) {
+                                        if (room.getRobotList().contains(account)) {
+                                            RobotEventDeal.robots.get(account).addTotalScore((int) room.getUserPacketMap().get(account).getScore());
                                         }
                                     }
                                 }

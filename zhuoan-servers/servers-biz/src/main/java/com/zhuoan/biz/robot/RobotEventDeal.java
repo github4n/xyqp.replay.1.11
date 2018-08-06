@@ -36,7 +36,7 @@ public class RobotEventDeal {
 
     private final static Logger logger = LoggerFactory.getLogger(RobotEventDeal.class);
 
-    ConcurrentHashMap<String,RobotInfo> robots = new ConcurrentHashMap<String, RobotInfo>();
+    public static ConcurrentHashMap<String,RobotInfo> robots = new ConcurrentHashMap<String, RobotInfo>();
 
     @Resource
     private Destination baseQueueDestination;

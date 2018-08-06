@@ -242,12 +242,12 @@ public class DdzGameEventDeal {
         }else {
             result.put("nextType",DdzConstant.DDZ_BE_LANDLORD_TYPE_ROB);
         }
+        boolean beginTime = false;
         if (isAllChoice(roomNo)) {
             // 确定地主
             isContinue = determineLandlord(roomNo);
             if (isContinue) {
-                // 开启定时器
-                beginEventTimer(roomNo,room.getLandlordAccount());
+                beginTime = true;
                 // 状态改变
                 result.put("card",obtainLandlordCard(roomNo));
                 result.put("landlord",obtainLandlordIndex(roomNo));
@@ -267,6 +267,9 @@ public class DdzGameEventDeal {
             room.setGameStatus(DdzConstant.DDZ_GAME_STATUS_READY);
             changeGameStatus(roomNo);
             startGame(roomNo);
+        } else if (beginTime) {
+            // 开启定时器
+            beginEventTimer(roomNo,room.getLandlordAccount());
         }
     }
 
