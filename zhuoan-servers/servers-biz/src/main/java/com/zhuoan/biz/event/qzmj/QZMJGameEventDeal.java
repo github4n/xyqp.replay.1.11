@@ -808,7 +808,7 @@ public class QZMJGameEventDeal {
             // 出牌提示
             JSONArray tingTip = MaJiangCore.tingPaiTip(game.getUserPacketMap().get(account).getMyPai(), game.getJin(), shengyuList);
             result.put("tingTip",tingTip);
-            result.put("compensateList",MaJiangCore.getCompensateList(game.getUserPacketMap().get(account).getMyPai(), game.getJin(), tingTip));
+            result.put("compensateList",MaJiangCore.getCompensateList(game.getUserPacketMap().get(account).getMyPai(),getOutList(roomNo), game.getJin(), tingTip));
         }
         //当前正在操作的人
         result.put(QZMJConstant.foucs, focus);
@@ -1282,7 +1282,7 @@ public class QZMJGameEventDeal {
 
                 JSONArray tingTip = MaJiangCore.tingPaiTip(game.getUserPacketMap().get(zhuaID).getMyPai(), game.getJin(), shengyuList);
                 back.put("tingTip",tingTip);
-                back.put("compensateList",MaJiangCore.getCompensateList(game.getUserPacketMap().get(zhuaID).getMyPai(), game.getJin(), tingTip));
+                back.put("compensateList",MaJiangCore.getCompensateList(game.getUserPacketMap().get(zhuaID).getMyPai(),getOutList(game.getRoomNo()), game.getJin(), tingTip));
             }else{
                 back.put("tingTip",new JSONArray());
                 back.put("compensateList",new JSONArray());
@@ -3429,7 +3429,7 @@ public class QZMJGameEventDeal {
                         // 出牌提示
                         JSONArray tingTip = MaJiangCore.tingPaiTip(room.getUserPacketMap().get(zhuaID).getMyPai(), room.getJin(), shengyuList);
                         back.put("tingTip",tingTip);
-                        back.put("compensateList",MaJiangCore.getCompensateList(room.getUserPacketMap().get(zhuaID).getMyPai(), room.getJin(), tingTip));
+                        back.put("compensateList",MaJiangCore.getCompensateList(room.getUserPacketMap().get(zhuaID).getMyPai(),getOutList(room.getRoomNo()), room.getJin(), tingTip));
                     }
                     back.put(QZMJConstant.gangvalue,anvalue);
                     back.put(QZMJConstant.value, new int[]{mopai});
@@ -3653,7 +3653,7 @@ public class QZMJGameEventDeal {
                 // 出牌提示
                 JSONArray tingTip = MaJiangCore.tingPaiTip(room.getUserPacketMap().get(thisask).getMyPai(), room.getJin(), shengyuList);
                 chupai.put("tingTip",tingTip);
-                chupai.put("compensateList",MaJiangCore.getCompensateList(room.getUserPacketMap().get(thisask).getMyPai(), room.getJin(), tingTip));
+                chupai.put("compensateList",MaJiangCore.getCompensateList(room.getUserPacketMap().get(thisask).getMyPai(),getOutList(roomNo), room.getJin(), tingTip));
                 beginGameEventTimer(roomNo,thisask,0,QZMJConstant.QZ_MJ_TIMER_TYPE_CP);
                 CommonConstant.sendMsgEventToSingle(room.getPlayerMap().get(thisask).getUuid(),String.valueOf(chupai),"gameActionPush");
             }else{
@@ -3746,7 +3746,7 @@ public class QZMJGameEventDeal {
                             // 出牌提示
                             JSONArray tingTip = MaJiangCore.tingPaiTip(room.getUserPacketMap().get(clientId).getMyPai(), room.getJin(), shengyuList);
                             objchi.put("tingTip",tingTip);
-                            objchi.put("compensateList",MaJiangCore.getCompensateList(room.getUserPacketMap().get(clientId).getMyPai(), room.getJin(), tingTip));
+                            objchi.put("compensateList",MaJiangCore.getCompensateList(room.getUserPacketMap().get(clientId).getMyPai(),getOutList(roomNo), room.getJin(), tingTip));
                         }
                     }
                     CommonConstant.sendMsgEventToSingle(room.getPlayerMap().get(uuid).getUuid(),String.valueOf(objchi),"gameActReultPush");
@@ -3777,7 +3777,7 @@ public class QZMJGameEventDeal {
                             // 出牌提示
                             JSONArray tingTip = MaJiangCore.tingPaiTip(room.getUserPacketMap().get(clientId).getMyPai(), room.getJin(), shengyuList1);
                             objpeng.put("tingTip",tingTip);
-                            objpeng.put("compensateList",MaJiangCore.getCompensateList(room.getUserPacketMap().get(clientId).getMyPai(), room.getJin(), tingTip));
+                            objpeng.put("compensateList",MaJiangCore.getCompensateList(room.getUserPacketMap().get(clientId).getMyPai(),getOutList(roomNo), room.getJin(), tingTip));
                         }
                         CommonConstant.sendMsgEventToSingle(room.getPlayerMap().get(uuid).getUuid(),String.valueOf(objpeng),"gameActReultPush");
                     }
@@ -4219,5 +4219,37 @@ public class QZMJGameEventDeal {
             }
         }
         return false;
+    }
+
+    /**
+     * 获取桌面上的牌(已出的和已吃碰杠的)
+     * @param roomNo
+     * @return
+     */
+    private List<Integer> getOutList(String roomNo) {
+        List<Integer> outList = new ArrayList<>();
+        if (RoomManage.gameRoomMap.containsKey(roomNo) && RoomManage.gameRoomMap.get(roomNo) != null) {
+            QZMJGameRoom room = (QZMJGameRoom) RoomManage.gameRoomMap.get(roomNo);
+            List<Integer> leftList = new ArrayList<>(Dto.arrayToList(room.getPai(), room.getIndex()));
+            for (String account : room.getUserPacketMap().keySet()) {
+                if (room.getUserPacketMap().containsKey(account) && room.getUserPacketMap().get(account) != null) {
+                    leftList.addAll(room.getUserPacketMap().get(account).getMyPai());
+                }
+            }
+            List<Integer> allList = new ArrayList<>(Dto.arrayToList(QZMJConstant.ALL_PAI,0));
+            // 去除玩家手里的牌及牌堆里的牌
+            for (Integer pai : leftList) {
+                if (allList.contains(pai)) {
+                    allList.remove(pai);
+                }
+            }
+            // 去除花牌
+            for (Integer pai : allList) {
+                if (pai < 50) {
+                    outList.add(pai);
+                }
+            }
+        }
+        return outList;
     }
 }

@@ -13,7 +13,7 @@ public class MaJiangCore {
 	private static int yunsuanCount = 0;
 
 	public static void main(String[] args) {
-		
+
 		long yunxingCount = 1000000000;
 		int huCount = 0;
 		for (int i = 0; i < yunxingCount; i++) {
@@ -828,8 +828,10 @@ public class MaJiangCore {
 		return false;
 	}
 
-	public static List<Integer> getCompensateList(List<Integer> myPai, int jin, JSONArray tingList) {
+    public static List<Integer> getCompensateList(List<Integer> myPai, List<Integer> outList, int jin, JSONArray tingList) {
         List<Integer> compensateList = new ArrayList<>();
+        // 所有正确的手牌
+        List<Integer> legalList = new ArrayList<>();
         // 有听打无听
         if (tingList.size() > 0) {
             // 所有听的牌
@@ -837,16 +839,104 @@ public class MaJiangCore {
             for (int i = 0; i < tingList.size(); i++) {
                 allTing.add(tingList.getJSONObject(i).getInt("pai"));
             }
-            for (Integer pai : myPai) {
-                if (!allTing.contains(pai)) {
-                    compensateList.add(pai);
+            legalList.addAll(allTing);
+        } else {
+            List<Integer> singleList = getAllSingle(myPai);
+            // 有单牌优先出单牌
+            if (singleList.size() > 0) {
+                // 计算每个单牌桌面上的牌数
+                Map<Integer, Integer> outCountMap = getOutCount(singleList,outList);
+                List<Integer> moreList = new ArrayList<>();
+                for (Integer pai : outCountMap.keySet()) {
+                    if (outCountMap.get(pai) >= QZMJConstant.OUT_CARD_THRESHOLD) {
+                        moreList.add(pai);
+                    }
+                }
+                // 单牌见2先出
+                if (moreList.size() > 0) {
+                    // 有字优先打字
+                    List<Integer> moreZiList = new ArrayList<>();
+                    for (Integer pai : moreList) {
+                        if (QZMJConstant.ZI_PAI.contains(pai)) {
+                            moreZiList.add(pai);
+                        }
+                    }
+                    if (moreZiList.size() > 0) {
+                        legalList.addAll(moreZiList);
+                    }else {
+                        legalList.addAll(moreList);
+                    }
+                }else {
+                    legalList.addAll(singleList);
                 }
             }
         }
-
-
-
+        for (Integer pai : myPai) {
+            if (!legalList.contains(pai)) {
+                compensateList.add(pai);
+            }
+        }
         return compensateList;
     }
-	
+
+    private static Map<Integer, Integer> getOutCount(List<Integer> curList,List<Integer> outList) {
+        // curList中已出牌数
+        Map<Integer, Integer> outCountMap = new HashMap<>();
+        // 所有已经出过的牌
+        Map<Integer, Integer> countMap = new HashMap<>();
+        for (Integer pai : outList) {
+            // 已经存在+1,不存在存初值1
+            if (countMap.containsKey(pai) && countMap.get(pai) != null) {
+                countMap.put(pai, countMap.get(pai) + 1);
+            } else {
+                countMap.put(pai, 1);
+            }
+        }
+        for (Integer pai : curList) {
+            if (countMap.containsKey(pai) && countMap.get(pai) != null) {
+                outCountMap.put(pai, countMap.get(pai));
+            } else {
+                outCountMap.put(pai, 0);
+            }
+        }
+        return outCountMap;
+    }
+
+    /**
+     * 取所有单牌
+     * @param myPai 手牌
+     * @return List<Integer>
+     */
+    private static List<Integer> getAllSingle(List<Integer> myPai) {
+        List<Integer> singleList = new ArrayList<>();
+        // 取手牌中的所有单牌
+        for (Integer pai : myPai) {
+            if (checkSingle(myPai, pai)) {
+                singleList.add(pai);
+            }
+        }
+        return singleList;
+    }
+
+    /**
+     * 判断某张牌是否是单牌
+     * @param myPai 手牌
+     * @param pai 牌
+     * @return boolean
+     */
+    private static boolean checkSingle(List<Integer> myPai, int pai) {
+        int num = 0;
+        for (Integer p : myPai) {
+            // 字牌牌只计算相同的张数,万条筒取相邻的两张牌
+            if (QZMJConstant.ZI_PAI.contains(pai)) {
+                if (Math.abs(p - pai) == 0) {
+                    num++;
+                }
+            } else if (p / 10 == pai / 10 && Math.abs(p - pai) <= 2) {
+                num++;
+            }
+        }
+        return num <= 1;
+    }
+
 }

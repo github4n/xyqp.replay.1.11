@@ -1571,7 +1571,11 @@ public class DdzGameEventDeal {
         obj.put("timeArray",timeArray);
         obj.put("leftArray",getLeftArray(roomNo,account));
         if (!Dto.isObjNull(room.getWinStreakObj())) {
-            obj.put("drawInfo", "还剩" + (room.getWinStreakObj().getInt("time") - room.getUserPacketMap().get(account).getWinStreakTime()) + "局");
+            int left = room.getWinStreakObj().getInt("time") - room.getUserPacketMap().get(account).getWinStreakTime();
+            if (left < 0) {
+                left = 0;
+            }
+            obj.put("drawInfo", "还剩" + left + "局");
             if (redisService.sHasKey("win_streak_player_info_" + room.getWinStreakObj().getLong("id"), account)) {
                 obj.put("drawInfo", "今日已抽奖");
             }

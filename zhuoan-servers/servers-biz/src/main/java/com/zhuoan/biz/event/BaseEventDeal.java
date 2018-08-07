@@ -1395,7 +1395,7 @@ public class BaseEventDeal {
             JSONArray winStreakArray = setting.getJSONArray("win_streak_array");
             for (Object winStreak : winStreakArray) {
                 JSONObject winStreakObj = JSONObject.fromObject(winStreak);
-                if (winStreakObj.getInt("di") == winStreakObj.getInt("di")) {
+                if (baseInfo.getInt("di") == winStreakObj.getInt("di")) {
                     room.setWinStreakObj(winStreakObj);
                     break;
                 }
@@ -3002,7 +3002,7 @@ public class BaseEventDeal {
             String rewardType = winStreakObj.getString("rewardType");
             // 场次id
             String baseInfoId = winStreakObj.getString("id");
-            if (winStreakTime == time) {
+            if (winStreakTime >= time) {
                 if (!redisService.sHasKey("win_streak_player_info_" + baseInfoId, account)) {
                     // 更新奖励
                     JSONArray array = new JSONArray();

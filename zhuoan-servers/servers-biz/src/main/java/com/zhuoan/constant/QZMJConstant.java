@@ -423,6 +423,11 @@ public class QZMJConstant {
     public static final int QZ_MJ_TIMER_TYPE_EVENT = 1;
     public static final int QZ_MJ_TIMER_TYPE_CP = 2;
 
+    /**
+     * 已出牌阈值
+     */
+    public static final int OUT_CARD_THRESHOLD = 2;
+
 
 	/**
 	 * 获取胡牌的倍数
