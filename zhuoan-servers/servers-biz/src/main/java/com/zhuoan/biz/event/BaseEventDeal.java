@@ -725,7 +725,7 @@ public class BaseEventDeal {
             CommonConstant.sendMsgEventToSingle(client, String.valueOf(result), "enterRoomPush_NN");
             return;
         }
-        if (client != null) {
+        if (client != null && room.getRoomType() != CommonConstant.ROOM_TYPE_MATCH) {
             if (!userInfo.containsKey("uuid")||Dto.stringIsNULL(userInfo.getString("uuid"))||
                 !userInfo.getString("uuid").equals(postData.getString("uuid"))) {
                 return;
@@ -865,6 +865,8 @@ public class BaseEventDeal {
             // 房卡场不需要重新刷新分数
             if (gameRoom.getRoomType() == CommonConstant.ROOM_TYPE_FK || gameRoom.getRoomType() == CommonConstant.ROOM_TYPE_DK) {
                 playerinfo.setScore(gameRoom.getPlayerMap().get(playerinfo.getAccount()).getScore());
+            }else if (gameRoom.getRoomType() == CommonConstant.ROOM_TYPE_MATCH) {
+                playerinfo.setMyRank(gameRoom.getPlayerMap().get(playerinfo.getAccount()).getMyRank());
             }
             joinData.put("isReconnect", CommonConstant.GLOBAL_YES);
         } else {
