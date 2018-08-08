@@ -982,7 +982,7 @@ public class BaseEventDeal {
         }
         playerinfo.setHeadimg(userInfo.getString("headimg"));
         playerinfo.setSex(userInfo.getString("sex"));
-        if (userInfo.containsKey("")) {
+        if (userInfo.containsKey("ip")) {
             playerinfo.setIp(userInfo.getString("ip"));
         }else {
             playerinfo.setIp("");
