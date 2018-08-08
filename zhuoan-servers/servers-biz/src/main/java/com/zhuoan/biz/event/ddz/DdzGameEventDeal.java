@@ -809,7 +809,7 @@ public class DdzGameEventDeal {
         room.getPlayerMap().get(account).setUuid(client.getSessionId());
         // 刷新比赛场
         if (room.getRoomType() == CommonConstant.ROOM_TYPE_MATCH) {
-            matchEventDeal.changePlayerInfo(room.getMatchNum(),String.valueOf(client.getSessionId()),userInfo.getString("uuid"),account,0,0);
+            matchEventDeal.changePlayerInfo(room.getMatchNum(),String.valueOf(client.getSessionId()),null,account,0,0);
         }
         // 组织数据，通知玩家
         result.put("type", 1);

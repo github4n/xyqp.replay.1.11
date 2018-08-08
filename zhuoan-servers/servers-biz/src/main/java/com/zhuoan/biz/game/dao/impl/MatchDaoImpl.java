@@ -36,9 +36,13 @@ public class MatchDaoImpl implements MatchDao {
     }
 
     @Override
-    public void updateMatchSettingById(long matchId, String createTime) {
-        String sql = "update za_match_setting set create_time=? where id=?";
-        DBUtil.executeUpdateBySQL(sql, new Object[]{createTime, matchId});
+    public void updateMatchSettingById(JSONObject matchSetting) {
+        String sql = "update za_match_setting set description=?,match_info=?,create_time=? where id=?";
+        String description = matchSetting.getString("description");
+        String matchInfo = String.valueOf(matchSetting.getJSONArray("match_info"));
+        String createTime = matchSetting.getString("create_time");
+        long id = matchSetting.getLong("id");
+        DBUtil.executeUpdateBySQL(sql, new Object[]{description, matchInfo, createTime, id});
     }
 
     @Override

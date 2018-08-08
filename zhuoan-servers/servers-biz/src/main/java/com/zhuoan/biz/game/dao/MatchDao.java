@@ -32,10 +32,9 @@ public interface MatchDao {
     /**
      * 更新场次信息
      *
-     * @param matchId    场次id
-     * @param createTime 创建时间
+     * @param matchSetting    场次信息
      */
-    void updateMatchSettingById(long matchId, String createTime);
+    void updateMatchSettingById(JSONObject matchSetting);
 
     /**
      * 获取当前未开赛的场次

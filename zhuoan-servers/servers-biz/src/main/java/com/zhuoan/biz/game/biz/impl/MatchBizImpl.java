@@ -31,8 +31,8 @@ public class MatchBizImpl implements MatchBiz {
     }
 
     @Override
-    public void updateMatchSettingById(long matchId, String createTime) {
-        matchDao.updateMatchSettingById(matchId, createTime);
+    public void updateMatchSettingById(JSONObject matchSetting) {
+        matchDao.updateMatchSettingById(matchSetting);
     }
 
     @Override

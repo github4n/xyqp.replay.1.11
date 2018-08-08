@@ -101,7 +101,7 @@ public class MatchEventDeal {
                         startBeginTimer(matchSetting, unFullMatch.getString("match_num"));
                     }
                 }
-                matchBiz.updateMatchSettingById(matchSetting.getLong("id"), matchSetting.getString("create_time"));
+                matchBiz.updateMatchSettingById(matchSetting);
             }
             matchSetting.put("online_num", matchSetting.getInt("online_num") + RandomUtils.nextInt(10));
             newTimeMatchSettings.add(matchSetting);

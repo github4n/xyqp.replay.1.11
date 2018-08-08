@@ -81,7 +81,7 @@ public class AchievementBizImpl implements AchievementBiz {
                 obj.put("user_name", userInfo.getString("name"));
             }
             if (userInfo.containsKey("headimg")) {
-                obj.put("user_img", userInfo.getString("headimg"));
+                obj.put("user_img", "http://game.88huhu.cn/zagame"+userInfo.getString("headimg"));
             }
             if (userInfo.containsKey("sign")) {
                 obj.put("user_sign", userInfo.getString("sign"));
