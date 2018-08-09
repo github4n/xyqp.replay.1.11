@@ -1,9 +1,10 @@
 package com.zhuoan.webapp.controller.gameproxy;
 
+import com.zhuoan.biz.model.RoomManage;
+import com.zhuoan.service.cache.RedisService;
 import com.zhuoan.util.Dto;
 import com.zhuoan.util.MD5;
 import com.zhuoan.webapp.controller.BaseController;
-import com.zhuoan.webapp.service.GameProxyService;
 import net.sf.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -28,7 +29,7 @@ public class GameProxyController extends BaseController {
     private final static Logger logger = LoggerFactory.getLogger(GameProxyController.class);
 
     @Resource
-    private GameProxyService gameProxyService;
+    private RedisService redisService;
 
     @RequestMapping(value = "updateRedisCache.json", method = RequestMethod.POST)
     public void updateRedisCache(HttpServletRequest request, HttpServletResponse response) throws IOException {
@@ -39,10 +40,22 @@ public class GameProxyController extends BaseController {
         String platform = request.getParameter("platform");
         String roomNo = request.getParameter("room_no");
         String sign = request.getParameter("sign");
+        String gameId = request.getParameter("game_id");
         String md5 = MD5.MD5Encode(cacheType + thisDate + platform + roomNo + "zhoan");
         JSONObject result = new JSONObject();
         if (!Dto.stringIsNULL(md5) && md5.equals(sign)) {
-            gameProxyService.deleteCacheByKey(Integer.valueOf(cacheType), roomNo, platform);
+            if (cacheType.equals("match_setting")) {
+                redisService.deleteByKey("match_setting_0");
+                redisService.deleteByKey("match_setting_1");
+            }else if (cacheType.equals("dissolveRoom")) {
+                RoomManage.gameRoomMap.remove(roomNo);
+            } else{
+                if (cacheType.contains("gold_setting_")) {
+                    redisService.deleteByKey("game_info_by_id_" + gameId);
+                    redisService.deleteByKey("game_on_or_off_" + gameId);
+                }
+                redisService.deleteByKey(cacheType);
+            }
             logger.info("[" + getIp(request) + "] 清除缓存数据 [cacheType:" + cacheType + ",roomNo:" + roomNo + ",platform:" + platform + "]");
             result.put("code", 1);
             result.put("msg", "操作成功");

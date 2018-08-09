@@ -373,6 +373,17 @@ public class DdzGameEventDeal {
         for (String player : obtainAllPlayerAccount(roomNo)) {
             result.put("leftArray",getLeftArray(roomNo,player));
             result.put("myPai",room.getUserPacketMap().get(player).getMyPai());
+            result.put("isDraw", CommonConstant.GLOBAL_NO);
+            if (!Dto.isObjNull(room.getWinStreakObj())) {
+                JSONObject winStreakObj = room.getWinStreakObj();
+                // 场次id
+                String baseInfoId = winStreakObj.getString("id");
+                // 局数到达之后今日还未在该场次抽过奖展示抽奖弹窗(加isGameOver判断只在结算的时候展示)
+                if (isGameOver && winStreakObj.getInt("time") >= room.getUserPacketMap().get(account).getWinStreakTime()
+                    && !redisService.sHasKey("win_streak_player_info_" + baseInfoId, account)) {
+                    result.put("isDraw", CommonConstant.GLOBAL_YES);
+                }
+            }
             CommonConstant.sendMsgEventToSingle(room.getPlayerMap().get(player).getUuid(),String.valueOf(result),"gameEventPush_DDZ");
         }
         final String nextPlayerAccount = obtainNextPlayerAccount(roomNo,account);
@@ -540,7 +551,12 @@ public class DdzGameEventDeal {
                 String baseInfoId = winStreakObj.getString("id");
                 if (!redisService.sHasKey("win_streak_player_info_" + baseInfoId, account)) {
                     int winTime = time - room.getUserPacketMap().get(account).getWinStreakTime();
-                    if (mustWin == CommonConstant.GLOBAL_YES) {
+                    if (winTime < 0) {
+                        winTime = 0;
+                    }
+                    if (winTime == 0) {
+                        result.put("content", "当前可拆红包,确定退出");
+                    }else if (mustWin == CommonConstant.GLOBAL_YES) {
                         result.put("content", "再连胜" + winTime + "场可拆红包,确定退出");
                     }else {
                         result.put("content", "再赢" + winTime + "场可拆红包,确定退出");
@@ -1052,39 +1068,14 @@ public class DdzGameEventDeal {
             int time = winStreakObj.getInt("time");
             // 是否需要连胜
             int mustWin = winStreakObj.getInt("mustWin");
-            // 奖励金额
-            double reward = winStreakObj.getDouble("reward");
-            // 奖励类型
-            String rewardType = winStreakObj.getString("rewardType");
-            // 场次id
-            String baseInfoId = winStreakObj.getString("id");
             // 设置连胜次数
             for (String player : obtainAllPlayerAccount(roomNo)) {
+                // 达到条件之后不再更新次数
+                if (room.getUserPacketMap().get(player).getWinStreakTime() == time) {
+                    continue;
+                }
                 if (mustWin == CommonConstant.GLOBAL_NO || room.getUserPacketMap().get(player).getScore() > 0) {
                     room.getUserPacketMap().get(player).setWinStreakTime(room.getUserPacketMap().get(player).getWinStreakTime() + 1);
-//                    if (room.getUserPacketMap().get(player).getWinStreakTime() == time) {
-//                        if (!redisService.sHasKey("win_streak_player_info_" + baseInfoId, player)) {
-//                            // 更新奖励
-//                            updateUserInfo(room, player, reward, rewardType);
-//                            // 添加缓存数据
-//                            redisService.sSet("win_streak_player_info_" + baseInfoId, player);
-//                            // 添加记录
-//                            JSONObject ticketRec = new JSONObject();
-//                            ticketRec.put("user_account", player);
-//                            ticketRec.put("game_id", room.getGid());
-//                            ticketRec.put("ticket_type", CommonConstant.TICKET_TYPE_MONEY);
-//                            ticketRec.put("money", reward);
-//                            ticketRec.put("coins_id", baseInfoId);
-//                            ticketRec.put("create_time", TimeUtil.getNowDate());
-//                            userBiz.addUserTicketRec(ticketRec);
-//                            // 通知
-//                            JSONObject result = new JSONObject();
-//                            result.put("type", CommonConstant.SHOW_MSG_TYPE_SMALL);
-//                            String msg = "恭喜获得" + reward + "红包券";
-//                            result.put(CommonConstant.RESULT_KEY_MSG, msg);
-//                            CommonConstant.sendMsgEventToSingle(room.getPlayerMap().get(player).getUuid(), String.valueOf(result), "tipMsgPush");
-//                        }
-//                    }
                 }else {
                     room.getUserPacketMap().get(player).setWinStreakTime(0);
                 }
@@ -1570,14 +1561,21 @@ public class DdzGameEventDeal {
         }
         obj.put("timeArray",timeArray);
         obj.put("leftArray",getLeftArray(roomNo,account));
+        obj.put("isDraw", CommonConstant.GLOBAL_NO);
         if (!Dto.isObjNull(room.getWinStreakObj())) {
             int left = room.getWinStreakObj().getInt("time") - room.getUserPacketMap().get(account).getWinStreakTime();
             if (left < 0) {
                 left = 0;
             }
-            obj.put("drawInfo", "还剩" + left + "局");
-            if (redisService.sHasKey("win_streak_player_info_" + room.getWinStreakObj().getLong("id"), account)) {
-                obj.put("drawInfo", "今日已抽奖");
+            obj.put("drawInfo", "今日已抽奖");
+            if (!redisService.sHasKey("win_streak_player_info_" + room.getWinStreakObj().getLong("id"), account)) {
+                obj.put("drawInfo", "还剩" + left + "局");
+                if (left == 0) {
+                    obj.put("drawInfo", "可抽奖");
+                    if (room.getGameStatus() == DdzConstant.DDZ_GAME_STATUS_SUMMARY) {
+                        obj.put("isDraw", CommonConstant.GLOBAL_YES);
+                    }
+                }
             }
         }
         return obj;
