@@ -529,7 +529,11 @@ public class MatchEventDeal {
         if (matchSetting.getInt("is_auto") == CommonConstant.GLOBAL_YES) {
             // 所有玩家
             Map<Object, Object> allPlayerInfo = redisService.hmget("player_info_" + matchNum);
-            int leftNum = matchSetting.getInt("player_count") - allPlayerInfo.size();
+            int totalCount = matchSetting.getInt("player_count");
+            if (matchSetting.getJSONArray("promotion").getInt(0) > totalCount) {
+                totalCount = matchSetting.getJSONArray("promotion").getInt(0);
+            }
+            int leftNum = totalCount - allPlayerInfo.size();
             JSONArray robotArray = matchBiz.getRobotList(leftNum);
             for (int i = 0; i < robotArray.size(); i++) {
                 initRankList(robotArray.getJSONObject(i).getString("account"), matchNum);

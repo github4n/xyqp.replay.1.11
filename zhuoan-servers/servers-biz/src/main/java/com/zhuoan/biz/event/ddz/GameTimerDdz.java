@@ -39,6 +39,63 @@ public class GameTimerDdz {
     private ProducerService producerService;
 
     /**
+     * 准备倒计时
+     * @param roomNo
+     * @param outAccount
+     * @param timeLeft
+     */
+    public void gameReadyOverTime(String roomNo, String outAccount, int timeLeft) {
+        for (int i = timeLeft; i >= 0; i--) {
+            // 房间存在
+            if (RoomManage.gameRoomMap.containsKey(roomNo) && RoomManage.gameRoomMap.get(roomNo) != null) {
+                DdzGameRoom room = (DdzGameRoom) RoomManage.gameRoomMap.get(roomNo);
+                // 房间非准备状态
+                if (room.getGameStatus() != DdzConstant.DDZ_GAME_STATUS_READY) {
+                    sendReadyTimerToAll(outAccount, 0, room);
+                    break;
+                }
+                // 玩家不在当前房间内
+                if (!room.getPlayerMap().containsKey(outAccount) || room.getPlayerMap().get(outAccount) == null) {
+                    sendReadyTimerToAll(outAccount, 0, room);
+                    break;
+                }
+                // 房间人数未满
+                if (room.getPlayerMap().size() != DdzConstant.DDZ_PLAYER_NUMBER) {
+                    sendReadyTimerToAll(outAccount, 0, room);
+                    break;
+                }
+                // 该玩家已准备
+                if (room.getUserPacketMap().get(outAccount).getStatus() == DdzConstant.DDZ_USER_STATUS_READY) {
+                    sendReadyTimerToAll(outAccount, 0, room);
+                    break;
+                }
+                sendReadyTimerToAll(outAccount, i, room);
+                if (i == 0) {
+                    JSONObject data = new JSONObject();
+                    data.put(CommonConstant.DATA_KEY_ROOM_NO,roomNo);
+                    data.put(CommonConstant.DATA_KEY_ACCOUNT,outAccount);
+                    producerService.sendMessage(ddzQueueDestination, new Messages(null, data, CommonConstant.GAME_ID_DDZ, DdzConstant.DDZ_GAME_EVENT_EXIT_ROOM));
+                }
+
+                try {
+                    Thread.sleep(1000);
+                } catch (Exception e) {
+                    logger.error("", e);
+                }
+            } else {
+                break;
+            }
+        }
+    }
+
+    private void sendReadyTimerToAll(String outAccount, int time, DdzGameRoom room) {
+        JSONObject result = new JSONObject();
+        result.put("index", room.getPlayerMap().get(outAccount).getMyIndex());
+        result.put("time", time);
+        CommonConstant.sendMsgEventToAll(room.getAllUUIDList(), String.valueOf(result), "gameTimer_DDZ");
+    }
+
+    /**
      * 出牌超时
      * @param roomNo
      * @param nextAccount

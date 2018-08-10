@@ -169,6 +169,27 @@ public class DdzGameEventDeal {
         if (room.getGameStatus() != DdzConstant.DDZ_GAME_STATUS_READY) {
             room.setGameStatus(DdzConstant.DDZ_GAME_STATUS_READY);
         }
+        // 金币场开始准备定时器
+        if (room.getRoomType() == CommonConstant.ROOM_TYPE_JB) {
+            int readyCount = 0;
+            String unReadyAccount = null;
+            for (String player : room.getUserPacketMap().keySet()) {
+                if (room.getUserPacketMap().get(player).getStatus() == DdzConstant.DDZ_USER_STATUS_READY) {
+                    readyCount ++;
+                } else {
+                    unReadyAccount = player;
+                }
+            }
+            if (readyCount == DdzConstant.DDZ_PLAYER_NUMBER - 1 && !Dto.stringIsNULL(unReadyAccount)) {
+                final String outAccount = unReadyAccount;
+                ThreadPoolHelper.executorService.submit(new Runnable() {
+                    @Override
+                    public void run() {
+                        gameTimerDdz.gameReadyOverTime(roomNo,outAccount,15);
+                    }
+                });
+            }
+        }
         // 房间内所有玩家都已经完成准备且人数为3通知开始游戏,否则通知玩家准备
         if (isAllReady(roomNo) && room.getPlayerMap().size() >= DdzConstant.DDZ_PLAYER_NUMBER) {
             // 初始化房间信息
