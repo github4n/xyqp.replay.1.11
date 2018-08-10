@@ -147,7 +147,7 @@ public class RobotEventDeal {
                     break;
             }
             robotInfo.setDelayTime(RandomUtils.nextInt(3)+2);
-            robotInfo.setOutTimes(RandomUtils.nextInt(30)+100);
+            robotInfo.setOutTimes(RandomUtils.nextInt(6)+10);
             robots.put(robotAccount,robotInfo);
         }
     }

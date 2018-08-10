@@ -3,10 +3,7 @@ package com.zhuoan.biz.event.ddz;
 import com.corundumstudio.socketio.SocketIOClient;
 import com.zhuoan.biz.core.ddz.DdzCore;
 import com.zhuoan.biz.event.match.MatchEventDeal;
-import com.zhuoan.biz.game.biz.AchievementBiz;
-import com.zhuoan.biz.game.biz.PropsBiz;
-import com.zhuoan.biz.game.biz.RoomBiz;
-import com.zhuoan.biz.game.biz.UserBiz;
+import com.zhuoan.biz.game.biz.*;
 import com.zhuoan.biz.model.Playerinfo;
 import com.zhuoan.biz.model.RoomManage;
 import com.zhuoan.biz.model.dao.PumpDao;
@@ -115,6 +112,8 @@ public class DdzGameEventDeal {
             if (room.getRoomType()==CommonConstant.ROOM_TYPE_MATCH) {
                 gameReady(null,data);
             }
+            // 金币场开始准备定时器
+            beginReadyTimer(room.getRoomNo(), room);
         }else if (room.getRoomType() == CommonConstant.ROOM_TYPE_MATCH) {
             matchEventDeal.changePlayerInfo(room.getMatchNum(),String.valueOf(client.getSessionId()),null,account,0,0);
         }
@@ -170,6 +169,25 @@ public class DdzGameEventDeal {
             room.setGameStatus(DdzConstant.DDZ_GAME_STATUS_READY);
         }
         // 金币场开始准备定时器
+        beginReadyTimer(roomNo, room);
+        // 房间内所有玩家都已经完成准备且人数为3通知开始游戏,否则通知玩家准备
+        if (isAllReady(roomNo) && room.getPlayerMap().size() >= DdzConstant.DDZ_PLAYER_NUMBER) {
+            // 初始化房间信息
+            startGame(roomNo);
+        } else {
+            JSONObject result = new JSONObject();
+            for (String player : obtainAllPlayerAccount(roomNo)) {
+                int readyStatus = 0;
+                if (room.getUserPacketMap().get(player).getStatus()==DdzConstant.DDZ_USER_STATUS_READY) {
+                    readyStatus = 1;
+                }
+                result.put(room.getPlayerMap().get(player).getMyIndex(),readyStatus);
+            }
+            CommonConstant.sendMsgEventToAll(room.getAllUUIDList(), String.valueOf(result), "gameReadyPush_DDZ");
+        }
+    }
+
+    private void beginReadyTimer(final String roomNo, DdzGameRoom room) {
         if (room.getRoomType() == CommonConstant.ROOM_TYPE_JB) {
             int readyCount = 0;
             String unReadyAccount = null;
@@ -189,21 +207,6 @@ public class DdzGameEventDeal {
                     }
                 });
             }
-        }
-        // 房间内所有玩家都已经完成准备且人数为3通知开始游戏,否则通知玩家准备
-        if (isAllReady(roomNo) && room.getPlayerMap().size() >= DdzConstant.DDZ_PLAYER_NUMBER) {
-            // 初始化房间信息
-            startGame(roomNo);
-        } else {
-            JSONObject result = new JSONObject();
-            for (String player : obtainAllPlayerAccount(roomNo)) {
-                int readyStatus = 0;
-                if (room.getUserPacketMap().get(player).getStatus()==DdzConstant.DDZ_USER_STATUS_READY) {
-                    readyStatus = 1;
-                }
-                result.put(room.getPlayerMap().get(player).getMyIndex(),readyStatus);
-            }
-            CommonConstant.sendMsgEventToAll(room.getAllUUIDList(), String.valueOf(result), "gameReadyPush_DDZ");
         }
     }
 
@@ -397,11 +400,8 @@ public class DdzGameEventDeal {
             result.put("isDraw", CommonConstant.GLOBAL_NO);
             if (!Dto.isObjNull(room.getWinStreakObj())) {
                 JSONObject winStreakObj = room.getWinStreakObj();
-                // 场次id
-                String baseInfoId = winStreakObj.getString("id");
                 // 局数到达之后今日还未在该场次抽过奖展示抽奖弹窗(加isGameOver判断只在结算的时候展示)
-                if (isGameOver && winStreakObj.getInt("time") >= room.getUserPacketMap().get(account).getWinStreakTime()
-                    && !redisService.sHasKey("win_streak_player_info_" + baseInfoId, account)) {
+                if (isGameOver && winStreakObj.getInt("time") <= room.getUserPacketMap().get(player).getWinStreakTime()) {
                     result.put("isDraw", CommonConstant.GLOBAL_YES);
                 }
             }
@@ -568,22 +568,14 @@ public class DdzGameEventDeal {
                 int time = winStreakObj.getInt("time");
                 // 是否需要连胜
                 int mustWin = winStreakObj.getInt("mustWin");
-                // 场次id
-                String baseInfoId = winStreakObj.getString("id");
-                if (!redisService.sHasKey("win_streak_player_info_" + baseInfoId, account)) {
-                    int winTime = time - room.getUserPacketMap().get(account).getWinStreakTime();
-                    if (winTime < 0) {
-                        winTime = 0;
-                    }
-                    if (winTime == 0) {
-                        result.put("content", "当前可拆红包,确定退出");
-                    }else if (mustWin == CommonConstant.GLOBAL_YES) {
-                        result.put("content", "再连胜" + winTime + "场可拆红包,确定退出");
-                    }else {
-                        result.put("content", "再赢" + winTime + "场可拆红包,确定退出");
-                    }
+                int winTime = time - room.getUserPacketMap().get(account).getWinStreakTime();
+                // 已经达到次数
+                if (winTime <= 0) {
+                    result.put("content", "当前可拆红包,确定退出");
+                }else if (mustWin == CommonConstant.GLOBAL_YES) {
+                    result.put("content", "再连胜" + winTime + "场可拆红包,确定退出");
                 }else {
-                    result.put("content", "确定退出");
+                    result.put("content", "再赢" + winTime + "场可拆红包,确定退出");
                 }
             }else {
                 result.put("content", "确定退出");
@@ -666,12 +658,22 @@ public class DdzGameEventDeal {
             if (postData.containsKey("notSendToMe")) {
                 CommonConstant.sendMsgEventToAll(room.getAllUUIDList(), String.valueOf(result), "exitRoomPush_DDZ");
             }
+            if (room.getRobotList().contains(account)) {
+                roomBiz.updateRobotStatus(account, 0);
+            }
             // 所有人都退出清除房间数据
             if (room.getPlayerMap().size() == 0) {
                 redisService.deleteByKey("summaryTimes_ddz_"+room.getRoomNo());
                 roomInfo.put("status",room.getIsClose());
                 roomInfo.put("game_index",room.getGameIndex());
                 RoomManage.gameRoomMap.remove(room.getRoomNo());
+            }else if (room.getRoomType() == CommonConstant.ROOM_TYPE_JB) {
+                for (String uuid : obtainAllPlayerAccount(roomNo)) {
+                    if (!room.getRobotList().contains(uuid)) {
+                        robotEventDeal.robotJoin(roomNo);
+                        break;
+                    }
+                }
             }
             producerService.sendMessage(daoQueueDestination, new PumpDao(DaoTypeConstant.UPDATE_ROOM_INFO, roomInfo));
         } else {
@@ -1095,9 +1097,10 @@ public class DdzGameEventDeal {
                 if (room.getUserPacketMap().get(player).getWinStreakTime() == time) {
                     continue;
                 }
-                if (mustWin == CommonConstant.GLOBAL_NO || room.getUserPacketMap().get(player).getScore() > 0) {
+                // 胜利局数+1 如果需要连胜失败了直接算0
+                if (room.getUserPacketMap().get(player).getScore() > 0) {
                     room.getUserPacketMap().get(player).setWinStreakTime(room.getUserPacketMap().get(player).getWinStreakTime() + 1);
-                }else {
+                }else if (mustWin == CommonConstant.GLOBAL_YES) {
                     room.getUserPacketMap().get(player).setWinStreakTime(0);
                 }
             }
@@ -1585,18 +1588,13 @@ public class DdzGameEventDeal {
         obj.put("isDraw", CommonConstant.GLOBAL_NO);
         if (!Dto.isObjNull(room.getWinStreakObj())) {
             int left = room.getWinStreakObj().getInt("time") - room.getUserPacketMap().get(account).getWinStreakTime();
-            if (left < 0) {
-                left = 0;
-            }
-            obj.put("drawInfo", "今日已抽奖");
-            if (!redisService.sHasKey("win_streak_player_info_" + room.getWinStreakObj().getLong("id"), account)) {
-                obj.put("drawInfo", "还剩" + left + "局");
-                if (left == 0) {
-                    obj.put("drawInfo", "可抽奖");
-                    if (room.getGameStatus() == DdzConstant.DDZ_GAME_STATUS_SUMMARY) {
-                        obj.put("isDraw", CommonConstant.GLOBAL_YES);
-                    }
+            if (left <= 0) {
+                obj.put("drawInfo", "可抽奖");
+                if (room.getGameStatus() == DdzConstant.DDZ_GAME_STATUS_SUMMARY) {
+                    obj.put("isDraw", CommonConstant.GLOBAL_YES);
                 }
+            } else {
+                obj.put("drawInfo", "还剩" + left + "局");
             }
         }
         return obj;

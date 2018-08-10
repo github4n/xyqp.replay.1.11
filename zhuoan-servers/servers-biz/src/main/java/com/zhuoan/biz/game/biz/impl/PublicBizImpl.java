@@ -2,6 +2,7 @@ package com.zhuoan.biz.game.biz.impl;
 
 import com.zhuoan.biz.game.biz.PublicBiz;
 import com.zhuoan.biz.game.dao.GameDao;
+import com.zhuoan.constant.CommonConstant;
 import com.zhuoan.util.Dto;
 import com.zhuoan.util.TimeUtil;
 import net.sf.json.JSONArray;
@@ -115,5 +116,32 @@ public class PublicBizImpl implements PublicBiz{
     @Override
     public void addOrUpdateUserGameInfo(JSONObject obj) {
         gameDao.addOrUpdateUserGameInfo(obj);
+    }
+
+    @Override
+    public void addUserWelfareRec(String account, double sum, int type, int gameId) {
+        JSONObject userInfo = gameDao.getUserByAccount(account);
+        if (!Dto.isObjNull(userInfo)) {
+            JSONObject obj = new JSONObject();
+            obj.put("userid", userInfo.getLong("id"));
+            obj.put("gid", gameId);
+            obj.put("type", type);
+            obj.put("sum", sum);
+            obj.put("doType", CommonConstant.SCORE_CHANGE_DO_TYPE_WELFARE);
+            obj.put("creataTime", TimeUtil.getNowDate());
+            if (type + 1 == CommonConstant.CURRENCY_TYPE_SCORE && userInfo.containsKey("score")) {
+                obj.put("pocketOld", userInfo.getInt("score"));
+                obj.put("memo", "实物券变动");
+            }else if (type + 1 == CommonConstant.CURRENCY_TYPE_YB && userInfo.containsKey("yuanbao")) {
+                obj.put("pocketOld", userInfo.getDouble("yuanbao"));
+                obj.put("memo", "红包券变动");
+            }
+            obj.put("pocketChange", sum);
+            obj.put("operatorType", CommonConstant.SCORE_CHANGE_TYPE_OTHER);
+            if (userInfo.containsKey("platform")) {
+                obj.put("platform", userInfo.getString("platform"));
+            }
+            gameDao.addUserWelfareRec(obj);
+        }
     }
 }

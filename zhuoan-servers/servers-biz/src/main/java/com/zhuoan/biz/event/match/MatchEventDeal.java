@@ -2,6 +2,7 @@ package com.zhuoan.biz.event.match;
 
 import com.corundumstudio.socketio.SocketIOClient;
 import com.zhuoan.biz.game.biz.MatchBiz;
+import com.zhuoan.biz.game.biz.PublicBiz;
 import com.zhuoan.biz.game.biz.UserBiz;
 import com.zhuoan.biz.model.GameRoom;
 import com.zhuoan.biz.model.RoomManage;
@@ -49,19 +50,13 @@ public class MatchEventDeal {
     private UserBiz userBiz;
 
     @Resource
+    private PublicBiz publicBiz;
+
+    @Resource
     private Destination baseQueueDestination;
 
     @Resource
     private ProducerService producerService;
-
-    @Scheduled(cron = "0 0 0 * * ?")
-    public void clearRewardInfo() {
-        // 清除奖励信息
-        Set<Object> idSet = redisService.sGet("win_streak_baseInfo_id");
-        for (Object o : idSet) {
-            redisService.deleteByKey("win_streak_player_info_"+String.valueOf(o));
-        }
-    }
 
     @Scheduled(cron = "0/10 * * * * ?")
     public void startTimeMatch() {
@@ -867,14 +862,7 @@ public class MatchEventDeal {
                     matchBiz.addOrUpdateUserWinningRecord(object);
                     if (score > 0) {
                         // 添加记录
-                        JSONObject ticketRec = new JSONObject();
-                        ticketRec.put("user_account", account);
-                        ticketRec.put("game_id", matchInfo.getInt("game_id"));
-                        ticketRec.put("ticket_type", CommonConstant.TICKET_TYPE_THING);
-                        ticketRec.put("money", score);
-                        ticketRec.put("match_id", matchInfo.getInt("match_id"));
-                        ticketRec.put("create_time", TimeUtil.getNowDate());
-                        userBiz.addUserTicketRec(ticketRec);
+                        publicBiz.addUserWelfareRec(account, score, CommonConstant.TICKET_TYPE_THING, matchInfo.getInt("game_id"));
                     }
 
                     return rewardInfo.getString("name");

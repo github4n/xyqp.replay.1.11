@@ -306,6 +306,10 @@ public class CommonConstant {
     /**
      * 积分变动类型-抽水
      */
+    public static final int SCORE_CHANGE_TYPE_OTHER = 3;
+    /**
+     * 积分变动类型-抽水
+     */
     public static final int SCORE_CHANGE_TYPE_PUMP = 10;
     /**
      * 积分变动类型-游戏输赢
@@ -315,6 +319,10 @@ public class CommonConstant {
      * 积分变动类型-洗牌
      */
     public static final int SCORE_CHANGE_TYPE_SHUFFLE = 30;
+    /**
+     * 积分变动doType-福利
+     */
+    public static final int SCORE_CHANGE_DO_TYPE_WELFARE = 4;
     /**
      * 无庄家
      */
@@ -327,6 +335,10 @@ public class CommonConstant {
      * 签到金币-最大
      */
     public static final int COINS_SIGN_MAX = 1000;
+    /**
+     * 签到金币-最大
+     */
+    public static final int COINS_SIGN_BASE = 0;
     /**
      * 房卡场解散房间
      */
@@ -344,12 +356,11 @@ public class CommonConstant {
     /**
      * 红包券
      */
-    public static final int TICKET_TYPE_MONEY = 0;
+    public static final int TICKET_TYPE_MONEY = 3;
     /**
      * 实物券
      */
-    public static final int TICKET_TYPE_THING = 1;
-
+    public static final int TICKET_TYPE_THING = 2;
     /**
      * 签到信息事件类型-大厅检查
      */

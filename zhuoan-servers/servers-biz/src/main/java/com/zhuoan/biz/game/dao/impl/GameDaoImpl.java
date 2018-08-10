@@ -728,5 +728,10 @@ public class GameDaoImpl implements GameDao {
     public void addUserTicketRec(JSONObject ticketRec) {
         DBJsonUtil.add(ticketRec,"za_user_ticket_rec");
     }
+
+    @Override
+    public void addUserWelfareRec(JSONObject obj) {
+        DBJsonUtil.add(obj,"za_userdeduction");
+    }
 }
 

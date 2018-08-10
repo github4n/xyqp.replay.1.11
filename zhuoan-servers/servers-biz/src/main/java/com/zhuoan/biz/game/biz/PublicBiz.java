@@ -106,4 +106,13 @@ public interface PublicBiz {
      * @param obj
      */
     public void addOrUpdateUserGameInfo(JSONObject obj);
+
+    /**
+     * 添加玩家福利信息
+     * @param account
+     * @param sum
+     * @param type
+     * @param gameId
+     */
+    void addUserWelfareRec(String account, double sum, int type, int gameId);
 }

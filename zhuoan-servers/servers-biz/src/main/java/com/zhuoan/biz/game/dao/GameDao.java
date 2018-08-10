@@ -362,4 +362,10 @@ public interface GameDao {
      */
     void addUserTicketRec(JSONObject ticketRec);
 
+    /**
+     * 添加福利记录
+     * @param obj
+     */
+    void addUserWelfareRec(JSONObject obj);
+
 }
