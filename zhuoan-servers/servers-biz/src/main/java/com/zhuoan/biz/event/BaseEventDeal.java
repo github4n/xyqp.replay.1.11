@@ -2338,7 +2338,7 @@ public class BaseEventDeal {
                         reward = maxReward;
                     }
                     result.put("reward",reward);
-                    result.put("days",signInfo.getInt("singnum"));
+                    result.put("days",signDay-1);
                 }else {
                     result.put("reward",baseReward + minReward);
                     result.put("days",0);

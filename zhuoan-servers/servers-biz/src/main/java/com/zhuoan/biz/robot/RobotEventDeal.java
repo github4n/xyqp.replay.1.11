@@ -21,8 +21,7 @@ import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
 import javax.jms.Destination;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -373,22 +372,109 @@ public class RobotEventDeal {
                 return robotPai;
             }
         }
+        List<List<String>> allCard = DdzCore.obtainRobotCard(lastCard, robotPai);
+        // 下家不是队友且只有一张牌
+        if (!isTeammateWithNext(roomNo,robotAccount)) {
+            String nextAccount = getNextAccount(roomNo,robotAccount);
+            if (allCard.size() > 0 && room.getUserPacketMap().get(nextAccount).getMyPai().size() == 1) {
+                List<List<String>> notSingleList = getNotSingleList(allCard);
+                return notSingleList.size() > 0 ? notSingleList.get(0) : new ArrayList<String>();
+            }
+        }
         if (isTeammateWithLast(roomNo,room.getLastOperateAccount(),robotAccount)) {
-            // 单牌和对子 垫牌
+            // 单牌和对子 垫牌  队友能直接走完不垫牌
             if (DdzCore.obtainCardType(lastCard) != DdzConstant.DDZ_CARD_TYPE_SINGLE && DdzCore.obtainCardType(lastCard) != DdzConstant.DDZ_CARD_TYPE_PAIRS) {
                 return new ArrayList<String>();
             }else if (lastCard.size()>0 && DdzCore.obtainCardValue(lastCard.get(0)) > DdzConstant.DDZ_CARD_NUM_TWELVE) {
                 return new ArrayList<String>();
+            }else if (DdzCore.checkCard(lastCard,room.getUserPacketMap().get(room.getLastOperateAccount()).getMyPai())) {
+                return new ArrayList<String>();
             }
         }
-        List<List<String>> allCard = DdzCore.obtainRobotCard(lastCard, robotPai);
+
         // 手牌多的时候不出炸
         if (lastCard.size()>0&&allCard.size()>0&&DdzCore.obtainCardType(allCard.get(0))==DdzConstant.DDZ_CARD_TYPE_BOMB) {
             if (room.getUserPacketMap().get(room.getLastOperateAccount()).getMyPai().size()>10) {
                 return new ArrayList<>();
             }
         }
-        return allCard.size()>0?allCard.get(0):new ArrayList<String>();
+        if (allCard.size() > 0) {
+            if (DdzCore.obtainCardType(allCard.get(0)) == DdzConstant.DDZ_CARD_TYPE_STRAIGHT) {
+                return allCard.get(0);
+            }else {
+                return obtainMinRobotCardDdz(allCard, lastCard);
+            }
+        }
+        return new ArrayList<String>();
+    }
+
+    /**
+     * 下家单牌处理
+     * @param allCard
+     * @return
+     */
+    private List<List<String>> getNotSingleList(List<List<String>> allCard) {
+        List<List<String>> notSingleList = new ArrayList<>();
+        List<List<String>> singleList = new ArrayList<>();
+        // 优先取出所有非单牌
+        for (List<String> cardList : allCard) {
+            if (DdzCore.obtainCardType(cardList) != DdzConstant.DDZ_CARD_TYPE_SINGLE) {
+                notSingleList.add(cardList);
+            }else {
+                singleList.add(cardList);
+            }
+        }
+        // 单牌从大小出
+        Collections.sort(singleList, new Comparator<List<String>>() {
+            @Override
+            public int compare(List<String> o1, List<String> o2) {
+                return getMaxValue(o2) - getMaxValue(o1);
+            }
+        });
+        notSingleList.addAll(singleList);
+        return notSingleList;
+    }
+
+    private List<String> obtainMinRobotCardDdz(List<List<String>> allCard,List<String> lastCard) {
+        List<String> bestList = new ArrayList<>();
+        for (int i = 0; i < allCard.size(); i++) {
+            if (getMinValue(allCard.get(i)) < getMinValue(bestList)) {
+                if (lastCard.size() == 0 || DdzCore.obtainCardType(lastCard) == DdzCore.obtainCardType(allCard.get(i))) {
+                    bestList = allCard.get(i);
+                }
+            }
+        }
+        return bestList;
+    }
+
+    private int getMinValue(List<String> cardList) {
+        int minValue = 18;
+        int cardType = DdzCore.obtainCardType(cardList);
+        if (cardType == DdzConstant.DDZ_CARD_TYPE_THREE_WITH_SINGLE || cardType == DdzConstant.DDZ_CARD_TYPE_THREE_WITH_PARIS) {
+            cardList = DdzCore.obtainRepeatList(cardList,3,false).get(0);
+        }
+        for (String card : cardList) {
+            int cardValue = DdzCore.obtainCardValue(card);
+            if (cardValue < minValue) {
+                minValue = cardValue;
+            }
+        }
+        return minValue;
+    }
+
+    private int getMaxValue(List<String> cardList) {
+        int maxValue = 0;
+        int cardType = DdzCore.obtainCardType(cardList);
+        if (cardType == DdzConstant.DDZ_CARD_TYPE_THREE_WITH_SINGLE || cardType == DdzConstant.DDZ_CARD_TYPE_THREE_WITH_PARIS) {
+            cardList = DdzCore.obtainRepeatList(cardList,3,false).get(0);
+        }
+        for (String card : cardList) {
+            int cardValue = DdzCore.obtainCardValue(card);
+            if (cardValue > maxValue) {
+                maxValue = cardValue;
+            }
+        }
+        return maxValue;
     }
 
     /**
@@ -408,6 +494,44 @@ public class RobotEventDeal {
             }
         }
         return false;
+    }
+
+    /**
+     * 下家和自己是不是队友
+     * @param roomNo
+     * @param account
+     * @return
+     */
+    private boolean isTeammateWithNext(String roomNo, String account) {
+        DdzGameRoom room = (DdzGameRoom) RoomManage.gameRoomMap.get(roomNo);
+        // 自己不是地主
+        if (account.equals(room.getLandlordAccount())) {
+            return false;
+        }
+        // 下家不是地主
+        if (room.getLandlordAccount().equals(getNextAccount(roomNo,account))) {
+            return false;
+        }
+        return true;
+    }
+
+    /**
+     * 下家和自己是不是队友
+     * @param roomNo
+     * @param account
+     * @return
+     */
+    private String getNextAccount(String roomNo, String account) {
+        DdzGameRoom room = (DdzGameRoom) RoomManage.gameRoomMap.get(roomNo);
+        // 不是地主判断下家是不是地主
+        int playerIndex = room.getPlayerMap().get(account).getMyIndex();
+        playerIndex++;
+        for (String next : room.getPlayerMap().keySet()) {
+            if (room.getPlayerMap().get(next).getMyIndex() == playerIndex%DdzConstant.DDZ_PLAYER_NUMBER) {
+                return next;
+            }
+        }
+        return null;
     }
 
     /**
