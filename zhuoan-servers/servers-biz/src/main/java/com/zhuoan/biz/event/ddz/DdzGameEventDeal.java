@@ -658,8 +658,9 @@ public class DdzGameEventDeal {
             if (postData.containsKey("notSendToMe")) {
                 CommonConstant.sendMsgEventToAll(room.getAllUUIDList(), String.valueOf(result), "exitRoomPush_DDZ");
             }
+            boolean isRobot = false;
             if (room.getRobotList().contains(account)) {
-                roomBiz.updateRobotStatus(account, 0);
+                isRobot = true;
             }
             // 所有人都退出清除房间数据
             if (room.getPlayerMap().size() == 0) {
@@ -674,6 +675,9 @@ public class DdzGameEventDeal {
                         break;
                     }
                 }
+            }
+            if (isRobot) {
+                roomBiz.updateRobotStatus(account, 0);
             }
             producerService.sendMessage(daoQueueDestination, new PumpDao(DaoTypeConstant.UPDATE_ROOM_INFO, roomInfo));
         } else {
