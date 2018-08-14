@@ -1003,6 +1003,12 @@ public class BaseEventDeal {
         } else {
             playerinfo.setArea("");
         }
+        // 平台标识
+        if (userInfo.containsKey("platform")) {
+            playerinfo.setPlatform(userInfo.getString("platform"));
+        } else {
+            playerinfo.setArea("");
+        }
         if (userInfo.containsKey("lv")) {
             int vip = userInfo.getInt("lv");
             if (vip > 1) {
@@ -1694,6 +1700,12 @@ public class BaseEventDeal {
                 }
             }
         }
+        Collections.sort(allRoom, new Comparator() {
+            @Override
+            public int compare(Object o1, Object o2) {
+                return JSONObject.fromObject(o1).getInt("renshu") - JSONObject.fromObject(o2).getInt("renshu");
+            }
+        });
         result.element(CommonConstant.RESULT_KEY_CODE, CommonConstant.GLOBAL_YES);
         result.element("gid", gameId);
         result.element("array", allRoom);
@@ -2018,12 +2030,14 @@ public class BaseEventDeal {
                 }
                 JSONObject object = new JSONObject();
                 object.put("userId",room.getPlayerMap().get(account).getId());
+                object.put("platform",room.getPlayerMap().get(account).getPlatform());
                 object.put("gameId",gameId);
                 object.put("room_id",room.getId());
                 object.put("room_no",roomNo);
                 object.put("new",room.getPlayerMap().get(account).getScore());
                 object.put("old",oldScore);
                 object.put("change",-sum);
+                object.put("type",room.getRoomType());
                 producerService.sendMessage(daoQueueDestination, new PumpDao(DaoTypeConstant.INSERT_APP_OBJ_REC, object));
                 // 通知玩家
                 result.element(CommonConstant.RESULT_KEY_CODE, CommonConstant.GLOBAL_YES);
@@ -2234,7 +2248,7 @@ public class BaseEventDeal {
                 }
             }
         }
-        if (roomNoList.size()==0) {
+        if (roomNoList.size()<=5) {
             createRoomBase(client,postData);
         }else {
             // 随机加入

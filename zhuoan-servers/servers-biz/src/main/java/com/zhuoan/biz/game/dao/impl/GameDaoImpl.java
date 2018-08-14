@@ -547,10 +547,12 @@ public class GameDaoImpl implements GameDao {
 
     @Override
     public void addAppObjRec(JSONObject object) {
-        String sql = "insert into za_userdeduction(userid,gid,roomNo,doType,roomid,creataTime,pocketNew,pocketOld,pocketChange,operatorType,memo) values(?,?,?,?,?,?,?,?,?,?,?)";
+        String sql = "insert into za_userdeduction(userid,gid,roomNo,doType,roomid,creataTime,pocketNew,pocketOld,pocketChange,operatorType," +
+            "memo,sum,platform,type) values(?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
         DBUtil.executeUpdateBySQL(sql,new Object[]{object.getLong("userId"),object.getInt("gameId"),object.getString("room_no"),
             1,object.getLong("room_id"),new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date()),object.getDouble("new"),
-            object.getDouble("old"),object.getDouble("change"),CommonConstant.SCORE_CHANGE_TYPE_SHUFFLE,"洗牌"});
+            object.getDouble("old"),object.getDouble("change"),CommonConstant.SCORE_CHANGE_TYPE_SHUFFLE,"洗牌",
+            object.getDouble("change"),object.getString("platform"),object.getInt("type")});
     }
 
     @Override

@@ -96,6 +96,10 @@ public class Playerinfo implements Serializable{
      * 比赛场排名
      */
     private int myRank;
+    /**
+     * 平台标识
+     */
+    private String platform;
 
     public int getRoomCardNum() {
         return roomCardNum;
@@ -238,6 +242,14 @@ public class Playerinfo implements Serializable{
 
     public void setMyRank(int myRank) {
         this.myRank = myRank;
+    }
+
+    public String getPlatform() {
+        return platform;
+    }
+
+    public void setPlatform(String platform) {
+        this.platform = platform;
     }
 
     /**
