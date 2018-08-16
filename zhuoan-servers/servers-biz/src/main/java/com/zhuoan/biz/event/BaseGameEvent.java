@@ -132,6 +132,16 @@ public class BaseGameEvent {
         });
 
         /**
+         * 换房间
+         */
+        server.addEventListener("changeRoom", Object.class, new DataListener<Object>() {
+            @Override
+            public void onData(SocketIOClient client, Object data, AckRequest ackSender) {
+                producerService.sendMessage(baseQueueDestination, new Messages(client, data, CommonConstant.GAME_BASE, CommonConstant.BASE_GAME_EVENT_CHANGE_ROOM));
+            }
+        });
+
+        /**
          *  获取洗牌信息
          */
         server.addEventListener("xipaiMessa", Object.class, new DataListener<Object>() {

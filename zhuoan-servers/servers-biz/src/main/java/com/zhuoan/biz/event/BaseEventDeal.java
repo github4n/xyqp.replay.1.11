@@ -3177,7 +3177,7 @@ public class BaseEventDeal {
                     JSONArray achievementArray = achievementBiz.getAchievementInfoByGameId(achievementInfo.getInt("game_id"),achievementInfo.getString("platform"));
                     JSONArray arr = new JSONArray();
                     for (Object o : achievementArray) {
-                        JSONObject achievement = JSONObject.fromObject(o);
+                        JSONObject achievement JSONObject.fromObject(o);
                         // 可以领取 已经领取 不能领
                         if (rewardArray.contains(achievement.getLong("id"))) {
                             achievement.put("status",1);
@@ -3198,4 +3198,96 @@ public class BaseEventDeal {
         result.put(CommonConstant.RESULT_KEY_MSG, "领取失败");
         CommonConstant.sendMsgEventToSingle(client, String.valueOf(result),"drawAchievementRewardPush");
     }
+
+    /**
+     * 换房间
+     * @param client
+     * @param data
+     */
+    public void changeRoomBase(SocketIOClient client, Object data) {
+        JSONObject postData = fromObject(data);
+        // 玩家账号
+        String account = postData.getString(CommonConstant.DATA_KEY_ACCOUNT);
+        // 房间号
+        String roomNo = postData.getString(CommonConstant.DATA_KEY_ROOM_NO);
+        // 找到当前房间对象
+        GameRoom nowRoom = RoomManage.gameRoomMap.get(roomNo);
+        // 找到当前用户玩家
+        JSONObject userInfo = userBiz.getUserByAccount(account);
+        // 参数判空
+        if (Dto.isObjNull(userInfo) || Dto.isObjNull(nowRoom)){
+            return ;
+        }
+
+        // 第一步、完成换房间需要先判断是否有空房间，
+        // 若有继续第二步，若无直接返回无空房间信息
+        List temp = haveEmptyRoom(nowRoom);
+        if(temp != null && temp.size() > 0) {
+            // 第二步、玩家退出房间
+            JSONObject exitData = fromObject(data);
+
+            String  uuid =String.valueOf(nowRoom.getPlayerMap().get(account).getUuid());
+            exitData.put("notSend",1);
+            exitData.put("notSendToMe",1);
+            exitData.put("uuid",uuid);
+
+            switch (nowRoom.getGid()) {
+                case CommonConstant.GAME_ID_NN:
+                    nnGameEventDealNew.exitRoom(null, exitData);
+                    break;
+                case CommonConstant.GAME_ID_SSS:
+                    sssGameEventDealNew.exitRoom(null, exitData);
+                    break;
+                case CommonConstant.GAME_ID_ZJH:
+                    zjhGameEventDealNew.exitRoom(null, exitData);
+                    break;
+                case CommonConstant.GAME_ID_SW:
+                    swGameEventDeal.exitRoom(null,exitData);
+                    break;
+                default:
+                    break;
+            }
+
+            // 第三步、玩家加入相应房间
+            JSONObject joinData = new JSONObject();
+
+            // 随机取出一个房间号加入
+            int index=(int)(Math.random()*temp.size());
+
+            joinData.put("account",account);
+            joinData.put("account",account);
+            joinData.put("room_no",temp.get(index));
+            joinData.put("uuid",uuid);
+            joinRoomBase(client, joinData);
+
+        }
+    }
+
+    /**
+     * 判断是否有空房间号
+     */
+    private List<String>haveEmptyRoom(GameRoom room) {
+        // 根据游戏id查找对应的房间数
+        // 然后进行遍历
+        // 最后返回查询结果
+        Map<String,GameRoom> map = RoomManage.gameRoomMap;
+        List<String> list = new ArrayList<String>();
+
+        for(String roomNum:map.keySet()){
+            GameRoom gameRoom = map.get(roomNum);
+            // 判断房间状态
+            if(room.getGid() == gameRoom.getGid()
+                && room.getRoomType() == gameRoom.getRoomType()
+                && gameRoom.getPlayerMap().size() < gameRoom.getPlayerCount()
+                && roomNum != room.getRoomNo()
+                && room.getScore() == gameRoom.getScore()){
+                if (room.getWfType() == gameRoom.getWfType()) {// jiaru youxi moshi de bijiao
+                    list.add(roomNum);
+                }
+            }
+        }
+        return list;
+    }
+
+
  }
