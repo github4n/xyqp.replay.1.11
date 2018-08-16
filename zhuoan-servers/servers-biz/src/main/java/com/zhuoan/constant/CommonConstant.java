@@ -44,10 +44,6 @@ public class CommonConstant {
      */
     public static final int BASE_GAME_EVENT_JOIN_ROOM = 6;
     /**
-     * 公共游戏事件-换房间
-     */
-    public static final int BASE_GAME_EVENT_CHANGE_ROOM = 37;
-    /**
      * 公共游戏事件-获取洗牌信息
      */
     public static final int BASE_GAME_EVENT_GET_SHUFFLE_INFO = 7;
@@ -163,6 +159,10 @@ public class CommonConstant {
      * 公共游戏事件-抽奖
      */
     public static final int BASE_GAME_EVENT_DRAW_ACHIEVEMENT_REWARD = 36;
+    /**
+     * 公共游戏事件-换房间
+     */
+    public static final int BASE_GAME_EVENT_CHANGE_ROOM = 37;
     /**
      * 游戏公共部分
      */
