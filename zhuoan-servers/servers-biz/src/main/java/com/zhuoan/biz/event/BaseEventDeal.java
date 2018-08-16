@@ -942,7 +942,13 @@ public class BaseEventDeal {
             case CommonConstant.GAME_ID_DDZ:
                 // 重连不需要重新设置用户牌局信息
                 if (!((DdzGameRoom) gameRoom).getUserPacketMap().containsKey(userInfo.getString("account"))) {
-                    ((DdzGameRoom) gameRoom).getUserPacketMap().put(userInfo.getString("account"), new UserPacketDdz());
+                    UserPacketDdz up = new UserPacketDdz();
+                    // 设置连胜局数
+                    Object winTimeInfo = redisService.hget("win_time_info_" + gameRoom.getScore(), userInfo.getString("account"));
+                    if (!Dto.isNull(winTimeInfo)) {
+                        up.setWinStreakTime(Integer.parseInt(String.valueOf(winTimeInfo)));
+                    }
+                    ((DdzGameRoom) gameRoom).getUserPacketMap().put(userInfo.getString("account"), up);
                 }
                 ddzGameEventDeal.joinRoom(client, joinData);
                 break;
@@ -1393,8 +1399,13 @@ public class BaseEventDeal {
         // 房主
         room.setOwner(account);
         // 添加牌局信息
-        if (baseInfo.getInt("roomType")!=CommonConstant.ROOM_TYPE_DK) {
-            room.getUserPacketMap().put(account,new UserPacketDdz());
+        if (baseInfo.getInt("roomType") != CommonConstant.ROOM_TYPE_DK) {
+            UserPacketDdz up = new UserPacketDdz();
+            Object winTimeInfo = redisService.hget("win_time_info_" + baseInfo.getDouble("di"), account);
+            if (!Dto.isNull(winTimeInfo)) {
+                up.setWinStreakTime(Integer.parseInt(String.valueOf(winTimeInfo)));
+            }
+            room.getUserPacketMap().put(account, up);
         }
         JSONObject setting = getGameInfoById(CommonConstant.GAME_ID_DDZ);
         if (baseInfo.containsKey("win_streak")) {

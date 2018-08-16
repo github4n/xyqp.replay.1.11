@@ -1,6 +1,7 @@
 package com.zhuoan.webapp.controller.gameproxy;
 
 import com.zhuoan.biz.model.RoomManage;
+import com.zhuoan.constant.CommonConstant;
 import com.zhuoan.service.cache.RedisService;
 import com.zhuoan.util.Dto;
 import com.zhuoan.util.MD5;
@@ -48,7 +49,13 @@ public class GameProxyController extends BaseController {
                 redisService.deleteByKey("match_setting_0");
                 redisService.deleteByKey("match_setting_1");
             }else if (cacheType.equals("dissolveRoom")) {
-                RoomManage.gameRoomMap.remove(roomNo);
+                if (RoomManage.gameRoomMap.containsKey(roomNo)&&RoomManage.gameRoomMap.get(roomNo)!=null) {
+                    JSONObject obj = new JSONObject();
+                    obj.put("type", CommonConstant.SHOW_MSG_TYPE_BIG);
+                    obj.put(CommonConstant.RESULT_KEY_MSG,"房间已被解散");
+                    CommonConstant.sendMsgEventToAll(RoomManage.gameRoomMap.get(roomNo).getAllUUIDList(),String.valueOf(obj),"tipMsgPush");
+                    RoomManage.gameRoomMap.remove(roomNo);
+                }
             } else{
                 if (cacheType.contains("gold_setting_")) {
                     redisService.deleteByKey("game_info_by_id_" + gameId);
