@@ -3177,7 +3177,7 @@ public class BaseEventDeal {
                     JSONArray achievementArray = achievementBiz.getAchievementInfoByGameId(achievementInfo.getInt("game_id"),achievementInfo.getString("platform"));
                     JSONArray arr = new JSONArray();
                     for (Object o : achievementArray) {
-                        JSONObject achievement JSONObject.fromObject(o);
+                        JSONObject achievement = JSONObject.fromObject(o);
                         // 可以领取 已经领取 不能领
                         if (rewardArray.contains(achievement.getLong("id"))) {
                             achievement.put("status",1);
@@ -3215,7 +3215,7 @@ public class BaseEventDeal {
         // 找到当前用户玩家
         JSONObject userInfo = userBiz.getUserByAccount(account);
         // 参数判空
-        if (Dto.isObjNull(userInfo) || Dto.isObjNull(nowRoom)){
+        if (Dto.isObjNull(userInfo) || nowRoom == null){
             return ;
         }
 
@@ -3271,19 +3271,15 @@ public class BaseEventDeal {
         // 然后进行遍历
         // 最后返回查询结果
         Map<String,GameRoom> map = RoomManage.gameRoomMap;
-        List<String> list = new ArrayList<String>();
+        List<String> list = new ArrayList<>();
 
         for(String roomNum:map.keySet()){
             GameRoom gameRoom = map.get(roomNum);
             // 判断房间状态
-            if(room.getGid() == gameRoom.getGid()
-                && room.getRoomType() == gameRoom.getRoomType()
-                && gameRoom.getPlayerMap().size() < gameRoom.getPlayerCount()
-                && roomNum != room.getRoomNo()
-                && room.getScore() == gameRoom.getScore()){
-                if (room.getWfType() == gameRoom.getWfType()) {// jiaru youxi moshi de bijiao
+            if(room.getGid() == gameRoom.getGid() && room.getRoomType() == gameRoom.getRoomType()
+                && gameRoom.getPlayerMap().size() < gameRoom.getPlayerCount() && roomNum != room.getRoomNo()
+                && room.getScore() == gameRoom.getScore() && room.getWfType() == gameRoom.getWfType()) {
                     list.add(roomNum);
-                }
             }
         }
         return list;
