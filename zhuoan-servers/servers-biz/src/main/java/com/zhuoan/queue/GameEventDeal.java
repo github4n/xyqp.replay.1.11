@@ -105,6 +105,9 @@ public class GameEventDeal {
                     case CommonConstant.BASE_GAME_EVENT_JOIN_ROOM:
                         baseEventDeal.joinRoomBase(client, data);
                         break;
+                    case CommonConstant.BASE_GAME_EVENT_CHANGE_ROOM:
+                        baseEventDeal.changeRoomBase(client,data);
+                        break;
                     case CommonConstant.BASE_GAME_EVENT_GET_SHUFFLE_INFO:
                         baseEventDeal.getShuffleInfo(client, data);
                         break;
