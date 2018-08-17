@@ -120,7 +120,9 @@ public class GameMain implements SocketIoManagerService {
 
         if (StringUtils.endsWithIgnoreCase(env.getProperty(EnvKeyEnum.RUN_ENVIRONMENT.getKey()), SocketConfigConstant.RUN_ENV)) {
             // 本机外网IP
-            localOuterNetIp = IpAddressUtil.getLocalOuterNetIp();
+            //localOuterNetIp = IpAddressUtil.getLocalOuterNetIp();
+            localOuterNetIp = env.getProperty(EnvKeyEnum.SERVER_IP.getKey());
+
         }
         int localPort = Integer.valueOf(env.getProperty(EnvKeyEnum.LOCAL_PORT.getKey()));
         // 本地启用主机名字

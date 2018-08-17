@@ -280,6 +280,8 @@ public class QZMJGameRoom extends GameRoom{
         this.yjType = 0;
         //游金玩家
         this.yjAccount = null;
+        // 上个操作玩家
+        this.lastAccount = null;
         // 胡牌类型
         this.huType = 0;
         this.startStatus = 0;

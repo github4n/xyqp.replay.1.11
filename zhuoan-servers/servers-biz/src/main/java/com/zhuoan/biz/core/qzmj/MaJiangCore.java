@@ -754,8 +754,8 @@ public class MaJiangCore {
 	            i += 1;
 	 
 	            if (HuPaiPanDin(paiT,jinPaiList)) {
-	            	if(jinPaiList.size()>0 || paiT.size()%3==1){ // 剩下最后一张牌为将牌
-	            		
+                    // 剩下最后一张牌为将牌
+	            	if(jinPaiList.size()>0 || paiT.size()%3==1){
 	            		return true;
 	            	}
 	            }
@@ -830,53 +830,115 @@ public class MaJiangCore {
 
     public static List<Integer> getCompensateList(List<Integer> myPai, List<Integer> outList, int jin, JSONArray tingList) {
         List<Integer> compensateList = new ArrayList<>();
-        // 所有正确的手牌
-        List<Integer> legalList = new ArrayList<>();
-        // 有听打无听
-        if (tingList.size() > 0) {
-            // 所有听的牌
-            List<Integer> allTing = new ArrayList<>();
-            for (int i = 0; i < tingList.size(); i++) {
-                allTing.add(tingList.getJSONObject(i).getInt("pai"));
-            }
-            legalList.addAll(allTing);
-        } else {
-            List<Integer> singleList = getAllSingle(myPai);
-            // 有单牌优先出单牌
-            if (singleList.size() > 0) {
-                // 计算每个单牌桌面上的牌数
-                Map<Integer, Integer> outCountMap = getOutCount(singleList,outList);
-                List<Integer> moreList = new ArrayList<>();
-                for (Integer pai : outCountMap.keySet()) {
-                    if (outCountMap.get(pai) >= QZMJConstant.OUT_CARD_THRESHOLD) {
-                        moreList.add(pai);
-                    }
+        try {
+            // 所有正确的手牌
+            List<Integer> legalList = new ArrayList<>();
+            // 有听打无听
+            if (tingList.size() > 0) {
+                // 所有听的牌
+                List<Integer> allTing = new ArrayList<>();
+                for (int i = 0; i < tingList.size(); i++) {
+                    allTing.add(tingList.getJSONObject(i).getInt("pai"));
                 }
-                // 单牌见2先出
-                if (moreList.size() > 0) {
-                    // 有字优先打字
-                    List<Integer> moreZiList = new ArrayList<>();
-                    for (Integer pai : moreList) {
-                        if (QZMJConstant.ZI_PAI.contains(pai)) {
-                            moreZiList.add(pai);
+                legalList.addAll(allTing);
+            } else {
+                List<Integer> singleList = getAllSingle(myPai);
+                // 有单牌优先出单牌
+                if (singleList.size() > 0) {
+                    // 计算每个单牌桌面上的牌数
+                    Map<Integer, Integer> outCountMap = getOutCount(singleList,outList);
+                    List<Integer> moreList = new ArrayList<>();
+                    for (Integer pai : outCountMap.keySet()) {
+                        if (outCountMap.get(pai) >= QZMJConstant.OUT_CARD_THRESHOLD) {
+                            moreList.add(pai);
                         }
                     }
-                    if (moreZiList.size() > 0) {
-                        legalList.addAll(moreZiList);
+                    // 单牌见2先出
+                    if (moreList.size() > 0) {
+                        // 有字优先打字
+                        List<Integer> moreZiList = new ArrayList<>();
+                        for (Integer pai : moreList) {
+                            if (QZMJConstant.ZI_PAI.contains(pai)) {
+                                moreZiList.add(pai);
+                            }
+                        }
+                        if (moreZiList.size() > 0) {
+                            legalList.addAll(moreZiList);
+                        }else {
+                            legalList.addAll(moreList);
+                        }
                     }else {
-                        legalList.addAll(moreList);
+                        legalList.addAll(singleList);
                     }
-                }else {
-                    legalList.addAll(singleList);
+                }
+            }
+            for (Integer pai : myPai) {
+                if (!legalList.contains(pai)) {
+                    compensateList.add(pai);
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return compensateList;
+    }
+
+    private static List<Integer> wipeOffPai(List<Integer> myPai, Integer jin) {
+        // 去除金
+	    List<Integer> jinList = new ArrayList<>();
+	    for (int i = 0; i < myPai.size(); i++) {
+            if (myPai.get(i).equals(jin)) {
+                jinList.add(myPai.get(i));
+            }
+        }
+        myPai.removeAll(jinList);
+        myPai.remove(jin);
+        // 手牌排序
+	    Collections.sort(myPai);
+        // 去除刻、顺子之后的手牌
+	    List<Integer> newPaiList = new ArrayList<>(myPai);
+	    // 优先去除所有刻子
+        for (int i = 0; i < myPai.size(); i++) {
+            List<Integer> threeList = new ArrayList<>();
+            for (int j = 0; j < myPai.size(); j++) {
+                if (myPai.get(i).equals(myPai.get(j))) {
+                    threeList.add(myPai.get(j));
+                }
+            }
+            // 去掉所有刻
+            if (threeList.size() >= 3) {
+                for (int j = 0; j < 3; j++) {
+                    newPaiList.remove(threeList.get(j));
+                }
+                return wipeOffPai(newPaiList,jin);
+            }
+        }
+        // 去除顺子
+        for (int i = 0; i < myPai.size(); i++) {
+            if (!QZMJConstant.ZI_PAI.contains(myPai.get(i)) && newPaiList.contains(myPai.get(i))) {
+                Integer nextOne = myPai.get(i) + 1;
+                Integer nextTwo = myPai.get(i) + 2;
+                Integer nextThree = myPai.get(i) + 3;
+                if (newPaiList.contains(nextOne) && newPaiList.contains(nextTwo)) {
+                    newPaiList.remove(nextOne);
+                    newPaiList.remove(nextTwo);
+                    // 计算当前这张牌的牌数
+                    List<Integer> doubleList = new ArrayList<>();
+                    for (int j = 0; j < newPaiList.size(); j++) {
+                        if (myPai.get(i).equals(newPaiList.get(j))) {
+                            doubleList.add(newPaiList.get(j));
+                        }
+                    }
+                    // 如果当前牌是对子且有其他的牌可以补足
+                    if (newPaiList.contains(nextThree) && doubleList.size() >= 2) {
+                        newPaiList.remove(nextThree);
+                    } else {
+                        newPaiList.remove(myPai.get(i));
+                    }
                 }
             }
         }
-        for (Integer pai : myPai) {
-            if (!legalList.contains(pai)) {
-                compensateList.add(pai);
-            }
-        }
-        return compensateList;
+	    return newPaiList;
     }
 
     private static Map<Integer, Integer> getOutCount(List<Integer> curList,List<Integer> outList) {
