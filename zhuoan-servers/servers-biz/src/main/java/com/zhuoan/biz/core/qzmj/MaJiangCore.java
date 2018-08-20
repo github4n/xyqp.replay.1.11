@@ -842,17 +842,11 @@ public class MaJiangCore {
                 }
                 legalList.addAll(allTing);
             } else {
-                List<Integer> singleList = getAllSingle(myPai);
+                List<Integer> singleList = getAllSingle(myPai, jin);
                 // 有单牌优先出单牌
                 if (singleList.size() > 0) {
                     // 计算每个单牌桌面上的牌数
-                    Map<Integer, Integer> outCountMap = getOutCount(singleList,outList);
-                    List<Integer> moreList = new ArrayList<>();
-                    for (Integer pai : outCountMap.keySet()) {
-                        if (outCountMap.get(pai) >= QZMJConstant.OUT_CARD_THRESHOLD) {
-                            moreList.add(pai);
-                        }
-                    }
+                    List<Integer> moreList = getMoreList(outList, singleList);
                     // 单牌见2先出
                     if (moreList.size() > 0) {
                         // 有字优先打字
@@ -870,6 +864,16 @@ public class MaJiangCore {
                     }else {
                         legalList.addAll(singleList);
                     }
+                } else {
+                    // 去除所有的刻 顺子
+                    List<Integer> wipeList = wipeOffPai(myPai, jin);
+                    List<Integer> doubleList = getDoubleList(wipeList);
+                    List<Integer> moreList = getMoreList(outList, doubleList);
+                    for (int i = 0; i < wipeList.size(); i++) {
+                        if (!doubleList.contains(wipeList.get(i)) || moreList.contains(wipeList.get(i))) {
+                            legalList.add(wipeList.get(i));
+                        }
+                    }
                 }
             }
             for (Integer pai : myPai) {
@@ -883,62 +887,93 @@ public class MaJiangCore {
         return compensateList;
     }
 
-    private static List<Integer> wipeOffPai(List<Integer> myPai, Integer jin) {
-        // 去除金
-	    List<Integer> jinList = new ArrayList<>();
-	    for (int i = 0; i < myPai.size(); i++) {
-            if (myPai.get(i).equals(jin)) {
-                jinList.add(myPai.get(i));
+    private static List<Integer> getMoreList(List<Integer> outList, List<Integer> curList) {
+        List<Integer> moreList = new ArrayList<>();
+        Map<Integer, Integer> outCountMap = getOutCount(curList, outList);
+        for (Integer pai : outCountMap.keySet()) {
+            if (outCountMap.get(pai) >= QZMJConstant.OUT_CARD_THRESHOLD) {
+                moreList.add(pai);
             }
         }
-        myPai.removeAll(jinList);
-        myPai.remove(jin);
+        return moreList;
+    }
+
+    private static List<Integer> wipeOffPai(List<Integer> myPai, Integer jin) {
+        List<Integer> copyPai = new ArrayList<>(myPai);
+        // 去除金
+	    List<Integer> jinList = new ArrayList<>();
+	    for (int i = 0; i < copyPai.size(); i++) {
+            if (copyPai.get(i).equals(jin)) {
+                jinList.add(copyPai.get(i));
+            }
+        }
+        copyPai.removeAll(jinList);
         // 手牌排序
-	    Collections.sort(myPai);
+	    Collections.sort(copyPai);
         // 去除刻、顺子之后的手牌
-	    List<Integer> newPaiList = new ArrayList<>(myPai);
+	    List<Integer> newPaiList = new ArrayList<>(copyPai);
 	    // 优先去除所有刻子
-        for (int i = 0; i < myPai.size(); i++) {
+        for (int i = 0; i < copyPai.size(); i++) {
             List<Integer> threeList = new ArrayList<>();
-            for (int j = 0; j < myPai.size(); j++) {
-                if (myPai.get(i).equals(myPai.get(j))) {
-                    threeList.add(myPai.get(j));
+            for (int j = 0; j < copyPai.size(); j++) {
+                if (copyPai.get(i).equals(copyPai.get(j))) {
+                    threeList.add(copyPai.get(j));
                 }
             }
             // 去掉所有刻
-            if (threeList.size() >= 3) {
-                for (int j = 0; j < 3; j++) {
+            if (threeList.size() >= QZMJConstant.CARD_SIZE_THREE) {
+                for (int j = 0; j < QZMJConstant.CARD_SIZE_THREE; j++) {
                     newPaiList.remove(threeList.get(j));
                 }
                 return wipeOffPai(newPaiList,jin);
             }
         }
         // 去除顺子
-        for (int i = 0; i < myPai.size(); i++) {
-            if (!QZMJConstant.ZI_PAI.contains(myPai.get(i)) && newPaiList.contains(myPai.get(i))) {
-                Integer nextOne = myPai.get(i) + 1;
-                Integer nextTwo = myPai.get(i) + 2;
-                Integer nextThree = myPai.get(i) + 3;
+        for (int i = 0; i < copyPai.size(); i++) {
+            if (!QZMJConstant.ZI_PAI.contains(copyPai.get(i)) && newPaiList.contains(copyPai.get(i))) {
+                Integer nextOne = copyPai.get(i) + 1;
+                Integer nextTwo = copyPai.get(i) + 2;
+                Integer nextThree = copyPai.get(i) + 3;
                 if (newPaiList.contains(nextOne) && newPaiList.contains(nextTwo)) {
                     newPaiList.remove(nextOne);
                     newPaiList.remove(nextTwo);
                     // 计算当前这张牌的牌数
                     List<Integer> doubleList = new ArrayList<>();
                     for (int j = 0; j < newPaiList.size(); j++) {
-                        if (myPai.get(i).equals(newPaiList.get(j))) {
+                        if (copyPai.get(i).equals(newPaiList.get(j))) {
                             doubleList.add(newPaiList.get(j));
                         }
                     }
                     // 如果当前牌是对子且有其他的牌可以补足
-                    if (newPaiList.contains(nextThree) && doubleList.size() >= 2) {
+                    if (newPaiList.contains(nextThree) && doubleList.size() >= QZMJConstant.CARD_SIZE_TWO) {
                         newPaiList.remove(nextThree);
                     } else {
-                        newPaiList.remove(myPai.get(i));
+                        newPaiList.remove(copyPai.get(i));
                     }
                 }
             }
         }
 	    return newPaiList;
+    }
+
+    private static List<Integer> getDoubleList(List<Integer> myPai) {
+        List<Integer> allDoubleList = new ArrayList<>();
+        for (int i = 0; i < myPai.size(); i++) {
+            List<Integer> doubleList = new ArrayList<>();
+            for (int j = 0; j < myPai.size(); j++) {
+                if (myPai.get(i).equals(myPai.get(j))) {
+                    doubleList.add(myPai.get(j));
+                }
+            }
+            if (doubleList.size() == QZMJConstant.CARD_SIZE_TWO) {
+                // 防止重复添加
+                if (!allDoubleList.contains(doubleList.get(0))) {
+                    allDoubleList.addAll(doubleList);
+                }
+            }
+        }
+
+	    return allDoubleList;
     }
 
     private static Map<Integer, Integer> getOutCount(List<Integer> curList,List<Integer> outList) {
@@ -969,11 +1004,20 @@ public class MaJiangCore {
      * @param myPai 手牌
      * @return List<Integer>
      */
-    private static List<Integer> getAllSingle(List<Integer> myPai) {
+    private static List<Integer> getAllSingle(List<Integer> myPai, int jin) {
+        List<Integer> copyPai = new ArrayList<>(myPai);
+        // 去除金
+        List<Integer> jinList = new ArrayList<>();
+        for (int i = 0; i < copyPai.size(); i++) {
+            if (copyPai.get(i).equals(jin)) {
+                jinList.add(copyPai.get(i));
+            }
+        }
+        copyPai.removeAll(jinList);
         List<Integer> singleList = new ArrayList<>();
         // 取手牌中的所有单牌
-        for (Integer pai : myPai) {
-            if (checkSingle(myPai, pai)) {
+        for (Integer pai : copyPai) {
+            if (checkSingle(copyPai, pai)) {
                 singleList.add(pai);
             }
         }

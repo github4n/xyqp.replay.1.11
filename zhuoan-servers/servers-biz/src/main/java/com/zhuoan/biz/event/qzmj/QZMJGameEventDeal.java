@@ -1751,7 +1751,7 @@ public class QZMJGameEventDeal {
                         }
                     }
                 }
-                if (gamePlay.getGid()==CommonConstant.GAME_ID_QZMJ) {
+                if (gamePlay.getGid()==CommonConstant.GAME_ID_QZMJ || gamePlay.getGid() == CommonConstant.GAME_ID_ZZC) {
                     summary(roomNo, account);
                 }else if (gamePlay.getGid()==CommonConstant.GAME_ID_NAMJ) {
                     summaryNA(roomNo, account);

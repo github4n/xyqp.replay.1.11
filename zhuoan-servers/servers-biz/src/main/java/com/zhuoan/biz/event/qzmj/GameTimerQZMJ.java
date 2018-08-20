@@ -180,7 +180,7 @@ public class GameTimerQZMJ {
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
-        if (RoomManage.gameRoomMap.get(roomNo).getGid()==CommonConstant.GAME_ID_QZMJ) {
+        if (RoomManage.gameRoomMap.get(roomNo).getGid()==CommonConstant.GAME_ID_QZMJ || RoomManage.gameRoomMap.get(roomNo).getGid() == CommonConstant.GAME_ID_ZZC) {
             buHua(roomNo);
         }else if (RoomManage.gameRoomMap.get(roomNo).getGid()==CommonConstant.GAME_ID_NAMJ) {
             dingJin(roomNo);
@@ -194,7 +194,7 @@ public class GameTimerQZMJ {
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
-        if (RoomManage.gameRoomMap.get(roomNo).getGid()==CommonConstant.GAME_ID_QZMJ) {
+        if (RoomManage.gameRoomMap.get(roomNo).getGid()==CommonConstant.GAME_ID_QZMJ || RoomManage.gameRoomMap.get(roomNo).getGid() == CommonConstant.GAME_ID_ZZC) {
             dingJin(roomNo);
         }else if (RoomManage.gameRoomMap.get(roomNo).getGid()==CommonConstant.GAME_ID_NAMJ) {
             moPai(roomNo);
@@ -208,7 +208,7 @@ public class GameTimerQZMJ {
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
-        if (RoomManage.gameRoomMap.get(roomNo).getGid()==CommonConstant.GAME_ID_QZMJ) {
+        if (RoomManage.gameRoomMap.get(roomNo).getGid()==CommonConstant.GAME_ID_QZMJ || RoomManage.gameRoomMap.get(roomNo).getGid() == CommonConstant.GAME_ID_ZZC) {
             moPai(roomNo);
         }else if (RoomManage.gameRoomMap.get(roomNo).getGid()==CommonConstant.GAME_ID_NAMJ) {
             buHua(roomNo);

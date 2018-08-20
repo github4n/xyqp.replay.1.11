@@ -428,6 +428,12 @@ public class QZMJConstant {
      */
     public static final int OUT_CARD_THRESHOLD = 2;
 
+    /**
+     * 牌数
+     */
+    public static final int CARD_SIZE_THREE = 3;
+    public static final int CARD_SIZE_TWO = 2;
+    public static final int CARD_SIZE_ONE = 1;
 
 	/**
 	 * 获取胡牌的倍数
