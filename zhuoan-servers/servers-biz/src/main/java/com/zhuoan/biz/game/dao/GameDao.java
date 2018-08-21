@@ -241,9 +241,10 @@ public interface GameDao {
      * 根据用户id获取玩家战绩
      * @param userId
      * @param gameId
+     * @param roomType
      * @return
      */
-    public JSONArray getUserGameLogsByUserId(long userId, int gameId);
+    public JSONArray getUserGameLogsByUserId(long userId, int gameId, int roomType);
 
     /**
      * 获取系统配置

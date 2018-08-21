@@ -685,6 +685,7 @@ public class GameRoom {
             userGameLog.put("createtime", TimeUtil.getNowDate());
             userGameLog.put("account", users.getJSONObject(i).getDouble("fen"));
             userGameLog.put("fee", getFee());
+            userGameLog.put("room_type", getRoomType());
             userGameLogs.add(userGameLog);
         }
         return userGameLogs;

@@ -1772,7 +1772,11 @@ public class BaseEventDeal {
         if (postData.containsKey("id")&&postData.containsKey("gid")) {
             long userId = postData.getLong("id");
             int gameId = postData.getInt("gid");
-            JSONArray userGameLogs = gameLogBiz.getUserGameLogsByUserId(userId,gameId);
+            int roomType = 3;
+            if (postData.containsKey("room_type")) {
+                roomType = postData.getInt("room_type");
+            }
+            JSONArray userGameLogs = gameLogBiz.getUserGameLogsByUserId(userId,gameId,roomType);
             JSONObject back = new JSONObject();
             JSONArray result = new JSONArray();
             if (userGameLogs.size()>0) {
