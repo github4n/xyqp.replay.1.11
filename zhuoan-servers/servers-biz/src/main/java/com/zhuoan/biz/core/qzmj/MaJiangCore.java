@@ -869,12 +869,17 @@ public class MaJiangCore {
                     List<Integer> wipeList = wipeOffPai(myPai, jin);
                     List<Integer> doubleList = getDoubleList(wipeList);
                     List<Integer> moreList = getMoreList(outList, doubleList);
-                    for (int i = 0; i < wipeList.size(); i++) {
-                        // 所有不是雀的牌，或者死雀多于2可以拆死雀
-                        if (!doubleList.contains(wipeList.get(i))) {
-                            legalList.add(wipeList.get(i));
-                        }else if (moreList.size() > 1 && moreList.contains(wipeList.get(i))) {
-                            legalList.add(wipeList.get(i));
+                    // 全是雀可以拆雀
+                    if (wipeList.size() == doubleList.size()) {
+                        legalList.addAll(doubleList);
+                    } else {
+                        for (int i = 0; i < wipeList.size(); i++) {
+                            // 所有不是雀的牌，或者死雀多于2可以拆死雀
+                            if (!doubleList.contains(wipeList.get(i))) {
+                                legalList.add(wipeList.get(i));
+                            }else if (moreList.size() > 1 && moreList.contains(wipeList.get(i))) {
+                                legalList.add(wipeList.get(i));
+                            }
                         }
                     }
                 }
