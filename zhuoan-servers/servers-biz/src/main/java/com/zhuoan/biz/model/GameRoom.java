@@ -199,8 +199,14 @@ public class GameRoom {
      * 比赛场总人数
      */
     private int totalNum;
-
+    /**
+     * 连胜信息
+     */
     private JSONObject winStreakObj = new JSONObject();
+    /**
+     * 货币类型
+     */
+    private String currencyType;
 
     public int getLastIndex() {
         return lastIndex;
@@ -570,6 +576,14 @@ public class GameRoom {
         this.winStreakObj = winStreakObj;
     }
 
+    public String getCurrencyType() {
+        return currencyType;
+    }
+
+    public void setCurrencyType(String currencyType) {
+        this.currencyType = currencyType;
+    }
+
     /**
      * 获取当前房间内的所有人
      * @return
@@ -628,7 +642,7 @@ public class GameRoom {
         objectDao.put("roomNo",getRoomNo());
         objectDao.put("gId",getGid());
         objectDao.put("fee",getFee());
-        objectDao.put("updateType",getUpdateType());
+        objectDao.put("updateType",getCurrencyType());
         return objectDao;
     }
 
@@ -638,14 +652,14 @@ public class GameRoom {
         obj.put("roomNo",getRoomNo());
         obj.put("gId",getGid());
         obj.put("fee",roomCardCount);
-        obj.put("updateType",getUpdateType());
+        obj.put("updateType",getCurrencyType());
         return obj;
     }
 
     public JSONObject getPumpObject(JSONArray array) {
         JSONObject jsonObject = new JSONObject();
         jsonObject.put("array",array);
-        jsonObject.put("updateType",getUpdateType());
+        jsonObject.put("updateType",getCurrencyType());
         return jsonObject;
     }
 

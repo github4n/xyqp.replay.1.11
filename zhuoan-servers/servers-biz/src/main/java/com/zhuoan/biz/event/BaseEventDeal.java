@@ -166,14 +166,19 @@ public class BaseEventDeal {
                 return;
             }
         } else if (baseInfo.getInt("roomType") == CommonConstant.ROOM_TYPE_FK||baseInfo.getInt("roomType") == CommonConstant.ROOM_TYPE_DK) {
-            if (userInfo.containsKey("roomcard")) {
+            String updateType = baseInfo.containsKey("updateYb") ? "yuanbao" : "roomcard";
+            if (userInfo.containsKey(updateType)) {
                 int roomCard = getRoomCardPayInfo(baseInfo);
                 if (baseInfo.getInt("roomType") == CommonConstant.ROOM_TYPE_DK) {
                     roomCard += obtainProxyRoomCard(account);
                 }
-                if (userInfo.getInt("roomcard")<roomCard) {
+                if (userInfo.getInt(updateType)<roomCard) {
                     result.element(CommonConstant.RESULT_KEY_CODE, CommonConstant.GLOBAL_NO);
-                    result.element(CommonConstant.RESULT_KEY_MSG, "房卡不足");
+                    if ("yuanbao".equals(updateType)) {
+                        result.element(CommonConstant.RESULT_KEY_MSG, "元宝不足");
+                    } else {
+                        result.element(CommonConstant.RESULT_KEY_MSG, "房卡不足");
+                    }
                     CommonConstant.sendMsgEventToSingle(client, String.valueOf(result), "enterRoomPush_NN");
                     return;
                 }
@@ -358,6 +363,11 @@ public class BaseEventDeal {
             }
         }
         gameRoom.setUserIdList(idList);
+        if (baseInfo.containsKey("updateYb") && baseInfo.getInt("updateYb") == CommonConstant.GLOBAL_YES) {
+            gameRoom.setCurrencyType("yuanbao");
+        } else {
+            gameRoom.setCurrencyType(gameRoom.getUpdateType());
+        }
         // 支付类型
         if (baseInfo.containsKey("paytype")) {
             gameRoom.setPayType(baseInfo.getInt("paytype"));
@@ -774,9 +784,14 @@ public class BaseEventDeal {
                     return;
                 }
             } else if (room.getRoomType() == CommonConstant.ROOM_TYPE_FK && userInfo.containsKey("roomcard")) {
-                if (userInfo.getInt("roomcard") < room.getEnterScore()) {
+                String updateType = room.getCurrencyType();
+                if (userInfo.getInt(updateType) < room.getEnterScore()) {
                     result.element(CommonConstant.RESULT_KEY_CODE, CommonConstant.GLOBAL_NO);
-                    result.element(CommonConstant.RESULT_KEY_MSG, "房卡不足");
+                    if ("yuanbao".equals(updateType)) {
+                        result.element(CommonConstant.RESULT_KEY_MSG, "元宝不足");
+                    } else {
+                        result.element(CommonConstant.RESULT_KEY_MSG, "房卡不足");
+                    }
                     CommonConstant.sendMsgEventToSingle(client, String.valueOf(result), "enterRoomPush_NN");
                     return;
                 }
@@ -1574,6 +1589,7 @@ public class BaseEventDeal {
             }
             JSONObject result = new JSONObject();
             result.put("data", array);
+            result.put("flag", flag);
             result.put(CommonConstant.RESULT_KEY_CODE, CommonConstant.GLOBAL_YES);
             CommonConstant.sendMsgEventToSingle(client, String.valueOf(result), "getGameSettingPush");
         }
@@ -1586,7 +1602,7 @@ public class BaseEventDeal {
      * @return
      */
     private JSONArray getGameSetting(int gid, String platform, int flag) {
-        String key = "game_setting_"+platform+"_"+gid;
+        String key = "game_setting_" + platform + "_" + flag + "_" + gid;
         JSONArray gameSetting = new JSONArray();
         if (!key.equals("")) {
             try {
@@ -2051,7 +2067,7 @@ public class BaseEventDeal {
                 // 更新玩家分数
                 JSONObject obj = new JSONObject();
                 obj.put("account", account);
-                obj.put("updateType", room.getUpdateType());
+                obj.put("updateType", room.getCurrencyType());
                 obj.put("sum", -sum);
                 producerService.sendMessage(daoQueueDestination, new PumpDao(DaoTypeConstant.UPDATE_USER_INFO, obj));
                 // 插入洗牌数据

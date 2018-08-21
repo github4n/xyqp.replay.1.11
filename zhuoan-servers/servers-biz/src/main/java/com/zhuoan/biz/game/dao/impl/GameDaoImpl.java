@@ -420,9 +420,17 @@ public class GameDaoImpl implements GameDao {
                 pocketOld = user.getDouble("coins");
                 pocketNew = Dto.sub(pocketOld,fee);
             }
+            String memo = "";
+            if (RoomManage.gameRoomMap.containsKey(roomNo)&&RoomManage.gameRoomMap.get(roomNo)!=null) {
+                if (RoomManage.gameRoomMap.get(roomNo).getRoomType()==CommonConstant.ROOM_TYPE_FK) {
+                    memo = "房卡场扣房卡";
+                }else if (RoomManage.gameRoomMap.get(roomNo).getRoomType()==CommonConstant.ROOM_TYPE_YB) {
+                    memo = "元宝场抽水";
+                }
+            }
             sql += " WHEN "+uid+" THEN "+fee;
             addSql += "("+uid+","+roomId+",'"+roomNo+"',"+gid+","+type1+","+(-fee)+","+
-                2+",'"+nowTime+"','抽水','"+platform+"',"+pocketNew+","+pocketOld+","+fee+","+
+                2+",'"+nowTime+"','"+memo+"','"+platform+"',"+pocketNew+","+pocketOld+","+fee+","+
                 CommonConstant.SCORE_CHANGE_TYPE_PUMP+")";
             if (i==objectListBySQL.size()-1) {
                 sqlString2 += uid+")";
