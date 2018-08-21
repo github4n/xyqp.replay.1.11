@@ -870,7 +870,10 @@ public class MaJiangCore {
                     List<Integer> doubleList = getDoubleList(wipeList);
                     List<Integer> moreList = getMoreList(outList, doubleList);
                     for (int i = 0; i < wipeList.size(); i++) {
-                        if (!doubleList.contains(wipeList.get(i)) || moreList.contains(wipeList.get(i))) {
+                        // 所有不是雀的牌，或者死雀多于2可以拆死雀
+                        if (!doubleList.contains(wipeList.get(i))) {
+                            legalList.add(wipeList.get(i));
+                        }else if (moreList.size() > 1 && moreList.contains(wipeList.get(i))) {
                             legalList.add(wipeList.get(i));
                         }
                     }
@@ -889,8 +892,10 @@ public class MaJiangCore {
 
     private static List<Integer> getMoreList(List<Integer> outList, List<Integer> curList) {
         List<Integer> moreList = new ArrayList<>();
+        // 统计当前手牌中没张牌桌面上的数量
         Map<Integer, Integer> outCountMap = getOutCount(curList, outList);
         for (Integer pai : outCountMap.keySet()) {
+            // 已出牌数大于阈值的优先打
             if (outCountMap.get(pai) >= QZMJConstant.OUT_CARD_THRESHOLD) {
                 moreList.add(pai);
             }
@@ -960,6 +965,7 @@ public class MaJiangCore {
         List<Integer> allDoubleList = new ArrayList<>();
         for (int i = 0; i < myPai.size(); i++) {
             List<Integer> doubleList = new ArrayList<>();
+            // 取所有相同的牌
             for (int j = 0; j < myPai.size(); j++) {
                 if (myPai.get(i).equals(myPai.get(j))) {
                     doubleList.add(myPai.get(j));

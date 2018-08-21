@@ -1589,7 +1589,6 @@ public class QZMJGameEventDeal {
             JSONArray huTimes = getHuTypeTimes(gameId,account);
 
             obj.put("huTypeTimes", huTimes);
-            obj.put("compensateScore", room.getUserPacketMap().get(account).getCompensateScore());
 
             fianlSummaryArray.add(obj);
         }
@@ -1655,6 +1654,10 @@ public class QZMJGameEventDeal {
             obj.put("val", userPacketQZMJ.getQiangGangHuTimes());
             array.add(obj);
         }
+        JSONObject obj = new JSONObject();
+        obj.put("name", "包赔    ");
+        obj.put("val", userPacketQZMJ.getCompensateScore());
+        array.add(obj);
         return array;
     }
 
