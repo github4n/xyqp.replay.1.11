@@ -130,6 +130,18 @@ public class QZMJGameRoom extends GameRoom{
      * 开局状态
      */
 	private int startStatus;
+    /**
+     * 包赔玩家
+     */
+	private String compensateAccount = null;
+
+    public String getCompensateAccount() {
+        return compensateAccount;
+    }
+
+    public void setCompensateAccount(String compensateAccount) {
+        this.compensateAccount = compensateAccount;
+    }
 
     public int getStartStatus() {
         return startStatus;
@@ -282,6 +294,7 @@ public class QZMJGameRoom extends GameRoom{
         this.yjAccount = null;
         // 上个操作玩家
         this.lastAccount = null;
+        this.compensateAccount = null;
         // 胡牌类型
         this.huType = 0;
         this.startStatus = 0;

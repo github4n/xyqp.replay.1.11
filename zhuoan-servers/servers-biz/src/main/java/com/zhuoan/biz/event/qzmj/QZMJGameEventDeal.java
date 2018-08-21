@@ -266,9 +266,36 @@ public class QZMJGameEventDeal {
             return;
         }
         if (postData.containsKey("pai")) {
-            //获取要出的牌
-            int pai = postData.getInt("pai");
             //出牌
+            int pai = postData.getInt("pai");
+            if (room.getGid() == CommonConstant.GAME_ID_ZZC) {
+                // 牌局中剩余牌数（包含其他玩家手牌）
+                List<Integer> leftList = new ArrayList<Integer>(Dto.arrayToList(room.getPai(), room.getIndex()));
+                for (String player : room.getPlayerMap().keySet()) {
+                    if (room.getUserPacketMap().containsKey(player) && room.getUserPacketMap().get(player) != null) {
+                        if (!account.equals(player)) {
+                            leftList.addAll(room.getUserPacketMap().get(player).getMyPai());
+                        }
+                    }
+                }
+                JSONArray tingTip = MaJiangCore.tingPaiTip(room.getUserPacketMap().get(account).getMyPai(), room.getJin(), leftList);
+                List<Integer> compensateList = MaJiangCore.getCompensateList(room.getUserPacketMap().get(account).getMyPai(), getOutList(roomNo), room.getJin(), tingTip);
+                //获取要出的牌
+                if (compensateList.contains(pai)) {
+                    room.setCompensateAccount(account);
+                } else if (account.equals(room.getCompensateAccount())){
+                    boolean isCompensate = false;
+                    for (String player : room.getUserPacketMap().keySet()) {
+                        if (room.getUserPacketMap().get(player).getYouJinIng() > 0) {
+                            isCompensate = true;
+                            break;
+                        }
+                    }
+                    if (!isCompensate) {
+                        room.setCompensateAccount(null);
+                    }
+                }
+            }
             //type： 0:无操作 ,1：抓 2：暗杠(抓杠)询问事件 3：自摸(抓糊)询问事件 4：吃 询问事件 5：碰 询问事件 6：杠 出牌 7：糊 询问事件  8：结算事件
             Object[] outResult = chuPai(roomNo, pai, account);
             //出牌返回
@@ -911,6 +938,7 @@ public class QZMJGameEventDeal {
             data.put("myIndex", player.getMyIndex());
             data.put("huaValue", JSONArray.fromObject(userPacketQZMJ.getHuaList()));
             data.put("gangValue", JSONArray.fromObject(userPacketQZMJ.getGangValue()));
+            data.put("isCompensate", CommonConstant.GLOBAL_NO);
             // 判断玩家是否是庄家
             if(winner.equals(gamePlay.getBanker())){
                 data.put("zhuang", 1);
@@ -970,6 +998,10 @@ public class QZMJGameEventDeal {
                     data.put("myIndex", player.getMyIndex());
                     data.put("huaValue", JSONArray.fromObject(userPacketQZMJ.getHuaList()));
                     data.put("gangValue", JSONArray.fromObject(userPacketQZMJ.getGangValue()));
+                    data.put("isCompensate", CommonConstant.GLOBAL_NO);
+                    if (uuid.equals(gamePlay.getCompensateAccount())) {
+                        data.put("isCompensate", CommonConstant.GLOBAL_YES);
+                    }
                     // 判断玩家是否是庄家
                     if(uuid.equals(gamePlay.getBanker())){
                         data.put("zhuang", 1);
@@ -1557,6 +1589,7 @@ public class QZMJGameEventDeal {
             JSONArray huTimes = getHuTypeTimes(gameId,account);
 
             obj.put("huTypeTimes", huTimes);
+            obj.put("compensateScore", room.getUserPacketMap().get(account).getCompensateScore());
 
             fianlSummaryArray.add(obj);
         }
@@ -1867,6 +1900,21 @@ public class QZMJGameEventDeal {
                     // 更新胡的玩家分数
                     room.getPlayerMap().get(account).setScore(room.getPlayerMap().get(account).getScore()+score);
                     room.getUserPacketMap().get(account).setScore(room.getUserPacketMap().get(account).getScore()+score);
+                }
+            }
+        }
+
+        if (room.getGid() == CommonConstant.GAME_ID_ZZC && !Dto.stringIsNULL(room.getCompensateAccount())) {
+            String compensateAccount = room.getCompensateAccount();
+            if (room.getUserPacketMap().containsKey(compensateAccount) && room.getUserPacketMap().get(compensateAccount) != null) {
+                for (String player : room.getUserPacketMap().keySet()) {
+                    int sum = room.getUserPacketMap().get(player).getScore();
+                    if (sum > 0) {
+                        room.getUserPacketMap().get(player).setCompensateScore(room.getUserPacketMap().get(player).getCompensateScore() + sum);
+                    } else {
+                        room.getUserPacketMap().get(compensateAccount).setCompensateScore(room.getUserPacketMap().get(compensateAccount).getCompensateScore() + sum);
+                    }
+                    room.getPlayerMap().get(player).setScore(room.getPlayerMap().get(player).getScore() - sum);
                 }
             }
         }

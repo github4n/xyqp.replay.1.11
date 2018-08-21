@@ -92,6 +92,10 @@ public class UserPacketQZMJ {
      * 取消托管次数
      */
     private int cancelTrusteeTime = 0;
+    /**
+     * 包赔分数
+     */
+    private int compensateScore = 0;
 
     public List<Integer> getMyPai() {
         return myPai;
@@ -259,6 +263,14 @@ public class UserPacketQZMJ {
 
     public void setCancelTrusteeTime(int cancelTrusteeTime) {
         this.cancelTrusteeTime = cancelTrusteeTime;
+    }
+
+    public int getCompensateScore() {
+        return compensateScore;
+    }
+
+    public void setCompensateScore(int compensateScore) {
+        this.compensateScore = compensateScore;
     }
 
     public void initUserPacket(){
