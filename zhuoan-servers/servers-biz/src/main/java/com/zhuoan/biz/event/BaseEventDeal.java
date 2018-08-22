@@ -3250,20 +3250,16 @@ public class BaseEventDeal {
      * @param data
      */
     public void changeRoomBase(SocketIOClient client, Object data) {
-        JSONObject postData = fromObject(data);
+        JSONObject postData = JSONObject.fromObject(data);
+        if (!CommonConstant.checkEvent(postData, CommonConstant.CHECK_GAME_STATUS_NO, client)) {
+            return;
+        }
         // 玩家账号
         String account = postData.getString(CommonConstant.DATA_KEY_ACCOUNT);
         // 房间号
         String roomNo = postData.getString(CommonConstant.DATA_KEY_ROOM_NO);
         // 找到当前房间对象
         GameRoom nowRoom = RoomManage.gameRoomMap.get(roomNo);
-        // 找到当前用户玩家
-        JSONObject userInfo = userBiz.getUserByAccount(account);
-        // 参数判空
-        if (Dto.isObjNull(userInfo) || nowRoom == null){
-            return ;
-        }
-
         // 第一步、完成换房间需要先判断是否有空房间，
         // 若有继续第二步，若无直接返回无空房间信息
         List temp = haveEmptyRoom(nowRoom);
@@ -3271,10 +3267,8 @@ public class BaseEventDeal {
             // 第二步、玩家退出房间
             JSONObject exitData = fromObject(data);
 
-            String  uuid =String.valueOf(nowRoom.getPlayerMap().get(account).getUuid());
             exitData.put("notSend",1);
             exitData.put("notSendToMe",1);
-            exitData.put("uuid",uuid);
 
             switch (nowRoom.getGid()) {
                 case CommonConstant.GAME_ID_NN:
@@ -3292,19 +3286,24 @@ public class BaseEventDeal {
                 default:
                     break;
             }
+            if (!nowRoom.getPlayerMap().containsKey(account)) {
+                // 第三步、玩家加入相应房间
+                JSONObject joinData = new JSONObject();
+                // 随机取出一个房间号加入
+                int index = RandomUtils.nextInt(temp.size());
+                joinData.put("account",account);
+                joinData.put("room_no",temp.get(index));
+                JSONObject userInfo = userBiz.getUserByAccount(account);
+                joinData.put("uuid", Dto.isObjNull(userInfo) ? "" : userInfo.getString("uuid"));
+                joinRoomBase(client, joinData);
+            }
 
-            // 第三步、玩家加入相应房间
-            JSONObject joinData = new JSONObject();
-
-            // 随机取出一个房间号加入
-            int index=(int)(Math.random()*temp.size());
-
-            joinData.put("account",account);
-            joinData.put("account",account);
-            joinData.put("room_no",temp.get(index));
-            joinData.put("uuid",uuid);
-            joinRoomBase(client, joinData);
-
+        } else {
+            // 通知玩家
+            JSONObject result = new JSONObject();
+            result.put("type", CommonConstant.SHOW_MSG_TYPE_NORMAL);
+            result.put(CommonConstant.RESULT_KEY_MSG, "当前无法换桌");
+            CommonConstant.sendMsgEventToSingle(client, String.valueOf(result), "tipMsgPush");
         }
     }
 
@@ -3322,7 +3321,7 @@ public class BaseEventDeal {
             GameRoom gameRoom = map.get(roomNum);
             // 判断房间状态
             if(room.getGid() == gameRoom.getGid() && room.getRoomType() == gameRoom.getRoomType()
-                && gameRoom.getPlayerMap().size() < gameRoom.getPlayerCount() && roomNum != room.getRoomNo()
+                && gameRoom.getPlayerMap().size() < gameRoom.getPlayerCount() && !roomNum.equals(room.getRoomNo())
                 && room.getScore() == gameRoom.getScore() && room.getWfType() == gameRoom.getWfType()) {
                     list.add(roomNum);
             }
