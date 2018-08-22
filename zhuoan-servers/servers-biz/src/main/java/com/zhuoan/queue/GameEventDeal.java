@@ -86,392 +86,432 @@ public class GameEventDeal {
         // 处理队列中的信息。。。。。
         switch (gid) {
             case CommonConstant.GAME_BASE:
-                switch (sorts) {
-                    case CommonConstant.BASE_GAME_GET_USER_INFO:
-                        baseEventDeal.getUserInfo(client, data);
-                        break;
-                    case CommonConstant.BASE_GAME_EVENT_CHECK_USER:
-                        baseEventDeal.checkUser(client, data);
-                        break;
-                    case CommonConstant.BASE_GAME_EVENT_GET_GAME_SETTING:
-                        baseEventDeal.getGameSetting(client, data);
-                        break;
-                    case CommonConstant.BASE_GAME_EVENT_GET_ALL_ROOM_LIST:
-                        baseEventDeal.getAllRoomList(client, data);
-                        break;
-                    case CommonConstant.BASE_GAME_EVENT_CREATE_ROOM:
-                        baseEventDeal.createRoomBase(client, data);
-                        break;
-                    case CommonConstant.BASE_GAME_EVENT_JOIN_ROOM:
-                        baseEventDeal.joinRoomBase(client, data);
-                        break;
-                    case CommonConstant.BASE_GAME_EVENT_GET_SHUFFLE_INFO:
-                        baseEventDeal.getShuffleInfo(client, data);
-                        break;
-                    case CommonConstant.BASE_GAME_EVENT_DO_SHUFFLE:
-                        baseEventDeal.doShuffle(client, data);
-                        break;
-                    case CommonConstant.BASE_GAME_EVENT_SEND_MESSAGE:
-                        baseEventDeal.sendMessage(client, data);
-                        break;
-                    case CommonConstant.BASE_GAME_EVENT_SEND_VOICE:
-                        baseEventDeal.sendVoice(client, data);
-                        break;
-                    case CommonConstant.BASE_GAME_EVENT_GET_USER_GAME_LOGS:
-                        baseEventDeal.getUserGameLogs(client, data);
-                        break;
-                    case CommonConstant.BASE_GAME_EVENT_DISSOLVE_ROOM:
-                        baseEventDeal.dissolveRoom(client, data);
-                        break;
-                    case CommonConstant.BASE_GAME_EVENT_ON_OR_OFF_GAME:
-                        baseEventDeal.onOrOffGame(client, data);
-                        break;
-                    case CommonConstant.BASE_GAME_EVENT_SEND_NOTICE:
-                        baseEventDeal.sendNotice(client, data);
-                        break;
-                    case CommonConstant.BASE_GAME_EVENT_GET_NOTICE:
-                        baseEventDeal.getNotice(client, data);
-                        break;
-                    case CommonConstant.BASE_GAME_EVENT_GET_ROOM_AND_PLAYER_COUNT:
-                        baseEventDeal.getRoomAndPlayerCount(client, data);
-                        break;
-                    case CommonConstant.BASE_GAME_EVENT_SON_GAME:
-                        baseEventDeal.getRoomGid(client, data);
-                        break;
-                    case CommonConstant.BASE_GAME_EVENT_JOIN_COIN_ROOM:
-                        baseEventDeal.joinCoinRoom(client, data);
-                        break;
-                    case CommonConstant.BASE_GAME_EVENT_GET_ROOM_CARD_PAY_INFO:
-                        baseEventDeal.getRoomCardPayInfo(client, data);
-                        break;
-                    case CommonConstant.BASE_GAME_EVENT_GET_COIN_SETTING:
-                        baseEventDeal.getCoinSetting(client, data);
-                        break;
-                    case CommonConstant.BASE_GAME_EVENT_GET_USER_SIGN_INFO:
-                        baseEventDeal.checkSignIn(client, data);
-                        break;
-                    case CommonConstant.BASE_GAME_EVENT_DO_USER_SIGN:
-                        baseEventDeal.doUserSignIn(client, data);
-                        break;
-                    case CommonConstant.BASE_GAME_EVENT_GET_COMPETITIVE_INFO:
-                        baseEventDeal.getCompetitiveInfo(client, data);
-                        break;
-                    case CommonConstant.BASE_GAME_EVENT_JOIN_COMPETITIVE_ROOM:
-                        baseEventDeal.joinCompetitiveRoom(client, data);
-                        break;
-                    case CommonConstant.BASE_GAME_EVENT_CHECK_IP:
-                        baseEventDeal.gameCheckIp(client, data);
-                        break;
-                    case CommonConstant.BASE_GAME_EVENT_GET_PROXY_ROOM_LIST:
-                        baseEventDeal.getProxyRoomList(client, data);
-                        break;
-                    case CommonConstant.BASE_GAME_EVENT_DISSOLVE_PROXY_ROOM:
-                        baseEventDeal.dissolveProxyRoom(client, data);
-                        break;
-                    case CommonConstant.BASE_GAME_EVENT_GET_USER_ACHIEVEMENT_INFO:
-                        baseEventDeal.getUserAchievementInfo(client, data);
-                        break;
-                    case CommonConstant.BASE_GAME_EVENT_GET_PROPS_INFO:
-                        baseEventDeal.getPropsInfo(client, data);
-                        break;
-                    case CommonConstant.BASE_GAME_EVENT_USER_PURCHASE:
-                        baseEventDeal.userPurchase(client, data);
-                        break;
-                    case CommonConstant.BASE_GAME_EVENT_GET_ACHIEVEMENT_RANK:
-                        baseEventDeal.getAchievementRank(client, data);
-                        break;
-                    case CommonConstant.BASE_GAME_EVENT_GET_DRAW_INFO:
-                        baseEventDeal.getDrawInfo(client, data);
-                        break;
-                    case CommonConstant.BASE_GAME_EVENT_GAME_DRAW:
-                        baseEventDeal.gameDraw(client, data);
-                        break;
-                    case CommonConstant.BASE_GAME_EVENT_GET_ACHIEVEMENT_DETAIL:
-                        baseEventDeal.getAchievementDetail(client, data);
-                        break;
-                    case CommonConstant.BASE_GAME_EVENT_DRAW_ACHIEVEMENT_REWARD:
-                        baseEventDeal.drawAchievementReward(client, data);
-                        break;
-                    case CommonConstant.BASE_GAME_EVENT_CHANGE_ROOM:
-                        baseEventDeal.changeRoomBase(client,data);
-                        break;
-                    default:
-                        break;
-                }
+                baseEvents(data, sorts, client);
                 break;
             case CommonConstant.GAME_ID_NN:
                 // 牛牛
-                switch (sorts) {
-                    case NNConstant.NN_GAME_EVENT_READY:
-                        nnGameEventDealNew.gameReady(client, data);
-                        break;
-                    case NNConstant.NN_GAME_EVENT_QZ:
-                        nnGameEventDealNew.gameQiangZhuang(client, data);
-                        break;
-                    case NNConstant.NN_GAME_EVENT_XZ:
-                        nnGameEventDealNew.gameXiaZhu(client, data);
-                        break;
-                    case NNConstant.NN_GAME_EVENT_LP:
-                        nnGameEventDealNew.showPai(client, data);
-                        break;
-                    case NNConstant.NN_GAME_EVENT_EXIT:
-                        nnGameEventDealNew.exitRoom(client, data);
-                        break;
-                    case NNConstant.NN_GAME_EVENT_RECONNECT:
-                        nnGameEventDealNew.reconnectGame(client, data);
-                        break;
-                    case NNConstant.NN_GAME_EVENT_CLOSE_ROOM:
-                        nnGameEventDealNew.closeRoom(client, data);
-                        break;
-                    case NNConstant.NN_GAME_EVENT_BE_BANKER:
-                        nnGameEventDealNew.gameBeBanker(client, data);
-                        break;
-                    default:
-                        break;
-                }
+                NNEvents(data, sorts, client);
                 break;
             case CommonConstant.GAME_ID_SSS:
                 // 十三水
-                switch (sorts) {
-                    case SSSConstant.SSS_GAME_EVENT_READY:
-                        // 玩家准备
-                        sssGameEventDealNew.gameReady(client, data);
-                        break;
-                    case SSSConstant.SSS_GAME_EVENT_EVENT:
-                        // 游戏中
-                        sssGameEventDealNew.gameEvent(client, data);
-                        break;
-                    case SSSConstant.SSS_GAME_EVENT_EXIT:
-                        // 离开房间
-                        sssGameEventDealNew.exitRoom(client, data);
-                        break;
-                    case SSSConstant.SSS_GAME_EVENT_RECONNECT:
-                        // 断线重连
-                        sssGameEventDealNew.reconnectGame(client, data);
-                    case SSSConstant.SSS_GAME_EVENT_CLOSE_ROOM:
-                        // 断线重连
-                        sssGameEventDealNew.closeRoom(client, data);
-                        break;
-                    case SSSConstant.SSS_GAME_EVENT_BE_BANKER:
-                        // 上庄
-                        sssGameEventDealNew.gameBeBanker(client, data);
-                        break;
-                    case SSSConstant.SSS_GAME_EVENT_XZ:
-                        // 下注
-                        sssGameEventDealNew.gameXiaZhu(client, data);
-                        break;
-                    default:
-                        break;
-                }
+                SSSEvents(data, sorts, client);
                 break;
             case CommonConstant.GAME_ID_ZJH:
                 // 炸金花
-                switch (sorts) {
-                    case ZJHConstant.ZJH_GAME_EVENT_READY:
-                        zjhGameEventDealNew.gameReady(client, data);
-                        break;
-                    case ZJHConstant.ZJH_GAME_EVENT_GAME:
-                        zjhGameEventDealNew.gameEvent(client, data);
-                        break;
-                    case ZJHConstant.ZJH_GAME_EVENT_EXIT:
-                        zjhGameEventDealNew.exitRoom(client, data);
-                        break;
-                    case ZJHConstant.ZJH_GAME_EVENT_RECONNECT:
-                        zjhGameEventDealNew.reconnectGame(client, data);
-                        break;
-                    case ZJHConstant.ZJH_GAME_EVENT_CLOSE_ROOM:
-                        zjhGameEventDealNew.closeRoom(client, data);
-                        break;
-                    default:
-                        break;
-                }
+                ZJHEvents(data, sorts, client);
                 break;
             case CommonConstant.GAME_ID_BDX:
                 // 比大小
-                switch (sorts) {
-                    case BDXConstant.BDX_GAME_EVENT_XZ:
-                        bdxGameEventDealNew.xiaZhu(client, data);
-                        break;
-                    case BDXConstant.BDX_GAME_EVENT_GIVE_UP:
-                        bdxGameEventDealNew.gameEvent(client, data);
-                        break;
-                    case BDXConstant.BDX_GAME_EVENT_EXIT:
-                        bdxGameEventDealNew.exitRoom(client, data);
-                        break;
-                    case BDXConstant.BDX_GAME_EVENT_RECONNECT:
-                        bdxGameEventDealNew.reconnectGame(client, data);
-                        break;
-
-                    default:
-                        break;
-                }
+                BDZEvents(data, sorts, client);
                 break;
             case CommonConstant.GAME_ID_QZMJ:
                 // 泉州麻将
-                switch (sorts) {
-                    case QZMJConstant.QZMJ_GAME_EVENT_READY:
-                        qzmjGameEventDeal.loadFinish(client,data);
-                        break;
-                    case QZMJConstant.QZMJ_GAME_EVENT_CP:
-                        qzmjGameEventDeal.gameChuPai(client,data);
-                        break;
-                    case QZMJConstant.QZMJ_GAME_EVENT_IN:
-                        qzmjGameEventDeal.gameEvent(client,data);
-                        break;
-                    case QZMJConstant.QZMJ_GAME_EVENT_GANG_CP:
-                        qzmjGameEventDeal.gangChupaiEvent(client,data);
-                        break;
-                    case QZMJConstant.QZMJ_GAME_EVENT_CLOSE_ROOM:
-                        qzmjGameEventDeal.closeRoom(client,data);
-                        break;
-                    case QZMJConstant.QZMJ_GAME_EVENT_EXIT_ROOM:
-                        qzmjGameEventDeal.exitRoom(client,data);
-                        break;
-                    case QZMJConstant.QZMJ_GAME_EVENT_RECONNECT:
-                        qzmjGameEventDeal.reconnectGame(client,data);
-                        break;
-                    case QZMJConstant.QZMJ_GAME_EVENT_TRUSTEE:
-                        qzmjGameEventDeal.gameTrustee(client,data);
-                        break;
-                    default:
-                        break;
-                }
+                QzMjEvents(data, sorts, client);
                 break;
             case CommonConstant.GAME_ID_GP_PJ:
                 // 骨牌牌九
-                switch (sorts) {
-                    case GPPJConstant.GP_PJ_GAME_EVENT_READY:
-                        gppjGameEventDeal.gameReady(client,data);
-                        break;
-                    case GPPJConstant.GP_PJ_GAME_EVENT_START:
-                        gppjGameEventDeal.gameStart(client,data);
-                        break;
-                    case GPPJConstant.GP_PJ_GAME_EVENT_CUT:
-                        gppjGameEventDeal.gameCut(client,data);
-                        break;
-                    case GPPJConstant.GP_PJ_GAME_EVENT_QZ:
-                        gppjGameEventDeal.gameQz(client,data);
-                        break;
-                    case GPPJConstant.GP_PJ_GAME_EVENT_XZ:
-                        gppjGameEventDeal.gameXz(client,data);
-                        break;
-                    case GPPJConstant.GP_PJ_GAME_EVENT_SHOW:
-                        gppjGameEventDeal.gameShow(client,data);
-                        break;
-                    case GPPJConstant.GP_PJ_GAME_EVENT_RECONNECT:
-                        gppjGameEventDeal.reconnectGame(client,data);
-                        break;
-                    case GPPJConstant.GP_PJ_GAME_EVENT_EXIT:
-                        gppjGameEventDeal.exitRoom(client,data);
-                        break;
-                    case GPPJConstant.GP_PJ_GAME_EVENT_CLOSE_ROOM:
-                        gppjGameEventDeal.closeRoom(client,data);
-                        break;
-                    default:
-                        break;
-                }
+                GpPjEvents(data, sorts, client);
                 break;
             case CommonConstant.GAME_ID_SW:
                 // 水蛙
-                switch (sorts) {
-                    case SwConstant.SW_GAME_EVENT_START_GAME:
-                        swGameEventDeal.gameStart(client,data);
-                        break;
-                    case SwConstant.SW_GAME_EVENT_BET:
-                        swGameEventDeal.gameBet(client,data);
-                        break;
-                    case SwConstant.SW_GAME_EVENT_BE_BANKER:
-                        swGameEventDeal.gameBeBanker(client,data);
-                        break;
-                    case SwConstant.SW_GAME_EVENT_UNDO:
-                        swGameEventDeal.gameUndo(client,data);
-                        break;
-                    case SwConstant.SW_GAME_EVENT_EXIT_ROOM:
-                        swGameEventDeal.exitRoom(client,data);
-                        break;
-                    case SwConstant.SW_GAME_EVENT_CHANGE_SEAT:
-                        swGameEventDeal.gameChangeSeat(client,data);
-                        break;
-                    case SwConstant.SW_GAME_EVENT_RECONNECT:
-                        swGameEventDeal.reconnectGame(client,data);
-                        break;
-                    case SwConstant.SW_GAME_EVENT_GET_HISTORY:
-                        swGameEventDeal.getHistory(client,data);
-                        break;
-                    case SwConstant.SW_GAME_EVENT_GET_ALL_USER:
-                        swGameEventDeal.getAllUser(client,data);
-                        break;
-                    case SwConstant.SW_GAME_EVENT_HIDE_TREASURE:
-                        swGameEventDeal.gameHide(client,data);
-                        break;
-                    case SwConstant.SW_GAME_EVENT_GET_UNDO_INFO:
-                        swGameEventDeal.getUndoInfo(client,data);
-                        break;
-                    default:
-                        break;
-                }
+                swEvents(data, sorts, client);
                 break;
             case CommonConstant.GAME_ID_DDZ:
                 // 斗地主
-                switch (sorts) {
-                    case DdzConstant.DDZ_GAME_EVENT_READY:
-                        ddzGameEventDeal.gameReady(client,data);
-                        break;
-                    case DdzConstant.DDZ_GAME_EVENT_CALL_AND_ROB:
-                        ddzGameEventDeal.gameBeLandlord(client,data);
-                        break;
-                    case DdzConstant.DDZ_GAME_EVENT_GAME_IN:
-                        ddzGameEventDeal.gameEvent(client,data);
-                        break;
-                    case DdzConstant.DDZ_GAME_EVENT_RECONNECT:
-                        ddzGameEventDeal.reconnectGame(client,data);
-                        break;
-                    case DdzConstant.DDZ_GAME_EVENT_PROMPT:
-                        ddzGameEventDeal.gamePrompt(client,data);
-                        break;
-                    case DdzConstant.DDZ_GAME_EVENT_CONTINUE:
-                        ddzGameEventDeal.gameContinue(client,data);
-                        break;
-                    case DdzConstant.DDZ_GAME_EVENT_EXIT_ROOM:
-                        ddzGameEventDeal.exitRoom(client,data);
-                        break;
-                    case DdzConstant.DDZ_GAME_EVENT_CLOSE_ROOM:
-                        ddzGameEventDeal.closeRoom(client,data);
-                        break;
-                    case DdzConstant.DDZ_GAME_EVENT_TRUSTEE:
-                        ddzGameEventDeal.gameTrustee(client,data);
-                        break;
-                    case DdzConstant.DDZ_GAME_EVENT_AUTO_PLAY:
-                        ddzGameEventDeal.gameAutoPlay(client,data);
-                        break;
-                    case DdzConstant.DDZ_GAME_EVENT_GET_OUT_INFO:
-                        ddzGameEventDeal.getOutInfo(client,data);
-                        break;
-                    default:
-                        break;
-                }
+                ddzEvents(data, sorts, client);
                 break;
             case CommonConstant.GAME_MATCH:
                 // 比赛场
-                switch (sorts) {
-                    case MatchConstant.MATCH_EVENT_GET_MATCH_SETTING:
-                        matchEventDeal.obtainMatchInfo(client,data);
-                        break;
-                    case MatchConstant.MATCH_EVENT_SIGN_UP:
-                        matchEventDeal.matchSignUp(client,data);
-                        break;
-                    case MatchConstant.MATCH_EVENT_UPDATE_MATCH_COUNT:
-                        matchEventDeal.updateMatchCount(client,data);
-                        break;
-                    case MatchConstant.MATCH_EVENT_CANCEL_SIGN:
-                        matchEventDeal.matchCancelSign(client,data);
-                        break;
-                    case MatchConstant.MATCH_EVENT_GET_WINNING_RECORD:
-                        matchEventDeal.getWinningRecord(client,data);
-                        break;
-                    default:
-                        break;
-                }
+                matchEvents(data, sorts, client);
+                break;
+            default:
+                break;
+        }
+    }
+
+    private void matchEvents(Object data, Integer sorts, SocketIOClient client) {
+        switch (sorts) {
+            case MatchConstant.MATCH_EVENT_GET_MATCH_SETTING:
+                matchEventDeal.obtainMatchInfo(client,data);
+                break;
+            case MatchConstant.MATCH_EVENT_SIGN_UP:
+                matchEventDeal.matchSignUp(client,data);
+                break;
+            case MatchConstant.MATCH_EVENT_UPDATE_MATCH_COUNT:
+                matchEventDeal.updateMatchCount(client,data);
+                break;
+            case MatchConstant.MATCH_EVENT_CANCEL_SIGN:
+                matchEventDeal.matchCancelSign(client,data);
+                break;
+            case MatchConstant.MATCH_EVENT_GET_WINNING_RECORD:
+                matchEventDeal.getWinningRecord(client,data);
+                break;
+            default:
+                break;
+        }
+    }
+
+    private void ddzEvents(Object data, Integer sorts, SocketIOClient client) {
+        switch (sorts) {
+            case DdzConstant.DDZ_GAME_EVENT_READY:
+                ddzGameEventDeal.gameReady(client,data);
+                break;
+            case DdzConstant.DDZ_GAME_EVENT_CALL_AND_ROB:
+                ddzGameEventDeal.gameBeLandlord(client,data);
+                break;
+            case DdzConstant.DDZ_GAME_EVENT_GAME_IN:
+                ddzGameEventDeal.gameEvent(client,data);
+                break;
+            case DdzConstant.DDZ_GAME_EVENT_RECONNECT:
+                ddzGameEventDeal.reconnectGame(client,data);
+                break;
+            case DdzConstant.DDZ_GAME_EVENT_PROMPT:
+                ddzGameEventDeal.gamePrompt(client,data);
+                break;
+            case DdzConstant.DDZ_GAME_EVENT_CONTINUE:
+                ddzGameEventDeal.gameContinue(client,data);
+                break;
+            case DdzConstant.DDZ_GAME_EVENT_EXIT_ROOM:
+                ddzGameEventDeal.exitRoom(client,data);
+                break;
+            case DdzConstant.DDZ_GAME_EVENT_CLOSE_ROOM:
+                ddzGameEventDeal.closeRoom(client,data);
+                break;
+            case DdzConstant.DDZ_GAME_EVENT_TRUSTEE:
+                ddzGameEventDeal.gameTrustee(client,data);
+                break;
+            case DdzConstant.DDZ_GAME_EVENT_AUTO_PLAY:
+                ddzGameEventDeal.gameAutoPlay(client,data);
+                break;
+            case DdzConstant.DDZ_GAME_EVENT_GET_OUT_INFO:
+                ddzGameEventDeal.getOutInfo(client,data);
+                break;
+            default:
+                break;
+        }
+    }
+
+    private void swEvents(Object data, Integer sorts, SocketIOClient client) {
+        switch (sorts) {
+            case SwConstant.SW_GAME_EVENT_START_GAME:
+                swGameEventDeal.gameStart(client,data);
+                break;
+            case SwConstant.SW_GAME_EVENT_BET:
+                swGameEventDeal.gameBet(client,data);
+                break;
+            case SwConstant.SW_GAME_EVENT_BE_BANKER:
+                swGameEventDeal.gameBeBanker(client,data);
+                break;
+            case SwConstant.SW_GAME_EVENT_UNDO:
+                swGameEventDeal.gameUndo(client,data);
+                break;
+            case SwConstant.SW_GAME_EVENT_EXIT_ROOM:
+                swGameEventDeal.exitRoom(client,data);
+                break;
+            case SwConstant.SW_GAME_EVENT_CHANGE_SEAT:
+                swGameEventDeal.gameChangeSeat(client,data);
+                break;
+            case SwConstant.SW_GAME_EVENT_RECONNECT:
+                swGameEventDeal.reconnectGame(client,data);
+                break;
+            case SwConstant.SW_GAME_EVENT_GET_HISTORY:
+                swGameEventDeal.getHistory(client,data);
+                break;
+            case SwConstant.SW_GAME_EVENT_GET_ALL_USER:
+                swGameEventDeal.getAllUser(client,data);
+                break;
+            case SwConstant.SW_GAME_EVENT_HIDE_TREASURE:
+                swGameEventDeal.gameHide(client,data);
+                break;
+            case SwConstant.SW_GAME_EVENT_GET_UNDO_INFO:
+                swGameEventDeal.getUndoInfo(client,data);
+                break;
+            default:
+                break;
+        }
+    }
+
+    private void GpPjEvents(Object data, Integer sorts, SocketIOClient client) {
+        switch (sorts) {
+            case GPPJConstant.GP_PJ_GAME_EVENT_READY:
+                gppjGameEventDeal.gameReady(client,data);
+                break;
+            case GPPJConstant.GP_PJ_GAME_EVENT_START:
+                gppjGameEventDeal.gameStart(client,data);
+                break;
+            case GPPJConstant.GP_PJ_GAME_EVENT_CUT:
+                gppjGameEventDeal.gameCut(client,data);
+                break;
+            case GPPJConstant.GP_PJ_GAME_EVENT_QZ:
+                gppjGameEventDeal.gameQz(client,data);
+                break;
+            case GPPJConstant.GP_PJ_GAME_EVENT_XZ:
+                gppjGameEventDeal.gameXz(client,data);
+                break;
+            case GPPJConstant.GP_PJ_GAME_EVENT_SHOW:
+                gppjGameEventDeal.gameShow(client,data);
+                break;
+            case GPPJConstant.GP_PJ_GAME_EVENT_RECONNECT:
+                gppjGameEventDeal.reconnectGame(client,data);
+                break;
+            case GPPJConstant.GP_PJ_GAME_EVENT_EXIT:
+                gppjGameEventDeal.exitRoom(client,data);
+                break;
+            case GPPJConstant.GP_PJ_GAME_EVENT_CLOSE_ROOM:
+                gppjGameEventDeal.closeRoom(client,data);
+                break;
+            default:
+                break;
+        }
+    }
+
+    private void QzMjEvents(Object data, Integer sorts, SocketIOClient client) {
+        switch (sorts) {
+            case QZMJConstant.QZMJ_GAME_EVENT_READY:
+                qzmjGameEventDeal.loadFinish(client,data);
+                break;
+            case QZMJConstant.QZMJ_GAME_EVENT_CP:
+                qzmjGameEventDeal.gameChuPai(client,data);
+                break;
+            case QZMJConstant.QZMJ_GAME_EVENT_IN:
+                qzmjGameEventDeal.gameEvent(client,data);
+                break;
+            case QZMJConstant.QZMJ_GAME_EVENT_GANG_CP:
+                qzmjGameEventDeal.gangChupaiEvent(client,data);
+                break;
+            case QZMJConstant.QZMJ_GAME_EVENT_CLOSE_ROOM:
+                qzmjGameEventDeal.closeRoom(client,data);
+                break;
+            case QZMJConstant.QZMJ_GAME_EVENT_EXIT_ROOM:
+                qzmjGameEventDeal.exitRoom(client,data);
+                break;
+            case QZMJConstant.QZMJ_GAME_EVENT_RECONNECT:
+                qzmjGameEventDeal.reconnectGame(client,data);
+                break;
+            case QZMJConstant.QZMJ_GAME_EVENT_TRUSTEE:
+                qzmjGameEventDeal.gameTrustee(client,data);
+                break;
+            default:
+                break;
+        }
+    }
+
+    private void BDZEvents(Object data, Integer sorts, SocketIOClient client) {
+        switch (sorts) {
+            case BDXConstant.BDX_GAME_EVENT_XZ:
+                bdxGameEventDealNew.xiaZhu(client, data);
+                break;
+            case BDXConstant.BDX_GAME_EVENT_GIVE_UP:
+                bdxGameEventDealNew.gameEvent(client, data);
+                break;
+            case BDXConstant.BDX_GAME_EVENT_EXIT:
+                bdxGameEventDealNew.exitRoom(client, data);
+                break;
+            case BDXConstant.BDX_GAME_EVENT_RECONNECT:
+                bdxGameEventDealNew.reconnectGame(client, data);
+                break;
+
+            default:
+                break;
+        }
+    }
+
+    private void ZJHEvents(Object data, Integer sorts, SocketIOClient client) {
+        switch (sorts) {
+            case ZJHConstant.ZJH_GAME_EVENT_READY:
+                zjhGameEventDealNew.gameReady(client, data);
+                break;
+            case ZJHConstant.ZJH_GAME_EVENT_GAME:
+                zjhGameEventDealNew.gameEvent(client, data);
+                break;
+            case ZJHConstant.ZJH_GAME_EVENT_EXIT:
+                zjhGameEventDealNew.exitRoom(client, data);
+                break;
+            case ZJHConstant.ZJH_GAME_EVENT_RECONNECT:
+                zjhGameEventDealNew.reconnectGame(client, data);
+                break;
+            case ZJHConstant.ZJH_GAME_EVENT_CLOSE_ROOM:
+                zjhGameEventDealNew.closeRoom(client, data);
+                break;
+            default:
+                break;
+        }
+    }
+
+    private void SSSEvents(Object data, Integer sorts, SocketIOClient client) {
+        switch (sorts) {
+            case SSSConstant.SSS_GAME_EVENT_READY:
+                // 玩家准备
+                sssGameEventDealNew.gameReady(client, data);
+                break;
+            case SSSConstant.SSS_GAME_EVENT_EVENT:
+                // 游戏中
+                sssGameEventDealNew.gameEvent(client, data);
+                break;
+            case SSSConstant.SSS_GAME_EVENT_EXIT:
+                // 离开房间
+                sssGameEventDealNew.exitRoom(client, data);
+                break;
+            case SSSConstant.SSS_GAME_EVENT_RECONNECT:
+                // 断线重连
+                sssGameEventDealNew.reconnectGame(client, data);
+            case SSSConstant.SSS_GAME_EVENT_CLOSE_ROOM:
+                // 断线重连
+                sssGameEventDealNew.closeRoom(client, data);
+                break;
+            case SSSConstant.SSS_GAME_EVENT_BE_BANKER:
+                // 上庄
+                sssGameEventDealNew.gameBeBanker(client, data);
+                break;
+            case SSSConstant.SSS_GAME_EVENT_XZ:
+                // 下注
+                sssGameEventDealNew.gameXiaZhu(client, data);
+                break;
+            default:
+                break;
+        }
+    }
+
+    private void NNEvents(Object data, Integer sorts, SocketIOClient client) {
+        switch (sorts) {
+            case NNConstant.NN_GAME_EVENT_READY:
+                nnGameEventDealNew.gameReady(client, data);
+                break;
+            case NNConstant.NN_GAME_EVENT_QZ:
+                nnGameEventDealNew.gameQiangZhuang(client, data);
+                break;
+            case NNConstant.NN_GAME_EVENT_XZ:
+                nnGameEventDealNew.gameXiaZhu(client, data);
+                break;
+            case NNConstant.NN_GAME_EVENT_LP:
+                nnGameEventDealNew.showPai(client, data);
+                break;
+            case NNConstant.NN_GAME_EVENT_EXIT:
+                nnGameEventDealNew.exitRoom(client, data);
+                break;
+            case NNConstant.NN_GAME_EVENT_RECONNECT:
+                nnGameEventDealNew.reconnectGame(client, data);
+                break;
+            case NNConstant.NN_GAME_EVENT_CLOSE_ROOM:
+                nnGameEventDealNew.closeRoom(client, data);
+                break;
+            case NNConstant.NN_GAME_EVENT_BE_BANKER:
+                nnGameEventDealNew.gameBeBanker(client, data);
+                break;
+            default:
+                break;
+        }
+    }
+
+    private void baseEvents(Object data, Integer sorts, SocketIOClient client) {
+        switch (sorts) {
+            case CommonConstant.BASE_GAME_GET_USER_INFO:
+                baseEventDeal.getUserInfo(client, data);
+                break;
+            case CommonConstant.BASE_GAME_EVENT_CHECK_USER:
+                baseEventDeal.checkUser(client, data);
+                break;
+            case CommonConstant.BASE_GAME_EVENT_GET_GAME_SETTING:
+                baseEventDeal.getGameSetting(client, data);
+                break;
+            case CommonConstant.BASE_GAME_EVENT_GET_ALL_ROOM_LIST:
+                baseEventDeal.getAllRoomList(client, data);
+                break;
+            case CommonConstant.BASE_GAME_EVENT_CREATE_ROOM:
+                baseEventDeal.createRoomBase(client, data);
+                break;
+            case CommonConstant.BASE_GAME_EVENT_JOIN_ROOM:
+                baseEventDeal.joinRoomBase(client, data);
+                break;
+            case CommonConstant.BASE_GAME_EVENT_GET_SHUFFLE_INFO:
+                baseEventDeal.getShuffleInfo(client, data);
+                break;
+            case CommonConstant.BASE_GAME_EVENT_DO_SHUFFLE:
+                baseEventDeal.doShuffle(client, data);
+                break;
+            case CommonConstant.BASE_GAME_EVENT_SEND_MESSAGE:
+                baseEventDeal.sendMessage(client, data);
+                break;
+            case CommonConstant.BASE_GAME_EVENT_SEND_VOICE:
+                baseEventDeal.sendVoice(client, data);
+                break;
+            case CommonConstant.BASE_GAME_EVENT_GET_USER_GAME_LOGS:
+                baseEventDeal.getUserGameLogs(client, data);
+                break;
+            case CommonConstant.BASE_GAME_EVENT_DISSOLVE_ROOM:
+                baseEventDeal.dissolveRoom(client, data);
+                break;
+            case CommonConstant.BASE_GAME_EVENT_ON_OR_OFF_GAME:
+                baseEventDeal.onOrOffGame(client, data);
+                break;
+            case CommonConstant.BASE_GAME_EVENT_SEND_NOTICE:
+                baseEventDeal.sendNotice(client, data);
+                break;
+            case CommonConstant.BASE_GAME_EVENT_GET_NOTICE:
+                baseEventDeal.getNotice(client, data);
+                break;
+            case CommonConstant.BASE_GAME_EVENT_GET_ROOM_AND_PLAYER_COUNT:
+                baseEventDeal.getRoomAndPlayerCount(client, data);
+                break;
+            case CommonConstant.BASE_GAME_EVENT_SON_GAME:
+                baseEventDeal.getRoomGid(client, data);
+                break;
+            case CommonConstant.BASE_GAME_EVENT_JOIN_COIN_ROOM:
+                baseEventDeal.joinCoinRoom(client, data);
+                break;
+            case CommonConstant.BASE_GAME_EVENT_GET_ROOM_CARD_PAY_INFO:
+                baseEventDeal.getRoomCardPayInfo(client, data);
+                break;
+            case CommonConstant.BASE_GAME_EVENT_GET_COIN_SETTING:
+                baseEventDeal.getCoinSetting(client, data);
+                break;
+            case CommonConstant.BASE_GAME_EVENT_GET_USER_SIGN_INFO:
+                baseEventDeal.checkSignIn(client, data);
+                break;
+            case CommonConstant.BASE_GAME_EVENT_DO_USER_SIGN:
+                baseEventDeal.doUserSignIn(client, data);
+                break;
+            case CommonConstant.BASE_GAME_EVENT_GET_COMPETITIVE_INFO:
+                baseEventDeal.getCompetitiveInfo(client, data);
+                break;
+            case CommonConstant.BASE_GAME_EVENT_JOIN_COMPETITIVE_ROOM:
+                baseEventDeal.joinCompetitiveRoom(client, data);
+                break;
+            case CommonConstant.BASE_GAME_EVENT_CHECK_IP:
+                baseEventDeal.gameCheckIp(client, data);
+                break;
+            case CommonConstant.BASE_GAME_EVENT_GET_PROXY_ROOM_LIST:
+                baseEventDeal.getProxyRoomList(client, data);
+                break;
+            case CommonConstant.BASE_GAME_EVENT_DISSOLVE_PROXY_ROOM:
+                baseEventDeal.dissolveProxyRoom(client, data);
+                break;
+            case CommonConstant.BASE_GAME_EVENT_GET_USER_ACHIEVEMENT_INFO:
+                baseEventDeal.getUserAchievementInfo(client, data);
+                break;
+            case CommonConstant.BASE_GAME_EVENT_GET_PROPS_INFO:
+                baseEventDeal.getPropsInfo(client, data);
+                break;
+            case CommonConstant.BASE_GAME_EVENT_USER_PURCHASE:
+                baseEventDeal.userPurchase(client, data);
+                break;
+            case CommonConstant.BASE_GAME_EVENT_GET_ACHIEVEMENT_RANK:
+                baseEventDeal.getAchievementRank(client, data);
+                break;
+            case CommonConstant.BASE_GAME_EVENT_GET_DRAW_INFO:
+                baseEventDeal.getDrawInfo(client, data);
+                break;
+            case CommonConstant.BASE_GAME_EVENT_GAME_DRAW:
+                baseEventDeal.gameDraw(client, data);
+                break;
+            case CommonConstant.BASE_GAME_EVENT_GET_ACHIEVEMENT_DETAIL:
+                baseEventDeal.getAchievementDetail(client, data);
+                break;
+            case CommonConstant.BASE_GAME_EVENT_DRAW_ACHIEVEMENT_REWARD:
+                baseEventDeal.drawAchievementReward(client, data);
+                break;
+            case CommonConstant.BASE_GAME_EVENT_CHANGE_ROOM:
+                baseEventDeal.changeRoomBase(client,data);
                 break;
             default:
                 break;
