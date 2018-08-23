@@ -867,19 +867,26 @@ public class MaJiangCore {
                 } else {
                     // 去除所有的刻 顺子
                     List<Integer> wipeList = wipeOffPai(myPai, jin);
-                    List<Integer> doubleList = getDoubleList(wipeList);
-                    List<Integer> moreList = getMoreList(outList, doubleList);
-                    // 全是雀可以拆雀
-                    if (wipeList.size() == doubleList.size()) {
-                        legalList.addAll(doubleList);
+                    // 去除刻 顺子之后的单牌
+                    List<Integer> allSingle = getAllSingle(wipeList, jin);
+                    // 有有单牌优先出单牌
+                    if (allSingle.size() > 0) {
+                        legalList.addAll(allSingle);
                     } else {
-                        for (int i = 0; i < wipeList.size(); i++) {
-                            // 所有不是雀的牌，或者死雀多于2可以拆死雀
-                            if (!doubleList.contains(wipeList.get(i))) {
-                                legalList.add(wipeList.get(i));
-                            }else if (moreList.size() > 1 && moreList.contains(wipeList.get(i))) {
-                                legalList.add(wipeList.get(i));
+                        List<Integer> doubleList = getDoubleList(wipeList);
+                        List<Integer> moreList = getMoreList(outList, doubleList);
+                        // 有双雀必须留双雀
+                        if (doubleList.size() <= QZMJConstant.CARD_SIZE_FOUR && wipeList.size() != doubleList.size()) {
+                            for (int i = 0; i < wipeList.size(); i++) {
+                                // 所有不是雀的牌，或者死雀多于2可以拆死雀
+                                if (!doubleList.contains(wipeList.get(i))) {
+                                    legalList.add(wipeList.get(i));
+                                }else if (moreList.size() > 1 && moreList.contains(wipeList.get(i))) {
+                                    legalList.add(wipeList.get(i));
+                                }
                             }
+                        } else {
+                            legalList.addAll(wipeList);
                         }
                     }
                 }

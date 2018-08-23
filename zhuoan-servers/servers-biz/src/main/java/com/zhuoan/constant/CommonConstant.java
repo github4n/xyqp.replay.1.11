@@ -172,6 +172,10 @@ public class CommonConstant {
      */
     public static final int GAME_MATCH = 100;
     /**
+     * 俱乐部
+     */
+    public static final int GAME_CLUB = 101;
+    /**
      * 游戏id-牛牛
      */
     public static final int GAME_ID_NN = 1;

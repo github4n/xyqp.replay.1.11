@@ -431,6 +431,7 @@ public class QZMJConstant {
     /**
      * 牌数
      */
+    public static final int CARD_SIZE_FOUR = 4;
     public static final int CARD_SIZE_THREE = 3;
     public static final int CARD_SIZE_TWO = 2;
     public static final int CARD_SIZE_ONE = 1;
