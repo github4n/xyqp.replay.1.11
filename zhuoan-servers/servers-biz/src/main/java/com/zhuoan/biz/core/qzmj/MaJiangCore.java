@@ -840,7 +840,8 @@ public class MaJiangCore {
                 for (int i = 0; i < tingList.size(); i++) {
                     allTing.add(tingList.getJSONObject(i).getInt("pai"));
                 }
-                legalList.addAll(allTing);
+                List<Integer> legalTing = getTingPaiList(tingList, jin, allTing);
+                legalList.addAll(legalTing);
             } else {
                 List<Integer> singleList = getAllSingle(myPai, jin);
                 // 有单牌优先出单牌
@@ -900,6 +901,32 @@ public class MaJiangCore {
             e.printStackTrace();
         }
         return compensateList;
+    }
+
+    private static List<Integer> getTingPaiList(JSONArray tingList, int jin, List<Integer> allTing) {
+        List<Integer> result = new ArrayList<>();
+        // 加入判断，不能听无张,如果都听无张，那就都可以打
+        for (int i = 0; i < tingList.size(); i++) {
+            JSONObject tingPai = tingList.getJSONObject(i);
+            // 如果听的牌不等于金且count!=0,则加入legalList
+            JSONArray needPai = tingPai.getJSONArray("values");
+            boolean isWuZhang = true;
+            for (int j = 0; j < needPai.size(); j++) {
+                JSONObject temp = needPai.getJSONObject(j);
+                if (temp.getInt("val") != jin && temp.getInt("count") > 0) {
+                    isWuZhang = false;
+                    break;
+                }
+
+            }
+            if (isWuZhang == false) {
+                result.add(tingPai.getInt("pai"));
+            }
+        }
+        if (result.size() == 0) {
+            result.addAll(allTing);
+        }
+        return result;
     }
 
     private static List<Integer> getMoreList(List<Integer> outList, List<Integer> curList) {
