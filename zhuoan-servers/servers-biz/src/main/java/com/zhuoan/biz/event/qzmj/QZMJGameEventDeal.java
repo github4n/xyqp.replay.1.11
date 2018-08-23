@@ -783,6 +783,11 @@ public class QZMJGameEventDeal {
                             // 去掉重复数据
                             actData.remove("tingTip");
                         }
+                        if (actData.containsKey("compensateList")) {
+                            result.put("compensateList",actData.get("compensateList"));
+                            // 去掉重复数据
+                            actData.remove("compensateList");
+                        }
                     }
                     if(pai>0){
 
@@ -1812,38 +1817,46 @@ public class QZMJGameEventDeal {
             }
         }
 
-        //其他未胡玩家结算
-        for (String uuid : room.getPlayerMap().keySet()) {
-            if (room.getUserPacketMap().containsKey(uuid)&&room.getUserPacketMap().get(uuid)!=null) {
-                if(!uuid.equals(account)){
-                    Playerinfo p = room.getPlayerMap().get(uuid);
-                    UserPacketQZMJ userPacketQZMJ = room.getUserPacketMap().get(uuid);
-                    for (String uid : room.getPlayerMap().keySet()) {
-                        if (room.getUserPacketMap().containsKey(uid)&&room.getUserPacketMap().get(uid)!=null) {
-                            if(!uid.equals(account)&&!uid.equals(uuid)){
-                                Playerinfo p1 = room.getPlayerMap().get(uid);
-                                UserPacketQZMJ userPacketQZMJ1 = room.getUserPacketMap().get(uid);
-                                int score = userPacketQZMJ.getFan();
+        boolean summaryLose = true;
 
-                                if(!room.isCanOver && room.getRoomType()!= CommonConstant.ROOM_TYPE_COMPETITIVE){
+        if (room.getGid() == CommonConstant.GAME_ID_ZZC && !Dto.stringIsNULL(room.getCompensateAccount())) {
+            summaryLose = false;
+        }
 
-                                    // 牌局为1课或元宝场金币场
-                                    if(room.getGameCount()==999||room.getGameCount()==9999){
+        if (summaryLose) {
+            //其他未胡玩家结算
+            for (String uuid : room.getPlayerMap().keySet()) {
+                if (room.getUserPacketMap().containsKey(uuid)&&room.getUserPacketMap().get(uuid)!=null) {
+                    if(!uuid.equals(account)){
+                        Playerinfo p = room.getPlayerMap().get(uuid);
+                        UserPacketQZMJ userPacketQZMJ = room.getUserPacketMap().get(uuid);
+                        for (String uid : room.getPlayerMap().keySet()) {
+                            if (room.getUserPacketMap().containsKey(uid)&&room.getUserPacketMap().get(uid)!=null) {
+                                if(!uid.equals(account)&&!uid.equals(uuid)){
+                                    Playerinfo p1 = room.getPlayerMap().get(uid);
+                                    UserPacketQZMJ userPacketQZMJ1 = room.getUserPacketMap().get(uid);
+                                    int score = userPacketQZMJ.getFan();
 
-                                        // 判断牌局是否结束（玩家积分是否小于等于0）
-                                        if(p1.getScore()-score<=0){
-                                            score = (int) p1.getScore();
+                                    if(!room.isCanOver && room.getRoomType()!= CommonConstant.ROOM_TYPE_COMPETITIVE){
+
+                                        // 牌局为1课或元宝场金币场
+                                        if(room.getGameCount()==999||room.getGameCount()==9999){
+
+                                            // 判断牌局是否结束（玩家积分是否小于等于0）
+                                            if(p1.getScore()-score<=0){
+                                                score = (int) p1.getScore();
+                                            }
                                         }
                                     }
+
+                                    // 减少玩家分数
+                                    p1.setScore(p1.getScore()-score);
+                                    userPacketQZMJ1.setScore(userPacketQZMJ1.getScore()-score);
+
+                                    // 增加玩家分数
+                                    p.setScore(p.getScore()+score);
+                                    userPacketQZMJ.setScore(userPacketQZMJ.getScore()+score);
                                 }
-
-                                // 减少玩家分数
-                                p1.setScore(p1.getScore()-score);
-                                userPacketQZMJ1.setScore(userPacketQZMJ1.getScore()-score);
-
-                                // 增加玩家分数
-                                p.setScore(p.getScore()+score);
-                                userPacketQZMJ.setScore(userPacketQZMJ.getScore()+score);
                             }
                         }
                     }

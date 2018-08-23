@@ -1062,7 +1062,7 @@ public class MaJiangCore {
         List<Integer> singleList = new ArrayList<>();
         // 取手牌中的所有单牌
         for (Integer pai : copyPai) {
-            if (checkSingle(copyPai, pai)) {
+            if (checkSingle(copyPai, pai, jin)) {
                 singleList.add(pai);
             }
         }
@@ -1075,7 +1075,7 @@ public class MaJiangCore {
      * @param pai 牌
      * @return boolean
      */
-    private static boolean checkSingle(List<Integer> myPai, int pai) {
+    private static boolean checkSingle(List<Integer> myPai, int pai, int jin) {
         int num = 0;
         for (Integer p : myPai) {
             // 字牌牌只计算相同的张数,万条筒取相邻的两张牌
@@ -1084,10 +1084,64 @@ public class MaJiangCore {
                     num++;
                 }
             } else if (p / 10 == pai / 10 && Math.abs(p - pai) <= 2) {
-                num++;
+                // 两张牌相同或者两张牌不同时为金旁边的牌
+                if (p - pai == 0) {
+                    num++;
+                } else if (checkChiWithOutJin(p, pai, jin)) {
+                    num++;
+                }
             }
         }
         return num <= 1;
     }
 
+    private static boolean checkChiWithOutJin(int pai1, int pai2, int jin) {
+        List<Integer> paiList = new ArrayList<>();
+        if (QZMJConstant.TONG_PAI.contains(pai1)) {
+            paiList = QZMJConstant.TONG_PAI;
+        } else if (QZMJConstant.TIAO_PAI.contains(pai1)) {
+            paiList = QZMJConstant.TIAO_PAI;
+        } else if (QZMJConstant.WANG_PAI.contains(pai1)) {
+            paiList = QZMJConstant.WANG_PAI;
+        }
+        // 同一类型的牌
+        if (pai1 != pai2) {
+            if (paiList.size() > 0 && paiList.contains(pai1) && paiList.contains(pai2)) {
+                if (Math.abs(pai1 - pai2) <= 2) {
+                    if (!paiList.contains(jin)) {
+                        return true;
+                    }
+                    List<Integer> list = new ArrayList<>();
+                    list.add(pai1);
+                    list.add(pai2);
+                    list.add(jin);
+                    Collections.sort(list);
+                    if (list.get(0) == jin && jin % 10 == 7 && list.get(2) % 10 == 9) {
+                        return false;
+                    }
+                    if (list.get(1) == jin) {
+                        return false;
+                    }
+                    if (list.get(2) == jin && jin % 10 == 3 &&  list.get(0) % 10 == 1) {
+                        return false;
+                    }
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    private static List<Integer> getBestPai(List<Integer> myPai, List<Integer> doubleList) {
+        List<Integer> bestPai = new ArrayList<>();
+        List<Integer> copyPai = new ArrayList<>(myPai);
+        Collections.sort(copyPai);
+        for (int i = 0; i < copyPai.size(); i++) {
+
+
+
+
+        }
+        return bestPai;
+    }
 }
