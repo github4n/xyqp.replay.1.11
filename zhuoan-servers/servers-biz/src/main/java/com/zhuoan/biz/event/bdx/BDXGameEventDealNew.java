@@ -11,6 +11,7 @@ import com.zhuoan.biz.model.dao.PumpDao;
 import com.zhuoan.constant.BDXConstant;
 import com.zhuoan.constant.CommonConstant;
 import com.zhuoan.constant.DaoTypeConstant;
+import com.zhuoan.service.cache.RedisService;
 import com.zhuoan.service.jms.ProducerService;
 import com.zhuoan.util.Dto;
 import net.sf.json.JSONArray;
@@ -45,6 +46,9 @@ public class BDXGameEventDealNew {
 
     @Resource
     private FundEventDeal fundEventDeal;
+
+    @Resource
+    private RedisService redisService;
 
     /**
      * 创建房间通知自己
@@ -139,18 +143,22 @@ public class BDXGameEventDealNew {
                 CommonConstant.sendMsgEventToSingle(client,result.toString(),"gameXiazhuPush_BDX");
                 return;
             }
-            if (value<0||room.getPlayerMap().get(account).getScore()<value) {
-                result.put(CommonConstant.RESULT_KEY_CODE,CommonConstant.GLOBAL_NO);
-                result.put(CommonConstant.RESULT_KEY_MSG,"元宝不足");
-                CommonConstant.sendMsgEventToSingle(client,result.toString(),"gameXiazhuPush_BDX");
-                return;
+            JSONObject userInfo = userBiz.getUserByAccount(account);
+            if (!Dto.isObjNull(userInfo) && userInfo.containsKey(room.getCurrencyType())) {
+                if (value < 0 || userInfo.getDouble(room.getCurrencyType()) < value) {
+                    result.put(CommonConstant.RESULT_KEY_CODE,CommonConstant.GLOBAL_NO);
+                    result.put(CommonConstant.RESULT_KEY_MSG,"元宝不足");
+                    CommonConstant.sendMsgEventToSingle(client,result.toString(),"gameXiazhuPush_BDX");
+                    return;
+                }
+                redisService.insertKey("summaryTimes_bdx"+room.getRoomNo(),"0",null);
+                room.getUserPacketMap().get(account).setStatus(BDXConstant.BDX_USER_STATUS_GAME_EVENT);
+                room.getUserPacketMap().get(account).setValue(value);
+                result.put(CommonConstant.RESULT_KEY_CODE,CommonConstant.GLOBAL_YES);
+                result.put("index",room.getPlayerMap().get(account).getMyIndex());
+                result.put("value",value);
+                CommonConstant.sendMsgEventToAll(room.getAllUUIDList(),result.toString(),"gameXiazhuPush_BDX");
             }
-            room.getUserPacketMap().get(account).setStatus(BDXConstant.BDX_USER_STATUS_GAME_EVENT);
-            room.getUserPacketMap().get(account).setValue(value);
-            result.put(CommonConstant.RESULT_KEY_CODE,CommonConstant.GLOBAL_YES);
-            result.put("index",room.getPlayerMap().get(account).getMyIndex());
-            result.put("value",value);
-            CommonConstant.sendMsgEventToAll(room.getAllUUIDList(),result.toString(),"gameXiazhuPush_BDX");
         }
     }
 
@@ -170,6 +178,10 @@ public class BDXGameEventDealNew {
         BDXGameRoomNew room = (BDXGameRoomNew) RoomManage.gameRoomMap.get(roomNo);
         // 玩家账号
         String account = postData.getString(CommonConstant.DATA_KEY_ACCOUNT);
+        JSONObject userInfo = userBiz.getUserByAccount(account);
+        if (Dto.isObjNull(userInfo) || userInfo.getDouble(room.getCurrencyType()) < room.getUserPacketMap().get(account).getScore()) {
+            return;
+        }
         JSONObject result = new JSONObject();
         if (room.getUserPacketMap().get(account).getStatus()!=BDXConstant.BDX_USER_STATUS_GAME_EVENT) {
             result.put(CommonConstant.RESULT_KEY_CODE,CommonConstant.GLOBAL_NO);
@@ -229,6 +241,7 @@ public class BDXGameEventDealNew {
             }
         }
         List<UUID> list = room.getAllUUIDList();
+        redisService.deleteByKey("summaryTimes_bdx"+roomNo);
         RoomManage.gameRoomMap.remove(roomNo);
         JSONObject result = new JSONObject();
         result.put(CommonConstant.RESULT_KEY_CODE,CommonConstant.GLOBAL_YES);
@@ -286,6 +299,11 @@ public class BDXGameEventDealNew {
     }
 
     public void summary(BDXGameRoomNew room, String giveUpAccount){
+        String summaryTimesKey = "summaryTimes_bdx"+room.getRoomNo();
+        long summaryTimes = redisService.incr(summaryTimesKey,1);
+        if (summaryTimes>1) {
+            return;
+        }
         // 设置房间状态
         room.setGameStatus(BDXConstant.BDX_GAME_STATUS_SUMMARY);
         // 当局输赢
@@ -372,7 +390,7 @@ public class BDXGameEventDealNew {
             }
         }
         // 更新玩家分数
-        producerService.sendMessage(daoQueueDestination, new PumpDao(DaoTypeConstant.UPDATE_SCORE, room.getPumpObject(array)));
+        userBiz.updateUserBalance(array, room.getCurrencyType());
         // 玩家输赢记录
         producerService.sendMessage(daoQueueDestination, new PumpDao(DaoTypeConstant.USER_DEDUCTION, new JSONObject().element("user", userDeductionData)));
         // 战绩信息
