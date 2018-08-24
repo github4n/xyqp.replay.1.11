@@ -2444,8 +2444,8 @@ public class BaseEventDeal {
     public int getCoinsSignMinReward(String platform) {
         int minReward = CommonConstant.COINS_SIGN_MIN;
         JSONObject signRewardInfo = getCoinsSignRewardInfo(platform);
-        if (!Dto.isObjNull(signRewardInfo)&&signRewardInfo.containsKey("meitmoney")) {
-            return signRewardInfo.getInt("meitmoney");
+        if (!Dto.isObjNull(signRewardInfo)&&signRewardInfo.containsKey("signin_min")) {
+            return signRewardInfo.getInt("signin_min");
         }
         return minReward;
     }
@@ -2482,8 +2482,8 @@ public class BaseEventDeal {
     public int getCoinsSignMaxReward(String platform) {
         int maxReward = CommonConstant.COINS_SIGN_MAX;
         JSONObject signRewardInfo = getCoinsSignRewardInfo(platform);
-        if (!Dto.isObjNull(signRewardInfo)&&signRewardInfo.containsKey("monthmoney")) {
-            return signRewardInfo.getInt("monthmoney");
+        if (!Dto.isObjNull(signRewardInfo)&&signRewardInfo.containsKey("signin_max")) {
+            return signRewardInfo.getInt("signin_max");
         }
         return maxReward;
     }
@@ -2495,8 +2495,8 @@ public class BaseEventDeal {
     private int getCoinsSignBaseReward(String platform) {
         int maxReward = CommonConstant.COINS_SIGN_BASE;
         JSONObject signRewardInfo = getCoinsSignRewardInfo(platform);
-        if (!Dto.isObjNull(signRewardInfo)&&signRewardInfo.containsKey("firstmoney")) {
-            return signRewardInfo.getInt("firstmoney");
+        if (!Dto.isObjNull(signRewardInfo)&&signRewardInfo.containsKey("signin_base")) {
+            return signRewardInfo.getInt("signin_base");
         }
         return maxReward;
     }

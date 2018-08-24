@@ -691,8 +691,7 @@ public class GameDaoImpl implements GameDao {
 
     @Override
     public JSONObject getSignRewardInfoByPlatform(String platform) {
-        String sql = "SELECT id,firstnode,firstmoney,firstfangka,secnode,secmoney,secfangk,thnode,thmoney,thmofangk,monthmoney," +
-            "monthfangk,meitmoney,meitfangk,memo FROM za_sign_reward where memo=?";
+        String sql = "SELECT signin_base,signin_min,signin_max from operator_appsetting where platform=?";
         return DBUtil.getObjectBySQL(sql,new Object[]{platform});
     }
 
