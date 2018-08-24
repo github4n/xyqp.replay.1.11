@@ -828,6 +828,14 @@ public class MaJiangCore {
 		return false;
 	}
 
+    /**
+     * 所有违规的牌
+     * @param myPai
+     * @param outList
+     * @param jin
+     * @param tingList
+     * @return
+     */
     public static List<Integer> getCompensateList(List<Integer> myPai, List<Integer> outList, int jin, JSONArray tingList) {
         List<Integer> compensateList = new ArrayList<>();
         try {
@@ -875,19 +883,25 @@ public class MaJiangCore {
                         legalList.addAll(allSingle);
                     } else {
                         List<Integer> doubleList = getDoubleList(wipeList);
-                        List<Integer> moreList = getMoreList(outList, doubleList);
-                        // 有双雀必须留双雀
-                        if (doubleList.size() <= QZMJConstant.CARD_SIZE_FOUR && wipeList.size() != doubleList.size()) {
-                            for (int i = 0; i < wipeList.size(); i++) {
-                                // 所有不是雀的牌，或者死雀多于2可以拆死雀
-                                if (!doubleList.contains(wipeList.get(i))) {
-                                    legalList.add(wipeList.get(i));
-                                }else if (moreList.size() > 1 && moreList.contains(wipeList.get(i))) {
-                                    legalList.add(wipeList.get(i));
+                        // 不失牌出牌
+                        List<Integer> bestPai = getBestPai(wipeList, doubleList);
+                        if (bestPai.size() > 0) {
+                            legalList.addAll(bestPai);
+                        }else {
+                            List<Integer> moreList = getMoreList(outList, doubleList);
+                            // 有双雀必须留双雀
+                            if (doubleList.size() <= QZMJConstant.CARD_SIZE_FOUR && wipeList.size() != doubleList.size()) {
+                                for (int i = 0; i < wipeList.size(); i++) {
+                                    // 所有不是雀的牌，或者死雀多于2可以拆死雀
+                                    if (!doubleList.contains(wipeList.get(i))) {
+                                        legalList.add(wipeList.get(i));
+                                    }else if (moreList.size() > 1 && moreList.contains(wipeList.get(i))) {
+                                        legalList.add(wipeList.get(i));
+                                    }
                                 }
+                            } else {
+                                legalList.addAll(wipeList);
                             }
-                        } else {
-                            legalList.addAll(wipeList);
                         }
                     }
                 }
@@ -903,6 +917,13 @@ public class MaJiangCore {
         return compensateList;
     }
 
+    /**
+     * 所有可以听的牌
+     * @param tingList
+     * @param jin
+     * @param allTing
+     * @return
+     */
     private static List<Integer> getTingPaiList(JSONArray tingList, int jin, List<Integer> allTing) {
         List<Integer> result = new ArrayList<>();
         // 加入判断，不能听无张,如果都听无张，那就都可以打
@@ -910,16 +931,16 @@ public class MaJiangCore {
             JSONObject tingPai = tingList.getJSONObject(i);
             // 如果听的牌不等于金且count!=0,则加入legalList
             JSONArray needPai = tingPai.getJSONArray("values");
-            boolean isWuZhang = true;
+            boolean isNone = true;
             for (int j = 0; j < needPai.size(); j++) {
                 JSONObject temp = needPai.getJSONObject(j);
                 if (temp.getInt("val") != jin && temp.getInt("count") > 0) {
-                    isWuZhang = false;
+                    isNone = false;
                     break;
                 }
 
             }
-            if (isWuZhang == false) {
+            if (!isNone) {
                 result.add(tingPai.getInt("pai"));
             }
         }
@@ -929,6 +950,12 @@ public class MaJiangCore {
         return result;
     }
 
+    /**
+     * 取见2的牌
+     * @param outList
+     * @param curList
+     * @return
+     */
     private static List<Integer> getMoreList(List<Integer> outList, List<Integer> curList) {
         List<Integer> moreList = new ArrayList<>();
         // 统计当前手牌中没张牌桌面上的数量
@@ -942,6 +969,12 @@ public class MaJiangCore {
         return moreList;
     }
 
+    /**
+     * 去除所有刻，顺子
+     * @param myPai
+     * @param jin
+     * @return
+     */
     private static List<Integer> wipeOffPai(List<Integer> myPai, Integer jin) {
         List<Integer> copyPai = new ArrayList<>(myPai);
         // 去除金
@@ -1000,6 +1033,11 @@ public class MaJiangCore {
 	    return newPaiList;
     }
 
+    /**
+     * 取所有的雀
+     * @param myPai
+     * @return
+     */
     private static List<Integer> getDoubleList(List<Integer> myPai) {
         List<Integer> allDoubleList = new ArrayList<>();
         for (int i = 0; i < myPai.size(); i++) {
@@ -1021,6 +1059,12 @@ public class MaJiangCore {
 	    return allDoubleList;
     }
 
+    /**
+     * 统计已经出的牌数
+     * @param curList
+     * @param outList
+     * @return
+     */
     private static Map<Integer, Integer> getOutCount(List<Integer> curList,List<Integer> outList) {
         // curList中已出牌数
         Map<Integer, Integer> outCountMap = new HashMap<>();
@@ -1084,7 +1128,7 @@ public class MaJiangCore {
                     num++;
                 }
             } else if (p / 10 == pai / 10 && Math.abs(p - pai) <= 2) {
-                // 两张牌相同或者两张牌不同时为金旁边的牌
+                // 两张牌相同或者可以吃
                 if (p - pai == 0) {
                     num++;
                 } else if (checkChiWithOutJin(p, pai, jin)) {
@@ -1095,8 +1139,17 @@ public class MaJiangCore {
         return num <= 1;
     }
 
+    /**
+     * 是否可以吃
+     *
+     * @param pai1 pai1
+     * @param pai2 pai2
+     * @param jin jin
+     * @return boolean
+     */
     private static boolean checkChiWithOutJin(int pai1, int pai2, int jin) {
         List<Integer> paiList = new ArrayList<>();
+        // 万条筒可以吃
         if (QZMJConstant.TONG_PAI.contains(pai1)) {
             paiList = QZMJConstant.TONG_PAI;
         } else if (QZMJConstant.TIAO_PAI.contains(pai1)) {
@@ -1104,24 +1157,30 @@ public class MaJiangCore {
         } else if (QZMJConstant.WANG_PAI.contains(pai1)) {
             paiList = QZMJConstant.WANG_PAI;
         }
-        // 同一类型的牌
+        // 不是同一张牌
         if (pai1 != pai2) {
+            // 同一类型的牌
             if (paiList.size() > 0 && paiList.contains(pai1) && paiList.contains(pai2)) {
                 if (Math.abs(pai1 - pai2) <= 2) {
+                    // 和金不是同一类型的牌
                     if (!paiList.contains(jin)) {
                         return true;
                     }
+                    // 和金相同类型的添加一张金进行计算（需要排序）
                     List<Integer> list = new ArrayList<>();
                     list.add(pai1);
                     list.add(pai2);
                     list.add(jin);
                     Collections.sort(list);
+                    // 金在第一张 且金为7万 7条 7筒  最后一张为9万 9条 9筒
                     if (list.get(0) == jin && jin % 10 == 7 && list.get(2) % 10 == 9) {
                         return false;
                     }
+                    // 金在中间
                     if (list.get(1) == jin) {
                         return false;
                     }
+                    // 金在第三张 且金为3万 3条 3筒  第一张为1万 1条 1筒
                     if (list.get(2) == jin && jin % 10 == 3 &&  list.get(0) % 10 == 1) {
                         return false;
                     }
@@ -1132,15 +1191,69 @@ public class MaJiangCore {
         return false;
     }
 
+    /**
+     * 不失牌出牌
+     *
+     * @param myPai
+     * @param doubleList
+     * @return
+     */
     private static List<Integer> getBestPai(List<Integer> myPai, List<Integer> doubleList) {
         List<Integer> bestPai = new ArrayList<>();
-        List<Integer> copyPai = new ArrayList<>(myPai);
-        Collections.sort(copyPai);
-        for (int i = 0; i < copyPai.size(); i++) {
-
-
-
-
+        Collections.sort(myPai);
+        for (int i = 0; i < myPai.size(); i++) {
+            // 当前手牌
+            int pai = myPai.get(i);
+            // 当前手牌+1,+2,+3
+            int nextOne = myPai.get(i) + 1;
+            int nextTwo = myPai.get(i) + 2;
+            int nextThree = myPai.get(i) + 3;
+            // 当前手牌-1,-2,-3
+            int lastOne = myPai.get(i) - 1;
+            int lastTwo = myPai.get(i) - 2;
+            int lastThree = myPai.get(i) - 3;
+            // 手牌中同时有x x+2 x+3且都是同类型的手牌 例如1,3,4
+            if (pai / 10 == nextTwo / 10 && pai / 10 == nextThree / 10
+                && myPai.contains(nextTwo) && myPai.contains(nextThree)) {
+                // 手牌中没有x-1则优先出x
+                if (myPai.contains(lastOne) && pai / 10 == lastOne / 10) {
+                    // 1 2 4 5的情况1 2都可以出 其余情况不限制
+                    if (lastOne % 10 == 1) {
+                        if (!doubleList.contains(pai) && !bestPai.contains(pai)) {
+                            bestPai.add(pai);
+                        }
+                        if (!doubleList.contains(lastOne) && !bestPai.contains(lastOne)) {
+                            bestPai.add(lastOne);
+                        }
+                    }
+                } else {
+                    // 不是对子
+                    if (!doubleList.contains(pai) && !bestPai.contains(pai)) {
+                        bestPai.add(pai);
+                    }
+                }
+            }
+            // 手牌中同时有x x-2 x-3且都是同类型的手牌 例如2,3,5
+            if (pai / 10 == lastTwo / 10 && pai / 10 == lastThree / 10
+                && myPai.contains(lastTwo) && myPai.contains(lastThree)) {
+                // 手牌中没有x+1则优先出x
+                if (myPai.contains(nextOne) && pai / 10 == nextOne / 10) {
+                    // 5 6 8 9的情况8 9都可以出 其余情况不限制
+                    if (nextOne % 10 == 9) {
+                        if (!doubleList.contains(pai) && !bestPai.contains(pai)) {
+                            bestPai.add(pai);
+                        }
+                        if (!doubleList.contains(nextOne) && !bestPai.contains(nextOne)) {
+                            bestPai.add(nextOne);
+                        }
+                    }
+                } else {
+                    // 不是对子
+                    if (!doubleList.contains(pai) && !bestPai.contains(pai)) {
+                        bestPai.add(pai);
+                    }
+                }
+            }
         }
         return bestPai;
     }
