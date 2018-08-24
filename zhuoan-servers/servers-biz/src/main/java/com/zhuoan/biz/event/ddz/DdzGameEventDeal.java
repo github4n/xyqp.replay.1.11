@@ -115,7 +115,8 @@ public class DdzGameEventDeal {
             // 金币场开始准备定时器
             beginReadyTimer(room.getRoomNo(), room);
         }else if (room.getRoomType() == CommonConstant.ROOM_TYPE_MATCH) {
-            matchEventDeal.changePlayerInfo(room.getMatchNum(),String.valueOf(client.getSessionId()),null,account,0,0);
+            matchEventDeal.changePlayerInfo(room.getMatchNum(),String.valueOf(client.getSessionId()),null,
+                account,0,0, room.getUserPacketMap().get(account).getMyPai().size());
         }
     }
 
@@ -855,7 +856,8 @@ public class DdzGameEventDeal {
         room.getPlayerMap().get(account).setUuid(client.getSessionId());
         // 刷新比赛场
         if (room.getRoomType() == CommonConstant.ROOM_TYPE_MATCH) {
-            matchEventDeal.changePlayerInfo(room.getMatchNum(),String.valueOf(client.getSessionId()),null,account,0,0);
+            matchEventDeal.changePlayerInfo(room.getMatchNum(),String.valueOf(client.getSessionId()),
+                null,account,0,0, room.getUserPacketMap().get(account).getMyPai().size());
         }
         // 组织数据，通知玩家
         result.put("type", 1);
@@ -1074,6 +1076,7 @@ public class DdzGameEventDeal {
                 userDetail.put("account",player);
                 userDetail.put("score",room.getUserPacketMap().get(player).getScore());
                 userDetail.put("round",0);
+                userDetail.put("card",room.getUserPacketMap().get(player).getMyPai().size());
                 if (!room.getRobotList().contains(player)) {
                     userDetail.put("round",1);
                     realList.add(player);

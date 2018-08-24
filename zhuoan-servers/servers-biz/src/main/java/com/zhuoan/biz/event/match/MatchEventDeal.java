@@ -506,10 +506,10 @@ public class MatchEventDeal {
                         }
                     }
                 }
-                // 更改状态
-                matchBiz.updateMatchInfoByMatchNum(matchNum, 1);
                 // 初始化排行榜
                 initRank(matchSetting, matchNum);
+                // 更改状态
+                matchBiz.updateMatchInfoByMatchNum(matchNum, 1);
             }
         });
     }
@@ -521,9 +521,30 @@ public class MatchEventDeal {
      * @param matchNum
      */
     private void initRank(JSONObject matchSetting, String matchNum) {
+        JSONObject matchInfo = getMatchInfoByNumFromRedis(matchNum);
         if (matchSetting.getInt("is_auto") == CommonConstant.GLOBAL_YES) {
             // 所有玩家
             Map<Object, Object> allPlayerInfo = redisService.hmget("player_info_" + matchNum);
+            // 已经在房间内的玩家退赛
+            Set<Object> players = allPlayerInfo.keySet();
+            for (Object player : players) {
+                if (allPlayerInfo.containsKey(player)) {
+                    for (String roomNo : RoomManage.gameRoomMap.keySet()) {
+                        if (RoomManage.gameRoomMap.get(roomNo).getPlayerMap().containsKey(player)) {
+                            JSONObject data = new JSONObject();
+                            data.put("account", String.valueOf(player));
+                            data.put("gid", matchInfo.getLong("game_id"));
+                            data.put("match_id", matchInfo.getLong("match_id"));
+                            matchCancelSign(null, data);
+                        }
+                    }
+                }
+            }
+            allPlayerInfo = redisService.hmget("player_info_" + matchNum);
+            matchInfo = getMatchInfoByNumFromRedis(matchNum);
+            if (allPlayerInfo.size() == 0 || Dto.isObjNull(matchInfo)) {
+                return;
+            }
             int totalCount = matchSetting.getInt("player_count");
             if (matchSetting.getJSONArray("promotion").getInt(0) > totalCount) {
                 totalCount = matchSetting.getJSONArray("promotion").getInt(0);
@@ -912,6 +933,9 @@ public class MatchEventDeal {
         Collections.sort(sortList, new Comparator<Map.Entry<Object, Object>>() {
             @Override
             public int compare(Map.Entry<Object, Object> o1, Map.Entry<Object, Object> o2) {
+                if (JSONObject.fromObject(o2.getValue()).getInt("score") == JSONObject.fromObject(o1.getValue()).getInt("score")) {
+                    return JSONObject.fromObject(o1.getValue()).getInt("card") - JSONObject.fromObject(o2.getValue()).getInt("card");
+                }
                 return JSONObject.fromObject(o2.getValue()).getInt("score") - JSONObject.fromObject(o1.getValue()).getInt("score");
             }
         });
@@ -985,15 +1009,15 @@ public class MatchEventDeal {
                             if (landlordWin == 1) {
                                 // 玩家游戏详情
                                 List<JSONObject> userDetails = new ArrayList<>();
-                                userDetails.add(getUserDetail(robotList.get(j * perCount), score * 2, 1));
-                                userDetails.add(getUserDetail(robotList.get(j * perCount + 1), -score, 1));
-                                userDetails.add(getUserDetail(robotList.get(j * perCount + 2), -score, 1));
+                                userDetails.add(getUserDetail(robotList.get(j * perCount), score * 2, 1,0));
+                                userDetails.add(getUserDetail(robotList.get(j * perCount + 1), -score, 1, RandomUtils.nextInt(17) + 1));
+                                userDetails.add(getUserDetail(robotList.get(j * perCount + 2), -score, 1, RandomUtils.nextInt(17) + 1));
                                 userFinish(matchNum, userDetails, new ArrayList<String>());
                             } else {
                                 List<JSONObject> userDetails = new ArrayList<>();
-                                userDetails.add(getUserDetail(robotList.get(j * perCount), -score * 2, 1));
-                                userDetails.add(getUserDetail(robotList.get(j * perCount + 1), score, 1));
-                                userDetails.add(getUserDetail(robotList.get(j * perCount + 2), score, 1));
+                                userDetails.add(getUserDetail(robotList.get(j * perCount), -score * 2, 1, RandomUtils.nextInt(17) + 1));
+                                userDetails.add(getUserDetail(robotList.get(j * perCount + 1), score, 1, RandomUtils.nextInt(17) + 1));
+                                userDetails.add(getUserDetail(robotList.get(j * perCount + 2), score, 1, 0));
                                 userFinish(matchNum, userDetails, new ArrayList<String>());
                             }
                         }
@@ -1014,11 +1038,12 @@ public class MatchEventDeal {
      * @param round
      * @return
      */
-    private JSONObject getUserDetail(String account, int score, int round) {
+    private JSONObject getUserDetail(String account, int score, int round, int card) {
         JSONObject userDetail = new JSONObject();
         userDetail.put("account", account);
         userDetail.put("score", score);
         userDetail.put("round", round);
+        userDetail.put("card", card);
         return userDetail;
     }
 
@@ -1046,7 +1071,7 @@ public class MatchEventDeal {
                 for (int i = realSize; i <= perCount - realSize; i++) {
                     String robotAccount = getRobotList(robotList);
                     realPlayerList.add(realSize, robotAccount);
-                    changeRobotInfo(matchNum, robotAccount, 0, 1);
+                    changeRobotInfo(matchNum, robotAccount, 0, 1, 17);
                 }
                 // 创建一个房间实体
                 String roomNo = matchJoinDdz(matchNum, matchInfo, perCount);
@@ -1147,8 +1172,8 @@ public class MatchEventDeal {
     public void userFinish(String matchNum, List<JSONObject> userDetails, List<String> realPlayers) {
         // 更改分数
         for (JSONObject userDetail : userDetails) {
-            changeRobotInfo(matchNum, userDetail.getString("account"), userDetail.getInt("score"), userDetail.getInt("round"));
-            changePlayerInfo(matchNum, null, null, userDetail.getString("account"), userDetail.getInt("score"), userDetail.getInt("round"));
+            changeRobotInfo(matchNum, userDetail.getString("account"), userDetail.getInt("score"), userDetail.getInt("round"), userDetail.getInt("card"));
+            changePlayerInfo(matchNum, null, null, userDetail.getString("account"), userDetail.getInt("score"), userDetail.getInt("round"), userDetail.getInt("card"));
         }
         JSONObject matchInfo = getMatchInfoByNumFromRedis(matchNum);
         if (!Dto.isObjNull(matchInfo)) {
@@ -1255,12 +1280,13 @@ public class MatchEventDeal {
      * @param score
      * @param round
      */
-    private void changeRobotInfo(String matchNum, String account, int score, int round) {
+    private void changeRobotInfo(String matchNum, String account, int score, int round, int card) {
         Object o = redisService.hget("robot_info_" + matchNum, account);
         if (!Dto.isNull(o)) {
             JSONObject robotInfo = JSONObject.fromObject(o);
             robotInfo.put("score", robotInfo.getInt("score") + score);
             robotInfo.put("round", robotInfo.getInt("round") + round);
+            robotInfo.put("card", card);
             redisService.hset("robot_info_" + matchNum, account, String.valueOf(robotInfo));
         }
     }
@@ -1273,12 +1299,13 @@ public class MatchEventDeal {
      * @param score
      * @param round
      */
-    public void changePlayerInfo(String matchNum, String sessionId, String uuid, String account, int score, int round) {
+    public void changePlayerInfo(String matchNum, String sessionId, String uuid, String account, int score, int round, int card) {
         Object o = redisService.hget("player_info_" + matchNum, account);
         if (!Dto.isNull(o)) {
             JSONObject playerInfo = JSONObject.fromObject(o);
             playerInfo.put("score", playerInfo.getInt("score") + score);
             playerInfo.put("round", playerInfo.getInt("round") + round);
+            playerInfo.put("card", card);
             if (!Dto.stringIsNULL(sessionId)) {
                 playerInfo.put("sessionId", sessionId);
             }
@@ -1399,6 +1426,7 @@ public class MatchEventDeal {
         playerInfo.put("sessionId", sessionId);
         playerInfo.put("score", score);
         playerInfo.put("round", round);
+        playerInfo.put("card", 17);
         redisService.hset("player_info_" + matchNum, account, String.valueOf(playerInfo));
     }
 
@@ -1448,6 +1476,7 @@ public class MatchEventDeal {
         JSONObject robotInfo = new JSONObject();
         robotInfo.put("score", 1000);
         robotInfo.put("round", 0);
+        robotInfo.put("card", 17);
         redisService.hset("robot_info_" + matchNum, account, String.valueOf(robotInfo));
     }
 
