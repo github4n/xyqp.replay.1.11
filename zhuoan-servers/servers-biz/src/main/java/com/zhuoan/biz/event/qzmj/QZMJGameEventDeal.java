@@ -283,16 +283,25 @@ public class QZMJGameEventDeal {
                 //获取要出的牌
                 if (compensateList.contains(pai)) {
                     room.setCompensateAccount(account);
-                } else if (account.equals(room.getCompensateAccount())){
-                    boolean isCompensate = false;
-                    for (String player : room.getUserPacketMap().keySet()) {
-                        if (room.getUserPacketMap().get(player).getYouJinIng() > 0) {
-                            isCompensate = true;
-                            break;
+                } else {
+                    // 清空违规玩家
+                    room.setCompensateAccount(null);
+                    if (room.getCompensateMap().containsValue(account)) {
+                        // 该玩家有违规出牌记录需要清空
+                        for (String uuid : room.getCompensateMap().keySet()) {
+                            // 需要赔给其他人
+                            if (account.equals(room.getCompensateMap().get(uuid))) {
+                                boolean isCompensate = false;
+                                // 其他人游金不清空
+                                if (room.getUserPacketMap().get(uuid).getYouJinIng() > 0) {
+                                    isCompensate = true;
+                                }
+                                // 导致他人游金不清空
+                                if (!isCompensate) {
+                                    room.getCompensateMap().remove(account);
+                                }
+                            }
                         }
-                    }
-                    if (!isCompensate) {
-                        room.setCompensateAccount(null);
                     }
                 }
             }
@@ -328,7 +337,16 @@ public class QZMJGameEventDeal {
         String account = postData.getString(CommonConstant.DATA_KEY_ACCOUNT);
         if(postData.containsKey("type")){
             int type = -postData.getInt("type");
-
+            if (room.getGid() == CommonConstant.GAME_ID_ZZC) {
+                if (type == -4 || type == -5 || type == -6 || type == -7) {
+                    if (!Dto.stringIsNULL(room.getCompensateAccount())) {
+                        room.getCompensateMap().put(account,room.getCompensateAccount());
+                    }
+                }
+                if (type == -1) {
+                    room.getCompensateMap().remove(account);
+                }
+            }
             switch (type) {
                 case -1:
                     // 过
@@ -1004,7 +1022,7 @@ public class QZMJGameEventDeal {
                     data.put("huaValue", JSONArray.fromObject(userPacketQZMJ.getHuaList()));
                     data.put("gangValue", JSONArray.fromObject(userPacketQZMJ.getGangValue()));
                     data.put("isCompensate", CommonConstant.GLOBAL_NO);
-                    if (uuid.equals(gamePlay.getCompensateAccount())) {
+                    if (uuid.equals(gamePlay.getCompensateMap().get(winner))) {
                         data.put("isCompensate", CommonConstant.GLOBAL_YES);
                     }
                     // 判断玩家是否是庄家
@@ -1809,7 +1827,7 @@ public class QZMJGameEventDeal {
         QZMJGameRoom room = (QZMJGameRoom) RoomManage.gameRoomMap.get(roomNo);
         // 计算番
         for (String uuid : room.getUserPacketMap().keySet()) {
-            if (room.getUserPacketMap().containsKey(account)&&room.getUserPacketMap().get(account)!=null) {
+            if (room.getUserPacketMap().containsKey(uuid)&&room.getUserPacketMap().get(uuid)!=null) {
                 UserPacketQZMJ userPacketQZMJ = room.getUserPacketMap().get(uuid);
                 List<Integer> myPais =userPacketQZMJ.getMyPai();
                 int fan = room.getUserPacketMap().get(uuid).getTotalFanShu(myPais, room,uuid);
@@ -1818,9 +1836,13 @@ public class QZMJGameEventDeal {
         }
 
         boolean summaryLose = true;
+        String compensateAccount = null;
 
-        if (room.getGid() == CommonConstant.GAME_ID_ZZC && !Dto.stringIsNULL(room.getCompensateAccount())) {
-            summaryLose = false;
+        if (room.getGid() == CommonConstant.GAME_ID_ZZC) {
+            if (room.getCompensateMap().containsKey(account)) {
+                compensateAccount = room.getCompensateMap().get(account);
+                summaryLose = false;
+            }
         }
 
         if (summaryLose) {
@@ -1917,8 +1939,7 @@ public class QZMJGameEventDeal {
             }
         }
 
-        if (room.getGid() == CommonConstant.GAME_ID_ZZC && !Dto.stringIsNULL(room.getCompensateAccount())) {
-            String compensateAccount = room.getCompensateAccount();
+        if (room.getGid() == CommonConstant.GAME_ID_ZZC && !summaryLose && !Dto.stringIsNULL(compensateAccount)) {
             if (room.getUserPacketMap().containsKey(compensateAccount) && room.getUserPacketMap().get(compensateAccount) != null) {
                 for (String player : room.getUserPacketMap().keySet()) {
                     int sum = room.getUserPacketMap().get(player).getScore();

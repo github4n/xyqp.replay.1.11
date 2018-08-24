@@ -10,10 +10,7 @@ import net.sf.json.JSONObject;
 import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang.math.RandomUtils;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Random;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class QZMJGameRoom extends GameRoom{
@@ -134,6 +131,10 @@ public class QZMJGameRoom extends GameRoom{
      * 包赔玩家
      */
 	private String compensateAccount = null;
+    /**
+     * 包赔详情
+     */
+	private Map<String, String> compensateMap = new HashMap<>();
 
     public String getCompensateAccount() {
         return compensateAccount;
@@ -287,6 +288,14 @@ public class QZMJGameRoom extends GameRoom{
         this.huType = huType;
     }
 
+    public Map<String, String> getCompensateMap() {
+        return compensateMap;
+    }
+
+    public void setCompensateMap(Map<String, String> compensateMap) {
+        this.compensateMap = compensateMap;
+    }
+
     public void initGame() {
         //游金类型  1：单游 2：双游 3：三游
         this.yjType = 0;
@@ -295,6 +304,7 @@ public class QZMJGameRoom extends GameRoom{
         // 上个操作玩家
         this.lastAccount = null;
         this.compensateAccount = null;
+        this.compensateMap.clear();
         // 胡牌类型
         this.huType = 0;
         this.startStatus = 0;
