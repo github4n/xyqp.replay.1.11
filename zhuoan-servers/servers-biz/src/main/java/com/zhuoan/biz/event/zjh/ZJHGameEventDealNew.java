@@ -69,6 +69,8 @@ public class ZJHGameEventDealNew {
     public void createRoom(SocketIOClient client, Object data) {
         JSONObject postData = JSONObject.fromObject(data);
         String account = postData.getString(CommonConstant.DATA_KEY_ACCOUNT);
+        // 设置客户端标识
+        client.set(CommonConstant.DATA_KEY_ACCOUNT,account);
         String roomNo = postData.getString(CommonConstant.DATA_KEY_ROOM_NO);
         JSONObject roomData = obtainRoomData(roomNo, account);
         // 数据不为空
@@ -91,10 +93,10 @@ public class ZJHGameEventDealNew {
         // 进入房间通知自己
         createRoom(client, data);
         JSONObject joinData = JSONObject.fromObject(data);
+        String account = joinData.getString(CommonConstant.DATA_KEY_ACCOUNT);
+        ZJHGameRoomNew room = (ZJHGameRoomNew) RoomManage.gameRoomMap.get(joinData.getString(CommonConstant.DATA_KEY_ROOM_NO));
         // 非重连通知其他玩家
         if (joinData.containsKey("isReconnect") && joinData.getInt("isReconnect") == 0) {
-            String account = joinData.getString(CommonConstant.DATA_KEY_ACCOUNT);
-            ZJHGameRoomNew room = (ZJHGameRoomNew) RoomManage.gameRoomMap.get(joinData.getString(CommonConstant.DATA_KEY_ROOM_NO));
             Playerinfo player = room.getPlayerMap().get(account);
             JSONObject obj = new JSONObject();
             obj.put("account", player.getAccount());
@@ -113,6 +115,10 @@ public class ZJHGameEventDealNew {
             obj.put("userStatus", room.getUserPacketMap().get(account).getStatus());
             // 通知玩家
             CommonConstant.sendMsgEventToAll(room.getAllUUIDList(account), obj.toString(), "playerEnterPush_ZJH");
+        } else {
+            JSONObject result = new JSONObject();
+            result.put("index", room.getPlayerMap().get(account).getMyIndex());
+            CommonConstant.sendMsgEventToAll(room.getAllUUIDList(), String.valueOf(result), "userReconnectPush");
         }
     }
 
@@ -587,6 +593,7 @@ public class ZJHGameEventDealNew {
                 JSONObject result = new JSONObject();
                 result.put(CommonConstant.RESULT_KEY_CODE,CommonConstant.GLOBAL_YES);
                 result.put("type",ZJHConstant.GAME_ACTION_TYPE_FINAL_SUMMARY);
+                result.put("isClose",CommonConstant.GLOBAL_NO);
                 result.put("jiesuanData",room.obtainFinalSummaryData());
                 CommonConstant.sendMsgEventToAll(room.getAllUUIDList(),result.toString(),"gameActionPush_ZJH");
             }
@@ -681,6 +688,11 @@ public class ZJHGameEventDealNew {
                 result.put("myScore", room.getUserPacketMap().get(account).getScore());
                 result.put("type", ZJHConstant.GAME_ACTION_TYPE_GIVE_UP);
                 result.put("isGameover", isGameOver);
+                // 自己的牌型可知 20180827 wqm
+                if (uid.equals(account)) {
+                    result.put("mypai", room.getUserPacketMap().get(account).getPai());
+                    result.put("paiType", room.getUserPacketMap().get(account).getType());
+                }
                 if(isGameOver==1){
                     result.put("jiesuan",obtainSummaryData(room));
                     result.put("showPai",room.getUserPacketMap().get(uid).getBipaiList());
@@ -1255,6 +1267,7 @@ public class ZJHGameEventDealNew {
                     room.setGameStatus(ZJHConstant.ZJH_GAME_STATUS_FINAL_SUMMARY);
                     result.put(CommonConstant.RESULT_KEY_CODE,CommonConstant.GLOBAL_YES);
                     result.put("type",ZJHConstant.GAME_ACTION_TYPE_FINAL_SUMMARY);
+                    result.put("isClose",CommonConstant.GLOBAL_YES);
                     result.put("jiesuanData",room.obtainFinalSummaryData());
                     CommonConstant.sendMsgEventToAll(room.getAllUUIDList(),result.toString(),"gameActionPush_ZJH");
                 } else {// 刷新数据
@@ -1395,8 +1408,11 @@ public class ZJHGameEventDealNew {
             obj.put("timer", room.getXzTimer());
         }
         obj.put("myIndex", room.getPlayerMap().get(account).getMyIndex());
-        obj.put("mypai", room.getUserPacketMap().get(account).getPai());
-        obj.put("paiType", room.getUserPacketMap().get(account).getType());
+        if (room.getUserPacketMap().get(account).getStatus() == ZJHConstant.ZJH_USER_STATUS_KP
+            || room.getUserPacketMap().get(account).getStatus() == ZJHConstant.ZJH_USER_STATUS_QP) {
+            obj.put("mypai", room.getUserPacketMap().get(account).getPai());
+            obj.put("paiType", room.getUserPacketMap().get(account).getType());
+        }
         obj.put("users", room.getAllPlayer());
         obj.put("isGendaodi", room.getUserPacketMap().get(account).isGenDaoDi);
         obj.put("nextNum", room.getPlayerIndex(room.getFocus()));
@@ -1419,6 +1435,10 @@ public class ZJHGameEventDealNew {
         }
         if (room.getGameStatus()==ZJHConstant.ZJH_GAME_STATUS_FINAL_SUMMARY) {
             obj.put("jiesuanData", room.getFinalSummaryData());
+        }
+        if (room.getJieSanTime() > 0) {
+            obj.put("jiesan", CommonConstant.GLOBAL_YES);
+            obj.put("jiesanData", room.getJieSanData());
         }
         return obj;
     }

@@ -57,6 +57,7 @@ public class BaseGameEvent {
         server.addDisconnectListener(new DisconnectListener() {
             @Override
             public void onDisconnect(SocketIOClient client) {
+                CommonConstant.sendDisconnectToAll(client);
                 logger.info("用户 IP = [{}] with sessionId = [{}] 离线了！！！", obtainClientIp(client), client.getSessionId());
             }
         });

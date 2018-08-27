@@ -479,4 +479,20 @@ public class CommonConstant {
             client.sendEvent(eventName,JSONObject.fromObject(data));
         }
     }
+
+    public static void sendDisconnectToAll(SocketIOClient client) {
+        if (client.has(DATA_KEY_ACCOUNT)) {
+            String account = client.get(DATA_KEY_ACCOUNT);
+            for (String roomNo : RoomManage.gameRoomMap.keySet()) {
+                if (RoomManage.gameRoomMap.get(roomNo).getPlayerMap().containsKey(account) &&
+                    RoomManage.gameRoomMap.get(roomNo).getPlayerMap().get(account) != null) {
+                    JSONObject result = new JSONObject();
+                    result.put("index", RoomManage.gameRoomMap.get(roomNo).getPlayerMap().get(account).getMyIndex());
+                    sendMsgEventToAll(RoomManage.gameRoomMap.get(roomNo).getAllUUIDList(), String.valueOf(result), "userDisconnectPush");
+                    break;
+                }
+            }
+        }
+
+    }
 }
