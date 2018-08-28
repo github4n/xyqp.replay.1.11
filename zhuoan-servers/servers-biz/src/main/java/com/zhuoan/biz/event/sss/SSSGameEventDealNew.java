@@ -188,7 +188,7 @@ public class SSSGameEventDealNew {
             room.setGameStatus(SSSConstant.SSS_GAME_STATUS_READY);
         }
         // 当前准备人数大于最低开始人数开始游戏
-        if (room.getNowReadyCount()==room.getMinPlayer()) {
+        if (room.getRoomType() != CommonConstant.ROOM_TYPE_FK && room.getNowReadyCount()==room.getMinPlayer()) {
             final int readyTime;
             if (!Dto.isObjNull(room.getSetting())&&room.getSetting().containsKey("goldready")) {
                 readyTime = room.getSetting().getInt("goldready");
@@ -210,7 +210,7 @@ public class SSSGameEventDealNew {
             JSONObject result = new JSONObject();
             result.put("index",room.getPlayerMap().get(account).getMyIndex());
             result.put("showTimer",CommonConstant.GLOBAL_NO);
-            if (room.getNowReadyCount()>=room.getMinPlayer()) {
+            if (room.getRoomType() != CommonConstant.ROOM_TYPE_FK && room.getNowReadyCount()>=room.getMinPlayer()) {
                 result.put("showTimer",CommonConstant.GLOBAL_YES);
             }
             result.put("timer",room.getTimeLeft());
