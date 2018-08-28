@@ -116,6 +116,7 @@ public class ZJHGameEventDealNew {
             // 通知玩家
             CommonConstant.sendMsgEventToAll(room.getAllUUIDList(account), obj.toString(), "playerEnterPush_ZJH");
         } else {
+            room.getPlayerMap().get(account).setStatus(CommonConstant.GLOBAL_YES);
             JSONObject result = new JSONObject();
             result.put("index", room.getPlayerMap().get(account).getMyIndex());
             CommonConstant.sendMsgEventToAll(room.getAllUUIDList(), String.valueOf(result), "userReconnectPush");

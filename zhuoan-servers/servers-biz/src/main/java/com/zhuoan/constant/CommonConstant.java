@@ -486,6 +486,7 @@ public class CommonConstant {
             for (String roomNo : RoomManage.gameRoomMap.keySet()) {
                 if (RoomManage.gameRoomMap.get(roomNo).getPlayerMap().containsKey(account) &&
                     RoomManage.gameRoomMap.get(roomNo).getPlayerMap().get(account) != null) {
+                    RoomManage.gameRoomMap.get(roomNo).getPlayerMap().get(account).setStatus(CommonConstant.GLOBAL_NO);
                     JSONObject result = new JSONObject();
                     result.put("index", RoomManage.gameRoomMap.get(roomNo).getPlayerMap().get(account).getMyIndex());
                     sendMsgEventToAll(RoomManage.gameRoomMap.get(roomNo).getAllUUIDList(), String.valueOf(result), "userDisconnectPush");
