@@ -1326,7 +1326,7 @@ public class ZJHGameEventDealNew {
         result.put("data",obtainRoomData(roomNo,account));
         // 通知玩家
         CommonConstant.sendMsgEventToSingle(client,result.toString(),"reconnectGamePush_ZJH");
-        // 重连通知其他玩家
+
         JSONObject obj = new JSONObject();
         obj.put("index", room.getPlayerMap().get(account).getMyIndex());
         CommonConstant.sendMsgEventToAll(room.getAllUUIDList(), String.valueOf(obj), "userReconnectPush");
