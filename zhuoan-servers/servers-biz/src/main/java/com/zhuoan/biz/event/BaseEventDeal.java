@@ -2591,6 +2591,9 @@ public class BaseEventDeal {
             return -1;
         }
         JSONObject baseInfo = postData.getJSONObject("base_info");
+        if (baseInfo.containsKey("roomType") && baseInfo.getInt("roomType") == CommonConstant.ROOM_TYPE_FK) {
+            return 0;
+        }
         if (!baseInfo.containsKey("enterYB")||!baseInfo.containsKey("player")||!baseInfo.containsKey("yuanbao")) {
             return -1;
         }

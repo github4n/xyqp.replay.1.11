@@ -698,17 +698,19 @@ public class SSSGameEventDealNew {
                             }
                             // 坐庄模式元宝不足
                             if (room.getBankerType()== SSSConstant.SSS_BANKER_TYPE_ZZ) {
-                                if (room.getPlayerMap().get(room.getBanker()).getScore()<room.getMinBankerScore()) {
-                                    // 庄家设为空
-                                    room.setBanker(null);
-                                    // 设置游戏状态
-                                    room.setGameStatus(SSSConstant.SSS_GAME_STATUS_TO_BE_BANKER);
-                                    // 初始化倒计时
-                                    room.setTimeLeft(SSSConstant.SSS_TIMER_INIT);
-                                    // 重置玩家状态
-                                    for (String uuid : room.getUserPacketMap().keySet()) {
-                                        if (room.getUserPacketMap().containsKey(uuid)&&room.getUserPacketMap().get(uuid)!=null) {
-                                            room.getUserPacketMap().get(uuid).setStatus(SSSConstant.SSS_TIMER_INIT);
+                                if (room.getRoomType() != CommonConstant.ROOM_TYPE_FK) {
+                                    if (room.getPlayerMap().get(room.getBanker()).getScore()<room.getMinBankerScore()) {
+                                        // 庄家设为空
+                                        room.setBanker(null);
+                                        // 设置游戏状态
+                                        room.setGameStatus(SSSConstant.SSS_GAME_STATUS_TO_BE_BANKER);
+                                        // 初始化倒计时
+                                        room.setTimeLeft(SSSConstant.SSS_TIMER_INIT);
+                                        // 重置玩家状态
+                                        for (String uuid : room.getUserPacketMap().keySet()) {
+                                            if (room.getUserPacketMap().containsKey(uuid)&&room.getUserPacketMap().get(uuid)!=null) {
+                                                room.getUserPacketMap().get(uuid).setStatus(SSSConstant.SSS_TIMER_INIT);
+                                            }
                                         }
                                     }
                                 }
@@ -1111,23 +1113,25 @@ public class SSSGameEventDealNew {
                     CommonConstant.sendMsgEventToAll(room.getAllUUIDList(), result.toString(), "exitRoomPush_SSS");
                 }
                 // 坐庄模式
-                if (room.getBankerType() == SSSConstant.SSS_BANKER_TYPE_ZZ) {
-                    // 房主退出且房间内有其他玩家
-                    if (account.equals(room.getBanker())&&room.getUserPacketMap().size()>0) {
-                        // 庄家设为空
-                        room.setBanker(null);
-                        // 设置游戏状态
-                        room.setGameStatus(SSSConstant.SSS_GAME_STATUS_TO_BE_BANKER);
-                        // 初始化倒计时
-                        room.setTimeLeft(SSSConstant.SSS_TIMER_INIT);
-                        // 重置玩家状态
-                        for (String uuid : room.getUserPacketMap().keySet()) {
-                            if (room.getUserPacketMap().containsKey(uuid)&&room.getUserPacketMap().get(uuid)!=null) {
-                                room.getUserPacketMap().get(uuid).setStatus(SSSConstant.SSS_USER_STATUS_INIT);
+                if (room.getGameStatus() != SSSConstant.SSS_GAME_STATUS_FINAL_SUMMARY) {
+                    if (room.getBankerType() == SSSConstant.SSS_BANKER_TYPE_ZZ) {
+                        // 房主退出且房间内有其他玩家
+                        if (account.equals(room.getBanker())&&room.getUserPacketMap().size()>0) {
+                            // 庄家设为空
+                            room.setBanker(null);
+                            // 设置游戏状态
+                            room.setGameStatus(SSSConstant.SSS_GAME_STATUS_TO_BE_BANKER);
+                            // 初始化倒计时
+                            room.setTimeLeft(SSSConstant.SSS_TIMER_INIT);
+                            // 重置玩家状态
+                            for (String uuid : room.getUserPacketMap().keySet()) {
+                                if (room.getUserPacketMap().containsKey(uuid)&&room.getUserPacketMap().get(uuid)!=null) {
+                                    room.getUserPacketMap().get(uuid).setStatus(SSSConstant.SSS_USER_STATUS_INIT);
+                                }
                             }
+                            changeGameStatus(room);
+                            return;
                         }
-                        changeGameStatus(room);
-                        return;
                     }
                 }
                 // 房间内所有玩家都已经完成准备且人数大于最低开始人数通知开始游戏
@@ -1334,10 +1338,11 @@ public class SSSGameEventDealNew {
                 }
                 // 坐庄模式
                 obj.put("isBanker",CommonConstant.GLOBAL_NO);
-                if (room.getBankerType()== SSSConstant.SSS_BANKER_TYPE_ZZ) {
+                if (room.getBankerType() == SSSConstant.SSS_BANKER_TYPE_ZZ) {
                     // 上庄阶段或结算阶段庄家分数不足
                     if (room.getGameStatus()==SSSConstant.SSS_GAME_STATUS_TO_BE_BANKER||
-                        (room.getGameStatus()==SSSConstant.SSS_GAME_STATUS_SUMMARY&&room.getPlayerMap().get(room.getBanker()).getScore()<room.getMinBankerScore())) {
+                        (room.getRoomType() != CommonConstant.ROOM_TYPE_FK && room.getGameStatus() == SSSConstant.SSS_GAME_STATUS_SUMMARY
+                            && room.getPlayerMap().get(room.getBanker()).getScore() < room.getMinBankerScore())) {
                         obj.put("isBanker",CommonConstant.GLOBAL_YES);
                         obj.put("bankerMinScore",room.getMinBankerScore());
                         obj.put("bankerIsUse",CommonConstant.GLOBAL_YES);
@@ -1456,7 +1461,7 @@ public class SSSGameEventDealNew {
                 if (room.getGameStatus()==SSSConstant.SSS_GAME_STATUS_TO_BE_BANKER) {
                     roomData.put("bankerMinScore",room.getMinBankerScore());
                     roomData.put("bankerIsUse",CommonConstant.GLOBAL_NO);
-                    if (room.getPlayerMap().get(account).getScore()>=room.getMinBankerScore()) {
+                    if (room.getRoomType() == CommonConstant.ROOM_TYPE_FK || room.getPlayerMap().get(account).getScore()>=room.getMinBankerScore()) {
                         roomData.put("bankerIsUse",CommonConstant.GLOBAL_YES);
                     }
                 }
