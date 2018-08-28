@@ -460,6 +460,12 @@ public class BaseEventDeal {
         } else if (baseInfo.getInt("roomType") == CommonConstant.ROOM_TYPE_FK || gameRoom.getRoomType() == CommonConstant.ROOM_TYPE_DK){
             gameRoom.setReadyOvertime(CommonConstant.READY_OVERTIME_NOTHING);
         }
+        // 房卡场不同平台无法加入  20180828 wqm
+        if (baseInfo.getInt("roomType") == CommonConstant.ROOM_TYPE_FK) {
+            if (userInfo.containsKey("platform")) {
+                gameRoom.setPlatform(userInfo.getString("platform"));
+            }
+        }
         // 玩家人数
         gameRoom.setPlayerCount(playerNum);
         gameRoom.setLastIndex(playerNum);
@@ -783,9 +789,16 @@ public class BaseEventDeal {
                     CommonConstant.sendMsgEventToSingle(client, String.valueOf(result), "enterRoomPush_NN");
                     return;
                 }
-            } else if (room.getRoomType() == CommonConstant.ROOM_TYPE_FK && userInfo.containsKey("roomcard")) {
+            } else if (room.getRoomType() == CommonConstant.ROOM_TYPE_FK) {
+                if (!Dto.stringIsNULL(room.getPlatform()) && userInfo.containsKey("platform") &&
+                    !room.getPlatform().equals(userInfo.getString("platform"))) {
+                    result.element(CommonConstant.RESULT_KEY_CODE, CommonConstant.GLOBAL_NO);
+                    result.element(CommonConstant.RESULT_KEY_MSG, "房间不存在");
+                    CommonConstant.sendMsgEventToSingle(client, String.valueOf(result), "enterRoomPush_NN");
+                    return;
+                }
                 String updateType = room.getCurrencyType();
-                if (userInfo.getInt(updateType) < room.getEnterScore()) {
+                if (!userInfo.containsKey(updateType) || userInfo.getDouble(updateType) < room.getEnterScore()) {
                     result.element(CommonConstant.RESULT_KEY_CODE, CommonConstant.GLOBAL_NO);
                     if ("yuanbao".equals(updateType)) {
                         result.element(CommonConstant.RESULT_KEY_MSG, "元宝不足");

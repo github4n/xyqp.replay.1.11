@@ -207,6 +207,10 @@ public class GameRoom {
      * 货币类型
      */
     private String currencyType;
+    /**
+     * 平台标识
+     */
+    private String platform;
 
     public int getLastIndex() {
         return lastIndex;
@@ -582,6 +586,14 @@ public class GameRoom {
 
     public void setCurrencyType(String currencyType) {
         this.currencyType = currencyType;
+    }
+
+    public String getPlatform() {
+        return platform;
+    }
+
+    public void setPlatform(String platform) {
+        this.platform = platform;
     }
 
     /**
