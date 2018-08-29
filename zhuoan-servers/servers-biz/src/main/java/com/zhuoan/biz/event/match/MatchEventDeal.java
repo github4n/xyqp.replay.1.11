@@ -1068,9 +1068,9 @@ public class MatchEventDeal {
             if (realPlayerList.size() > 0) {
                 int realSize = realPlayerList.size();
                 // 机器人填满房间
-                for (int i = realSize; i <= perCount - realSize; i++) {
+                for (int i = 0; i < perCount - realSize; i++) {
                     String robotAccount = getRobotList(robotList);
-                    realPlayerList.add(realSize, robotAccount);
+                    realPlayerList.add(robotAccount);
                     changeRobotInfo(matchNum, robotAccount, 0, 1, 17);
                 }
                 // 创建一个房间实体
