@@ -205,7 +205,7 @@ public class BaseEventDeal {
         }
         if (!checkBaseInfo(postData.getJSONObject("base_info"),postData.getInt("gid"))) {
             result.element(CommonConstant.RESULT_KEY_CODE, CommonConstant.GLOBAL_NO);
-            result.element(CommonConstant.RESULT_KEY_MSG, "参数不正确");
+            result.element(CommonConstant.RESULT_KEY_MSG, "敬请期待");
             CommonConstant.sendMsgEventToSingle(client, String.valueOf(result), "enterRoomPush_NN");
             return;
         }
@@ -339,6 +339,9 @@ public class BaseEventDeal {
         }
         if (postData.containsKey("match_num")&&gameRoom.getRoomType()==CommonConstant.ROOM_TYPE_MATCH) {
             gameRoom.setMatchNum(postData.getString("match_num"));
+        }
+        if (postData.containsKey("clubCode")) {
+            gameRoom.setClubCode(postData.getString("clubCode"));
         }
         gameRoom.setRoomNo(roomNo);
         gameRoom.setRoomInfo(baseInfo);

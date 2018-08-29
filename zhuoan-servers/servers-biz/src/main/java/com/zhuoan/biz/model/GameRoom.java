@@ -211,6 +211,10 @@ public class GameRoom {
      * 平台标识
      */
     private String platform;
+    /**
+     * 俱乐部编号
+     */
+    private String clubCode;
 
     public int getLastIndex() {
         return lastIndex;
@@ -594,6 +598,14 @@ public class GameRoom {
 
     public void setPlatform(String platform) {
         this.platform = platform;
+    }
+
+    public String getClubCode() {
+        return clubCode;
+    }
+
+    public void setClubCode(String clubCode) {
+        this.clubCode = clubCode;
     }
 
     /**

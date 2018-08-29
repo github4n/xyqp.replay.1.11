@@ -6,6 +6,7 @@ import com.corundumstudio.socketio.SocketIOServer;
 import com.za.game.remote.iservice.IService;
 import com.zhuoan.biz.event.BaseGameEvent;
 import com.zhuoan.biz.event.bdx.BDXGameEvent;
+import com.zhuoan.biz.event.club.ClubEvent;
 import com.zhuoan.biz.event.ddz.DdzGameEvent;
 import com.zhuoan.biz.event.gppj.GPPJGameEvent;
 import com.zhuoan.biz.event.match.MatchEvent;
@@ -108,6 +109,9 @@ public class GameMain implements SocketIoManagerService {
 
     @Resource
     private MatchEvent matchEvent;
+
+    @Resource
+    private ClubEvent clubEvent;
 
     @Resource
     private RobotEventDeal robotEventDeal;
@@ -339,6 +343,9 @@ public class GameMain implements SocketIoManagerService {
 
         /* 比赛场 */
         matchEvent.listenerMatchGameEvent(server);
+
+        /* 俱乐部 */
+        clubEvent.listenerClubEvent(server);
 
     }
 }

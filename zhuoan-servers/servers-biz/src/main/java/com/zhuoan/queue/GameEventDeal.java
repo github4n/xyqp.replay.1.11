@@ -3,6 +3,7 @@ package com.zhuoan.queue;
 import com.corundumstudio.socketio.SocketIOClient;
 import com.zhuoan.biz.event.BaseEventDeal;
 import com.zhuoan.biz.event.bdx.BDXGameEventDealNew;
+import com.zhuoan.biz.event.club.ClubEventDeal;
 import com.zhuoan.biz.event.ddz.DdzGameEventDeal;
 import com.zhuoan.biz.event.gppj.GPPJGameEventDeal;
 import com.zhuoan.biz.event.match.MatchEventDeal;
@@ -69,6 +70,9 @@ public class GameEventDeal {
     private MatchEventDeal matchEventDeal;
 
     @Resource
+    private ClubEventDeal clubEventDeal;
+
+    @Resource
     private SocketIoManagerService socketIoManagerService;
 
     public void eventsMQ(Message message) {
@@ -123,6 +127,40 @@ public class GameEventDeal {
             case CommonConstant.GAME_MATCH:
                 // 比赛场
                 matchEvents(data, sorts, client);
+                break;
+            case CommonConstant.GAME_CLUB:
+                clubEvents(data, sorts, client);
+                break;
+            default:
+                break;
+        }
+    }
+
+    private void clubEvents(Object data, Integer sorts, SocketIOClient client) {
+        switch (sorts) {
+            case ClubConstant.CLUB_EVENT_GET_MY_CLUB_LIST:
+                clubEventDeal.getMyClubList(client, data);
+                break;
+            case ClubConstant.CLUB_EVENT_GET_CLUB_MEMBERS:
+                clubEventDeal.getClubMembers(client, data);
+                break;
+            case ClubConstant.CLUB_EVENT_GET_CLUB_SETTING:
+                clubEventDeal.getClubSetting(client, data);
+                break;
+            case ClubConstant.CLUB_EVENT_CHANGE_CLUB_SETTING:
+                clubEventDeal.changeClubSetting(client, data);
+                break;
+            case ClubConstant.CLUB_EVENT_EXIT_CLUB:
+                clubEventDeal.exitClub(client, data);
+                break;
+            case ClubConstant.CLUB_EVENT_TO_TOP:
+                clubEventDeal.toTop(client, data);
+                break;
+            case ClubConstant.CLUB_EVENT_REFRESH_CLUB_INFO:
+                clubEventDeal.refreshClubInfo(client, data);
+                break;
+            case ClubConstant.CLUB_EVENT_QUICK_JOIN_CLUB_ROOM:
+                clubEventDeal.quickJoinClubRoom(client, data);
                 break;
             default:
                 break;
