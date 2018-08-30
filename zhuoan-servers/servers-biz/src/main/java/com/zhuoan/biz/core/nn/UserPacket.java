@@ -395,7 +395,7 @@ public class UserPacket implements Serializable{
 	public UserPacket(Packer [] ps, List<Integer> types){
 		this(ps,false,types);
 	}
-	
+
 	/**
 	 * 构造方法
 	 * @param ps 牌

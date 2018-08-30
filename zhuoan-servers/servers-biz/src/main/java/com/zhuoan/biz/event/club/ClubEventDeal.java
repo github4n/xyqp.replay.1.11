@@ -319,7 +319,7 @@ public class ClubEventDeal {
             JSONObject clubInfo = clubBiz.getClubByCode(clubCode);
             if (!Dto.isObjNull(clubInfo)) {
                 postData.put("base_info",clubInfo.getString("quick_setting"));
-                // TODO: 2018/8/29 gid取值 
+                // TODO: 2018/8/29 gid取值
                 postData.put("gid",4);
                 baseEventDeal.createRoomBase(client,postData);
             }

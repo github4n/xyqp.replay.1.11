@@ -651,8 +651,10 @@ public class DdzCore {
             int bandNum = (type-2) * num * choice.size()/type;
             // 足够带
             if (bandChoice.size() >= bandNum) {
-                choice.addAll(bandChoice.subList(0, bandNum));
-                list.add(choice);
+                List<String> newChoice = new ArrayList<>();
+                newChoice.addAll(choice);
+                newChoice.addAll(bandChoice.subList(0, bandNum));
+                list.add(newChoice);
             }
         }
         return list;
@@ -742,23 +744,33 @@ public class DdzCore {
 
     public static void main(String[] args) {
         long start = System.currentTimeMillis();
-        List<List<String>> list = shuffleAndDeal();
-        System.out.println(list.get(0));
-        System.out.println(obtainRobotCard(new ArrayList<String>(),list.get(0)));
-        System.out.println(list.get(1));
-        System.out.println(obtainRobotCard(new ArrayList<String>(),list.get(1)));
-        System.out.println(list.get(2));
-        System.out.println(obtainRobotCard(new ArrayList<String>(),list.get(2)));
+        List<String> list = new ArrayList<>();
         List<String> list1 = new ArrayList<>();
-        list1.add("1-3");
         list1.add("2-3");
-        list1.add("3-3");
-        list1.add("4-4");
-        list1.add("1-4");
-        list1.add("2-4");
-        list1.add("1-5");
-        list1.add("2-6");
-        System.out.println(obtainRobotCard(new ArrayList<String>(),list1));
+        list1.add("2-8");
+        list1.add("3-8");
+        list1.add("4-8");
+
+        list.add("5-1");
+        list.add("1-2");
+        list.add("4-1");
+        list.add("3-1");
+        list.add("1-1");
+        list.add("4-13");
+        list.add("2-13");
+        list.add("1-13");
+        list.add("3-10");
+        list.add("2-9");
+        list.add("4-6");
+        list.add("2-6");
+        list.add("1-6");
+        list.add("3-4");
+        list.add("2-4");
+        list.add("1-4");
+        list.add("4-3");
+        list.add("3-3");
+        list.add("1-3");
+        System.out.println(obtainRobotCard(list1,list));
         long end = System.currentTimeMillis();
         System.out.println(end-start);
     }
