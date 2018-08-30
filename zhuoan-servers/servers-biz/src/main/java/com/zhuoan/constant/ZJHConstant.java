@@ -113,6 +113,10 @@ public class ZJHConstant {
      */
     public static final int ZJH_TIMER_XZ = 60;
     /**
+     * 炸金花倒计时-解散
+     */
+    public static final int ZJH_TIMER_CLOSE = 60;
+    /**
      * 炸金花游戏事件-跟到底
      */
     public static final int GAME_ACTION_TYPE_GDD = 1;

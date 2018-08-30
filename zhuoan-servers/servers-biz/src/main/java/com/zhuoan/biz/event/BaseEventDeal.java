@@ -1505,8 +1505,16 @@ public class BaseEventDeal {
         room.setWfType(wanFa);
         // 玩法类型 经典模式、必闷三圈、激情模式
         room.setGameType(baseInfo.getInt("type"));
-        // 设置下注时间
-        room.setXzTimer(ZJHConstant.ZJH_TIMER_XZ);
+        // 倒计时及满人可配  20180830  wqm
+        JSONObject setting = getGameInfoById(CommonConstant.GAME_ID_ZJH);
+        room.setSetting(setting);
+        if (setting.containsKey("eventTime")) {
+            // 设置下注时间
+            room.setXzTimer(setting.getInt("eventTime"));
+        } else {
+            // 设置下注时间
+            room.setXzTimer(ZJHConstant.ZJH_TIMER_XZ);
+        }
         // 庄家
         room.setBanker(account);
         // 房主

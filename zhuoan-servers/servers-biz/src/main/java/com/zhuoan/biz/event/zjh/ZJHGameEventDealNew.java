@@ -172,16 +172,26 @@ public class ZJHGameEventDealNew {
         }
         // 当前准备人数大于最低开始人数开启定时器
         if (room.getNowReadyCount() == ZJHConstant.ZJH_MIN_START_COUNT) {
-            room.setTimeLeft(ZJHConstant.ZJH_TIMER_READY);
+            // 倒计时可配  20180830  wqm
+            final int readyTime;
+            if (room.getSetting().containsKey("readyTime")) {
+                readyTime = room.getSetting().getInt("readyTime");
+            } else {
+                readyTime = ZJHConstant.ZJH_TIMER_READY;
+            }
+            room.setTimeLeft(readyTime);
             ThreadPoolHelper.executorService.submit(new Runnable() {
                 @Override
                 public void run() {
-                    gameTimerZJH.readyOverTime(roomNo,ZJHConstant.ZJH_GAME_STATUS_READY);
+                    gameTimerZJH.readyOverTime(roomNo,ZJHConstant.ZJH_GAME_STATUS_READY,readyTime);
                 }
             });
         }
+        // 是否满人开始可配  20180830  wqm
+        int minStartCount = !Dto.isObjNull(room.getSetting()) && room.getSetting().containsKey("mustFull") ?
+            room.getPlayerCount() : ZJHConstant.ZJH_MIN_START_COUNT;
         // 房间内所有玩家都已经完成准备且人数大于最低开始人数通知开始游戏,否则通知玩家准备
-        if (room.isAllReady() && room.getPlayerMap().size() >= ZJHConstant.ZJH_MIN_START_COUNT) {
+        if (room.isAllReady() && room.getPlayerMap().size() >= minStartCount) {
             startGame(room);
         } else {
             JSONObject result = new JSONObject();
@@ -247,11 +257,14 @@ public class ZJHGameEventDealNew {
         room.getGameProcess().put("faPai",gameProcessFP);
         room.setGameStatus(ZJHConstant.ZJH_GAME_STATUS_GAME);
         final String player = room.getNextOperationPlayer(room.getBanker());
+        // 下注时间可配  20180830  wqm
+        final int eventTime = !Dto.isObjNull(room.getSetting()) && room.getSetting().containsKey("eventTime") ?
+            room.getSetting().getInt("eventTime") : ZJHConstant.ZJH_TIMER_XZ;
         // 检查下家跟注状态
         ThreadPoolHelper.executorService.submit(new Runnable() {
             @Override
             public void run() {
-                gameTimerZJH.gameOverTime(room.getRoomNo(),ZJHConstant.ZJH_GAME_STATUS_GAME,player);
+                gameTimerZJH.gameOverTime(room.getRoomNo(),ZJHConstant.ZJH_GAME_STATUS_GAME,player, eventTime);
             }
         });
         JSONObject result = obtainStartData(room,player);
@@ -398,10 +411,13 @@ public class ZJHGameEventDealNew {
         room.addXzPlayer(myIndex,room.getPlayerIndex(nextPlayer));
         if (type!=ZJHConstant.GAME_ACTION_TYPE_COMPARE) {
             // 检查下家跟注状态
+            // 下注时间可配  20180830  wqm
+            final int eventTime = !Dto.isObjNull(room.getSetting()) && room.getSetting().containsKey("eventTime") ?
+                room.getSetting().getInt("eventTime") : ZJHConstant.ZJH_TIMER_XZ;
             ThreadPoolHelper.executorService.submit(new Runnable() {
                 @Override
                 public void run() {
-                    gameTimerZJH.gameOverTime(room.getRoomNo(),ZJHConstant.ZJH_GAME_STATUS_GAME,nextPlayer);
+                    gameTimerZJH.gameOverTime(room.getRoomNo(),ZJHConstant.ZJH_GAME_STATUS_GAME,nextPlayer,eventTime);
                 }
             });
         }
@@ -565,11 +581,14 @@ public class ZJHGameEventDealNew {
                             }
                         }
                         if(isGameOver!=1){
+                            // 下注时间可配  20180830  wqm
+                            final int eventTime = !Dto.isObjNull(room.getSetting()) && room.getSetting().containsKey("eventTime") ?
+                                room.getSetting().getInt("eventTime") : ZJHConstant.ZJH_TIMER_XZ;
                             // 检查下家跟注状态
                             ThreadPoolHelper.executorService.submit(new Runnable() {
                                 @Override
                                 public void run() {
-                                    gameTimerZJH.gameOverTime(room.getRoomNo(),ZJHConstant.ZJH_GAME_STATUS_GAME,nextPlayer);
+                                    gameTimerZJH.gameOverTime(room.getRoomNo(),ZJHConstant.ZJH_GAME_STATUS_GAME,nextPlayer, eventTime);
                                 }
                             });
                         }
@@ -660,11 +679,14 @@ public class ZJHGameEventDealNew {
         }
         // 确定下次操作的玩家
         final String nextPlayer = room.getNextOperationPlayer(account);
+        // 下注时间可配  20180830  wqm
+        final int eventTime = !Dto.isObjNull(room.getSetting()) && room.getSetting().containsKey("eventTime") ?
+            room.getSetting().getInt("eventTime") : ZJHConstant.ZJH_TIMER_XZ;
         // 检查下家跟注状态
         ThreadPoolHelper.executorService.submit(new Runnable() {
             @Override
             public void run() {
-                gameTimerZJH.gameOverTime(room.getRoomNo(),ZJHConstant.ZJH_GAME_STATUS_GAME,nextPlayer);
+                gameTimerZJH.gameOverTime(room.getRoomNo(),ZJHConstant.ZJH_GAME_STATUS_GAME,nextPlayer,eventTime);
             }
         });
         int nextNum = room.getPlayerIndex(nextPlayer);
@@ -1173,8 +1195,11 @@ public class ZJHGameEventDealNew {
                 if (postData.containsKey("notSendToMe")) {
                     CommonConstant.sendMsgEventToAll(room.getAllUUIDList(), result.toString(), "exitRoomPush_ZJH");
                 }
+                // 是否满人开始可配  20180830  wqm
+                int minStartCount = !Dto.isObjNull(room.getSetting()) && room.getSetting().containsKey("mustFull") ?
+                    room.getPlayerCount() : ZJHConstant.ZJH_MIN_START_COUNT;
                 // 房间内所有玩家都已经完成准备且人数大于两人通知开始游戏
-                if (room.isAllReady() && room.getPlayerMap().size() >= ZJHConstant.ZJH_MIN_START_COUNT) {
+                if (room.isAllReady() && room.getPlayerMap().size() >= minStartCount) {
                     startGame(room);
                 }
                 // 所有人都退出清除房间数据
@@ -1217,11 +1242,13 @@ public class ZJHGameEventDealNew {
             int type = postData.getInt("type");
             // 有人发起解散设置解散时间
             if (type == CommonConstant.CLOSE_ROOM_AGREE && room.getJieSanTime() == 0) {
-                room.setJieSanTime(60);
+                final int closeTime = !Dto.isObjNull(room.getSetting()) && room.getSetting().containsKey("closeTime") ?
+                    room.getSetting().getInt("closeTime") : ZJHConstant.ZJH_TIMER_CLOSE;
+                room.setJieSanTime(closeTime);
                 ThreadPoolHelper.executorService.submit(new Runnable() {
                     @Override
                     public void run() {
-                        gameTimerZJH.closeRoomOverTime(roomNo,room.getJieSanTime());
+                        gameTimerZJH.closeRoomOverTime(roomNo, closeTime);
                     }
                 });
             }
@@ -1362,7 +1389,7 @@ public class ZJHGameEventDealNew {
         obj.put("room_no", room.getRoomNo());
         obj.put("roomType", room.getRoomType());
         obj.put("game_count", room.getGameCount());
-        obj.put("xzTimer", ZJHConstant.ZJH_TIMER_XZ);
+        obj.put("xzTimer", room.getSetting().containsKey("eventTime") ? room.getSetting().getInt("eventTime"): ZJHConstant.ZJH_TIMER_XZ);
         if (room.getRoomType() == CommonConstant.ROOM_TYPE_YB) {
             StringBuffer roominfo = new StringBuffer();
             roominfo.append("底注:");

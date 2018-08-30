@@ -40,8 +40,8 @@ public class GameTimerZJH {
      * @param roomNo
      * @param gameStatus
      */
-    public void readyOverTime(String roomNo,int gameStatus){
-        for (int i = ZJHConstant.ZJH_TIMER_READY; i >= 0; i--) {
+    public void readyOverTime(String roomNo,int gameStatus, int time){
+        for (int i = time; i >= 0; i--) {
             // 房间存在
             if (RoomManage.gameRoomMap.containsKey(roomNo)&&RoomManage.gameRoomMap.get(roomNo)!=null) {
                 ZJHGameRoomNew room = (ZJHGameRoomNew)RoomManage.gameRoomMap.get(roomNo);
@@ -93,8 +93,8 @@ public class GameTimerZJH {
         }
     }
 
-    public void gameOverTime(String roomNo,int gameStatus,String account){
-        for (int i = ZJHConstant.ZJH_TIMER_XZ; i >= 0; i--) {
+    public void gameOverTime(String roomNo,int gameStatus,String account, int time){
+        for (int i = time; i >= 0; i--) {
             // 房间存在
             if (RoomManage.gameRoomMap.containsKey(roomNo)&&RoomManage.gameRoomMap.get(roomNo)!=null) {
                 ZJHGameRoomNew room = (ZJHGameRoomNew)RoomManage.gameRoomMap.get(roomNo);
@@ -106,7 +106,7 @@ public class GameTimerZJH {
                 if (!room.getFocus().equals(account)) {
                     break;
                 }
-                if (i==ZJHConstant.ZJH_TIMER_XZ-1) {
+                if (i == time-1) {
                     // 跟到底
                     if (room.getUserPacketMap().get(account).isGenDaoDi) {
                         // 组织数据
