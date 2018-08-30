@@ -20,7 +20,7 @@ public class PropsDaoImpl implements PropsDao {
     @Override
     public JSONArray getPropsInfoByPlatform(String platform) {
         String sql = "select id,game_id,props_type,props_name,props_price,cost_type,duration,status,platform,description,img_url " +
-            "from za_props_info where platform=?";
+            "from za_props_info where platform=? and status=1";
         return DBUtil.getObjectListBySQL(sql, new Object[]{platform});
     }
 
