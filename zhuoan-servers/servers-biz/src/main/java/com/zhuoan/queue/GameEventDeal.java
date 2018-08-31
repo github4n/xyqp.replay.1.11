@@ -184,6 +184,9 @@ public class GameEventDeal {
             case MatchConstant.MATCH_EVENT_GET_WINNING_RECORD:
                 matchEventDeal.getWinningRecord(client,data);
                 break;
+            case MatchConstant.MATCH_EVENT_GET_SIGN_UP_INFO:
+                matchEventDeal.getSignUpInfo(client,data);
+                break;
             default:
                 break;
         }

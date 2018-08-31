@@ -128,6 +128,61 @@ public class MatchEventDeal {
         redisService.insertKey(String.valueOf(countKey), String.valueOf(newCountMatchSettings), null);
     }
 
+    /**
+     * 获取报名信息
+     * @param client
+     * @param data
+     */
+    public void getSignUpInfo(SocketIOClient client, Object data) {
+        JSONObject postData = JSONObject.fromObject(data);
+        // 玩家账号
+        String account = postData.getString(CommonConstant.DATA_KEY_ACCOUNT);
+        // 当前所有未开始比赛场信息
+        JSONArray unFullMatchInfo = matchBiz.getUnFullMatchInfo();
+        JSONObject curMatchInfo = new JSONObject();
+        // 该玩家当前所在场次
+        for (int i = 0; i < unFullMatchInfo.size(); i++) {
+            JSONArray playerArray = unFullMatchInfo.getJSONObject(i).getJSONArray("player_array");
+            for (int j = 0; j < playerArray.size(); j++) {
+                if (playerArray.getJSONObject(i).getString("account").equals(account)) {
+                    curMatchInfo = unFullMatchInfo.getJSONObject(i);
+                    break;
+                }
+            }
+        }
+        JSONObject result = new JSONObject();
+        result.put(CommonConstant.RESULT_KEY_CODE, CommonConstant.GLOBAL_NO);
+        if (!Dto.isObjNull(curMatchInfo)) {
+            // 场次信息
+            JSONObject matchInfo = getMatchInfoByNumFromRedis(curMatchInfo.getString("match_num"));
+            if (!Dto.isObjNull(matchInfo)) {
+                result.put(CommonConstant.RESULT_KEY_CODE, CommonConstant.GLOBAL_YES);
+                int type = curMatchInfo.getInt("type");
+                result.put("type", type);
+                result.put("match_name", matchInfo.getString("match_name"));
+                result.put("matchNum", curMatchInfo.getString("match_num"));
+                result.put("signCount", matchInfo.getInt("sign_count"));
+                // 满人开赛传当前人数 定时赛传总时间及剩余时间
+                if (type == MatchConstant.MATCH_TYPE_COUNT) {
+                    result.put("totalCount", matchInfo.getInt("total_count"));
+                } else if (type == MatchConstant.MATCH_TYPE_TIME) {
+                    JSONObject matchSetting = matchBiz.getMatchSettingById(matchInfo.getLong("match_id"), matchInfo.getLong("game_id"));
+                    if (!Dto.isObjNull(matchSetting)) {
+                        JSONArray matchInfoArr = matchSetting.getJSONArray("match_info");
+                        for (int i = 0; i < matchInfoArr.size(); i++) {
+                            if (matchInfoArr.getJSONObject(i).getInt("type") == MatchConstant.MATCH_INFO_TYPE_TIME) {
+                                result.put("totalTime", matchInfoArr.getJSONObject(i).getString("value"));
+                                break;
+                            }
+                        }
+                        String difference = TimeUtil.getDaysBetweenTwoTime(matchSetting.getString("create_time"), TimeUtil.getNowDate(), 1000L);
+                        result.put("timeLeft", difference);
+                    }
+                }
+            }
+        }
+        CommonConstant.sendMsgEventToSingle(client, String.valueOf(result), "getSignUpInfoPush");
+    }
 
     /**
      * 获取比赛场信息

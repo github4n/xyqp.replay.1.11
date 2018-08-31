@@ -13,6 +13,7 @@ public class MatchConstant {
     public static final int MATCH_EVENT_UPDATE_MATCH_COUNT = 3;
     public static final int MATCH_EVENT_CANCEL_SIGN = 4;
     public static final int MATCH_EVENT_GET_WINNING_RECORD = 5;
+    public static final int MATCH_EVENT_GET_SIGN_UP_INFO = 6;
 
     /**
      * 场次类别

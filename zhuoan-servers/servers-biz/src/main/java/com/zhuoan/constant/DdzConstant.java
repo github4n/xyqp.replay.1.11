@@ -144,4 +144,6 @@ public class DdzConstant {
     public static final String DDZ_DATA_KEY_PAI_LIST = "paiList";
     public static final String DDZ_DATA_KEY_AUTO = "auto";
 
+    public static final int DDZ_MAX_RE_SHUFFLE_TIME = 3;
+
 }

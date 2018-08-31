@@ -78,5 +78,15 @@ public class MatchEvent {
                 producerService.sendMessage(matchQueueDestination, new Messages(client, data, CommonConstant.GAME_MATCH, MatchConstant.MATCH_EVENT_GET_WINNING_RECORD));
             }
         });
+
+        /**
+         * 获取比赛场报名信息
+         */
+        server.addEventListener("getSignUpInfo", Object.class, new DataListener<Object>() {
+            @Override
+            public void onData(SocketIOClient client, Object data, AckRequest ackSender) {
+                producerService.sendMessage(matchQueueDestination, new Messages(client, data, CommonConstant.GAME_MATCH, MatchConstant.MATCH_EVENT_GET_SIGN_UP_INFO));
+            }
+        });
     }
 }

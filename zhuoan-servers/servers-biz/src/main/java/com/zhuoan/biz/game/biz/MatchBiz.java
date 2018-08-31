@@ -32,7 +32,7 @@ public interface MatchBiz {
     /**
      * 更新场次信息
      *
-     * @param matchSetting    场次信息
+     * @param matchSetting 场次信息
      */
     void updateMatchSettingById(JSONObject matchSetting);
 
@@ -103,4 +103,10 @@ public interface MatchBiz {
      */
     void updateRobotStatus(String account, int status);
 
+    /**
+     * 获取所有未开赛比赛场
+     *
+     * @return JSONArray
+     */
+    JSONArray getUnFullMatchInfo();
 }

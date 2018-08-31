@@ -1037,6 +1037,8 @@ public class DdzGameEventDeal {
             room.getUserPacketMap().get(account).setIsTrustee(CommonConstant.GLOBAL_NO);
         }
         room.setGameStatus(DdzConstant.DDZ_GAME_STATUS_SUMMARY);
+        // 重置重新发牌次数
+        room.setReShuffleTime(0);
         // 房卡场
         if (room.getRoomType()==CommonConstant.ROOM_TYPE_FK || room.getRoomType() == CommonConstant.ROOM_TYPE_DK) {
             for (String account : obtainAllPlayerAccount(roomNo)) {
@@ -1311,8 +1313,12 @@ public class DdzGameEventDeal {
         if (!Dto.stringIsNULL(landlordAccount)) {
             room.setLandlordAccount(landlordAccount);
         }else {
+            int maxShuffleTime = !Dto.isObjNull(room.getSetting()) && room.getSetting().containsKey("max_shuffle_time")
+                ? room.getSetting().getInt("max_shuffle_time") : DdzConstant.DDZ_MAX_RE_SHUFFLE_TIME;
             // 重新开局
-            if (room.getSetting().containsKey("re_shuffle") && room.getSetting().getInt("re_shuffle") == CommonConstant.GLOBAL_YES) {
+            if (room.getSetting().containsKey("re_shuffle") && room.getSetting().getInt("re_shuffle") == CommonConstant.GLOBAL_YES &&
+                room.getReShuffleTime() < maxShuffleTime) {
+                room.setReShuffleTime(room.getReShuffleTime() + 1);
                 room.setFocusIndex(CommonConstant.NO_BANKER_INDEX);
                 return false;
             }

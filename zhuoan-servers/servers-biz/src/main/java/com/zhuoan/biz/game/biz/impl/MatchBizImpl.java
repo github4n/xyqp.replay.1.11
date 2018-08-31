@@ -75,4 +75,9 @@ public class MatchBizImpl implements MatchBiz {
         matchDao.updateRobotStatus(account, status);
     }
 
+    @Override
+    public JSONArray getUnFullMatchInfo() {
+        return matchDao.getUnFullMatchInfo();
+    }
+
 }

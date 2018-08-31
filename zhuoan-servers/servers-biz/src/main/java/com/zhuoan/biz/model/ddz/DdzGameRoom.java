@@ -56,6 +56,18 @@ public class DdzGameRoom extends GameRoom {
      * 最大倍数
      */
     private int maxMultiple;
+    /**
+     * 重新发牌次数
+     */
+    private int reShuffleTime;
+
+    public int getReShuffleTime() {
+        return reShuffleTime;
+    }
+
+    public void setReShuffleTime(int reShuffleTime) {
+        this.reShuffleTime = reShuffleTime;
+    }
 
     public int getMultiple() {
         return multiple;

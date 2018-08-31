@@ -25,14 +25,16 @@ public class MatchDaoImpl implements MatchDao {
         if (!Dto.stringIsNULL(createTime)) {
             sql += " and create_time>'" + createTime + "'";
         }
-        return TimeUtil.transTimestamp(DBUtil.getObjectListBySQL(sql, new Object[]{type}), "create_time", "yyyy-MM-dd HH:mm:ss");
+        JSONArray matchSettings = DBUtil.getObjectListBySQL(sql, new Object[]{type});
+        return Dto.isNull(matchSettings) ? matchSettings : TimeUtil.transTimestamp(matchSettings, "create_time", "yyyy-MM-dd HH:mm:ss");
     }
 
     @Override
     public JSONObject getMatchSettingById(long matchId, long gameId) {
         String sql = "select id,type,game_id,match_name,per_count,player_count,total_round,is_auto,robot_level,must_full,description,online_num,match_cost," +
             "cost_type,reward_info,match_info,rule,promotion,is_use,create_time,platform,memo,reward_detail from za_match_setting where id=? and game_id=?";
-        return TimeUtil.transTimeStamp(DBUtil.getObjectBySQL(sql, new Object[]{matchId, gameId}), "yyyy-MM-dd HH:mm:ss", "create_time");
+        JSONObject matchSetting = DBUtil.getObjectBySQL(sql, new Object[]{matchId, gameId});
+        return Dto.isObjNull(matchSetting) ? matchSetting : TimeUtil.transTimeStamp(matchSetting, "yyyy-MM-dd HH:mm:ss", "create_time");
     }
 
     @Override
@@ -90,6 +92,12 @@ public class MatchDaoImpl implements MatchDao {
     public void updateRobotStatus(String account, int status) {
         String sql = "update za_users set status=? where account=?";
         DBUtil.executeUpdateBySQL(sql, new Object[]{status, account});
+    }
+
+    @Override
+    public JSONArray getUnFullMatchInfo() {
+        String sql = "select id,match_num,match_id,type,player_array from za_match_info where is_full=?";
+        return DBUtil.getObjectListBySQL(sql,new Object[]{0});
     }
 
 }
