@@ -144,7 +144,7 @@ public class MatchEventDeal {
         for (int i = 0; i < unFullMatchInfo.size(); i++) {
             JSONArray playerArray = unFullMatchInfo.getJSONObject(i).getJSONArray("player_array");
             for (int j = 0; j < playerArray.size(); j++) {
-                if (playerArray.getJSONObject(i).getString("account").equals(account)) {
+                if (playerArray.getJSONObject(j).getString("account").equals(account)) {
                     curMatchInfo = unFullMatchInfo.getJSONObject(i);
                     break;
                 }
