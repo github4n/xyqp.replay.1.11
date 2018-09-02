@@ -156,7 +156,8 @@ public class NNGameEventDealNew {
             obj.put("roominfo2", room.getWfType());
         }
         // 房卡场
-        if (room.getRoomType() == CommonConstant.ROOM_TYPE_FK || room.getRoomType() == CommonConstant.ROOM_TYPE_DK) {
+        if (room.getRoomType() == CommonConstant.ROOM_TYPE_FK || room.getRoomType() == CommonConstant.ROOM_TYPE_DK
+            || room.getRoomType() == CommonConstant.ROOM_TYPE_CLUB) {
             StringBuffer roomInfo = new StringBuffer();
             roomInfo.append(room.getWfType());
             obj.put("roominfo",String.valueOf(roomInfo));
@@ -861,7 +862,8 @@ public class NNGameEventDealNew {
         }
         // 通知玩家
         changeGameStatus(room);
-        if (room.getRoomType() == CommonConstant.ROOM_TYPE_FK || room.getRoomType() == CommonConstant.ROOM_TYPE_DK) {
+        if (room.getRoomType() == CommonConstant.ROOM_TYPE_FK || room.getRoomType() == CommonConstant.ROOM_TYPE_DK
+            || room.getRoomType() == CommonConstant.ROOM_TYPE_CLUB) {
             if (room.getGameStatus()==NNConstant.NN_GAME_STATUS_JS&&room.getGameIndex()==room.getGameCount()) {
                 room.setIsClose(CommonConstant.CLOSE_ROOM_TYPE_FINISH);
                 room.setGameStatus(NNConstant.NN_GAME_STATUS_ZJS);
@@ -981,7 +983,8 @@ public class NNGameEventDealNew {
             }
         }
         // 房卡场结算
-        if (room.getRoomType()==CommonConstant.ROOM_TYPE_FK || room.getRoomType() == CommonConstant.ROOM_TYPE_DK) {
+        if (room.getRoomType()==CommonConstant.ROOM_TYPE_FK || room.getRoomType() == CommonConstant.ROOM_TYPE_DK
+            || room.getRoomType() == CommonConstant.ROOM_TYPE_CLUB) {
             room.setNeedFinalSummary(true);
             roomCardSummary(room.getRoomNo());
             // 更新房卡
@@ -1312,9 +1315,10 @@ public class NNGameEventDealNew {
                     room.getGameStatus() == NNConstant.NN_GAME_STATUS_JS) {// 初始及准备阶段可以退出
                     canExit = true;
                 }
-            }else if (room.getRoomType() == CommonConstant.ROOM_TYPE_FK || room.getRoomType() == CommonConstant.ROOM_TYPE_DK) {
+            }else if (room.getRoomType() == CommonConstant.ROOM_TYPE_FK || room.getRoomType() == CommonConstant.ROOM_TYPE_DK
+                || room.getRoomType() == CommonConstant.ROOM_TYPE_CLUB) {
                 if (room.getUserPacketMap().get(account).getPlayTimes()==0) {
-                    if (room.getPayType()==CommonConstant.PAY_TYPE_AA||!room.getOwner().equals(account)) {
+                    if (room.getPayType()==CommonConstant.PAY_TYPE_AA||!room.getOwner().equals(account) || room.getRoomType() == CommonConstant.ROOM_TYPE_CLUB) {
                         canExit = true;
                     }
                 }
@@ -1328,7 +1332,8 @@ public class NNGameEventDealNew {
                 // 更新数据库
                 JSONObject roomInfo = new JSONObject();
                 roomInfo.put("room_no", room.getRoomNo());
-                if (room.getRoomType()!=CommonConstant.ROOM_TYPE_FK&&room.getRoomType()!=CommonConstant.ROOM_TYPE_DK) {
+                if (room.getRoomType()!=CommonConstant.ROOM_TYPE_FK&&room.getRoomType()!=CommonConstant.ROOM_TYPE_DK
+                    && room.getRoomType() != CommonConstant.ROOM_TYPE_CLUB) {
                      roomInfo.put("user_id" + room.getPlayerMap().get(account).getMyIndex(), 0);
                 }
                 // 移除数据
@@ -1439,7 +1444,8 @@ public class NNGameEventDealNew {
                 obj.put("baseNum", room.getBaseNumTimes(RoomManage.gameRoomMap.get(room.getRoomNo()).getPlayerMap().get(account).getScore()));
                 obj.put("users", room.getAllPlayer());
                 obj.put("gameData", room.getGameData(account));
-                if (room.getRoomType()==CommonConstant.ROOM_TYPE_FK || room.getRoomType() == CommonConstant.ROOM_TYPE_DK) {
+                if (room.getRoomType()==CommonConstant.ROOM_TYPE_FK || room.getRoomType() == CommonConstant.ROOM_TYPE_DK
+                    || room.getRoomType() == CommonConstant.ROOM_TYPE_CLUB) {
                     if (room.getGameStatus()==NNConstant.NN_GAME_STATUS_ZJS) {
                         obj.put("jiesuanData", room.getFinalSummary());
                     }

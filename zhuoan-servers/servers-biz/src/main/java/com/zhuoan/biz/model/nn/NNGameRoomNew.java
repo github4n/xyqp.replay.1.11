@@ -326,7 +326,7 @@ public class NNGameRoomNew extends GameRoom{
             obj.put("name", new StringBuffer().append(String.valueOf(val)).append("倍").toString());
             obj.put("val", val);
             if(beiShu>=val||getRoomType()==CommonConstant.ROOM_TYPE_FK||getRoomType()==CommonConstant.ROOM_TYPE_DK
-                || getRoomType() == CommonConstant.ROOM_TYPE_COMPETITIVE){
+                || getRoomType() == CommonConstant.ROOM_TYPE_COMPETITIVE || getRoomType() == CommonConstant.ROOM_TYPE_CLUB){
                 obj.put("isuse",CommonConstant.GLOBAL_YES);
             }else{
                 obj.put("isuse", CommonConstant.GLOBAL_NO);
@@ -366,7 +366,7 @@ public class NNGameRoomNew extends GameRoom{
                 obj.put("name", name);
                 obj.put("val", val);
                 if(beiShu>=val||getRoomType()==CommonConstant.ROOM_TYPE_FK||getRoomType()==CommonConstant.ROOM_TYPE_DK
-                    || getRoomType() == CommonConstant.ROOM_TYPE_COMPETITIVE){
+                    || getRoomType() == CommonConstant.ROOM_TYPE_COMPETITIVE || getRoomType() == CommonConstant.ROOM_TYPE_CLUB){
                     obj.put("isuse", CommonConstant.GLOBAL_YES);
                 }else{
                     obj.put("isuse", CommonConstant.GLOBAL_NO);
