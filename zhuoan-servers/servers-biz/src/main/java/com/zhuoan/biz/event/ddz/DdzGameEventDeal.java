@@ -646,7 +646,7 @@ public class DdzGameEventDeal {
                     break;
                 }
             }
-            if (room.getRoomType() == CommonConstant.ROOM_TYPE_JB && room.getUserPacketMap().get(account).getWinStreakTime() > 0) {
+            if (room.getRoomType() == CommonConstant.ROOM_TYPE_JB && room.getUserPacketMap().get(account).getWinStreakTime() >= 0) {
                 redisService.hset("win_time_info_" + room.getScore(), account, String.valueOf(room.getUserPacketMap().get(account).getWinStreakTime()));
             }
             room.getPlayerMap().remove(account);
