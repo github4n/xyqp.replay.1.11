@@ -54,11 +54,11 @@ public class ClubEventDeal {
             // 当前已经入该俱乐部
             for (int i = 0; i < clubIds.length; i++) {
                 JSONObject clubInfo = clubBiz.getClubById(Long.valueOf(clubIds[i]));
+                JSONObject leaderInfo = userBiz.getUserByID(clubInfo.getLong("leaderId"));
                 JSONObject obj = new JSONObject();
                 obj.put("clubCode", clubInfo.getString("clubCode"));
                 obj.put("clubName", clubInfo.getString("clubName"));
-                // TODO: 2018/8/22 会长头像
-                obj.put("imgUrl", "imgUrl");
+                obj.put("imgUrl", leaderInfo.getString("headimg"));
                 obj.put("isTop",userClub.containsKey("top_club") && Long.valueOf(clubIds[i]) == userClub.getLong("top_club") ? CommonConstant.GLOBAL_YES : CommonConstant.GLOBAL_NO);
                 clubList.add(obj);
             }
@@ -101,26 +101,29 @@ public class ClubEventDeal {
 
     public void getClubSetting(SocketIOClient client, Object data) {
         JSONObject postData = JSONObject.fromObject(data);
-        if (!postData.containsKey(ClubConstant.DATA_KEY_CLUB_CODE)) {
+        if (!postData.containsKey(ClubConstant.DATA_KEY_CLUB_CODE) || !postData.containsKey(CommonConstant.DATA_KEY_ACCOUNT)) {
             return;
         }
         JSONObject result = new JSONObject();
         // 俱乐部编号
         String clubCode = postData.getString(ClubConstant.DATA_KEY_CLUB_CODE);
+        String account = postData.getString(CommonConstant.DATA_KEY_ACCOUNT);
         // 俱乐部信息
         JSONObject clubInfo = clubBiz.getClubByCode(clubCode);
         if (!Dto.isObjNull(clubInfo)) {
-            // TODO: 2018/8/22 会长头像、昵称
-            result.put("leader_img", "todo_img");
-            result.put("leader_name", "todo_name");
-            result.put("clubName", clubInfo.getString("clubName"));
-            result.put("clubCode", clubInfo.getString("clubCode"));
-            JSONArray memberArray = clubBiz.getClubMember(clubInfo.getLong("id"));
-            result.put("memberCount", memberArray == null ? 0 : memberArray.size());
-            result.put("notice", clubInfo.containsKey("notice") ? clubInfo.getString("notice") : "");
-            result.put("setting",clubInfo.containsKey("setting") ? clubInfo.getString("setting") : "");
-            result.put("isLeader", CommonConstant.GLOBAL_YES);
-            CommonConstant.sendMsgEventToSingle(client, String.valueOf(result), "getClubSettingPush");
+            JSONObject leaderInfo = userBiz.getUserByID(clubInfo.getLong("leaderId"));
+            if (!Dto.isObjNull(leaderInfo)) {
+                result.put("leader_img", leaderInfo.getString("headimg"));
+                result.put("leader_name", leaderInfo.getString("name"));
+                result.put("clubName", clubInfo.getString("clubName"));
+                result.put("clubCode", clubInfo.getString("clubCode"));
+                JSONArray memberArray = clubBiz.getClubMember(clubInfo.getLong("id"));
+                result.put("memberCount", memberArray == null ? 0 : memberArray.size());
+                result.put("notice", clubInfo.containsKey("notice") ? clubInfo.getString("notice") : "");
+                result.put("setting",clubInfo.containsKey("setting") ? clubInfo.getString("setting") : "");
+                result.put("isLeader", leaderInfo.getString("account").equals(account) ? CommonConstant.GLOBAL_YES : CommonConstant.GLOBAL_NO);
+                CommonConstant.sendMsgEventToSingle(client, String.valueOf(result), "getClubSettingPush");
+            }
         }
     }
 
@@ -131,12 +134,13 @@ public class ClubEventDeal {
          * 3、修改数据库
          */
         JSONObject postData = JSONObject.fromObject(data);
-        String clubCode = postData.getString("clubCode");
+        String clubCode = postData.containsKey("clubCode") ? postData.getString("clubCode") : "";
         String leader = postData.getString("leader");
         String uuid = postData.getString("uuid");
-        String notice = postData.getString("notice");
-        String setting = postData.getString("setting");
-        String quickSetting = postData.getString("quick_setting");
+        String notice = postData.containsKey("notice") ? postData.getString("notice") : "";
+        String setting = postData.containsKey("setting") ? postData.getString("setting") : "";
+        String quickSetting = postData.containsKey("quick_setting") ? postData.getString("quick_setting") : "";
+        String gameId = postData.containsKey("gid") ? postData.getString("gid") : "";
         String eventName = "changeClubSettingPush";
         JSONObject leaderInfo = clubBiz.getUserByAccountAndUuid(leader, uuid);
         // 验证用户信息是否合法
@@ -150,13 +154,16 @@ public class ClubEventDeal {
             sendPromptToSingle(client, CommonConstant.GLOBAL_NO, "无修改权限", eventName);
             return;
         }
-        // TODO: 2018/8/29 数据验证
         // 更新数据库
         JSONObject newClubInfo = new JSONObject();
         newClubInfo.put("id", clubInfo.getLong("id"));
-        newClubInfo.put("notice", notice);
-        newClubInfo.put("setting", setting);
-        newClubInfo.put("quick_setting", quickSetting);
+        if (!Dto.stringIsNULL(notice)) {
+            newClubInfo.put("notice", notice);
+        }
+        if (!Dto.stringIsNULL(setting) && !Dto.stringIsNULL(quickSetting) && !Dto.stringIsNULL(gameId)) {
+            newClubInfo.put("setting", setting);
+            newClubInfo.put("quick_setting", clubInfo.getJSONObject("quick_setting").element(gameId,quickSetting));
+        }
         clubBiz.updateClubInfo(newClubInfo);
         // 通知玩家
         sendPromptToSingle(client, CommonConstant.GLOBAL_YES, "修改成功", eventName);
@@ -200,8 +207,7 @@ public class ClubEventDeal {
             return;
         }
         // 当前用户所在的所有俱乐部
-        String clubIds = userInfo.getString("clubIds");
-        List<String> clubIdList = new ArrayList<>(Arrays.asList(clubIds.substring(1, clubIds.length()).split("\\$")));
+        List<String> clubIdList = getUserClubList(userInfo);
         // 当前要退出的俱乐部id
         String clubId = clubInfo.getString("id");
         // 未加入当前俱乐部提示，已加入更新数据库
@@ -291,37 +297,46 @@ public class ClubEventDeal {
         CommonConstant.sendMsgEventToSingle(client, String.valueOf(result), "refreshClubInfoPush");
     }
 
-    public void sendPromptToSingle(SocketIOClient client, int code, String msg, String eventName) {
-        JSONObject result = new JSONObject();
-        result.put(CommonConstant.RESULT_KEY_CODE, code);
-        result.put(CommonConstant.RESULT_KEY_MSG, msg);
-        CommonConstant.sendMsgEventToSingle(client, String.valueOf(result), eventName);
-    }
-
     public void quickJoinClubRoom(SocketIOClient client, Object data) {
         JSONObject postData = JSONObject.fromObject(data);
         if (postData.containsKey("base_info")) {
             baseEventDeal.createRoomBase(client,data);
             return;
         }
+        // 通知事件名称
+        String eventName = "quickJoinClubRoomPush";
         String clubCode = postData.getString("clubCode");
         String account = postData.getString(CommonConstant.DATA_KEY_ACCOUNT);
+        int gameId = postData.getInt("gid");
+        // 俱乐部不存在
+        JSONObject clubInfo = clubBiz.getClubByCode(clubCode);
+        if (Dto.isObjNull(clubInfo)) {
+            sendPromptToSingle(client, CommonConstant.GLOBAL_NO, "俱乐部不存在", eventName);
+            return;
+        }
+        // 用户信息不存在
+        JSONObject userInfo = clubBiz.getUserByAccountAndUuid(account, postData.getString("uuid"));;
+        if (Dto.isObjNull(userInfo) || !getUserClubList(userInfo).contains(clubInfo.getString("id"))) {
+            sendPromptToSingle(client, CommonConstant.GLOBAL_NO, "未加入该俱乐部", eventName);
+            return;
+        }
         List<String> roomNoList = new ArrayList<String>();
         for (String roomNo : RoomManage.gameRoomMap.keySet()) {
             GameRoom room = RoomManage.gameRoomMap.get(roomNo);
             // 当前俱乐部的所有房间
-            if (!Dto.stringIsNULL(clubCode) && clubCode.equals(room.getClubCode())
+            if (!Dto.stringIsNULL(clubCode) && clubCode.equals(room.getClubCode()) && room.getGid() == gameId
                 && !room.getPlayerMap().containsKey(account) && room.getPlayerMap().size() < room.getPlayerCount()) {
                 roomNoList.add(roomNo);
             }
         }
         if (roomNoList.size() == 0) {
-            JSONObject clubInfo = clubBiz.getClubByCode(clubCode);
-            if (!Dto.isObjNull(clubInfo)) {
-                postData.put("base_info",clubInfo.getString("quick_setting"));
-                // TODO: 2018/8/29 gid取值
-                postData.put("gid",4);
+            JSONObject quickSetting = !Dto.isObjNull(clubInfo.getJSONObject("quick_setting")) ?
+                clubInfo.getJSONObject("quick_setting").getJSONObject(String.valueOf(gameId)) : null;
+            if (!Dto.isObjNull(quickSetting)) {
+                postData.put("base_info", quickSetting);
                 baseEventDeal.createRoomBase(client,postData);
+            } else {
+                sendPromptToSingle(client, CommonConstant.GLOBAL_NO, "参数不正确,请联系会长修改", eventName);
             }
         }else {
             // 随机加入
@@ -329,5 +344,18 @@ public class ClubEventDeal {
             postData.put("room_no",roomNoList.get(0));
             baseEventDeal.joinRoomBase(client,postData);
         }
+    }
+
+
+    private void sendPromptToSingle(SocketIOClient client, int code, String msg, String eventName) {
+        JSONObject result = new JSONObject();
+        result.put(CommonConstant.RESULT_KEY_CODE, code);
+        result.put(CommonConstant.RESULT_KEY_MSG, msg);
+        CommonConstant.sendMsgEventToSingle(client, String.valueOf(result), eventName);
+    }
+
+    private List<String> getUserClubList(JSONObject userInfo) {
+        String clubIds = userInfo.getString("clubIds");
+        return new ArrayList<>(Arrays.asList(clubIds.substring(1, clubIds.length()).split("\\$")));
     }
 }
