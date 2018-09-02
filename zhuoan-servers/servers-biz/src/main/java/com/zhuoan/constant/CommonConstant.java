@@ -243,6 +243,10 @@ public class CommonConstant {
      * 房间类型-比赛场
      */
     public static final int ROOM_TYPE_MATCH = 5;
+    /**
+     * 房间类型-俱乐部
+     */
+    public static final int ROOM_TYPE_CLUB = 6;
 
     /**
      * 全局-是

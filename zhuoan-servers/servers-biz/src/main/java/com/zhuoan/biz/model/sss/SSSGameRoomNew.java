@@ -174,7 +174,7 @@ public class SSSGameRoomNew extends GameRoom{
                 obj.put("location", player.getLocation());
                 obj.put("area", player.getArea());
                 if (getRoomType() != CommonConstant.ROOM_TYPE_FK && getRoomType() != CommonConstant.ROOM_TYPE_COMPETITIVE
-                    && getRoomType() != CommonConstant.ROOM_TYPE_DK) {
+                    && getRoomType() != CommonConstant.ROOM_TYPE_DK && getRoomType() != CommonConstant.ROOM_TYPE_CLUB) {
                     if (player.getScore()<0) {
                         obj.put("score", 0);
                     }else {
@@ -229,7 +229,8 @@ public class SSSGameRoomNew extends GameRoom{
                         userData.put("sum",getUserPacketMap().get(account).getScore());
                         userData.put("account",account);
                         if (getGameStatus()==SSSConstant.SSS_GAME_STATUS_COMPARE && getRoomType()!=CommonConstant.ROOM_TYPE_FK
-                            && getRoomType()!=CommonConstant.ROOM_TYPE_COMPETITIVE && getRoomType() != CommonConstant.ROOM_TYPE_DK) {
+                            && getRoomType()!=CommonConstant.ROOM_TYPE_COMPETITIVE && getRoomType() != CommonConstant.ROOM_TYPE_DK
+                            && getRoomType() != CommonConstant.ROOM_TYPE_CLUB) {
                             double scoreLeft = Dto.add(getPlayerMap().get(account).getScore(),getUserPacketMap().get(account).getScore());
                             if (scoreLeft<0) {
                                 scoreLeft = 0;
@@ -766,7 +767,7 @@ public class SSSGameRoomNew extends GameRoom{
             obj.put("name", new StringBuffer().append(String.valueOf(val)).append("倍").toString());
             obj.put("val", val);
             if(yuanbao>=val*SSSConstant.SSS_XZ_BASE_NUM||getRoomType()==CommonConstant.ROOM_TYPE_FK
-                || getRoomType() == CommonConstant.ROOM_TYPE_DK){
+                || getRoomType() == CommonConstant.ROOM_TYPE_DK || getRoomType() == CommonConstant.ROOM_TYPE_CLUB){
                 obj.put("isuse", CommonConstant.GLOBAL_YES);
             }else{
                 obj.put("isuse", CommonConstant.GLOBAL_NO);

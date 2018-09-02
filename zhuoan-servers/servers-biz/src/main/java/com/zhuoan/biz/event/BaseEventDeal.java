@@ -377,7 +377,8 @@ public class BaseEventDeal {
         }
         if (gameRoom.getRoomType() == CommonConstant.ROOM_TYPE_YB || gameRoom.getRoomType() == CommonConstant.ROOM_TYPE_JB || gameRoom.getRoomType() == CommonConstant.ROOM_TYPE_COMPETITIVE) {
             gameRoom.setGameCount(9999);
-        }else if (gameRoom.getRoomType() == CommonConstant.ROOM_TYPE_FK || gameRoom.getRoomType() == CommonConstant.ROOM_TYPE_DK) {
+        }else if (gameRoom.getRoomType() == CommonConstant.ROOM_TYPE_FK || gameRoom.getRoomType() == CommonConstant.ROOM_TYPE_DK
+            || gameRoom.getRoomType() == CommonConstant.ROOM_TYPE_CLUB) {
             if (baseInfo.containsKey("turn")) {
                 JSONObject turn = baseInfo.getJSONObject("turn");
                 if (turn.containsKey("turn")) {
@@ -460,11 +461,12 @@ public class BaseEventDeal {
         } else if (baseInfo.getInt("roomType") == CommonConstant.ROOM_TYPE_YB||baseInfo.getInt("roomType") == CommonConstant.ROOM_TYPE_JB||
             baseInfo.getInt("roomType") == CommonConstant.ROOM_TYPE_COMPETITIVE) {
             gameRoom.setReadyOvertime(CommonConstant.READY_OVERTIME_OUT);
-        } else if (baseInfo.getInt("roomType") == CommonConstant.ROOM_TYPE_FK || gameRoom.getRoomType() == CommonConstant.ROOM_TYPE_DK){
+        } else if (gameRoom.getRoomType() == CommonConstant.ROOM_TYPE_FK || gameRoom.getRoomType() == CommonConstant.ROOM_TYPE_DK
+            || gameRoom.getRoomType() == CommonConstant.ROOM_TYPE_CLUB){
             gameRoom.setReadyOvertime(CommonConstant.READY_OVERTIME_NOTHING);
         }
         // 房卡场不同平台无法加入  20180828 wqm
-        if (baseInfo.getInt("roomType") == CommonConstant.ROOM_TYPE_FK) {
+        if (baseInfo.getInt("roomType") == CommonConstant.ROOM_TYPE_FK || baseInfo.getInt("roomType") == CommonConstant.ROOM_TYPE_CLUB) {
             if (userInfo.containsKey("platform")) {
                 gameRoom.setPlatform(userInfo.getString("platform"));
             }
@@ -522,7 +524,8 @@ public class BaseEventDeal {
                 obtainPlayerInfoData.put("location", postData.getString("location"));
             }
             Playerinfo playerinfo = obtainPlayerInfo(obtainPlayerInfoData);
-            if ((gameRoom.getRoomType() == CommonConstant.ROOM_TYPE_FK || gameRoom.getRoomType() == CommonConstant.ROOM_TYPE_DK)&&gameRoom.getGameCount()==999) {
+            if ((gameRoom.getRoomType() == CommonConstant.ROOM_TYPE_FK || gameRoom.getRoomType() == CommonConstant.ROOM_TYPE_DK
+                || gameRoom.getRoomType() == CommonConstant.ROOM_TYPE_CLUB)&&gameRoom.getGameCount()==999) {
                 playerinfo.setScore(100);
                 if (gameRoom.getGid()==CommonConstant.GAME_ID_NAMJ) {
                     playerinfo.setScore(15);
@@ -755,6 +758,13 @@ public class BaseEventDeal {
             CommonConstant.sendMsgEventToSingle(client, String.valueOf(result), "enterRoomPush_NN");
             return;
         }
+        if (!Dto.stringIsNULL(room.getPlatform()) && userInfo.containsKey("platform") &&
+            !room.getPlatform().equals(userInfo.getString("platform"))) {
+            result.element(CommonConstant.RESULT_KEY_CODE, CommonConstant.GLOBAL_NO);
+            result.element(CommonConstant.RESULT_KEY_MSG, "房间不存在");
+            CommonConstant.sendMsgEventToSingle(client, String.valueOf(result), "enterRoomPush_NN");
+            return;
+        }
         if (client != null && room.getRoomType() != CommonConstant.ROOM_TYPE_MATCH) {
             if (!userInfo.containsKey("uuid")||Dto.stringIsNULL(userInfo.getString("uuid"))||
                 !userInfo.getString("uuid").equals(postData.getString("uuid"))) {
@@ -793,13 +803,6 @@ public class BaseEventDeal {
                     return;
                 }
             } else if (room.getRoomType() == CommonConstant.ROOM_TYPE_FK) {
-                if (!Dto.stringIsNULL(room.getPlatform()) && userInfo.containsKey("platform") &&
-                    !room.getPlatform().equals(userInfo.getString("platform"))) {
-                    result.element(CommonConstant.RESULT_KEY_CODE, CommonConstant.GLOBAL_NO);
-                    result.element(CommonConstant.RESULT_KEY_MSG, "房间不存在");
-                    CommonConstant.sendMsgEventToSingle(client, String.valueOf(result), "enterRoomPush_NN");
-                    return;
-                }
                 String updateType = room.getCurrencyType();
                 if (!userInfo.containsKey(updateType) || userInfo.getDouble(updateType) < room.getEnterScore()) {
                     result.element(CommonConstant.RESULT_KEY_CODE, CommonConstant.GLOBAL_NO);
@@ -895,7 +898,8 @@ public class BaseEventDeal {
         }
         Playerinfo playerinfo = obtainPlayerInfo(obtainPlayerInfoData);
         // 麻将一刻设置底分
-        if ((gameRoom.getRoomType() == CommonConstant.ROOM_TYPE_FK || gameRoom.getRoomType() == CommonConstant.ROOM_TYPE_DK)&&gameRoom.getGameCount()==999) {
+        if ((gameRoom.getRoomType() == CommonConstant.ROOM_TYPE_FK || gameRoom.getRoomType() == CommonConstant.ROOM_TYPE_DK
+            || gameRoom.getRoomType() == CommonConstant.ROOM_TYPE_CLUB)&&gameRoom.getGameCount()==999) {
             playerinfo.setScore(100);
             if (gameRoom.getGid()==CommonConstant.GAME_ID_NAMJ) {
                 playerinfo.setScore(15);
@@ -905,7 +909,8 @@ public class BaseEventDeal {
         // 是否重连
         if (gameRoom.getPlayerMap().containsKey(playerinfo.getAccount())) {
             // 房卡场不需要重新刷新分数
-            if (gameRoom.getRoomType() == CommonConstant.ROOM_TYPE_FK || gameRoom.getRoomType() == CommonConstant.ROOM_TYPE_DK) {
+            if (gameRoom.getRoomType() == CommonConstant.ROOM_TYPE_FK || gameRoom.getRoomType() == CommonConstant.ROOM_TYPE_DK ||
+                gameRoom.getRoomType() == CommonConstant.ROOM_TYPE_CLUB) {
                 playerinfo.setScore(gameRoom.getPlayerMap().get(playerinfo.getAccount()).getScore());
             }else if (gameRoom.getRoomType() == CommonConstant.ROOM_TYPE_MATCH) {
                 playerinfo.setMyRank(gameRoom.getPlayerMap().get(playerinfo.getAccount()).getMyRank());
