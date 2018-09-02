@@ -143,7 +143,8 @@ public class QZMJGameEventDeal {
         }
         int type = postData.getInt("type");
         if (type == QZMJConstant.GAME_READY_TYPE_RECONNECT) {
-            if (room.getRoomType()!=CommonConstant.ROOM_TYPE_FK && room.getRoomType()!=CommonConstant.ROOM_TYPE_DK) {
+            if (room.getRoomType()!=CommonConstant.ROOM_TYPE_FK && room.getRoomType()!=CommonConstant.ROOM_TYPE_DK
+                && room.getRoomType() != CommonConstant.ROOM_TYPE_CLUB) {
                 reconnectGame(client,data);
             }else if (room.getGameStatus()==QZMJConstant.QZ_GAME_STATUS_INIT||room.getGameStatus()==QZMJConstant.QZ_GAME_STATUS_READY) {
                 gameReady(client,data);
@@ -559,9 +560,10 @@ public class QZMJGameEventDeal {
                     // 初始及准备阶段可以退出
                     canExit = true;
                 }
-            }else if (room.getRoomType() == CommonConstant.ROOM_TYPE_FK||room.getRoomType() == CommonConstant.ROOM_TYPE_DK) {
+            }else if (room.getRoomType() == CommonConstant.ROOM_TYPE_FK||room.getRoomType() == CommonConstant.ROOM_TYPE_DK
+                || room.getRoomType() == CommonConstant.ROOM_TYPE_CLUB) {
                 if (room.getUserPacketMap().get(account).getPlayTimes()==0) {
-                    if (room.getPayType()==CommonConstant.PAY_TYPE_AA||!room.getOwner().equals(account)) {
+                    if (room.getPayType()==CommonConstant.PAY_TYPE_AA||!room.getOwner().equals(account) || room.getRoomType() == CommonConstant.ROOM_TYPE_CLUB) {
                         canExit = true;
                     }
                 }
@@ -575,7 +577,8 @@ public class QZMJGameEventDeal {
                 // 更新数据库
                 JSONObject roomInfo = new JSONObject();
                 roomInfo.put("room_no", room.getRoomNo());
-                if (room.getRoomType()!=CommonConstant.ROOM_TYPE_FK&&room.getRoomType()!=CommonConstant.ROOM_TYPE_DK) {
+                if (room.getRoomType()!=CommonConstant.ROOM_TYPE_FK&&room.getRoomType()!=CommonConstant.ROOM_TYPE_DK
+                    && room.getRoomType() != CommonConstant.ROOM_TYPE_CLUB) {
                     roomInfo.put("user_id" + room.getPlayerMap().get(account).getMyIndex(), 0);
                 }
                 // 移除数据
@@ -636,7 +639,8 @@ public class QZMJGameEventDeal {
         }
         final String roomNo = postData.getString(CommonConstant.DATA_KEY_ROOM_NO);
         QZMJGameRoom room = (QZMJGameRoom) RoomManage.gameRoomMap.get(roomNo);
-        if (room.getRoomType()!=CommonConstant.ROOM_TYPE_FK&&room.getRoomType()!=CommonConstant.ROOM_TYPE_DK) {
+        if (room.getRoomType()!=CommonConstant.ROOM_TYPE_FK&&room.getRoomType()!=CommonConstant.ROOM_TYPE_DK
+            && room.getRoomType() != CommonConstant.ROOM_TYPE_CLUB) {
             return;
         }
         String account = postData.getString(CommonConstant.DATA_KEY_ACCOUNT);
@@ -1048,7 +1052,8 @@ public class QZMJGameEventDeal {
         backObj.put("type", 0);
         backObj.put("data", array);
         backObj.put("isLiuju", CommonConstant.GLOBAL_NO);
-        if (gamePlay.getRoomType()==CommonConstant.ROOM_TYPE_FK||gamePlay.getRoomType() == CommonConstant.ROOM_TYPE_DK) {
+        if (gamePlay.getRoomType()==CommonConstant.ROOM_TYPE_FK||gamePlay.getRoomType() == CommonConstant.ROOM_TYPE_DK
+            || gamePlay.getRoomType() == CommonConstant.ROOM_TYPE_CLUB) {
             if(gamePlay.getGameCount()==gamePlay.getGameIndex() || isFinish){
                 gamePlay.setIsClose(CommonConstant.CLOSE_ROOM_TYPE_FINISH);
                 // 保存结算汇总数据
@@ -1483,7 +1488,8 @@ public class QZMJGameEventDeal {
             room.faPai();
             // 开金
             room.choiceJin();
-            if (room.getFee() > 0 && room.getRoomType()!=CommonConstant.ROOM_TYPE_FK&&room.getRoomType()!=CommonConstant.ROOM_TYPE_DK) {
+            if (room.getFee() > 0 && room.getRoomType()!=CommonConstant.ROOM_TYPE_FK&&room.getRoomType()!=CommonConstant.ROOM_TYPE_DK
+                && room.getRoomType() != CommonConstant.ROOM_TYPE_CLUB) {
                 JSONArray array = new JSONArray();
                 for (String account : room.getPlayerMap().keySet()) {
                     if (room.getPlayerMap().containsKey(account)&&room.getPlayerMap().get(account)!=null) {
@@ -1540,7 +1546,8 @@ public class QZMJGameEventDeal {
                 }
             }
             final int startStatus;
-            if (room.getGameIndex()>1||(room.getRoomType()!=CommonConstant.ROOM_TYPE_FK&&room.getRoomType()!=CommonConstant.ROOM_TYPE_DK)) {
+            if (room.getGameIndex()>1||(room.getRoomType()!=CommonConstant.ROOM_TYPE_FK&&room.getRoomType()!=CommonConstant.ROOM_TYPE_DK
+                && room.getRoomType() != CommonConstant.ROOM_TYPE_CLUB)) {
                 startStatus = 2;
             }else {
                 startStatus = 1;
@@ -1704,7 +1711,8 @@ public class QZMJGameEventDeal {
         roomInfo.append("人 ");
         if (room.getGameCount()==999) {
             roomInfo.append("1课");
-        }else if (room.getRoomType()==CommonConstant.ROOM_TYPE_FK||room.getRoomType() == CommonConstant.ROOM_TYPE_DK){
+        }else if (room.getRoomType()==CommonConstant.ROOM_TYPE_FK||room.getRoomType() == CommonConstant.ROOM_TYPE_DK
+            || room.getRoomType() == CommonConstant.ROOM_TYPE_CLUB){
             roomInfo.append(room.getGameCount());
             roomInfo.append("局");
         }
