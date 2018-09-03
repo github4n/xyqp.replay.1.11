@@ -876,17 +876,17 @@ public class MatchEventDeal {
             }
         }
         // 比赛场积分规则调整  wqm  20180903
-        allPlayerInfo = redisService.hmget("player_info_" + matchNum);
-        if (allPlayerInfo != null && allPlayerInfo.size() > 0) {
-            for (Object o : allPlayerInfo.keySet()) {
-                JSONObject playerObj = JSONObject.fromObject(allPlayerInfo.get(o));
+        Map<Object, Object> newAllPlayerInfo = redisService.hmget("player_info_" + matchNum);
+        if (newAllPlayerInfo != null && newAllPlayerInfo.size() > 0) {
+            for (Object o : newAllPlayerInfo.keySet()) {
+                JSONObject playerObj = JSONObject.fromObject(newAllPlayerInfo.get(o));
                 playerObj.put("score", (int) playerObj.getInt("score") * 0.1 + 1000);
                 redisService.hset("player_info_" + matchNum, String.valueOf(o), String.valueOf(playerObj));
             }
-            allRobotInfo = redisService.hmget("robot_info_" + matchNum);
-            if (allRobotInfo != null && allRobotInfo.size() > 0) {
-                for (Object o : allRobotInfo.keySet()) {
-                    JSONObject robotObj = JSONObject.fromObject(allRobotInfo.get(o));
+            Map<Object, Object> newAllRobotInfo = redisService.hmget("robot_info_" + matchNum);
+            if (newAllRobotInfo != null && newAllRobotInfo.size() > 0) {
+                for (Object o : newAllRobotInfo.keySet()) {
+                    JSONObject robotObj = JSONObject.fromObject(newAllRobotInfo.get(o));
                     robotObj.put("score", (int) robotObj.getInt("score") * 0.1 + 1000);
                     redisService.hset("robot_info_" + matchNum, String.valueOf(o), String.valueOf(robotObj));
                 }

@@ -415,8 +415,8 @@ public class DdzGameEventDeal {
             if (!isGameOver) {
                 beginEventTimer(roomNo,nextPlayerAccount);
             } else if (room.getRoomType() == CommonConstant.ROOM_TYPE_MATCH && room.getGameCount() > room.getGameIndex()) {
-                matchContinue(roomNo, room, account);
-            }else if (room.isRobot()) {
+                matchContinue(roomNo);
+            }else if (room.isRobot() && room.getRoomType() != CommonConstant.ROOM_TYPE_MATCH) {
                 // 重置准备状态
                 for (String player : obtainAllPlayerAccount(roomNo)) {
                     room.getUserPacketMap().get(player).setStatus(DdzConstant.DDZ_USER_STATUS_INIT);
@@ -432,7 +432,7 @@ public class DdzGameEventDeal {
         }
     }
 
-    private void matchContinue(final String roomNo, final DdzGameRoom room, final String account) {
+    private void matchContinue(final String roomNo) {
         ThreadPoolHelper.executorService.submit(new Runnable() {
             @Override
             public void run() {
@@ -441,24 +441,27 @@ public class DdzGameEventDeal {
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
-                for (String player : obtainAllPlayerAccount(roomNo)) {
-                    room.getUserPacketMap().get(player).setStatus(DdzConstant.DDZ_USER_STATUS_INIT);
-                    JSONObject data = new JSONObject().element(CommonConstant.DATA_KEY_ACCOUNT, player).element(CommonConstant.DATA_KEY_ROOM_NO, roomNo);
-                    if (room.getRobotList().contains(player)) {
-                        // 改变分数
-                        matchEventDeal.changeRobotInfo(room.getMatchNum(), player, (int) room.getUserPacketMap()
-                        .get(player).getScore(), 0, room.getUserPacketMap().get(player).getMyPai().size());
-                        // 初始化场景
-                        gameContinue(null, data);
-                    } else {
-                        // 改变分数
-                        matchEventDeal.changePlayerInfo(room.getMatchNum(), null, null, player,
-                            (int) room.getUserPacketMap().get(player).getScore(), 0, room.getUserPacketMap().get(player).getMyPai().size());
-                        // 获取客户端对象
-                        SocketIOClient playerClient = room.getRobotList().contains(player) ?
-                            null : GameMain.server.getClient(room.getPlayerMap().get(player).getUuid());
-                        // 初始化场景
-                        gameContinue(playerClient, data);
+                if (RoomManage.gameRoomMap.containsKey(roomNo) && RoomManage.gameRoomMap.get(roomNo) != null) {
+                    DdzGameRoom room = (DdzGameRoom) RoomManage.gameRoomMap.get(roomNo);
+                    for (String player : obtainAllPlayerAccount(roomNo)) {
+                        room.getUserPacketMap().get(player).setStatus(DdzConstant.DDZ_USER_STATUS_INIT);
+                        JSONObject data = new JSONObject().element(CommonConstant.DATA_KEY_ACCOUNT, player).element(CommonConstant.DATA_KEY_ROOM_NO, roomNo);
+                        if (room.getRobotList().contains(player)) {
+                            // 改变分数
+                            matchEventDeal.changeRobotInfo(room.getMatchNum(), player, (int) room.getUserPacketMap()
+                                .get(player).getScore(), 0, room.getUserPacketMap().get(player).getMyPai().size());
+                            // 初始化场景
+                            gameContinue(null, data);
+                        } else {
+                            // 改变分数
+                            matchEventDeal.changePlayerInfo(room.getMatchNum(), null, null, player,
+                                (int) room.getUserPacketMap().get(player).getScore(), 0, room.getUserPacketMap().get(player).getMyPai().size());
+                            // 获取客户端对象
+                            SocketIOClient playerClient = room.getRobotList().contains(player) ?
+                                null : GameMain.server.getClient(room.getPlayerMap().get(player).getUuid());
+                            // 初始化场景
+                            gameContinue(playerClient, data);
+                        }
                     }
                 }
             }
@@ -1813,11 +1816,13 @@ public class DdzGameEventDeal {
      */
     private List<String> obtainAllPlayerAccount(String roomNo) {
         List<String> accountList = new ArrayList<>();
-        DdzGameRoom room = (DdzGameRoom) RoomManage.gameRoomMap.get(roomNo);
-        for (String account : room.getUserPacketMap().keySet()) {
-            if (room.getUserPacketMap().containsKey(account)&&room.getUserPacketMap().get(account)!=null&&
-                room.getPlayerMap().containsKey(account)&&room.getPlayerMap().get(account)!=null) {
-                accountList.add(account);
+        if (RoomManage.gameRoomMap.containsKey(roomNo) && RoomManage.gameRoomMap.get(roomNo) != null) {
+            DdzGameRoom room = (DdzGameRoom) RoomManage.gameRoomMap.get(roomNo);
+            for (String account : room.getUserPacketMap().keySet()) {
+                if (room.getUserPacketMap().containsKey(account)&&room.getUserPacketMap().get(account)!=null&&
+                    room.getPlayerMap().containsKey(account)&&room.getPlayerMap().get(account)!=null) {
+                    accountList.add(account);
+                }
             }
         }
         return accountList;
