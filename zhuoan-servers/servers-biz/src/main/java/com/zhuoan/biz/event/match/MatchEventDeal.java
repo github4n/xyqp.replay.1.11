@@ -98,7 +98,7 @@ public class MatchEventDeal {
                 }
                 matchBiz.updateMatchSettingById(matchSetting);
             }
-            matchSetting.put("online_num", matchSetting.getInt("online_num") + RandomUtils.nextInt(10));
+            matchSetting.put("online_num", matchSetting.getInt("online_num") + RandomUtils.nextInt(10) - RandomUtils.nextInt(10));
             newTimeMatchSettings.add(matchSetting);
         }
         StringBuffer timeKey = new StringBuffer();
@@ -114,7 +114,7 @@ public class MatchEventDeal {
         JSONArray newCountMatchSettings = new JSONArray();
         for (Object object : countMatchSettings) {
             JSONObject matchSetting = JSONObject.fromObject(object);
-            matchSetting.put("online_num", matchSetting.getInt("online_num") + RandomUtils.nextInt(10));
+            matchSetting.put("online_num", matchSetting.getInt("online_num") + RandomUtils.nextInt(10) - RandomUtils.nextInt(10));
             newCountMatchSettings.add(matchSetting);
 
             int flag = RandomUtils.nextInt(10);
