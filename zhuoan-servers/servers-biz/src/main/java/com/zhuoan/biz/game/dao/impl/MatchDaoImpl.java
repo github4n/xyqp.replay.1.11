@@ -33,7 +33,7 @@ public class MatchDaoImpl implements MatchDao {
     @Override
     public JSONObject getMatchSettingById(long matchId, long gameId) {
         String sql = "select id,type,game_id,match_name,per_count,player_count,total_round,is_auto,robot_level,must_full,description,online_num,match_cost," +
-            "cost_type,reward_info,match_info,rule,promotion,is_use,create_time,platform,memo,reward_detail from za_match_setting where id=? and game_id=?" +
+            "cost_type,reward_info,match_info,rule,promotion,is_use,create_time,platform,memo,reward_detail from za_match_setting where id=? and game_id=? " +
             "and is_use=1";
         JSONObject matchSetting = DBUtil.getObjectBySQL(sql, new Object[]{matchId, gameId});
         return Dto.isObjNull(matchSetting) ? matchSetting : TimeUtil.transTimeStamp(matchSetting, "yyyy-MM-dd HH:mm:ss", "create_time");
