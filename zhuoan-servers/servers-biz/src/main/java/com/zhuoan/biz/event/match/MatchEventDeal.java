@@ -1236,11 +1236,11 @@ public class MatchEventDeal {
         int totalNum = promotion.getInt(curRound);
         // 定时赛第一轮打两局
         if (curRound == 0 && matchInfo.getInt("type") == MatchConstant.MATCH_TYPE_TIME) {
-            room.setGameCount(2);
+            room.setGameCount(3);
         }
         // 冠亚季军打两局
         if (totalNum == promotion.getInt(promotion.size() - 2)) {
-            room.setGameCount(2);
+            room.setGameCount(3);
         }
         room.setTotalNum(totalNum);
         RoomManage.gameRoomMap.put(roomNo, room);
