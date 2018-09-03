@@ -98,7 +98,8 @@ public class MatchEventDeal {
                 }
                 matchBiz.updateMatchSettingById(matchSetting);
             }
-            matchSetting.put("online_num", matchSetting.getInt("online_num") + RandomUtils.nextInt(10) - RandomUtils.nextInt(10));
+            int onlineNum = matchSetting.getInt("online_num") + RandomUtils.nextInt(10) - RandomUtils.nextInt(10);
+            matchSetting.put("online_num", onlineNum > 0 ? onlineNum : 100);
             newTimeMatchSettings.add(matchSetting);
         }
         StringBuffer timeKey = new StringBuffer();
@@ -114,7 +115,8 @@ public class MatchEventDeal {
         JSONArray newCountMatchSettings = new JSONArray();
         for (Object object : countMatchSettings) {
             JSONObject matchSetting = JSONObject.fromObject(object);
-            matchSetting.put("online_num", matchSetting.getInt("online_num") + RandomUtils.nextInt(10) - RandomUtils.nextInt(10));
+            int onlineNum = matchSetting.getInt("online_num") + RandomUtils.nextInt(10) - RandomUtils.nextInt(10);
+            matchSetting.put("online_num", onlineNum > 0 ? onlineNum : 100);
             newCountMatchSettings.add(matchSetting);
 
             int flag = RandomUtils.nextInt(10);
@@ -873,6 +875,23 @@ public class MatchEventDeal {
                 playerOutMatch(matchNum, String.valueOf(outList.get(i).getKey()));
             }
         }
+        // 比赛场积分规则调整  wqm  20180903
+        allPlayerInfo = redisService.hmget("player_info_" + matchNum);
+        if (allPlayerInfo != null && allPlayerInfo.size() > 0) {
+            for (Object o : allPlayerInfo.keySet()) {
+                JSONObject playerObj = JSONObject.fromObject(allPlayerInfo.get(o));
+                playerObj.put("score", (int) playerObj.getInt("score") * 0.1 + 1000);
+                redisService.hset("player_info_" + matchNum, String.valueOf(o), String.valueOf(playerObj));
+            }
+            allRobotInfo = redisService.hmget("robot_info_" + matchNum);
+            if (allRobotInfo != null && allRobotInfo.size() > 0) {
+                for (Object o : allRobotInfo.keySet()) {
+                    JSONObject robotObj = JSONObject.fromObject(allRobotInfo.get(o));
+                    robotObj.put("score", (int) robotObj.getInt("score") * 0.1 + 1000);
+                    redisService.hset("robot_info_" + matchNum, String.valueOf(o), String.valueOf(robotObj));
+                }
+            }
+        }
         return outPlayerCount < allPlayerInfo.size();
     }
 
@@ -1057,7 +1076,7 @@ public class MatchEventDeal {
                             // 生成随机倍数
                             int multiple = RandomUtils.nextInt(maxMultiple) + 1;
                             // 计算分数
-                            int score = 1;
+                            int score = 10;
                             for (int k = 0; k < multiple; k++) {
                                 score *= 2;
                             }
@@ -1194,7 +1213,9 @@ public class MatchEventDeal {
         room.setRoomType(CommonConstant.ROOM_TYPE_MATCH);
         room.setRoomNo(roomNo);
         room.setPlayerCount(perCount);
-        room.setScore(1);
+        room.setGameCount(1);
+        room.setGameIndex(0);
+        room.setScore(10);
         room.setRobot(true);
         JSONObject setting = new JSONObject();
         setting.put("trustee_pass", CommonConstant.GLOBAL_YES);
@@ -1213,6 +1234,14 @@ public class MatchEventDeal {
         JSONArray promotion = matchInfo.getJSONArray("promotion");
         // 当前总人数
         int totalNum = promotion.getInt(curRound);
+        // 定时赛第一轮打两局
+        if (curRound == 0 && matchInfo.getInt("type") == MatchConstant.MATCH_TYPE_TIME) {
+            room.setGameCount(2);
+        }
+        // 冠亚季军打两局
+        if (totalNum == promotion.getInt(promotion.size() - 2)) {
+            room.setGameCount(2);
+        }
         room.setTotalNum(totalNum);
         RoomManage.gameRoomMap.put(roomNo, room);
         return roomNo;
@@ -1335,7 +1364,7 @@ public class MatchEventDeal {
      * @param score
      * @param round
      */
-    private void changeRobotInfo(String matchNum, String account, int score, int round, int card) {
+    public void changeRobotInfo(String matchNum, String account, int score, int round, int card) {
         Object o = redisService.hget("robot_info_" + matchNum, account);
         if (!Dto.isNull(o)) {
             JSONObject robotInfo = JSONObject.fromObject(o);
@@ -1434,6 +1463,7 @@ public class MatchEventDeal {
         cacheInfo.put("total_round", matchSetting.getInt("total_round"));
         cacheInfo.put("per_count", matchSetting.getInt("per_count"));
         cacheInfo.put("reward_detail", matchSetting.getJSONArray("reward_detail"));
+        cacheInfo.put("type", matchSetting.getInt("type"));
         addMatchInfoIntoRedis(matchNum, cacheInfo);
         // 添加玩家信息
         addPlayerInfo(account, matchNum, uuid, String.valueOf(client.getSessionId()), 1000, 0);

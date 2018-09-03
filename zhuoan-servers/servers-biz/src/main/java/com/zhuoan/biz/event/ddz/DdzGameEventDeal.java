@@ -15,6 +15,7 @@ import com.zhuoan.constant.DaoTypeConstant;
 import com.zhuoan.constant.DdzConstant;
 import com.zhuoan.service.cache.RedisService;
 import com.zhuoan.service.jms.ProducerService;
+import com.zhuoan.service.socketio.impl.GameMain;
 import com.zhuoan.util.Dto;
 import com.zhuoan.util.TimeUtil;
 import com.zhuoan.util.thread.ThreadPoolHelper;
@@ -413,6 +414,8 @@ public class DdzGameEventDeal {
             room.getUserPacketMap().containsKey(nextPlayerAccount)&&room.getUserPacketMap().get(nextPlayerAccount)!=null) {
             if (!isGameOver) {
                 beginEventTimer(roomNo,nextPlayerAccount);
+            } else if (room.getRoomType() == CommonConstant.ROOM_TYPE_MATCH && room.getGameCount() > room.getGameIndex()) {
+                matchContinue(roomNo, room, account);
             }else if (room.isRobot()) {
                 // 重置准备状态
                 for (String player : obtainAllPlayerAccount(roomNo)) {
@@ -427,6 +430,39 @@ public class DdzGameEventDeal {
                 }
             }
         }
+    }
+
+    private void matchContinue(final String roomNo, final DdzGameRoom room, final String account) {
+        ThreadPoolHelper.executorService.submit(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    Thread.sleep(5000);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+                for (String player : obtainAllPlayerAccount(roomNo)) {
+                    room.getUserPacketMap().get(player).setStatus(DdzConstant.DDZ_USER_STATUS_INIT);
+                    JSONObject data = new JSONObject().element(CommonConstant.DATA_KEY_ACCOUNT, player).element(CommonConstant.DATA_KEY_ROOM_NO, roomNo);
+                    if (room.getRobotList().contains(player)) {
+                        // 改变分数
+                        matchEventDeal.changeRobotInfo(room.getMatchNum(), player, (int) room.getUserPacketMap()
+                        .get(player).getScore(), 0, room.getUserPacketMap().get(player).getMyPai().size());
+                        // 初始化场景
+                        gameContinue(null, data);
+                    } else {
+                        // 改变分数
+                        matchEventDeal.changePlayerInfo(room.getMatchNum(), null, null, player,
+                            (int) room.getUserPacketMap().get(player).getScore(), 0, room.getUserPacketMap().get(player).getMyPai().size());
+                        // 获取客户端对象
+                        SocketIOClient playerClient = room.getRobotList().contains(player) ?
+                            null : GameMain.server.getClient(room.getPlayerMap().get(player).getUuid());
+                        // 初始化场景
+                        gameContinue(playerClient, data);
+                    }
+                }
+            }
+        });
     }
 
     /**
@@ -803,6 +839,9 @@ public class DdzGameEventDeal {
                 room.getUserPacketMap().get(player).setStatus(DdzConstant.DDZ_USER_STATUS_INIT);
             }
         }
+        if (room.getRoomType() == CommonConstant.ROOM_TYPE_MATCH && room.getGameCount() > room.getGameIndex()) {
+            gameReady(client, postData);
+        }
         // 比赛场获取分数
         if (room.getRoomType() == CommonConstant.ROOM_TYPE_MATCH) {
             room.getPlayerMap().get(account).setScore(getUserScoreByAccount(room.getMatchNum(),account));
@@ -1069,23 +1108,25 @@ public class DdzGameEventDeal {
             // 更新玩家连胜奖励
             updateUserStreakWinReward(roomNo, room);
         } else if (room.getRoomType() == CommonConstant.ROOM_TYPE_MATCH) {
-            // 玩家游戏详情
-            List<JSONObject> userDetails = new ArrayList<>();
-            // 玩家
-            List<String> realList = new ArrayList<>();
-            for (String player : obtainAllPlayerAccount(roomNo)) {
-                JSONObject userDetail = new JSONObject();
-                userDetail.put("account",player);
-                userDetail.put("score",room.getUserPacketMap().get(player).getScore());
-                userDetail.put("round",0);
-                userDetail.put("card",room.getUserPacketMap().get(player).getMyPai().size());
-                if (!room.getRobotList().contains(player)) {
-                    userDetail.put("round",1);
-                    realList.add(player);
+            if (room.getGameIndex() == room.getGameCount()) {
+                // 玩家游戏详情
+                List<JSONObject> userDetails = new ArrayList<>();
+                // 玩家
+                List<String> realList = new ArrayList<>();
+                for (String player : obtainAllPlayerAccount(roomNo)) {
+                    JSONObject userDetail = new JSONObject();
+                    userDetail.put("account",player);
+                    userDetail.put("score",room.getUserPacketMap().get(player).getScore());
+                    userDetail.put("round",0);
+                    userDetail.put("card",room.getUserPacketMap().get(player).getMyPai().size());
+                    if (!room.getRobotList().contains(player)) {
+                        userDetail.put("round",1);
+                        realList.add(player);
+                    }
+                    userDetails.add(userDetail);
                 }
-                userDetails.add(userDetail);
+                matchEventDeal.userFinish(room.getMatchNum(), userDetails, realList);
             }
-            matchEventDeal.userFinish(room.getMatchNum(), userDetails, realList);
         }
         // 更新成就信息
         updateUserAchievement(roomNo);

@@ -1069,7 +1069,8 @@ public class SSSGameEventDealNew {
                 || room.getRoomType() == CommonConstant.ROOM_TYPE_CLUB) {
                 // 房卡场没玩过可以退出
                 if (room.getUserPacketMap().get(account).getPlayTimes()==0) {
-                    if (room.getPayType()==CommonConstant.PAY_TYPE_AA||!room.getOwner().equals(account)) {
+                    if (room.getPayType()==CommonConstant.PAY_TYPE_AA||!room.getOwner().equals(account) ||
+                        room.getRoomType() == CommonConstant.ROOM_TYPE_CLUB) {
                         canExit = true;
                     }
                 }

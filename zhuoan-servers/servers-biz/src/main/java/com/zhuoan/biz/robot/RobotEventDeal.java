@@ -620,6 +620,7 @@ public class RobotEventDeal {
         robotInfo.setRobotAccount(account);
         robotInfo.setPlayRoomNo(roomNo);
         robotInfo.setPlayGameId(gameId);
+        robotInfo.setOutTimes(10);
         robots.put(account,robotInfo);
     }
 }

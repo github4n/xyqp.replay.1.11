@@ -3,12 +3,14 @@ package com.zhuoan.biz.event.club;
 import com.corundumstudio.socketio.SocketIOClient;
 import com.zhuoan.biz.event.BaseEventDeal;
 import com.zhuoan.biz.game.biz.ClubBiz;
+import com.zhuoan.biz.game.biz.RoomBiz;
 import com.zhuoan.biz.game.biz.UserBiz;
 import com.zhuoan.biz.model.GameRoom;
 import com.zhuoan.biz.model.RoomManage;
 import com.zhuoan.constant.ClubConstant;
 import com.zhuoan.constant.CommonConstant;
 import com.zhuoan.constant.Constant;
+import com.zhuoan.service.cache.RedisService;
 import com.zhuoan.util.Dto;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
@@ -34,6 +36,12 @@ public class ClubEventDeal {
 
     @Resource
     private UserBiz userBiz;
+
+    @Resource
+    private RedisService redisService;
+
+    @Resource
+    private RoomBiz roomBiz;
 
     @Resource
     private BaseEventDeal baseEventDeal;
@@ -120,7 +128,20 @@ public class ClubEventDeal {
                 JSONArray memberArray = clubBiz.getClubMember(clubInfo.getLong("id"));
                 result.put("memberCount", memberArray == null ? 0 : memberArray.size());
                 result.put("notice", clubInfo.containsKey("notice") ? clubInfo.getString("notice") : "");
-                result.put("setting",clubInfo.containsKey("setting") ? clubInfo.getString("setting") : "");
+                String setting = "";
+                if (clubInfo.containsKey("setting")) {
+                    JSONObject clubSetting = JSONObject.fromObject(clubInfo.getString("setting"));
+                    for (Object obj : clubSetting.keySet()) {
+                        String gameName = getGameNameById(Integer.parseInt(String.valueOf(obj)));
+                        if (!Dto.stringIsNULL(gameName)) {
+                            setting += gameName;
+                            setting += " ： ";
+                            setting += clubSetting.get(obj);
+                            setting += "\n";
+                        }
+                    }
+                }
+                result.put("setting", setting);
                 result.put("isLeader", leaderInfo.getString("account").equals(account) ? CommonConstant.GLOBAL_YES : CommonConstant.GLOBAL_NO);
                 CommonConstant.sendMsgEventToSingle(client, String.valueOf(result), "getClubSettingPush");
             }
@@ -140,7 +161,7 @@ public class ClubEventDeal {
         String notice = postData.containsKey("notice") ? postData.getString("notice") : "";
         String setting = postData.containsKey("setting") ? postData.getString("setting") : "";
         String quickSetting = postData.containsKey("quick_setting") ? postData.getString("quick_setting") : "";
-        String gameId = postData.containsKey("gid") ? postData.getString("gid") : "";
+        int gameId = postData.containsKey("gid") ? postData.getInt("gid") : 0;
         String eventName = "changeClubSettingPush";
         JSONObject leaderInfo = clubBiz.getUserByAccountAndUuid(leader, uuid);
         // 验证用户信息是否合法
@@ -160,9 +181,9 @@ public class ClubEventDeal {
         if (!Dto.stringIsNULL(notice)) {
             newClubInfo.put("notice", notice);
         }
-        if (!Dto.stringIsNULL(setting) && !Dto.stringIsNULL(quickSetting) && !Dto.stringIsNULL(gameId)) {
-            newClubInfo.put("setting", setting);
-            newClubInfo.put("quick_setting", clubInfo.getJSONObject("quick_setting").element(gameId,quickSetting));
+        if (!Dto.stringIsNULL(setting) && !Dto.stringIsNULL(quickSetting)) {
+            newClubInfo.put("setting", clubInfo.getJSONObject("setting").element(String.valueOf(gameId),setting));
+            newClubInfo.put("quick_setting", clubInfo.getJSONObject("quick_setting").element(String.valueOf(gameId),quickSetting));
         }
         clubBiz.updateClubInfo(newClubInfo);
         // 通知玩家
@@ -357,5 +378,31 @@ public class ClubEventDeal {
     private List<String> getUserClubList(JSONObject userInfo) {
         String clubIds = userInfo.getString("clubIds");
         return new ArrayList<>(Arrays.asList(clubIds.substring(1, clubIds.length()).split("\\$")));
+    }
+
+    private String getGameNameById(int gameId) {
+        JSONObject gameInfo;
+        try {
+            StringBuffer key = new StringBuffer();
+            key.append("game_on_or_off_");
+            key.append(gameId);
+            Object object = redisService.queryValueByKey(String.valueOf(key));
+            if (object!=null) {
+                gameInfo = JSONObject.fromObject(object);
+                return gameInfo.getString("name");
+            }else {
+                gameInfo = roomBiz.getGameInfoByID(gameId);
+                if (!Dto.isObjNull(gameInfo)) {
+                    redisService.insertKey(String.valueOf(key), String.valueOf(gameInfo), null);
+                    return gameInfo.getString("name");
+                }
+            }
+        } catch (Exception e) {
+            gameInfo = roomBiz.getGameInfoByID(gameId);
+            if (!Dto.isObjNull(gameInfo)) {
+                return gameInfo.getString("name");
+            }
+        }
+        return null;
     }
 }
