@@ -3361,5 +3361,127 @@ public class BaseEventDeal {
         return list;
     }
 
+    /**
+     * 获取房卡场战绩
+     * @param client
+     * @param data
+     */
+    public void getRoomCardGameLogList(SocketIOClient client, Object data) {
+        JSONObject postData = JSONObject.fromObject(data);
+        // 用户id
+        long userId = postData.getLong("user_id");
+        // 游戏id
+        int gameId = postData.getInt("gid");
+        // 房间类别
+        int roomType = postData.getInt("roomType");
+        // 所有房间列表
+        JSONArray roomList = gameLogBiz.getUserGameRoomByRoomType(userId, gameId, roomType);
+        // 房间号集合
+        List<String> list = new ArrayList<>();
+        for (Object o : roomList) {
+            list.add(JSONObject.fromObject(o).getString("room_no"));
+        }
+        // 用户战绩
+        JSONArray userGameLogsByUserId = gameLogBiz.getUserGameLogsByUserId(userId, gameId, roomType, list);
+        // 汇总
+        List<JSONObject> summaryLogs = summaryLogs(roomList, userGameLogsByUserId);
+        // 通知玩家
+        JSONObject result = new JSONObject();
+        if (summaryLogs.size() > 0) {
+            result.put(CommonConstant.RESULT_KEY_CODE, CommonConstant.GLOBAL_YES);
+            result.put("data", summaryLogs);
+            result.put("gid", gameId);
+        } else {
+            result.put(CommonConstant.RESULT_KEY_CODE, CommonConstant.GLOBAL_NO);
+        }
+        CommonConstant.sendMsgEventToSingle(client, String.valueOf(result), "getRoomCardGameLogListPush");
+    }
+
+    /**
+     * 战绩汇总
+     * @param roomList
+     * @param gameLogList
+     * @return
+     */
+    private List<JSONObject> summaryLogs(JSONArray roomList, JSONArray gameLogList) {
+        List<JSONObject> summaryList = new ArrayList<>();
+        // 遍历所有有效房间
+        for (int i = 0; i < roomList.size(); i++) {
+            JSONObject roomObj = roomList.getJSONObject(i);
+            // 取当前房间的战绩记录
+            List<JSONObject> gameLogByRoomNo = getGameLogByRoomNo(gameLogList, roomObj.getString("room_no"));
+            // 有战绩记录
+            if (gameLogByRoomNo.size() > 0) {
+                // result字段添加account防止报错
+                try {
+                    JSONObject obj = new JSONObject();
+                    obj.put("createtime", roomObj.getString("createtime"));
+                    obj.put("room_no", roomObj.getString("room_no"));
+                    obj.put("roomindex", roomObj.getString("id"));
+                    obj.put("result", getTotalSumList(gameLogByRoomNo));
+                    summaryList.add(obj);
+                } catch (Exception e) {
+
+                }
+            }
+        }
+        return summaryList;
+    }
+
+    private List<JSONObject> getTotalSumList(List<JSONObject> gameLogList) {
+        List<JSONObject> totalSum = new ArrayList<>();
+        if (gameLogList.size() > 0) {
+            String roomNo = gameLogList.get(0).getString("room_no");
+            // 玩家输赢统计
+            Map<String, Integer> sumMap = new HashMap<>();
+            // 玩家昵称统计
+            Map<String, String> playerMap = new HashMap<>();
+            for (JSONObject object : gameLogList) {
+                // 确保与当前房间相同
+                if (roomNo.equals(object.getString("room_no"))) {
+                    // 输赢结果
+                    JSONArray result = object.getJSONArray("result");
+                    // 统计
+                    for (int i = 0; i < result.size(); i++) {
+                        JSONObject sum = result.getJSONObject(i);
+                        // 已有结果累计输赢，否则添加当局结果
+                        if (sumMap.containsKey(sum.getString("account")) && playerMap.containsKey(sum.getString("account"))) {
+                            sumMap.put(sum.getString("account"), sumMap.get(sum.getString("account")) + sum.getInt("score"));
+                        } else {
+                            sumMap.put(sum.getString("account"), sum.getInt("score"));
+                            playerMap.put(sum.getString("account"), sum.getString("player"));
+                        }
+                    }
+                }
+            }
+            // 添加结果
+            if (sumMap.size() > 0 && playerMap.size() > 0) {
+                for (String account : sumMap.keySet()) {
+                    if (playerMap.containsKey(account)) {
+                        totalSum.add(new JSONObject().element("score",sumMap.get(account)).element("player",playerMap.get(account)));
+                    }
+                }
+            }
+        }
+        return totalSum;
+    }
+
+    /**
+     * 获取指定房间号战绩
+     * @param gameLogList
+     * @param roomNo
+     * @return
+     */
+    private List<JSONObject> getGameLogByRoomNo(JSONArray gameLogList, String roomNo) {
+        List<JSONObject> gameLog = new ArrayList<>();
+        for (int i = 0; i < gameLogList.size(); i++) {
+            JSONObject obj = gameLogList.getJSONObject(i);
+            if (obj.getString("room_no").equals(roomNo)) {
+                gameLog.add(obj);
+            }
+        }
+        return gameLog;
+    }
+
 
  }

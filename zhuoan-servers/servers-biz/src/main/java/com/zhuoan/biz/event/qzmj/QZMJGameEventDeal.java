@@ -2156,6 +2156,7 @@ public class QZMJGameEventDeal {
                 userResult.put("score", room.getUserPacketMap().get(account).getScore());
                 userResult.put("totalScore", RoomManage.gameRoomMap.get(room.getRoomNo()).getPlayerMap().get(account).getScore());
                 userResult.put("player", room.getPlayerMap().get(account).getName());
+                userResult.put("account", account);
                 gameResult.add(userResult);
             }
         }

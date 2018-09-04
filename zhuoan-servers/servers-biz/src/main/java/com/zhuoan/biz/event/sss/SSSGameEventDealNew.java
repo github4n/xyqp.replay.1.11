@@ -1018,6 +1018,7 @@ public class SSSGameEventDealNew {
                     userResult.put("score", room.getUserPacketMap().get(uuid).getScore());
                     userResult.put("totalScore", room.getPlayerMap().get(uuid).getScore());
                     userResult.put("player", room.getPlayerMap().get(uuid).getName());
+                    userResult.put("account", uuid);
                     gameResult.add(userResult);
                 }
             }

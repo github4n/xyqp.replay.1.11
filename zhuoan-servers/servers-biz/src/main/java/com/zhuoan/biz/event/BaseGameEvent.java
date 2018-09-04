@@ -414,6 +414,16 @@ public class BaseGameEvent {
             }
         });
 
+        /**
+         * 房卡场战绩获取
+         */
+        server.addEventListener("getRoomCardGameLogList", Object.class, new DataListener<Object>() {
+            @Override
+            public void onData(SocketIOClient client, Object data, AckRequest ackSender) {
+                producerService.sendMessage(baseQueueDestination, new Messages(client, data, CommonConstant.GAME_BASE, CommonConstant.BASE_GAME_EVENT_GET_ROOM_CARD_GAME_LOG));
+            }
+        });
+
     }
 
 

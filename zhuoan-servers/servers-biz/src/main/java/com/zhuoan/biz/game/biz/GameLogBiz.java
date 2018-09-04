@@ -3,6 +3,8 @@ package com.zhuoan.biz.game.biz;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 
+import java.util.List;
+
 
 /**
  * @author huaping.li
@@ -67,5 +69,22 @@ public interface GameLogBiz {
      */
     public JSONArray getUserGameLogsByUserId(long userId, int gameId, int roomType);
 
+    /**
+     * 获取用户游戏房间
+     * @param userId
+     * @param gameId
+     * @param roomType
+     * @return
+     */
+    JSONArray getUserGameRoomByRoomType(long userId, int gameId, int roomType);
 
+    /**
+     * 获取用户战绩(带房间号)
+     * @param userId
+     * @param gameId
+     * @param roomType
+     * @param roomList
+     * @return
+     */
+    JSONArray getUserGameLogsByUserId(long userId, int gameId, int roomType, List<String> roomList);
 }

@@ -738,5 +738,35 @@ public class GameDaoImpl implements GameDao {
     public void addUserWelfareRec(JSONObject obj) {
         DBJsonUtil.add(obj,"za_userdeduction");
     }
+
+    @Override
+    public JSONArray getUserGameRoomByRoomType(long userId, int gameId, int roomType) {
+        String sql = "SELECT id,room_no,game_count,createtime FROM za_gamerooms where game_id=? and roomtype=? and " +
+            "(user_id0=? or user_id1=? or user_id2=? or user_id3=? or user_id4=? or user_id5=? or user_id6=? or user_id7=? or user_id8=? or user_id9=?) " +
+            "order by id desc LIMIT 20";
+        JSONArray roomList = DBUtil.getObjectListBySQL(sql, new Object[]{gameId,roomType,userId,userId,userId,userId,userId,userId,userId,userId,userId,userId});
+        if (!Dto.isNull(roomList)) {
+            return TimeUtil.transTimestamp(roomList,"createtime","yyyy-MM-dd HH:mm:ss");
+        }
+        return roomList;
+    }
+
+    @Override
+    public JSONArray getUserGameLogsByUserId(long userId, int gameId, int roomType, List<String> roomList) {
+        String sql = "SELECT id,room_no,result,gamelog_id FROM `za_usergamelogs` where user_id=? and gid=? " +
+            "and room_type=?";
+        if (roomList.size() > 0) {
+            sql += " and room_no in(";
+            for (int i = 0; i < roomList.size(); i++) {
+                sql += roomList.get(i);
+                if (i < roomList.size() - 1) {
+                    sql += ",";
+                }
+            }
+            sql += ")";
+        }
+        sql += " ORDER BY id DESC";
+        return DBUtil.getObjectListBySQL(sql,new Object[]{userId, gameId, roomType});
+    }
 }
 

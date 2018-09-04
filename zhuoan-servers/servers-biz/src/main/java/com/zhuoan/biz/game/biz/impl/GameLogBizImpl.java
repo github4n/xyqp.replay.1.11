@@ -7,6 +7,7 @@ import net.sf.json.JSONObject;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
+import java.util.List;
 
 /**
  * @author huaping.li
@@ -95,5 +96,15 @@ public class GameLogBizImpl implements GameLogBiz {
     @Override
     public JSONArray getUserGameLogsByUserId(long userId, int gameId, int roomType) {
         return gameDao.getUserGameLogsByUserId(userId, gameId, roomType);
+    }
+
+    @Override
+    public JSONArray getUserGameRoomByRoomType(long userId, int gameId, int roomType) {
+        return gameDao.getUserGameRoomByRoomType(userId, gameId, roomType);
+    }
+
+    @Override
+    public JSONArray getUserGameLogsByUserId(long userId, int gameId, int roomType, List<String> roomList) {
+        return gameDao.getUserGameLogsByUserId(userId, gameId, roomType, roomList);
     }
 }
