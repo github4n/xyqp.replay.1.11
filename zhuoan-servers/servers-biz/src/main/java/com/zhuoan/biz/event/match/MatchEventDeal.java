@@ -828,6 +828,7 @@ public class MatchEventDeal {
                         redisService.setRemove("game_in_robot_list", account);
                     }
                     redisService.deleteByKey("summaryTimes_ddz_" + roomNo);
+                    redisService.deleteByKey("startTimes_ddz_" + roomNo);
                     RoomManage.gameRoomMap.remove(roomNo);
                 }
             }
@@ -999,8 +1000,6 @@ public class MatchEventDeal {
         Map<Object, Object> allPlayerInfo = redisService.hmget("player_info_" + matchNum);
         allPlayer.putAll(allRobotInfo);
         allPlayer.putAll(allPlayerInfo);
-        //  出局玩家数
-        int outPlayerCount = 0;
         // 根据分数排序
         Set<Map.Entry<Object, Object>> entry = allPlayer.entrySet();
         List<Map.Entry<Object, Object>> sortList = new ArrayList<>(entry);
@@ -1625,4 +1624,23 @@ public class MatchEventDeal {
         return roomNo;
     }
 
+    /**
+     * 刷新用户排名
+     *
+     * @param roomNo
+     */
+    public void refreshUserRank(String roomNo, String account) {
+        // 房间是否存在
+        if (RoomManage.gameRoomMap.containsKey(roomNo) && RoomManage.gameRoomMap.get(roomNo) != null) {
+            if (RoomManage.gameRoomMap.get(roomNo).getPlayerMap().containsKey(account)
+                && RoomManage.gameRoomMap.get(roomNo).getPlayerMap().get(account) != null) {
+                // 获取玩家排名
+                int userRank = getUserRank(RoomManage.gameRoomMap.get(roomNo).getMatchNum(), account);
+                // 更新玩家排名
+                if (userRank != -1) {
+                    RoomManage.gameRoomMap.get(roomNo).getPlayerMap().get(account).setMyRank(userRank);
+                }
+            }
+        }
+    }
 }

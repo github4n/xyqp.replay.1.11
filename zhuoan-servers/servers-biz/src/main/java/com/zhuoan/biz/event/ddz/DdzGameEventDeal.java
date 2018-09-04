@@ -290,6 +290,8 @@ public class DdzGameEventDeal {
             CommonConstant.sendMsgEventToSingle(room.getPlayerMap().get(player).getUuid(),String.valueOf(result),"gameLandlordPush_DDZ");
         }
         if (!isContinue) {
+            // 重置开始游戏防重
+            redisService.insertKey("startTimes_ddz_"+roomNo,"0",null);
             room.setGameStatus(DdzConstant.DDZ_GAME_STATUS_READY);
             changeGameStatus(roomNo);
             startGame(roomNo);
@@ -444,18 +446,23 @@ public class DdzGameEventDeal {
                 if (RoomManage.gameRoomMap.containsKey(roomNo) && RoomManage.gameRoomMap.get(roomNo) != null) {
                     DdzGameRoom room = (DdzGameRoom) RoomManage.gameRoomMap.get(roomNo);
                     for (String player : obtainAllPlayerAccount(roomNo)) {
+                        // 重置状态
                         room.getUserPacketMap().get(player).setStatus(DdzConstant.DDZ_USER_STATUS_INIT);
                         JSONObject data = new JSONObject().element(CommonConstant.DATA_KEY_ACCOUNT, player).element(CommonConstant.DATA_KEY_ROOM_NO, roomNo);
                         if (room.getRobotList().contains(player)) {
                             // 改变分数
                             matchEventDeal.changeRobotInfo(room.getMatchNum(), player, (int) room.getUserPacketMap()
                                 .get(player).getScore(), 0, room.getUserPacketMap().get(player).getMyPai().size());
+                            // 刷新玩家排名
+                            matchEventDeal.refreshUserRank(roomNo, player);
                             // 初始化场景
                             gameContinue(null, data);
                         } else {
                             // 改变分数
                             matchEventDeal.changePlayerInfo(room.getMatchNum(), null, null, player,
                                 (int) room.getUserPacketMap().get(player).getScore(), 0, room.getUserPacketMap().get(player).getMyPai().size());
+                            // 刷新玩家排名
+                            matchEventDeal.refreshUserRank(roomNo, player);
                             // 获取客户端对象
                             SocketIOClient playerClient = room.getRobotList().contains(player) ?
                                 null : GameMain.server.getClient(room.getPlayerMap().get(player).getUuid());
@@ -708,6 +715,7 @@ public class DdzGameEventDeal {
             // 所有人都退出清除房间数据
             if (room.getPlayerMap().size() == 0) {
                 redisService.deleteByKey("summaryTimes_ddz_"+room.getRoomNo());
+                redisService.deleteByKey("startTimes_ddz_"+room.getRoomNo());
                 roomInfo.put("status",room.getIsClose());
                 roomInfo.put("game_index",room.getGameIndex());
                 RoomManage.gameRoomMap.remove(room.getRoomNo());
@@ -948,6 +956,11 @@ public class DdzGameEventDeal {
      * @param roomNo
      */
     private void startGame(String roomNo) {
+        String startTimesKey = "startTimes_ddz_"+roomNo;
+        long startTimes = redisService.incr(startTimesKey,1);
+        if (startTimes>1) {
+            return;
+        }
         DdzGameRoom room = (DdzGameRoom) RoomManage.gameRoomMap.get(roomNo);
         // 设置房间状态
         room.setGameStatus(DdzConstant.DDZ_GAME_STATUS_CHOICE_LANDLORD);
@@ -1015,7 +1028,9 @@ public class DdzGameEventDeal {
         // 初始化倍数
         room.setMultiple(1);
         // 增加游戏局数
-        room.setGameIndex(room.getGameIndex()+1);
+        if (room.getReShuffleTime() == 0) {
+            room.setGameIndex(room.getGameIndex()+1);
+        }
         // 初始化玩家
         for (String account : obtainAllPlayerAccount(roomNo)) {
             room.getUserPacketMap().get(account).setScore(0);
@@ -1033,6 +1048,7 @@ public class DdzGameEventDeal {
         if (summaryTimes>1) {
             return;
         }
+        redisService.insertKey("startTimes_ddz_"+roomNo,"0",null);
         DdzGameRoom room = (DdzGameRoom) RoomManage.gameRoomMap.get(roomNo);
         // 农民输赢分数=倍数*底
         double farmerScore = Dto.mul(room.getMultiple(),room.getScore());
