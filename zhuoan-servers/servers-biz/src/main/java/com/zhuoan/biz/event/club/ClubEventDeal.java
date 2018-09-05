@@ -46,6 +46,11 @@ public class ClubEventDeal {
     @Resource
     private BaseEventDeal baseEventDeal;
 
+    /**
+     * 获取玩家俱乐部列表
+     * @param client
+     * @param data
+     */
     public void getMyClubList(SocketIOClient client, Object data) {
         JSONObject postData = JSONObject.fromObject(data);
         if (!postData.containsKey(CommonConstant.DATA_KEY_ACCOUNT)) {
@@ -78,6 +83,11 @@ public class ClubEventDeal {
         CommonConstant.sendMsgEventToSingle(client, String.valueOf(result), "getMyClubListPush");
     }
 
+    /**
+     * 获取俱乐部成员
+     * @param client
+     * @param data
+     */
     public void getClubMembers(SocketIOClient client, Object data) {
         JSONObject postData = JSONObject.fromObject(data);
         if (!postData.containsKey(ClubConstant.DATA_KEY_CLUB_CODE)) {
@@ -107,6 +117,11 @@ public class ClubEventDeal {
         CommonConstant.sendMsgEventToSingle(client, String.valueOf(result), "getClubMembersPush");
     }
 
+    /**
+     * 获取俱乐部设置
+     * @param client
+     * @param data
+     */
     public void getClubSetting(SocketIOClient client, Object data) {
         JSONObject postData = JSONObject.fromObject(data);
         if (!postData.containsKey(ClubConstant.DATA_KEY_CLUB_CODE) || !postData.containsKey(CommonConstant.DATA_KEY_ACCOUNT)) {
@@ -148,6 +163,11 @@ public class ClubEventDeal {
         }
     }
 
+    /**
+     * 更改俱乐部设置
+     * @param client
+     * @param data
+     */
     public void changeClubSetting(SocketIOClient client, Object data) {
         /**
          * 1、是否会长本人发起修改
@@ -259,6 +279,11 @@ public class ClubEventDeal {
 
     }
 
+    /**
+     * 刷新俱乐部信息
+     * @param client
+     * @param data
+     */
     public void refreshClubInfo(SocketIOClient client, Object data) {
         JSONObject postData = JSONObject.fromObject(data);
         // 俱乐部编号
@@ -318,6 +343,11 @@ public class ClubEventDeal {
         CommonConstant.sendMsgEventToSingle(client, String.valueOf(result), "refreshClubInfoPush");
     }
 
+    /**
+     * 快速加入
+     * @param client
+     * @param data
+     */
     public void quickJoinClubRoom(SocketIOClient client, Object data) {
         JSONObject postData = JSONObject.fromObject(data);
         if (postData.containsKey("base_info")) {
@@ -367,7 +397,13 @@ public class ClubEventDeal {
         }
     }
 
-
+    /**
+     * 发送失败提示信息
+     * @param client
+     * @param code
+     * @param msg
+     * @param eventName
+     */
     private void sendPromptToSingle(SocketIOClient client, int code, String msg, String eventName) {
         JSONObject result = new JSONObject();
         result.put(CommonConstant.RESULT_KEY_CODE, code);
@@ -375,11 +411,21 @@ public class ClubEventDeal {
         CommonConstant.sendMsgEventToSingle(client, String.valueOf(result), eventName);
     }
 
+    /**
+     * 获取玩家俱乐部集合
+     * @param userInfo
+     * @return
+     */
     private List<String> getUserClubList(JSONObject userInfo) {
         String clubIds = userInfo.getString("clubIds");
         return new ArrayList<>(Arrays.asList(clubIds.substring(1, clubIds.length()).split("\\$")));
     }
 
+    /**
+     * 根据游戏id获取游戏名称
+     * @param gameId
+     * @return
+     */
     private String getGameNameById(int gameId) {
         JSONObject gameInfo;
         try {

@@ -710,6 +710,9 @@ public class GameRoom {
             userGameLog.put("account", users.getJSONObject(i).getDouble("fen"));
             userGameLog.put("fee", getFee());
             userGameLog.put("room_type", getRoomType());
+            if (getRoomType() == CommonConstant.ROOM_TYPE_CLUB) {
+                userGameLog.put("club_code", getClubCode());
+            }
             userGameLogs.add(userGameLog);
         }
         return userGameLogs;

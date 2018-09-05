@@ -82,6 +82,9 @@ public class BaseEventDeal {
     private PropsBiz propsBiz;
 
     @Resource
+    private ClubBiz clubBiz;
+
+    @Resource
     private NNGameEventDealNew nnGameEventDealNew;
 
     @Resource
@@ -3375,7 +3378,7 @@ public class BaseEventDeal {
         // 房间类别
         int roomType = postData.getInt("roomType");
         // 俱乐部编号
-        String clubCode = postData.containsKey("club_code") ? postData.getString("club_code") : null;
+        String clubCode = postData.containsKey("clubCode") ? postData.getString("clubCode") : null;
         // 所有房间列表
         JSONArray roomList = gameLogBiz.getUserGameRoomByRoomType(userId, gameId, roomType);
         // 房间号集合
@@ -3386,9 +3389,20 @@ public class BaseEventDeal {
         // 用户战绩
         JSONArray userGameLogsByUserId = gameLogBiz.getUserGameLogsByUserId(userId, gameId, roomType, list, clubCode);
         // 汇总
-        List<JSONObject> summaryLogs = summaryLogs(roomList, userGameLogsByUserId);
+        List<JSONObject> summaryLogs = summaryLogs(roomList, userGameLogsByUserId, userId);
         // 通知玩家
         JSONObject result = new JSONObject();
+        // 是否是俱乐部会长查看战绩
+        result.put("isLeader", CommonConstant.GLOBAL_NO);
+        if (roomType == CommonConstant.ROOM_TYPE_CLUB && !Dto.stringIsNULL(clubCode)) {
+            // 俱乐部信息
+            JSONObject clubInfo = clubBiz.getClubByCode(clubCode);
+            if (!Dto.isObjNull(clubInfo)) {
+                if (userId == clubInfo.getLong("leaderId")) {
+                    result.put("isLeader", CommonConstant.GLOBAL_YES);
+                }
+            }
+        }
         if (summaryLogs.size() > 0) {
             result.put(CommonConstant.RESULT_KEY_CODE, CommonConstant.GLOBAL_YES);
             result.put("data", summaryLogs);
@@ -3397,6 +3411,70 @@ public class BaseEventDeal {
             result.put(CommonConstant.RESULT_KEY_CODE, CommonConstant.GLOBAL_NO);
         }
         CommonConstant.sendMsgEventToSingle(client, String.valueOf(result), "getRoomCardGameLogListPush");
+    }
+
+    /**
+     * 获取房卡场战绩
+     * @param client
+     * @param data
+     */
+    public void getClubGameLogList(SocketIOClient client, Object data) {
+        JSONObject postData = JSONObject.fromObject(data);
+        // 用户id
+        long userId = postData.getLong("user_id");
+        // 游戏id
+        int gameId = postData.getInt("gid");
+        // 房间类别
+        int roomType = postData.getInt("roomType");
+        // 俱乐部编号
+        String clubCode = postData.containsKey("clubCode") ? postData.getString("clubCode") : null;
+        // 俱乐部信息
+        if (Dto.stringIsNULL(clubCode)) {
+            return;
+        }
+        JSONObject clubInfo = clubBiz.getClubByCode(clubCode);
+        List<JSONObject> allLogs = new ArrayList<>();
+        List<String> allRoomNo = new ArrayList<>();
+        if (!Dto.isObjNull(clubInfo)) {
+            if (userId == clubInfo.getLong("leaderId")) {
+                JSONArray member = clubBiz.getClubMember(clubInfo.getLong("id"));
+                for (int i = 0; i < member.size(); i++) {
+                    long id = member.getJSONObject(i).getLong("id");
+                    // 所有房间列表
+                    JSONArray roomList = gameLogBiz.getUserGameRoomByRoomType(id, gameId, roomType);
+                    // 房间号集合
+                    List<String> list = new ArrayList<>();
+                    for (Object o : roomList) {
+                        String roomNo = JSONObject.fromObject(o).getString("room_no");
+                        if (!allRoomNo.contains(roomNo)) {
+                            allRoomNo.add(roomNo);
+                            list.add(roomNo);
+                        }
+                    }
+                    // 用户战绩
+                    JSONArray userGameLogsByUserId = gameLogBiz.getUserGameLogsByUserId(id, gameId, roomType, list, clubCode);
+                    // 去除重复房间
+                    JSONArray newRoomList = new JSONArray();
+                    for (int j = 0; j < roomList.size(); j++) {
+                        if (list.contains(roomList.getJSONObject(j).getString("room_no"))) {
+                            newRoomList.add(roomList.getJSONObject(j));
+                        }
+                    }
+                    // 汇总
+                    List<JSONObject> summaryLogs = summaryLogs(newRoomList, userGameLogsByUserId, id);
+                    allLogs.addAll(summaryLogs);
+                }
+            }
+        }
+        JSONObject result = new JSONObject();
+        if (allLogs.size() > 0) {
+            result.put(CommonConstant.RESULT_KEY_CODE, CommonConstant.GLOBAL_YES);
+            result.put("gid", gameId);
+            result.put("data", allLogs);
+        } else {
+            result.put(CommonConstant.RESULT_KEY_CODE, CommonConstant.GLOBAL_NO);
+        }
+        CommonConstant.sendMsgEventToSingle(client, String.valueOf(result), "getClubGameLogListPush");
     }
 
     /**
@@ -3434,9 +3512,10 @@ public class BaseEventDeal {
      * 战绩汇总
      * @param roomList
      * @param gameLogList
+     * @param userId
      * @return
      */
-    private List<JSONObject> summaryLogs(JSONArray roomList, JSONArray gameLogList) {
+    private List<JSONObject> summaryLogs(JSONArray roomList, JSONArray gameLogList, long userId) {
         List<JSONObject> summaryList = new ArrayList<>();
         // 遍历所有有效房间
         for (int i = 0; i < roomList.size(); i++) {
@@ -3451,6 +3530,7 @@ public class BaseEventDeal {
                     obj.put("createtime", roomObj.getString("createtime"));
                     obj.put("room_no", roomObj.getString("room_no"));
                     obj.put("roomindex", roomObj.getString("id"));
+                    obj.put("userId", userId);
                     obj.put("result", getTotalSumList(gameLogByRoomNo));
                     summaryList.add(obj);
                 } catch (Exception e) {

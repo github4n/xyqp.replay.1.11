@@ -540,11 +540,16 @@ public class MatchEventDeal {
                     // 满人开始的需要改变人数
                     int time = RandomUtils.nextInt(5) + 5;
                     for (int i = 0; i < time; i++) {
+                        try {
+                            Thread.sleep(1000);
+                        } catch (InterruptedException e) {
+                            e.printStackTrace();
+                        }
                         // 更改人数
                         JSONObject matchInfo = getMatchInfoByNumFromRedis(matchNum);
                         // 场次不存在终止线程
                         if (Dto.isObjNull(matchInfo)) {
-                            break;
+                            return;
                         }
                         // 增加人数
                         int addCount = RandomUtils.nextInt(matchInfo.getInt("total_count") - matchInfo.getInt("sign_count"));
@@ -556,17 +561,17 @@ public class MatchEventDeal {
                         matchInfo.put("sign_count", signCount);
                         // 更新缓存
                         redisService.insertKey("match_info_" + matchNum, String.valueOf(matchInfo), null);
-                        try {
-                            Thread.sleep(1000);
-                        } catch (InterruptedException e) {
-                            e.printStackTrace();
-                        }
                     }
                 }
-                // 初始化排行榜
-                initRank(matchSetting, matchNum);
-                // 更改状态
-                matchBiz.updateMatchInfoByMatchNum(matchNum, 1);
+                JSONObject unFullMatch = matchBiz.getMatchInfoByMatchId(matchSetting.getLong("id"), 0, 0);
+                // 当前场次未开始进行开始游戏(防止最后一个玩家报名与线程冲突开始多次)
+                if (!Dto.isObjNull(unFullMatch) && unFullMatch.getString("match_num").equals(matchNum)) {
+
+                    // 初始化排行榜
+                    initRank(matchSetting, matchNum);
+                    // 更改状态
+                    matchBiz.updateMatchInfoByMatchNum(matchNum, 1);
+                }
             }
         });
     }
@@ -1558,7 +1563,12 @@ public class MatchEventDeal {
         if (!Dto.isObjNull(matchInfo)) {
             // 添加玩家信息
             addPlayerInfo(account, unFullMatch.getString("match_num"), uuid, String.valueOf(client.getSessionId()), 1000, 0);
-            matchInfo.put("sign_count", matchInfo.getInt("sign_count") + 1);
+            int signCount = matchInfo.getInt("sign_count") + 1;
+            // 超出最大人数按最大人数计算
+            if (signCount > matchInfo.getInt("total_count")) {
+                signCount = matchInfo.getInt("total_count");
+            }
+            matchInfo.put("sign_count", signCount);
             addMatchInfoIntoRedis(unFullMatch.getString("match_num"), matchInfo);
         }
     }

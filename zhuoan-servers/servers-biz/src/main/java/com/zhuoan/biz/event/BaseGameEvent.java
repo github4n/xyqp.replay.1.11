@@ -434,6 +434,16 @@ public class BaseGameEvent {
             }
         });
 
+        /**
+         * 俱乐部战绩汇总
+         */
+        server.addEventListener("getClubGameLogList", Object.class, new DataListener<Object>() {
+            @Override
+            public void onData(SocketIOClient client, Object data, AckRequest ackSender) {
+                producerService.sendMessage(baseQueueDestination, new Messages(client, data, CommonConstant.GAME_BASE, CommonConstant.BASE_GAME_EVENT_GET_CLUB_GAME_LOG));
+            }
+        });
+
     }
 
 
