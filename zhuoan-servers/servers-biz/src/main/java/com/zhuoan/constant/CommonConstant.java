@@ -168,6 +168,10 @@ public class CommonConstant {
      */
     public static final int BASE_GAME_EVENT_GET_ROOM_CARD_GAME_LOG = 38;
     /**
+     * 公共游戏事件-获取房卡场战绩详情
+     */
+    public static final int BASE_GAME_EVENT_GET_ROOM_CARD_GAME_LOG_DETAIL = 39;
+    /**
      * 游戏公共部分
      */
     public static final int GAME_BASE = 0;

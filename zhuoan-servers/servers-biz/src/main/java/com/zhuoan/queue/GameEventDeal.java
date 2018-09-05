@@ -557,6 +557,9 @@ public class GameEventDeal {
             case CommonConstant.BASE_GAME_EVENT_GET_ROOM_CARD_GAME_LOG:
                 baseEventDeal.getRoomCardGameLogList(client,data);
                 break;
+            case CommonConstant.BASE_GAME_EVENT_GET_ROOM_CARD_GAME_LOG_DETAIL:
+                baseEventDeal.getRoomCardGameLogDetail(client,data);
+                break;
             default:
                 break;
         }

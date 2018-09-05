@@ -881,14 +881,14 @@ public class MatchEventDeal {
         if (newAllPlayerInfo != null && newAllPlayerInfo.size() > 0) {
             for (Object o : newAllPlayerInfo.keySet()) {
                 JSONObject playerObj = JSONObject.fromObject(newAllPlayerInfo.get(o));
-                playerObj.put("score", (int) playerObj.getInt("score") * 0.1 + 1000);
+                playerObj.put("score", (int) (playerObj.getInt("score") * 0.1) + 1000);
                 redisService.hset("player_info_" + matchNum, String.valueOf(o), String.valueOf(playerObj));
             }
             Map<Object, Object> newAllRobotInfo = redisService.hmget("robot_info_" + matchNum);
             if (newAllRobotInfo != null && newAllRobotInfo.size() > 0) {
                 for (Object o : newAllRobotInfo.keySet()) {
                     JSONObject robotObj = JSONObject.fromObject(newAllRobotInfo.get(o));
-                    robotObj.put("score", (int) robotObj.getInt("score") * 0.1 + 1000);
+                    robotObj.put("score", (int) (robotObj.getInt("score") * 0.1) + 1000);
                     redisService.hset("robot_info_" + matchNum, String.valueOf(o), String.valueOf(robotObj));
                 }
             }
@@ -1075,7 +1075,13 @@ public class MatchEventDeal {
                             // 生成随机倍数
                             int multiple = RandomUtils.nextInt(maxMultiple) + 1;
                             // 计算分数
-                            int score = 10;
+                            int score = 30;
+                            try {
+                                Object object = redisService.queryValueByKey(String.valueOf("match_room_score"));
+                                if (object != null) {
+                                    score = Integer.parseInt(String.valueOf(object));
+                                }
+                            } catch (Exception e) {}
                             for (int k = 0; k < multiple; k++) {
                                 score *= 2;
                             }
@@ -1214,7 +1220,14 @@ public class MatchEventDeal {
         room.setPlayerCount(perCount);
         room.setGameCount(1);
         room.setGameIndex(0);
-        room.setScore(10);
+        int score = 30;
+        try {
+            Object object = redisService.queryValueByKey(String.valueOf("match_room_score"));
+            if (object != null) {
+                score = Integer.parseInt(String.valueOf(object));
+            }
+        } catch (Exception e) {}
+        room.setScore(score);
         room.setRobot(true);
         JSONObject setting = new JSONObject();
         setting.put("trustee_pass", CommonConstant.GLOBAL_YES);

@@ -84,7 +84,8 @@ public interface GameLogBiz {
      * @param gameId
      * @param roomType
      * @param roomList
+     * @param clubCode
      * @return
      */
-    JSONArray getUserGameLogsByUserId(long userId, int gameId, int roomType, List<String> roomList);
+    JSONArray getUserGameLogsByUserId(long userId, int gameId, int roomType, List<String> roomList, String clubCode);
 }

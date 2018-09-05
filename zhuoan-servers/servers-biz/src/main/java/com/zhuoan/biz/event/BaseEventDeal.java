@@ -3374,6 +3374,8 @@ public class BaseEventDeal {
         int gameId = postData.getInt("gid");
         // 房间类别
         int roomType = postData.getInt("roomType");
+        // 俱乐部编号
+        String clubCode = postData.containsKey("club_code") ? postData.getString("club_code") : null;
         // 所有房间列表
         JSONArray roomList = gameLogBiz.getUserGameRoomByRoomType(userId, gameId, roomType);
         // 房间号集合
@@ -3382,7 +3384,7 @@ public class BaseEventDeal {
             list.add(JSONObject.fromObject(o).getString("room_no"));
         }
         // 用户战绩
-        JSONArray userGameLogsByUserId = gameLogBiz.getUserGameLogsByUserId(userId, gameId, roomType, list);
+        JSONArray userGameLogsByUserId = gameLogBiz.getUserGameLogsByUserId(userId, gameId, roomType, list, clubCode);
         // 汇总
         List<JSONObject> summaryLogs = summaryLogs(roomList, userGameLogsByUserId);
         // 通知玩家
@@ -3395,6 +3397,37 @@ public class BaseEventDeal {
             result.put(CommonConstant.RESULT_KEY_CODE, CommonConstant.GLOBAL_NO);
         }
         CommonConstant.sendMsgEventToSingle(client, String.valueOf(result), "getRoomCardGameLogListPush");
+    }
+
+    /**
+     * 获取房卡场战绩详情
+     * @param client
+     * @param data
+     */
+    public void getRoomCardGameLogDetail(SocketIOClient client, Object data) {
+        JSONObject postData = JSONObject.fromObject(data);
+        // 用户id
+        long userId = postData.getLong("user_id");
+        // 游戏id
+        int gameId = postData.getInt("gid");
+        // 房间类别
+        int roomType = postData.getInt("roomType");
+        // 房间号
+        String room_no = postData.getString("room_no");
+        List<String> list = new ArrayList<>();
+        list.add(room_no);
+        // 用户战绩
+        JSONArray userGameLogsByUserId = gameLogBiz.getUserGameLogsByUserId(userId, gameId, roomType, list, null);
+        // 通知玩家
+        JSONObject result = new JSONObject();
+        if (userGameLogsByUserId.size() > 0) {
+            result.put(CommonConstant.RESULT_KEY_CODE, CommonConstant.GLOBAL_YES);
+            result.put("list", userGameLogsByUserId);
+        } else {
+            result.put(CommonConstant.RESULT_KEY_CODE, CommonConstant.GLOBAL_NO);
+        }
+        System.out.println(result);
+        CommonConstant.sendMsgEventToSingle(client, String.valueOf(result), "getRoomCardGameLogDetailPush");
     }
 
     /**
@@ -3428,6 +3461,11 @@ public class BaseEventDeal {
         return summaryList;
     }
 
+    /**
+     * 获取累计输赢
+     * @param gameLogList
+     * @return
+     */
     private List<JSONObject> getTotalSumList(List<JSONObject> gameLogList) {
         List<JSONObject> totalSum = new ArrayList<>();
         if (gameLogList.size() > 0) {

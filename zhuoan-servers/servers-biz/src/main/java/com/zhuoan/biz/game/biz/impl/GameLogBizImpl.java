@@ -104,7 +104,7 @@ public class GameLogBizImpl implements GameLogBiz {
     }
 
     @Override
-    public JSONArray getUserGameLogsByUserId(long userId, int gameId, int roomType, List<String> roomList) {
-        return gameDao.getUserGameLogsByUserId(userId, gameId, roomType, roomList);
+    public JSONArray getUserGameLogsByUserId(long userId, int gameId, int roomType, List<String> roomList, String clubCode) {
+        return gameDao.getUserGameLogsByUserId(userId, gameId, roomType, roomList, clubCode);
     }
 }

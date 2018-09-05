@@ -752,8 +752,8 @@ public class GameDaoImpl implements GameDao {
     }
 
     @Override
-    public JSONArray getUserGameLogsByUserId(long userId, int gameId, int roomType, List<String> roomList) {
-        String sql = "SELECT id,room_no,result,gamelog_id FROM `za_usergamelogs` where user_id=? and gid=? " +
+    public JSONArray getUserGameLogsByUserId(long userId, int gameId, int roomType, List<String> roomList, String clubCode) {
+        String sql = "SELECT id,room_no,result,gamelog_id,game_index FROM `za_usergamelogs` where user_id=? and gid=? " +
             "and room_type=?";
         if (roomList.size() > 0) {
             sql += " and room_no in(";
@@ -764,6 +764,9 @@ public class GameDaoImpl implements GameDao {
                 }
             }
             sql += ")";
+        }
+        if (!Dto.stringIsNULL(clubCode)) {
+            sql += " and club_code='" + clubCode + "'";
         }
         sql += " ORDER BY id DESC";
         return DBUtil.getObjectListBySQL(sql,new Object[]{userId, gameId, roomType});
