@@ -3,7 +3,10 @@ package com.zhuoan.biz.event.ddz;
 import com.corundumstudio.socketio.SocketIOClient;
 import com.zhuoan.biz.core.ddz.DdzCore;
 import com.zhuoan.biz.event.match.MatchEventDeal;
-import com.zhuoan.biz.game.biz.*;
+import com.zhuoan.biz.game.biz.AchievementBiz;
+import com.zhuoan.biz.game.biz.PropsBiz;
+import com.zhuoan.biz.game.biz.RoomBiz;
+import com.zhuoan.biz.game.biz.UserBiz;
 import com.zhuoan.biz.model.Playerinfo;
 import com.zhuoan.biz.model.RoomManage;
 import com.zhuoan.biz.model.dao.PumpDao;
@@ -22,14 +25,13 @@ import com.zhuoan.util.thread.ThreadPoolHelper;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 import org.apache.commons.lang.math.RandomUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
 import javax.jms.Destination;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 
 /**
  * @author wqm
@@ -39,6 +41,8 @@ import java.util.UUID;
  **/
 @Component
 public class DdzGameEventDeal {
+
+    private final static Logger logger = LoggerFactory.getLogger(DdzGameEventDeal.class);
 
     @Resource
     private UserBiz userBiz;
@@ -117,7 +121,7 @@ public class DdzGameEventDeal {
             beginReadyTimer(room.getRoomNo(), room);
         }else if (room.getRoomType() == CommonConstant.ROOM_TYPE_MATCH) {
             matchEventDeal.changePlayerInfo(room.getMatchNum(),String.valueOf(client.getSessionId()),null,
-                account,0,0, room.getUserPacketMap().get(account).getMyPai().size());
+                account,0,0, room.getUserPacketMap().get(account).getMyPai().size(),0);
         }
     }
 
@@ -446,13 +450,15 @@ public class DdzGameEventDeal {
                 if (RoomManage.gameRoomMap.containsKey(roomNo) && RoomManage.gameRoomMap.get(roomNo) != null) {
                     DdzGameRoom room = (DdzGameRoom) RoomManage.gameRoomMap.get(roomNo);
                     for (String player : obtainAllPlayerAccount(roomNo)) {
+                        String firstAccount = getFirstAccountInRoom(roomNo);
+                        int win = player.equals(firstAccount) ? 10 : 1;
                         // 重置状态
                         room.getUserPacketMap().get(player).setStatus(DdzConstant.DDZ_USER_STATUS_INIT);
                         JSONObject data = new JSONObject().element(CommonConstant.DATA_KEY_ACCOUNT, player).element(CommonConstant.DATA_KEY_ROOM_NO, roomNo);
                         if (room.getRobotList().contains(player)) {
                             // 改变分数
                             matchEventDeal.changeRobotInfo(room.getMatchNum(), player, (int) room.getUserPacketMap()
-                                .get(player).getScore(), 0, room.getUserPacketMap().get(player).getMyPai().size());
+                                .get(player).getScore(), 0, room.getUserPacketMap().get(player).getMyPai().size(), win);
                             // 刷新玩家排名
                             matchEventDeal.refreshUserRank(roomNo, player);
                             // 初始化场景
@@ -460,7 +466,7 @@ public class DdzGameEventDeal {
                         } else {
                             // 改变分数
                             matchEventDeal.changePlayerInfo(room.getMatchNum(), null, null, player,
-                                (int) room.getUserPacketMap().get(player).getScore(), 0, room.getUserPacketMap().get(player).getMyPai().size());
+                                (int) room.getUserPacketMap().get(player).getScore(), 0, room.getUserPacketMap().get(player).getMyPai().size(), win);
                             // 刷新玩家排名
                             matchEventDeal.refreshUserRank(roomNo, player);
                             // 获取客户端对象
@@ -907,7 +913,7 @@ public class DdzGameEventDeal {
         // 刷新比赛场
         if (room.getRoomType() == CommonConstant.ROOM_TYPE_MATCH) {
             matchEventDeal.changePlayerInfo(room.getMatchNum(),String.valueOf(client.getSessionId()),
-                null,account,0,0, room.getUserPacketMap().get(account).getMyPai().size());
+                null,account,0,0, room.getUserPacketMap().get(account).getMyPai().size(), 0);
         }
         // 组织数据，通知玩家
         result.put("type", 1);
@@ -1132,6 +1138,7 @@ public class DdzGameEventDeal {
                 List<JSONObject> userDetails = new ArrayList<>();
                 // 玩家
                 List<String> realList = new ArrayList<>();
+                String firstAccount = getFirstAccountInRoom(roomNo);
                 for (String player : obtainAllPlayerAccount(roomNo)) {
                     JSONObject userDetail = new JSONObject();
                     userDetail.put("account",player);
@@ -1142,6 +1149,7 @@ public class DdzGameEventDeal {
                         userDetail.put("round",1);
                         realList.add(player);
                     }
+                    userDetail.put("win", player.equals(firstAccount) ? 10 : 1);
                     userDetails.add(userDetail);
                 }
                 matchEventDeal.userFinish(room.getMatchNum(), userDetails, realList);
@@ -2032,4 +2040,40 @@ public class DdzGameEventDeal {
         return leftArray;
     }
 
+    /**
+     * 获取当前房间内分数最高的玩家
+     * @param roomNo
+     * @return
+     */
+    private String getFirstAccountInRoom(String roomNo) {
+        try {
+            if (RoomManage.gameRoomMap.containsKey(roomNo) && RoomManage.gameRoomMap.get(roomNo) != null) {
+                // 房间实体对象
+                final DdzGameRoom room = (DdzGameRoom) RoomManage.gameRoomMap.get(roomNo);
+                // 当前房间内的所有的所有玩家
+                List<String> allPlayer = obtainAllPlayerAccount(roomNo);
+                if (allPlayer.size() > 0) {
+                    // 排序
+                    Collections.sort(allPlayer, new Comparator<String>() {
+                        @Override
+                        public int compare(String o1, String o2) {
+                            double score1 = room.getPlayerMap().get(o1).getScore();
+                            double score2 = room.getPlayerMap().get(o2).getScore();
+                            if (score1 == score2) {
+                                int size1 = room.getUserPacketMap().get(o1).getMyPai().size();
+                                int size2 = room.getUserPacketMap().get(o2).getMyPai().size();
+                                return size2 -size1;
+                            }
+                            return (int) (score2 - score1);
+                        }
+                    });
+                    // 取第一个玩家
+                    return allPlayer.get(0);
+                }
+            }
+        } catch (Exception e) {
+            logger.error("", e);
+        }
+        return null;
+    }
 }

@@ -141,7 +141,7 @@ public interface GameDao {
      * @param minScore
      * @return
      */
-    public JSONArray getRobotArray(int count,double minScore);
+    public JSONArray getRobotArray(int count,double minScore, double maxScore);
 
     /**
      * 金币场玩家抽水

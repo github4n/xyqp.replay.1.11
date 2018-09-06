@@ -3115,7 +3115,7 @@ public class BaseEventDeal {
             int time = winStreakObj.getInt("time");
             if (winStreakTime >= time) {
                 List<JSONObject> rewardList = room.getWinStreakObj().getJSONArray("rewardArr");
-                if (num > 0 && num < rewardList.size()) {
+                if (num >= 0 && num < rewardList.size()) {
                     Collections.shuffle(rewardList);
                     JSONObject rewardObj = rewardList.get(num);
                     double reward = rewardObj.getDouble("val");

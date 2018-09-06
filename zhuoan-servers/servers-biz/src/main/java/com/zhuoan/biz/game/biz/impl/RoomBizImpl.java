@@ -167,9 +167,9 @@ public class RoomBizImpl implements RoomBiz{
      * @return
      */
     @Override
-    public JSONArray getRobotArray(int count,double minScore) {
+    public JSONArray getRobotArray(int count,double minScore, double maxScore) {
 
-        return gameDao.getRobotArray(count,minScore);
+        return gameDao.getRobotArray(count,minScore,maxScore);
     }
 
     /**

@@ -112,7 +112,8 @@ public class RobotEventDeal {
         // 机器人数(随机留出1-3个空座)
         int robotCount = totalCount - playerCount ;
         double minScore = RoomManage.gameRoomMap.get(roomNo).getEnterScore();
-        JSONArray robotArray = roomBiz.getRobotArray(robotCount,minScore);
+        double maxScore = RoomManage.gameRoomMap.get(roomNo).getLeaveScore();
+        JSONArray robotArray = roomBiz.getRobotArray(robotCount,minScore, maxScore);
         for (int i = 0; i < robotArray.size(); i++) {
             String robotAccount = robotArray.getJSONObject(i).getString("account");
             JSONObject obj = new JSONObject();

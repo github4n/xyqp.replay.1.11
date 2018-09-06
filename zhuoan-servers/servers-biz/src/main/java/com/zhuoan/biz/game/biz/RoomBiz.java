@@ -89,9 +89,10 @@ public interface RoomBiz {
      * 获取机器人列表
      * @param count
      * @param minScore
+     * @param maxScore
      * @return
      */
-    public JSONArray getRobotArray(int count,double minScore);
+    public JSONArray getRobotArray(int count,double minScore, double maxScore);
 
     /**
      * 金币场玩家抽水
