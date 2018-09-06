@@ -214,6 +214,10 @@ public class ZJHGameEventDealNew {
         // 初始化房间信息
         room.initGame();
         ((ZJHGameEventDealNew)AopContext.currentProxy()).shuffleAndFp(room);
+        // 弃牌可见 20180827 wqm
+        for (String account : room.getUserPacketMap().keySet()) {
+            room.getUserPacketMap().get(account).addBiPaiList(room.getPlayerIndex(account), room.getUserPacketMap().get(account).getPai());
+        }
 
         if (room.getFee() > 0) {
             JSONArray array = new JSONArray();
@@ -803,10 +807,25 @@ public class ZJHGameEventDealNew {
         room.setTimeLeft(ZJHConstant.ZJH_TIMER_INIT);
         for (String uuid : room.getUserPacketMap().keySet()) {
             if (room.getUserPacketMap().containsKey(uuid)&&room.getUserPacketMap().get(uuid)!=null) {
-                Playerinfo player = RoomManage.gameRoomMap.get(room.getRoomNo()).getPlayerMap().get(uuid);
                 // 参与游戏的玩家才能参与结算
                 if(room.getUserPacketMap().get(uuid).getStatus()>ZJHConstant.ZJH_USER_STATUS_INIT) {
                     if (room.getUserPacketMap().get(uuid).getStatus()==ZJHConstant.ZJH_USER_STATUS_WIN) {
+                        if (room.getUserPacketMap().get(uuid).getType() == ZhaJinHuaCore.TYPE_BAOZI) {
+                            int score = !Dto.isObjNull(room.getSetting()) && room.getSetting().containsKey("boom_reward") ?
+                                room.getSetting().getInt("boom_reward") : 0;
+                            if (score > 0) {
+                                for (String account : room.getUserPacketMap().keySet()) {
+                                    if (!account.equals(uuid) && room.getUserPacketMap().get(account).getStatus() != ZJHConstant.ZJH_USER_STATUS_INIT) {
+                                        // 未赢玩家增加相应的下注积分
+                                        room.getPlayerMap().get(account).setScore(room.getPlayerMap().get(account).getScore() - score);
+                                        room.getUserPacketMap().get(account).setScore(room.getUserPacketMap().get(account).getScore() + score);
+                                        // 总积分增加
+                                        room.setTotalScore(room.getTotalScore() + score);
+                                    }
+                                }
+                            }
+                        }
+                        Playerinfo player = RoomManage.gameRoomMap.get(room.getRoomNo()).getPlayerMap().get(uuid);
                         double oldScore = player.getScore();
                         RoomManage.gameRoomMap.get(room.getRoomNo()).getPlayerMap().get(uuid).setScore(Dto.add(oldScore,room.getTotalScore()));
                         room.setBanker(uuid);

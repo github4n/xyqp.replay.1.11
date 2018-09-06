@@ -321,8 +321,6 @@ public class ZJHGameRoomNew extends GameRoom{
                 getUserPacketMap().get(account).setPai(myPai);
                 getUserPacketMap().get(account).setType(ZhaJinHuaCore.getPaiType(Arrays.asList(myPai)));
                 getUserPacketMap().get(account).setStatus(ZJHConstant.ZJH_USER_STATUS_AP);
-                // 弃牌可见 20180827 wqm
-                getUserPacketMap().get(account).addBiPaiList(getPlayerIndex(account), getUserPacketMap().get(account).getPai());
             }
         }
     }
