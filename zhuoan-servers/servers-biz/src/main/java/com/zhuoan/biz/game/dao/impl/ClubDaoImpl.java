@@ -24,13 +24,13 @@ public class ClubDaoImpl implements ClubDao {
 
     @Override
     public JSONObject getClubByCode(String clubCode) {
-        String sql = "select id,clubCode,platform,notice,setting,leaderId,clubName,quick_setting from club where clubCode=?";
+        String sql = "select id,clubCode,platform,notice,setting,leaderId,clubName,quick_setting,balance from club where clubCode=?";
         return DBUtil.getObjectBySQL(sql, new Object[]{clubCode});
     }
 
     @Override
     public JSONObject getClubById(long id) {
-        String sql = "select id,clubCode,clubName,platform,leaderId,quick_setting from club where id=?";
+        String sql = "select id,clubCode,platform,notice,setting,leaderId,clubName,quick_setting,balance from club where id=?";
         return DBUtil.getObjectBySQL(sql, new Object[]{id});
     }
 

@@ -350,10 +350,6 @@ public class ClubEventDeal {
      */
     public void quickJoinClubRoom(SocketIOClient client, Object data) {
         JSONObject postData = JSONObject.fromObject(data);
-        if (postData.containsKey("base_info")) {
-            baseEventDeal.createRoomBase(client,data);
-            return;
-        }
         // 通知事件名称
         String eventName = "quickJoinClubRoomPush";
         String clubCode = postData.getString("clubCode");
@@ -371,6 +367,17 @@ public class ClubEventDeal {
             sendPromptToSingle(client, CommonConstant.GLOBAL_NO, "未加入该俱乐部", eventName);
             return;
         }
+        if (postData.containsKey("base_info")) {
+            // 判断余额是否足够
+            // 当前俱乐部总余额必须大于已开房未扣费的房间需要消耗的总和+当前房间需要消耗的
+            int cost = getRoomCostByBaseInfo(postData.getJSONObject("base_info"));
+            if (cost == -1 || cost + getClubCost(clubCode) > clubInfo.getDouble("balance")) {
+                sendPromptToSingle(client, CommonConstant.GLOBAL_NO, "余额不足，请联系会长充值", eventName);
+                return;
+            }
+            baseEventDeal.createRoomBase(client,data);
+            return;
+        }
         List<String> roomNoList = new ArrayList<String>();
         for (String roomNo : RoomManage.gameRoomMap.keySet()) {
             GameRoom room = RoomManage.gameRoomMap.get(roomNo);
@@ -380,10 +387,17 @@ public class ClubEventDeal {
                 roomNoList.add(roomNo);
             }
         }
+        // 快速加入有房间加入房间 没有房间创建房间
         if (roomNoList.size() == 0) {
             JSONObject quickSetting = !Dto.isObjNull(clubInfo.getJSONObject("quick_setting")) ?
                 clubInfo.getJSONObject("quick_setting").getJSONObject(String.valueOf(gameId)) : null;
             if (!Dto.isObjNull(quickSetting)) {
+                // 判断余额是否足够
+                int cost = getRoomCostByBaseInfo(quickSetting);
+                if (cost == -1 || cost + getClubCost(clubCode) > clubInfo.getDouble("balance")) {
+                    sendPromptToSingle(client, CommonConstant.GLOBAL_NO, "余额不足，请联系会长充值", eventName);
+                    return;
+                }
                 postData.put("base_info", quickSetting);
                 baseEventDeal.createRoomBase(client,postData);
             } else {
@@ -395,6 +409,43 @@ public class ClubEventDeal {
             postData.put("room_no",roomNoList.get(0));
             baseEventDeal.joinRoomBase(client,postData);
         }
+    }
+
+    /**
+     * 计算当前房间所需要消耗的房卡
+     * @param baseInfo
+     * @return
+     */
+    private int getRoomCostByBaseInfo(JSONObject baseInfo) {
+        try {
+            if (baseInfo.containsKey("player") && baseInfo.containsKey("turn")) {
+                int player = baseInfo.getInt("player");
+                JSONObject turn = baseInfo.getJSONObject("turn");
+                if (turn.containsKey("AANum")) {
+                    int aaNum = turn.getInt("AANum");
+                    return player * aaNum;
+                }
+            }
+        } catch (Exception e) {
+
+        }
+        return -1;
+    }
+
+    /**
+     * 当前俱乐部已消耗
+     * @param clubCode
+     * @return
+     */
+    private int getClubCost(String clubCode) {
+        int cost = 0;
+        for (String roomNo : RoomManage.gameRoomMap.keySet()) {
+            GameRoom room = RoomManage.gameRoomMap.get(roomNo);
+            if (room.getRoomType() == CommonConstant.ROOM_TYPE_CLUB && clubCode.equals(room.getClubCode()) && !room.isCost()) {
+                cost += room.getSinglePayNum() * room.getPlayerCount();
+            }
+        }
+        return cost;
     }
 
     /**

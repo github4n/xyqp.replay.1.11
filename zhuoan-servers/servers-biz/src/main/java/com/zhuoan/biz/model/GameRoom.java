@@ -215,6 +215,18 @@ public class GameRoom {
      * 俱乐部编号
      */
     private String clubCode;
+    /**
+     * 是否扣费
+     */
+    private boolean isCost = false;
+
+    public boolean isCost() {
+        return isCost;
+    }
+
+    public void setCost(boolean cost) {
+        isCost = cost;
+    }
 
     public int getLastIndex() {
         return lastIndex;

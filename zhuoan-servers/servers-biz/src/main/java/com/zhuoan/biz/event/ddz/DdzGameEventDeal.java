@@ -997,7 +997,6 @@ public class DdzGameEventDeal {
             // 抽水
             producerService.sendMessage(daoQueueDestination, new PumpDao(DaoTypeConstant.PUMP, room.getJsonObject(array)));
         }
-        changeGameStatus(roomNo);
         // 设置地主牌
         room.setLandlordCard(cardList.get(cardIndex));
         // 随机产生叫地主玩家
