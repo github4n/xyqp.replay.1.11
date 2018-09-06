@@ -6,6 +6,7 @@ import com.zhuoan.biz.core.sss.SSSOrdinaryCards;
 import com.zhuoan.biz.core.sss.SSSSpecialCardSort;
 import com.zhuoan.biz.core.sss.SSSSpecialCards;
 import com.zhuoan.biz.event.FundEventDeal;
+import com.zhuoan.biz.game.biz.ClubBiz;
 import com.zhuoan.biz.game.biz.RoomBiz;
 import com.zhuoan.biz.game.biz.UserBiz;
 import com.zhuoan.biz.model.Playerinfo;
@@ -67,6 +68,9 @@ public class SSSGameEventDealNew {
 
     @Resource
     private UserBiz userBiz;
+
+    @Resource
+    private ClubBiz clubBiz;
 
     @Resource
     private FundEventDeal fundEventDeal;
@@ -680,6 +684,12 @@ public class SSSGameEventDealNew {
                             // 更新数据库
                             updateUserScore(room);
                             updateCompetitiveUserScore(roomNo);
+                            if (room.getId()==0) {
+                                JSONObject roomInfo = roomBiz.getRoomInfoByRno(room.getRoomNo());
+                                if (!Dto.isObjNull(roomInfo)) {
+                                    room.setId(roomInfo.getLong("id"));
+                                }
+                            }
                             if (room.getRoomType()==CommonConstant.ROOM_TYPE_YB) {
                                 saveUserDeduction(room);
                             }
@@ -927,6 +937,10 @@ public class SSSGameEventDealNew {
                 roomCardCount = room.getPlayerCount()*room.getSinglePayNum();
                 array.add(userInfo.getLong("id"));
             }
+        } else if (room.getRoomType() == CommonConstant.ROOM_TYPE_CLUB && room.getGameIndex() == 1) {
+            roomCardCount = room.getPlayerCount()*room.getSinglePayNum();
+            boolean pump = clubBiz.clubPump(room.getClubCode(), roomCardCount, room.getId(), roomNo, room.getGid());
+            room.setCost(pump);
         }
         if (array.size()>0) {
             producerService.sendMessage(daoQueueDestination, new PumpDao(DaoTypeConstant.PUMP, room.getRoomCardChangeObject(array,roomCardCount)));

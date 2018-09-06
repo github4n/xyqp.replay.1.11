@@ -5,6 +5,7 @@ import com.zhuoan.biz.core.nn.NiuNiuServer;
 import com.zhuoan.biz.core.nn.Packer;
 import com.zhuoan.biz.core.nn.UserPacket;
 import com.zhuoan.biz.event.FundEventDeal;
+import com.zhuoan.biz.game.biz.ClubBiz;
 import com.zhuoan.biz.game.biz.RoomBiz;
 import com.zhuoan.biz.game.biz.UserBiz;
 import com.zhuoan.biz.model.PackerCompare;
@@ -65,6 +66,9 @@ public class NNGameEventDealNew {
 
     @Resource
     private UserBiz userBiz;
+
+    @Resource
+    private ClubBiz clubBiz;
 
     @Resource
     private FundEventDeal fundEventDeal;
@@ -1160,6 +1164,10 @@ public class NNGameEventDealNew {
                 roomCardCount = room.getPlayerCount()*room.getSinglePayNum();
                 array.add(userInfo.getLong("id"));
             }
+        } else if (room.getRoomType() == CommonConstant.ROOM_TYPE_CLUB && room.getGameIndex() == 1) {
+            roomCardCount = room.getPlayerCount()*room.getSinglePayNum();
+            boolean pump = clubBiz.clubPump(room.getClubCode(), roomCardCount, room.getId(), roomNo, room.getGid());
+            room.setCost(pump);
         }
         if (array.size()>0) {
             producerService.sendMessage(daoQueueDestination, new PumpDao(DaoTypeConstant.PUMP, room.getRoomCardChangeObject(array,roomCardCount)));

@@ -66,4 +66,26 @@ public interface ClubDao {
      * @param clubIds clubIds
      */
     void updateUserClubIds(long userId, String clubIds);
+
+    /**
+     * 更新俱乐部余额
+     * @param clubId clubId
+     * @param sum sum
+     */
+    void updateClubBalance(long clubId, double sum);
+
+    /**
+     * 添加俱乐部抽水记录
+     * @param userId userId
+     * @param roomId roomId
+     * @param roomNo roomNo
+     * @param gid gid
+     * @param type type
+     * @param sum sum
+     * @param createTime createTime
+     * @param platform platform
+     * @param pocketNew pocketNew
+     * @param pocketOld pocketOld
+     */
+    void addClubPumpRec(long userId, long roomId, String roomNo, int gid, int type, double sum,String createTime, String platform, double pocketNew, double pocketOld);
 }

@@ -66,4 +66,15 @@ public interface ClubBiz {
      * @param clubIds clubIds
      */
     void updateUserClubIds(long userId, String clubIds);
+
+    /**
+     * 俱乐部抽水
+     * @param clubCode clubCode
+     * @param sum sum
+     * @param roomId roomId
+     * @param roomNo roomNo
+     * @param gid gid
+     * @return
+     */
+    boolean clubPump(String clubCode, double sum, long roomId,String roomNo, int gid);
 }
