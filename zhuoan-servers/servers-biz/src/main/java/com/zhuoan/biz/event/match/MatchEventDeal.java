@@ -1075,31 +1075,20 @@ public class MatchEventDeal {
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
-                int time = RandomUtils.nextInt(10) + 5;
-                for (int i = 0; i < time; i++) {
-                    try {
-                        // 取出所有本轮未操作的玩家
-                        Map<Object, Object> allRobotInfo = redisService.hmget("robot_info_" + matchNum);
-                        List<String> robotList = new ArrayList<>();
-                        for (Map.Entry<Object, Object> obj : allRobotInfo.entrySet()) {
-                            if (JSONObject.fromObject(obj.getValue()).getInt("round") == curRound) {
-                                robotList.add(String.valueOf(obj.getKey()));
-                            }
-                        }
-                        if (robotList.size() == 0) {
-                            break;
-                        }
-                        int count = RandomUtils.nextInt(robotList.size() / perCount);
-                        if (i == time - 1) {
-                            count = robotList.size() / perCount;
-                        }
+                List<String> curRoundRobotList = getCurRoundRobotList(matchNum, curRound);
+                while (curRoundRobotList.size() > 0) {
+                    // 桌数
+                    int tableNum = curRoundRobotList.size() / perCount;
+                    if (tableNum > 0) {
+                        // 本次完成桌数
+                        int changeTableNum = RandomUtils.nextInt(tableNum) + 1;
                         JSONObject matchInfo = getMatchInfoByNumFromRedis(matchNum);
-                        for (int j = 0; j < count; j++) {
+                        for (int j = 0; j < changeTableNum; j++) {
                             int landlordWin = RandomUtils.nextInt(2);
                             // 最大倍数
                             int maxMultiple = matchInfo.getInt("robot_level");
-                            if (maxMultiple < 0) {
-                                maxMultiple = 0;
+                            if (maxMultiple < 1) {
+                                maxMultiple = 1;
                             }
                             // 生成随机倍数
                             int multiple = RandomUtils.nextInt(maxMultiple) + 1;
@@ -1117,25 +1106,50 @@ public class MatchEventDeal {
                             if (landlordWin == 1) {
                                 // 玩家游戏详情
                                 List<JSONObject> userDetails = new ArrayList<>();
-                                userDetails.add(getUserDetail(robotList.get(j * perCount), score * 2, 1,0));
-                                userDetails.add(getUserDetail(robotList.get(j * perCount + 1), -score, 1, RandomUtils.nextInt(17) + 1));
-                                userDetails.add(getUserDetail(robotList.get(j * perCount + 2), -score, 1, RandomUtils.nextInt(17) + 1));
+                                userDetails.add(getUserDetail(curRoundRobotList.get(j * perCount), score * 2, curRound + 1,0));
+                                userDetails.add(getUserDetail(curRoundRobotList.get(j * perCount + 1), -score, curRound + 1, RandomUtils.nextInt(17) + 1));
+                                userDetails.add(getUserDetail(curRoundRobotList.get(j * perCount + 2), -score, curRound + 1, RandomUtils.nextInt(17) + 1));
                                 userFinish(matchNum, userDetails, new ArrayList<String>());
                             } else {
                                 List<JSONObject> userDetails = new ArrayList<>();
-                                userDetails.add(getUserDetail(robotList.get(j * perCount), -score * 2, 1, RandomUtils.nextInt(17) + 1));
-                                userDetails.add(getUserDetail(robotList.get(j * perCount + 1), score, 1, RandomUtils.nextInt(17) + 1));
-                                userDetails.add(getUserDetail(robotList.get(j * perCount + 2), score, 1, 0));
+                                userDetails.add(getUserDetail(curRoundRobotList.get(j * perCount), -score * 2, curRound + 1, RandomUtils.nextInt(17) + 1));
+                                userDetails.add(getUserDetail(curRoundRobotList.get(j * perCount + 1), score, curRound + 1, RandomUtils.nextInt(17) + 1));
+                                userDetails.add(getUserDetail(curRoundRobotList.get(j * perCount + 2), score, curRound + 1, 0));
                                 userFinish(matchNum, userDetails, new ArrayList<String>());
                             }
                         }
-                        Thread.sleep(1000);
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
+                        curRoundRobotList = getCurRoundRobotList(matchNum, curRound);
+                        try {
+                            Thread.sleep(1000);
+                        } catch (InterruptedException e) {
+                            e.printStackTrace();
+                        }
+                    } else if (curRoundRobotList.size() > 0) {
+                        /**
+                         *  如果有玩家轮数异常，强制刷新
+                         *  wqm  2018/09/07
+                         */
+                        List<JSONObject> userDetails = new ArrayList<>();
+                        for (String account : curRoundRobotList) {
+                            userDetails.add(getUserDetail(account, 0, curRound + 1, RandomUtils.nextInt(17) + 1));
+                        }
+                        userFinish(matchNum, userDetails, new ArrayList<String>());
+                        curRoundRobotList = getCurRoundRobotList(matchNum, curRound);
                     }
                 }
             }
         });
+    }
+
+    private List<String> getCurRoundRobotList(String matchNum, int curRound) {
+        Map<Object, Object> allRobotInfo = redisService.hmget("robot_info_" + matchNum);
+        List<String> robotList = new ArrayList<>();
+        for (Map.Entry<Object, Object> obj : allRobotInfo.entrySet()) {
+            if (JSONObject.fromObject(obj.getValue()).getInt("round") != curRound + 1) {
+                robotList.add(String.valueOf(obj.getKey()));
+            }
+        }
+        return robotList;
     }
 
     /**
@@ -1190,7 +1204,7 @@ public class MatchEventDeal {
                         SocketIOClient client = GameMain.server.getClient(UUID.fromString(playerInfo.getString("sessionId")));
                         producerService.sendMessage(baseQueueDestination, new Messages(client, obj, CommonConstant.GAME_BASE, CommonConstant.BASE_GAME_EVENT_JOIN_ROOM));
                     } else {
-                        changeRobotInfo(matchNum, singleMate.get(i), 0, 1, 17,0);
+                        changeRobotInfo(matchNum, singleMate.get(i), 0, matchInfo.getInt("cur_round") + 1, 17,0);
                         producerService.sendMessage(baseQueueDestination, new Messages(null, obj, CommonConstant.GAME_BASE, CommonConstant.BASE_GAME_EVENT_JOIN_ROOM));
                     }
                     try {
@@ -1407,7 +1421,9 @@ public class MatchEventDeal {
         if (!Dto.isNull(o)) {
             JSONObject robotInfo = JSONObject.fromObject(o);
             robotInfo.put("score", robotInfo.getInt("score") + score);
-            robotInfo.put("round", robotInfo.getInt("round") + round);
+            if (round != 0) {
+                robotInfo.put("round", round);
+            }
             robotInfo.put("card", card);
             robotInfo.put("win", win);
             redisService.hset("robot_info_" + matchNum, account, String.valueOf(robotInfo));
