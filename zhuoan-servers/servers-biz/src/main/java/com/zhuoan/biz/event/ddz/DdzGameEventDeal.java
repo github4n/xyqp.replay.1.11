@@ -438,6 +438,10 @@ public class DdzGameEventDeal {
         }
     }
 
+    /**
+     * 比赛场多局游戏继续游戏
+     * @param roomNo
+     */
     private void matchContinue(final String roomNo) {
         ThreadPoolHelper.executorService.submit(new Runnable() {
             @Override
@@ -449,26 +453,37 @@ public class DdzGameEventDeal {
                 }
                 if (RoomManage.gameRoomMap.containsKey(roomNo) && RoomManage.gameRoomMap.get(roomNo) != null) {
                     DdzGameRoom room = (DdzGameRoom) RoomManage.gameRoomMap.get(roomNo);
+                    /**
+                     * 这个地方写两个for循环
+                     * 需要所有人分数都更新完之后才去进行分数排名以及初始化，防止分数不准确
+                     * wqm  2018/09/07
+                     */
                     for (String player : obtainAllPlayerAccount(roomNo)) {
+                        // 本桌第一名玩家
                         String firstAccount = getFirstAccountInRoom(roomNo);
+                        // 是否是本桌第一名玩家
                         int win = player.equals(firstAccount) ? 10 : 1;
-                        // 重置状态
-                        room.getUserPacketMap().get(player).setStatus(DdzConstant.DDZ_USER_STATUS_INIT);
-                        JSONObject data = new JSONObject().element(CommonConstant.DATA_KEY_ACCOUNT, player).element(CommonConstant.DATA_KEY_ROOM_NO, roomNo);
                         if (room.getRobotList().contains(player)) {
                             // 改变分数
                             matchEventDeal.changeRobotInfo(room.getMatchNum(), player, (int) room.getUserPacketMap()
                                 .get(player).getScore(), 0, room.getUserPacketMap().get(player).getMyPai().size(), win);
-                            // 刷新玩家排名
-                            matchEventDeal.refreshUserRank(roomNo, player);
-                            // 初始化场景
-                            gameContinue(null, data);
                         } else {
                             // 改变分数
                             matchEventDeal.changePlayerInfo(room.getMatchNum(), null, null, player,
                                 (int) room.getUserPacketMap().get(player).getScore(), 0, room.getUserPacketMap().get(player).getMyPai().size(), win);
-                            // 刷新玩家排名
-                            matchEventDeal.refreshUserRank(roomNo, player);
+                        }
+                    }
+                    for (String player : obtainAllPlayerAccount(roomNo)) {
+                        // 刷新玩家排名
+                        matchEventDeal.refreshUserRank(roomNo, player);
+                        // 重置状态
+                        room.getUserPacketMap().get(player).setStatus(DdzConstant.DDZ_USER_STATUS_INIT);
+                        // 组织数据初始化
+                        JSONObject data = new JSONObject().element(CommonConstant.DATA_KEY_ACCOUNT, player).element(CommonConstant.DATA_KEY_ROOM_NO, roomNo);
+                        if (room.getRobotList().contains(player)) {
+                            // 初始化场景
+                            gameContinue(null, data);
+                        } else {
                             // 获取客户端对象
                             SocketIOClient playerClient = room.getRobotList().contains(player) ?
                                 null : GameMain.server.getClient(room.getPlayerMap().get(player).getUuid());
