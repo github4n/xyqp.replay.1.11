@@ -2972,6 +2972,7 @@ public class BaseEventDeal {
                         props.put("props_type", propsInfo.getInt("props_type"));
                         props.put("props_name", propsInfo.getString("props_name"));
                         props.put("end_time", endTime);
+                        props.put("props_count", duration);
                     }else {
                         // 当前是否过期
                         if (TimeUtil.isLatter(nowTime,userProps.getString("end_time"))) {
@@ -2981,6 +2982,7 @@ public class BaseEventDeal {
                         }
                         props.put("id", userProps.getString("id"));
                         props.put("end_time", endTime);
+                        props.put("props_count", userProps.getInt("props_count") + duration);
                     }
                     propsBiz.addOrUpdateUserProps(props);
                     // 扣除玩家金币房卡
@@ -3008,6 +3010,9 @@ public class BaseEventDeal {
                     }
                     result.put("end_time", endTime);
                     result.put("account", account);
+                    if (propsType == CommonConstant.PROPS_TYPE_DOUBLE_CARD) {
+                        result.put("props_count", props.getInt("props_count"));
+                    }
                     if (postData.containsKey("room_no")) {
                         String roomNo = postData.getString("room_no");
                         if (RoomManage.gameRoomMap.containsKey(roomNo) && RoomManage.gameRoomMap.get(roomNo) != null) {
@@ -3017,7 +3022,17 @@ public class BaseEventDeal {
                                     if (room.getRoomType() == CommonConstant.ROOM_TYPE_JB) {
                                         room.getPlayerMap().get(account).setScore(result.getInt("coins"));
                                     }
-                                    ((DdzGameRoom) room).getUserPacketMap().get(account).setJpqEndTime(endTime);
+                                    // 更改对应的道具类型
+                                    switch (propsType) {
+                                        case CommonConstant.PROPS_TYPE_JPQ:
+                                            ((DdzGameRoom) room).getUserPacketMap().get(account).setJpqEndTime(endTime);
+                                            break;
+                                        case CommonConstant.PROPS_TYPE_DOUBLE_CARD:
+                                            ((DdzGameRoom) room).getUserPacketMap().get(account).setDoubleCardNum(props.getInt("props_count"));
+                                            break;
+                                        default:
+                                            break;
+                                    }
                                     CommonConstant.sendMsgEventToAll(room.getAllUUIDList(account),String.valueOf(result),"userPurchasePush");
                                 }
                             }

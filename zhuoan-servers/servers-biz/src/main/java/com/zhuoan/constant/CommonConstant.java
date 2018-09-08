@@ -380,6 +380,10 @@ public class CommonConstant {
      * 道具类型-记牌器
      */
     public static final int PROPS_TYPE_JPQ = 1;
+    /**
+     * 道具类型-加倍卡
+     */
+    public static final int PROPS_TYPE_DOUBLE_CARD = 2;
 
     /**
      * 红包券

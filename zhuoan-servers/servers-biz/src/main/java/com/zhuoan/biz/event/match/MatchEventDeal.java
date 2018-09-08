@@ -1272,6 +1272,7 @@ public class MatchEventDeal {
         setting.put("trustee_lose", CommonConstant.GLOBAL_YES);
         setting.put("auto_last", CommonConstant.GLOBAL_YES);
         setting.put("re_shuffle", CommonConstant.GLOBAL_YES);
+        setting.put("is_double", CommonConstant.GLOBAL_YES);
         room.setSetting(setting);
         List<Long> idList = new ArrayList<Long>();
         for (int j = 0; j < perCount; j++) {

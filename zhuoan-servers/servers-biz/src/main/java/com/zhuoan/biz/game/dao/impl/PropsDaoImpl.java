@@ -33,7 +33,7 @@ public class PropsDaoImpl implements PropsDao {
 
     @Override
     public JSONObject getUserPropsByType(String account, int propsType) {
-        String sql = "select id,user_account,game_id,props_type,props_name,end_time,status from za_user_props where " +
+        String sql = "select id,user_account,game_id,props_type,props_name,end_time,status,props_count from za_user_props where " +
             "user_account=? and props_type=?";
         JSONObject userProps = DBUtil.getObjectBySQL(sql, new Object[]{account, propsType});
         if (!Dto.isObjNull(userProps)) {
@@ -45,5 +45,11 @@ public class PropsDaoImpl implements PropsDao {
     @Override
     public void addOrUpdateUserProps(JSONObject userProps) {
         DBJsonUtil.saveOrUpdate(userProps, "za_user_props");
+    }
+
+    @Override
+    public void updateUserPropsCount(String account, int propsType, int sum) {
+        String sql = "update za_user_props set props_count=props_count-? where user_account=? and props_type=?";
+        DBUtil.executeUpdateBySQL(sql, new Object[]{sum, account, propsType});
     }
 }

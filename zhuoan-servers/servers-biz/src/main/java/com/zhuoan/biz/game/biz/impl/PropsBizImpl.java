@@ -39,4 +39,9 @@ public class PropsBizImpl implements PropsBiz {
     public void addOrUpdateUserProps(JSONObject userProps) {
         propsDao.addOrUpdateUserProps(userProps);
     }
+
+    @Override
+    public void updateUserPropsCount(String account, int propsType, int sum) {
+        propsDao.updateUserPropsCount(account, propsType, sum);
+    }
 }

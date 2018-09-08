@@ -103,6 +103,7 @@ public class DdzConstant {
     public static final int DDZ_GAME_STATUS_GAME_IN = 3;
     public static final int DDZ_GAME_STATUS_SUMMARY = 4;
     public static final int DDZ_GAME_STATUS_FINAL_SUMMARY = 5;
+    public static final int DDZ_GAME_STATUS_DOUBLE = 10;
 
     public static final int DDZ_USER_STATUS_INIT = 0;
     public static final int DDZ_USER_STATUS_READY = 1;
@@ -130,6 +131,7 @@ public class DdzConstant {
     public static final int DDZ_GAME_EVENT_ROBOT_CALL = 11;
     public static final int DDZ_GAME_EVENT_ROBOT_ROB = 12;
     public static final int DDZ_GAME_EVENT_GET_OUT_INFO = 13;
+    public static final int DDZ_GAME_EVENT_GAME_DOUBLE = 14;
 
     public static final int DDZ_RECONNECT_NODE_READY = 0;
     public static final int DDZ_RECONNECT_NODE_CALL = 1;
@@ -137,6 +139,7 @@ public class DdzConstant {
     public static final int DDZ_RECONNECT_NODE_IN = 3;
     public static final int DDZ_RECONNECT_NODE_SUMMARY = 4;
     public static final int DDZ_RECONNECT_NODE_FINAL_SUMMARY = 5;
+    public static final int DDZ_RECONNECT_DOUBLE = 10;
 
 
     public static final String DDZ_DATA_KEY_TYPE = "type";
@@ -145,5 +148,8 @@ public class DdzConstant {
     public static final String DDZ_DATA_KEY_AUTO = "auto";
 
     public static final int DDZ_MAX_RE_SHUFFLE_TIME = 3;
+
+    public static final int DDZ_DOUBLE_TYPE_NO = 0;
+    public static final int DDZ_DOUBLE_TYPE_YES = 1;
 
 }

@@ -277,7 +277,10 @@ public class DdzGameEventDeal {
             // 确定地主
             isContinue = determineLandlord(roomNo);
             if (isContinue) {
-                beginTime = true;
+                // 当前游戏状态为游戏中(3)开始出牌倒计时
+                if (room.getGameStatus() == DdzConstant.DDZ_GAME_STATUS_GAME_IN) {
+                    beginTime = true;
+                }
                 // 状态改变
                 result.put("card",obtainLandlordCard(roomNo));
                 result.put("landlord",obtainLandlordIndex(roomNo));
@@ -289,6 +292,12 @@ public class DdzGameEventDeal {
         result.put("nextChoice",room.getFocusIndex());
         result.put("gameStatus",room.getGameStatus());
         for (String player : obtainAllPlayerAccount(roomNo)) {
+            if (room.getGameStatus() == DdzConstant.DDZ_GAME_STATUS_DOUBLE) {
+                // 当前加倍卡数量
+                result.put("doubleCardNum", getUserDoubleCardNum(roomNo,player));
+                // 需要消耗的加倍卡数量
+                result.put("costNum", getCurDoubleCardCost(roomNo,player));
+            }
             result.put("myPai",room.getUserPacketMap().get(player).getMyPai());
             result.put("leftArray",getLeftArray(roomNo, player));
             CommonConstant.sendMsgEventToSingle(room.getPlayerMap().get(player).getUuid(),String.valueOf(result),"gameLandlordPush_DDZ");
@@ -303,6 +312,95 @@ public class DdzGameEventDeal {
             // 开启定时器
             beginEventTimer(roomNo,room.getLandlordAccount());
         }
+    }
+
+    /**
+     * 加倍
+     * @param client
+     * @param data
+     */
+    public void gameDouble(SocketIOClient client, Object data) {
+        JSONObject postData = JSONObject.fromObject(data);
+        // 不满足准备条件直接忽略
+        if (!CommonConstant.checkEvent(postData, DdzConstant.DDZ_GAME_STATUS_DOUBLE, client)) {
+            return;
+        }
+        // 房间号
+        String roomNo = postData.getString(CommonConstant.DATA_KEY_ROOM_NO);
+        DdzGameRoom room = (DdzGameRoom) RoomManage.gameRoomMap.get(roomNo);
+        // 玩家账号
+        String account = postData.getString(CommonConstant.DATA_KEY_ACCOUNT);
+        // 通知事件名称
+        String eventName = "gameDoublePush_DDZ";
+        // 是否加倍
+        int type = !postData.containsKey("type") ? 0 : postData.getInt("type");
+        // 已经加倍过无法再次加倍
+        if (room.getUserPacketMap().get(account).getDoubleTime() != 0) {
+            sendDoubleResult(client, eventName, "当前无法操作");
+            return;
+        }
+        if (type == DdzConstant.DDZ_DOUBLE_TYPE_NO) {
+            room.getUserPacketMap().get(account).setDoubleTime(1);
+        } else if (type == DdzConstant.DDZ_DOUBLE_TYPE_YES) {
+            // 当前消耗
+            int curCost = getCurDoubleCardCost(roomNo, account);
+            // 当前加倍卡数
+            int curCount = getUserDoubleCardNum(roomNo, account);
+            // 道具是否足够
+            if (curCount < curCost) {
+                sendDoubleResult(client, eventName, "道具不足,无法加倍");
+                return;
+            }
+            // 设置当前玩家加倍倍数
+            room.getUserPacketMap().get(account).setDoubleTime(2);
+            // 扣除相应道具
+            room.getUserPacketMap().get(account).setDoubleCardNum(room.getUserPacketMap().get(account).getDoubleCardNum() - curCost);
+            // 比赛场添加免费使用记录
+            if (curCost == 0 && room.getRoomType() == CommonConstant.ROOM_TYPE_MATCH && !Dto.stringIsNULL(room.getMatchNum())) {
+                redisService.sSet("double_player_list_" + room.getMatchNum(), account);
+            }
+            // 有消耗更新数据
+            if (curCost > 0) {
+                propsBiz.updateUserPropsCount(account, CommonConstant.PROPS_TYPE_DOUBLE_CARD, curCost);
+            }
+        }
+        // 是否所有玩家都完成加倍
+        boolean doubleFinish = true;
+        for (String player : obtainAllPlayerAccount(roomNo)) {
+            // 有玩家未加倍直接终止for循环
+            if (room.getUserPacketMap().get(player).getDoubleTime() == 0) {
+                doubleFinish = false;
+                break;
+            }
+        }
+        // 所有玩家都完成加倍更改游戏状态  加倍(10) --> 游戏中(3)
+        if (doubleFinish) {
+            room.setGameStatus(DdzConstant.DDZ_GAME_STATUS_GAME_IN);
+            // 开启定时器
+            beginEventTimer(roomNo,room.getLandlordAccount());
+        }
+        // 组织数据通知玩家
+        JSONObject result = new JSONObject();
+        result.put(CommonConstant.RESULT_KEY_CODE, CommonConstant.GLOBAL_YES);
+        result.put("gameStatus", room.getGameStatus());
+        result.put("nextNum", room.getFocusIndex());
+        result.put("num", room.getPlayerMap().get(account).getMyIndex());
+        result.put("multiple", room.getMultiple());
+        result.put("type", type);
+        CommonConstant.sendMsgEventToAll(room.getAllUUIDList(), String.valueOf(result), eventName);
+    }
+
+    /**
+     * 发送加倍结果
+     * @param client
+     * @param eventName
+     * @param msg
+     */
+    private void sendDoubleResult(SocketIOClient client, String eventName, String msg) {
+        JSONObject result = new JSONObject();
+        result.put(CommonConstant.RESULT_KEY_CODE, CommonConstant.GLOBAL_NO);
+        result.put(CommonConstant.RESULT_KEY_MSG, msg);
+        CommonConstant.sendMsgEventToSingle(client, String.valueOf(result), eventName);
     }
 
     /**
@@ -1054,6 +1152,7 @@ public class DdzGameEventDeal {
         // 初始化玩家
         for (String account : obtainAllPlayerAccount(roomNo)) {
             room.getUserPacketMap().get(account).setScore(0);
+            room.getUserPacketMap().get(account).setDoubleTime(0);
         }
     }
 
@@ -1063,11 +1162,13 @@ public class DdzGameEventDeal {
      * @param winAccount
      */
     private void summary(String roomNo,String winAccount) {
+        // 结算防重
         String summaryTimesKey = "summaryTimes_ddz_"+roomNo;
         long summaryTimes = redisService.incr(summaryTimesKey,1);
         if (summaryTimes>1) {
             return;
         }
+        // 重置开始游戏防重
         redisService.insertKey("startTimes_ddz_"+roomNo,"0",null);
         DdzGameRoom room = (DdzGameRoom) RoomManage.gameRoomMap.get(roomNo);
         // 农民输赢分数=倍数*底
@@ -1079,6 +1180,7 @@ public class DdzGameEventDeal {
         if (isSpring(roomNo)==CommonConstant.GLOBAL_YES) {
             farmerScore *= 2;
         }
+        // 如果有托管包赔取出当前所有托管农民
         List<String> trusteeFarmer = new ArrayList<>();
         if (!Dto.isObjNull(room.getSetting()) && room.getSetting().containsKey("trustee_lose") &&
             room.getSetting().getInt("trustee_lose") == CommonConstant.GLOBAL_YES) {
@@ -1088,32 +1190,61 @@ public class DdzGameEventDeal {
                 }
             }
         }
-        // 设置为玩家分数
+        // 各个玩家结算数据
+        Map<String,Double> sumMap = new HashMap<>();
         for (String account : obtainAllPlayerAccount(roomNo)) {
-            if (account.equals(room.getLandlordAccount())) {
-                room.getUserPacketMap().get(account).setScore(Dto.mul(-2,farmerScore));
-            } else if (trusteeFarmer.size() == 1 && trusteeFarmer.contains(account)) {
-                // 只有当前农民托管胜利不算积分，失败算双倍积分
-                if (farmerScore > 0) {
-                    room.getUserPacketMap().get(account).setScore(0);
-                }else {
-                    room.getUserPacketMap().get(account).setScore(Dto.mul(2,farmerScore));
+            if (!account.equals(room.getLandlordAccount())) {
+                double singleFarmScore = farmerScore;
+                // 单个农民输赢等于农民基础底分 * 农民加倍倍数 * 地主加倍倍数
+                if (room.getUserPacketMap().get(account).getDoubleTime() > 0 &&
+                    room.getUserPacketMap().get(room.getLandlordAccount()).getDoubleTime() > 0) {
+                    singleFarmScore = singleFarmScore * room.getUserPacketMap().get(account).getDoubleTime()
+                        * room.getUserPacketMap().get(room.getLandlordAccount()).getDoubleTime();
                 }
-            } else if (trusteeFarmer.size() == 1 && !trusteeFarmer.contains(account)) {
-                // 有农民托管且不是当前用户胜利算双倍积分，失败不算积分
-                if (farmerScore > 0) {
-                    room.getUserPacketMap().get(account).setScore(Dto.mul(2,farmerScore));
-                }else {
-                    room.getUserPacketMap().get(account).setScore(0);
+                sumMap.put(account, singleFarmScore);
+                // 地主输赢为农民积分的相反数，进行累加
+                if (!sumMap.containsKey(room.getLandlordAccount())) {
+                    sumMap.put(room.getLandlordAccount(), -singleFarmScore);
+                } else {
+                    sumMap.put(room.getLandlordAccount(), Dto.sub(sumMap.get(room.getLandlordAccount()), singleFarmScore));
                 }
-            } else{
-                room.getUserPacketMap().get(account).setScore(farmerScore);
             }
+        }
+        // 优先更改地主输赢积分，用于后续判断
+        room.getUserPacketMap().get(room.getLandlordAccount()).setScore(sumMap.get(room.getLandlordAccount()));
+        for (String account : sumMap.keySet()) {
+            if (!account.equals(room.getLandlordAccount())) {
+                if (trusteeFarmer.size() == 1) {
+                    /**
+                     * wqm  2018/09/08
+                     * 只有一个农民托管的情况下,假设地主积分为x
+                     * 如果农民胜利则该农民积分为0，另外一个农民为-x
+                     * 如果地主胜利则该农民积分为-x，另外一个农民积分为0
+                     */
+                    if (trusteeFarmer.contains(account)) {
+                        if (sumMap.get(account) > 0) {
+                            room.getUserPacketMap().get(account).setScore(0);
+                        } else {
+                            room.getUserPacketMap().get(account).setScore(-sumMap.get(room.getLandlordAccount()));
+                        }
+                    } else {
+                        if (sumMap.get(account) > 0) {
+                            room.getUserPacketMap().get(account).setScore(-sumMap.get(room.getLandlordAccount()));
+                        } else {
+                            room.getUserPacketMap().get(account).setScore(0);
+                        }
+                    }
+                } else{
+                    room.getUserPacketMap().get(account).setScore(sumMap.get(account));
+                }
+            }
+            // 设置为玩家分数
             double oldScore =  room.getPlayerMap().get(account).getScore();
             room.getPlayerMap().get(account).setScore(Dto.add(room.getUserPacketMap().get(account).getScore(),oldScore));
             // 重置托管状态
             room.getUserPacketMap().get(account).setIsTrustee(CommonConstant.GLOBAL_NO);
         }
+
         room.setGameStatus(DdzConstant.DDZ_GAME_STATUS_SUMMARY);
         // 重置重新发牌次数
         room.setReShuffleTime(0);
@@ -1416,8 +1547,17 @@ public class DdzGameEventDeal {
         // 排序
         DdzCore.sortCard(landlordPai);
         room.getUserPacketMap().get(room.getLandlordAccount()).setMyPai(landlordPai);
-        // 设置房间状态
-        room.setGameStatus(DdzConstant.DDZ_GAME_STATUS_GAME_IN);
+        /**
+         * 设置房间状态
+         * 如果当前房间有加倍选项更改为加倍状态(10)
+         * 否则更改为游戏中(3)
+         * wqm 2018/09/06
+         */
+        if (!Dto.isObjNull(room.getSetting()) && room.getSetting().containsKey("is_double")) {
+            room.setGameStatus(DdzConstant.DDZ_GAME_STATUS_DOUBLE);
+        } else {
+            room.setGameStatus(DdzConstant.DDZ_GAME_STATUS_GAME_IN);
+        }
         return true;
     }
 
@@ -1681,6 +1821,11 @@ public class DdzGameEventDeal {
         } else {
             timeArray.add(20);
         }
+        if (room.getSetting().containsKey("doubleTime")) {
+            timeArray.add(room.getSetting().getInt("doubleTime"));
+        } else {
+            timeArray.add(10);
+        }
         obj.put("timeArray",timeArray);
         obj.put("leftArray",getLeftArray(roomNo,account));
         obj.put("isDraw", CommonConstant.GLOBAL_NO);
@@ -1695,6 +1840,10 @@ public class DdzGameEventDeal {
                 obj.put("drawInfo", "还剩" + left + "局");
             }
         }
+        // 当前加倍卡数量
+        obj.put("doubleCardNum", getUserDoubleCardNum(roomNo,account));
+        // 需要消耗的加倍卡数量
+        obj.put("costNum", getCurDoubleCardCost(roomNo,account));
         return obj;
     }
 
@@ -1782,6 +1931,7 @@ public class DdzGameEventDeal {
             obj.put("userStatus", up.getStatus());
             obj.put("cardNum", up.getMyPai().size());
             obj.put("trusteeStatus", up.getIsTrustee());
+            obj.put("isDouble", up.getDoubleTime());
         }
         return obj;
     }
@@ -1794,7 +1944,7 @@ public class DdzGameEventDeal {
     private List<String> obtainLandlordCard(String roomNo) {
         List<String> landlordCard = new ArrayList<>();
         DdzGameRoom room = (DdzGameRoom) RoomManage.gameRoomMap.get(roomNo);
-        if (room.getGameStatus()== DdzConstant.DDZ_GAME_STATUS_GAME_IN) {
+        if (room.getGameStatus()== DdzConstant.DDZ_GAME_STATUS_GAME_IN || room.getGameStatus() == DdzConstant.DDZ_GAME_STATUS_DOUBLE) {
             return room.getLandlordCard();
         }
         return landlordCard;
@@ -1807,7 +1957,7 @@ public class DdzGameEventDeal {
      */
     private int obtainLandlordIndex(String roomNo) {
         DdzGameRoom room = (DdzGameRoom) RoomManage.gameRoomMap.get(roomNo);
-        if (room.getGameStatus()== DdzConstant.DDZ_GAME_STATUS_GAME_IN) {
+        if (room.getGameStatus()== DdzConstant.DDZ_GAME_STATUS_GAME_IN || room.getGameStatus() == DdzConstant.DDZ_GAME_STATUS_DOUBLE) {
             if (!Dto.stringIsNULL(room.getLandlordAccount())&&room.getPlayerMap().containsKey(room.getLandlordAccount())&&
                 room.getPlayerMap().get(room.getLandlordAccount())!=null) {
                 return room.getPlayerMap().get(room.getLandlordAccount()).getMyIndex();
@@ -1842,6 +1992,8 @@ public class DdzGameEventDeal {
                 return DdzConstant.DDZ_RECONNECT_NODE_SUMMARY;
             case DdzConstant.DDZ_GAME_STATUS_FINAL_SUMMARY:
                 return DdzConstant.DDZ_RECONNECT_NODE_FINAL_SUMMARY;
+            case DdzConstant.DDZ_GAME_STATUS_DOUBLE:
+                return DdzConstant.DDZ_RECONNECT_DOUBLE;
             default:
                 return DdzConstant.DDZ_RECONNECT_NODE_READY;
         }
@@ -2089,5 +2241,52 @@ public class DdzGameEventDeal {
             logger.error("", e);
         }
         return null;
+    }
+
+    /**
+     * 获取当前用户的
+     * @param roomNo
+     * @param account
+     * @return
+     */
+    private int getUserDoubleCardNum(String roomNo, String account) {
+        if (RoomManage.gameRoomMap.containsKey(roomNo) && RoomManage.gameRoomMap.get(roomNo) != null) {
+            DdzGameRoom room = (DdzGameRoom) RoomManage.gameRoomMap.get(roomNo);
+            if (room.getUserPacketMap().containsKey(account) && room.getUserPacketMap().get(account) != null) {
+                // 未从数据库查询过
+                if (room.getUserPacketMap().get(account).getDoubleCardNum() == -1) {
+                    JSONObject userProps = propsBiz.getUserPropsByType(account, CommonConstant.PROPS_TYPE_DOUBLE_CARD);
+                    // 赋值
+                    if (!Dto.isObjNull(userProps)) {
+                        room.getUserPacketMap().get(account).setDoubleCardNum(userProps.getInt("props_count"));
+                    }
+                }
+                // 负数清0
+                if (room.getUserPacketMap().get(account).getDoubleCardNum() < 0) {
+                    room.getUserPacketMap().get(account).setDoubleCardNum(0);
+                }
+                return room.getUserPacketMap().get(account).getDoubleCardNum();
+            }
+        }
+        return 0;
+    }
+
+    /**
+     * 获取当前用户的记牌器数
+     * @param roomNo
+     * @param account
+     * @return
+     */
+    private int getCurDoubleCardCost(String roomNo, String account) {
+        if (RoomManage.gameRoomMap.containsKey(roomNo) && RoomManage.gameRoomMap.get(roomNo) != null) {
+            DdzGameRoom room = (DdzGameRoom) RoomManage.gameRoomMap.get(roomNo);
+            // 比赛场每场可以免费加倍一次
+            if (room.getRoomType() == CommonConstant.ROOM_TYPE_MATCH && !Dto.stringIsNULL(room.getMatchNum())) {
+                if (!redisService.sHasKey("double_player_list_" + room.getMatchNum(), account)) {
+                    return 0;
+                }
+            }
+        }
+        return 1;
     }
 }

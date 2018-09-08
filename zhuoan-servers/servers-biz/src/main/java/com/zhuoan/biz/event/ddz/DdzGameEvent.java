@@ -127,6 +127,16 @@ public class DdzGameEvent {
                 producerService.sendMessage(ddzQueueDestination, new Messages(client, data, CommonConstant.GAME_ID_DDZ, DdzConstant.DDZ_GAME_EVENT_GET_OUT_INFO));
             }
         });
+
+        /**
+         * 加倍事件
+         */
+        server.addEventListener("gameDouble_DDZ", Object.class, new DataListener<Object>() {
+            @Override
+            public void onData(SocketIOClient client, Object data, AckRequest ackSender) {
+                producerService.sendMessage(ddzQueueDestination, new Messages(client, data, CommonConstant.GAME_ID_DDZ, DdzConstant.DDZ_GAME_EVENT_GAME_DOUBLE));
+            }
+        });
     }
 
 }

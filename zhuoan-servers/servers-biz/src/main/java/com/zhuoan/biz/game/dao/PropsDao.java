@@ -41,4 +41,13 @@ public interface PropsDao {
      * @param userProps 用户道具信息
      */
     void addOrUpdateUserProps(JSONObject userProps);
+
+    /**
+     * 更改用户道具数
+     *
+     * @param account account
+     * @param propsType propsType
+     * @param sum sum
+     */
+    void updateUserPropsCount(String account, int propsType, int sum);
 }

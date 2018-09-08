@@ -54,6 +54,14 @@ public class UserPacketDdz {
      * 连胜次数
      */
     private int winStreakTime;
+    /**
+     * 加倍数
+     */
+    private int doubleTime;
+    /**
+     * 加倍卡数
+     */
+    private int doubleCardNum = -1;
 
     public int getStatus() {
         return status;
@@ -141,5 +149,21 @@ public class UserPacketDdz {
 
     public void setWinStreakTime(int winStreakTime) {
         this.winStreakTime = winStreakTime;
+    }
+
+    public int getDoubleTime() {
+        return doubleTime;
+    }
+
+    public void setDoubleTime(int doubleTime) {
+        this.doubleTime = doubleTime;
+    }
+
+    public int getDoubleCardNum() {
+        return doubleCardNum;
+    }
+
+    public void setDoubleCardNum(int doubleCardNum) {
+        this.doubleCardNum = doubleCardNum;
     }
 }
