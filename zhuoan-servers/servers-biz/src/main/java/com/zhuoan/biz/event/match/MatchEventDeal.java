@@ -632,17 +632,10 @@ public class MatchEventDeal {
      */
     private void startMatch(String matchNum) {
         JSONObject matchInfo = getMatchInfoByNumFromRedis(matchNum);
-        // 晋级人数
-        JSONArray promotion = matchInfo.getJSONArray("promotion");
         // 当前轮数
         int curRound = matchInfo.getInt("cur_round");
-        // 总轮数
-        int totalRound = matchInfo.getInt("total_round");
         // 每桌人数
         int perCount = matchInfo.getInt("per_count");
-        // 当前总人数
-        int totalNum = promotion.getInt(curRound);
-        Map<Object, Object> allPlayerInfo = redisService.hmget("player_info_" + matchNum);
         // 所有玩家
         List<String> allPlayerList = new ArrayList<>();
         List<Map.Entry<Object, Object>> sortedPlayers = getSortedPlayers(matchNum);

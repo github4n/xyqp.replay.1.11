@@ -135,6 +135,9 @@ public class PublicBizImpl implements PublicBiz{
             }else if (type + 1 == CommonConstant.CURRENCY_TYPE_YB && userInfo.containsKey("yuanbao")) {
                 obj.put("pocketOld", userInfo.getDouble("yuanbao"));
                 obj.put("memo", "红包券变动");
+            }else if (type + 1 == CommonConstant.CURRENCY_TYPE_ROOM_CARD && userInfo.containsKey("yuanbao")) {
+                obj.put("pocketOld", userInfo.getDouble("yuanbao"));
+                obj.put("memo", "钻石变动");
             }
             obj.put("pocketChange", sum);
             obj.put("operatorType", CommonConstant.SCORE_CHANGE_TYPE_OTHER);
