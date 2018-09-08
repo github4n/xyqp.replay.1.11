@@ -566,7 +566,24 @@ public class MatchEventDeal {
                 JSONObject unFullMatch = matchBiz.getMatchInfoByMatchId(matchSetting.getLong("id"), 0, 0);
                 // 当前场次未开始进行开始游戏(防止最后一个玩家报名与线程冲突开始多次)
                 if (!Dto.isObjNull(unFullMatch) && unFullMatch.getString("match_num").equals(matchNum)) {
-
+                    // 玩家信息
+                    JSONArray playerArray = unFullMatch.getJSONArray("player_array");
+                    // 消耗类型
+                    int costFee = -1;
+                    JSONArray costType = matchSetting.getJSONArray("cost_type");
+                    for (Object costObj : costType) {
+                        if ("roomcard".equals(JSONObject.fromObject(costObj).getString("type"))) {
+                            costFee = JSONObject.fromObject(costObj).getInt("value");
+                            break;
+                        }
+                    }
+                    // 添加记录
+                    for (Object player : playerArray) {
+                        if ("roomcard".equals(JSONObject.fromObject(player).getString("type"))) {
+                            publicBiz.addUserWelfareRec(JSONObject.fromObject(player).getString("account"), costFee,
+                                CommonConstant.CURRENCY_TYPE_ROOM_CARD - 1, matchSetting.getInt("game_id"));
+                        }
+                    }
                     // 初始化排行榜
                     initRank(matchSetting, matchNum);
                     // 更改状态
