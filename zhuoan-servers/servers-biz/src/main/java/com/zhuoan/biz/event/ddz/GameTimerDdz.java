@@ -248,4 +248,53 @@ public class GameTimerDdz {
             }
         }
     }
+
+    /**
+     * 加倍超时
+     * @param roomNo
+     * @param timeLeft
+     */
+    public void doubleOverTime(String roomNo, int timeLeft) {
+        for (int i = timeLeft; i >= 0; i--) {
+            // 房间存在
+            if (RoomManage.gameRoomMap.containsKey(roomNo) && RoomManage.gameRoomMap.get(roomNo) != null) {
+                DdzGameRoom room = (DdzGameRoom) RoomManage.gameRoomMap.get(roomNo);
+                if (room.getGameStatus() != DdzConstant.DDZ_GAME_STATUS_DOUBLE) {
+                    break;
+                }
+                // 设置倒计时
+                room.setTimeLeft(i);
+                if (i == 0) {
+                    // 当前阶段所有未完成操作的玩家
+                    List<String> autoAccountList = new ArrayList<String>();
+                    for (String account : room.getUserPacketMap().keySet()) {
+                        if (room.getUserPacketMap().containsKey(account) && room.getUserPacketMap().get(account) != null) {
+                            if (room.getUserPacketMap().get(account).getDoubleTime() < 1) {
+                                autoAccountList.add(account);
+                            }
+                        }
+                    }
+                    for (String account : autoAccountList) {
+                        // 组织数据
+                        JSONObject data = new JSONObject();
+                        // 房间号
+                        data.put(CommonConstant.DATA_KEY_ROOM_NO, room.getRoomNo());
+                        // 账号
+                        data.put(CommonConstant.DATA_KEY_ACCOUNT, account);
+                        // 不加倍
+                        data.put(DdzConstant.DDZ_DATA_KEY_TYPE, DdzConstant.DDZ_DOUBLE_TYPE_NO);
+                        SocketIOClient client = GameMain.server.getClient(room.getPlayerMap().get(account).getUuid());
+                        producerService.sendMessage(ddzQueueDestination, new Messages(client, data, CommonConstant.GAME_ID_DDZ, DdzConstant.DDZ_GAME_EVENT_GAME_DOUBLE));
+                    }
+                }
+                try {
+                    Thread.sleep(1000);
+                } catch (Exception e) {
+                    logger.error("", e);
+                }
+            } else {
+                break;
+            }
+        }
+    }
 }

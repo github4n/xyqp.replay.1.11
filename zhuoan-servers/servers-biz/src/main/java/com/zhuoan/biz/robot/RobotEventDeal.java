@@ -316,6 +316,10 @@ public class RobotEventDeal {
                 obj.put(DdzConstant.DDZ_DATA_KEY_IS_CHOICE,obtainRobOrNot(robotInfo.getPlayRoomNo(),robotAccount));
                 robotInfo.setActionType(DdzConstant.DDZ_GAME_EVENT_CALL_AND_ROB);
             }
+            // 加倍
+            if (robotInfo.getActionType() == DdzConstant.DDZ_GAME_EVENT_GAME_DOUBLE) {
+                obj.put(DdzConstant.DDZ_DATA_KEY_TYPE, DdzConstant.DDZ_DOUBLE_TYPE_NO);
+            }
             // 出牌
             if (robotInfo.getActionType() == DdzConstant.DDZ_GAME_EVENT_GAME_IN) {
                 List<String> allCard = obtainRobotCardDdz(robotInfo.getPlayRoomNo(),robotAccount);

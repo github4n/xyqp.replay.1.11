@@ -277,10 +277,7 @@ public class DdzGameEventDeal {
             // 确定地主
             isContinue = determineLandlord(roomNo);
             if (isContinue) {
-                // 当前游戏状态为游戏中(3)开始出牌倒计时
-                if (room.getGameStatus() == DdzConstant.DDZ_GAME_STATUS_GAME_IN) {
-                    beginTime = true;
-                }
+                beginTime = true;
                 // 状态改变
                 result.put("card",obtainLandlordCard(roomNo));
                 result.put("landlord",obtainLandlordIndex(roomNo));
@@ -295,8 +292,9 @@ public class DdzGameEventDeal {
             if (room.getGameStatus() == DdzConstant.DDZ_GAME_STATUS_DOUBLE) {
                 // 当前加倍卡数量
                 result.put("doubleCardNum", getUserDoubleCardNum(roomNo,player));
-                // 需要消耗的加倍卡数量
-                result.put("costNum", getCurDoubleCardCost(roomNo,player));
+                // 需要消耗的加倍卡数量  -1无法加倍前端页面上显示1次
+                int curDoubleCardCost = getCurDoubleCardCost(roomNo, player);
+                result.put("costNum", curDoubleCardCost < 0 ? 1 : curDoubleCardCost);
             }
             result.put("myPai",room.getUserPacketMap().get(player).getMyPai());
             result.put("leftArray",getLeftArray(roomNo, player));
@@ -309,8 +307,15 @@ public class DdzGameEventDeal {
             changeGameStatus(roomNo);
             startGame(roomNo);
         } else if (beginTime) {
-            // 开启定时器
-            beginEventTimer(roomNo,room.getLandlordAccount());
+            /**
+             * 当前游戏状态为游戏中(3)开始出牌倒计时
+             * 当前游戏状态为加倍(10)开始加倍倒计时
+             */
+            if (room.getGameStatus() == DdzConstant.DDZ_GAME_STATUS_GAME_IN) {
+                beginEventTimer(roomNo,room.getLandlordAccount());
+            } else if (room.getGameStatus() == DdzConstant.DDZ_GAME_STATUS_DOUBLE) {
+                beginDoubleTimer(roomNo);
+            }
         }
     }
 
@@ -333,7 +338,7 @@ public class DdzGameEventDeal {
         // 通知事件名称
         String eventName = "gameDoublePush_DDZ";
         // 是否加倍
-        int type = !postData.containsKey("type") ? 0 : postData.getInt("type");
+        int type = !postData.containsKey(DdzConstant.DDZ_DATA_KEY_TYPE) ? 0 : postData.getInt(DdzConstant.DDZ_DATA_KEY_TYPE);
         // 已经加倍过无法再次加倍
         if (room.getUserPacketMap().get(account).getDoubleTime() != 0) {
             sendDoubleResult(client, eventName, "当前无法操作");
@@ -344,6 +349,13 @@ public class DdzGameEventDeal {
         } else if (type == DdzConstant.DDZ_DOUBLE_TYPE_YES) {
             // 当前消耗
             int curCost = getCurDoubleCardCost(roomNo, account);
+            if (curCost < 0) {
+                sendDoubleResult(client, eventName, "加倍次数已达上限");
+                // 不加倍
+                postData.put(DdzConstant.DDZ_DATA_KEY_TYPE, DdzConstant.DDZ_DOUBLE_TYPE_NO);
+                gameDouble(client,postData);
+                return;
+            }
             // 当前加倍卡数
             int curCount = getUserDoubleCardNum(roomNo, account);
             // 道具是否足够
@@ -355,9 +367,16 @@ public class DdzGameEventDeal {
             room.getUserPacketMap().get(account).setDoubleTime(2);
             // 扣除相应道具
             room.getUserPacketMap().get(account).setDoubleCardNum(room.getUserPacketMap().get(account).getDoubleCardNum() - curCost);
-            // 比赛场添加免费使用记录
-            if (curCost == 0 && room.getRoomType() == CommonConstant.ROOM_TYPE_MATCH && !Dto.stringIsNULL(room.getMatchNum())) {
-                redisService.sSet("double_player_list_" + room.getMatchNum(), account);
+            // 比赛场添加使用记录
+            if (room.getRoomType() == CommonConstant.ROOM_TYPE_MATCH && !Dto.stringIsNULL(room.getMatchNum())) {
+                int doubleTime = 1;
+                // 玩家加倍信息
+                Object o = redisService.hget("double_info_" + room.getMatchNum(), account);
+                // 之前有加倍信息加上之前的次数
+                if (o != null) {
+                    doubleTime += Integer.parseInt(String.valueOf(o));
+                }
+                redisService.hset("double_info_" + room.getMatchNum(), account, String.valueOf(doubleTime));
             }
             // 有消耗更新数据
             if (curCost > 0) {
@@ -1586,6 +1605,35 @@ public class DdzGameEventDeal {
             robotEventDeal.changeRobotActionDetail(nextPlayerAccount,DdzConstant.DDZ_GAME_EVENT_GAME_IN,delayTime);
         }
     }
+
+    /**
+     * 开始加倍定时器
+     *
+     * @param roomNo
+     */
+    private void beginDoubleTimer(final String roomNo) {
+        DdzGameRoom room = (DdzGameRoom) RoomManage.gameRoomMap.get(roomNo);
+        final int timeLeft;
+        if (room.getSetting().containsKey("doubleTime")) {
+            timeLeft = room.getSetting().getInt("doubleTime");
+        } else {
+            timeLeft = 10;
+        }
+        ThreadPoolHelper.executorService.submit(new Runnable() {
+            @Override
+            public void run() {
+                gameTimerDdz.doubleOverTime(roomNo, timeLeft);
+            }
+        });
+        // 机器人出牌
+        if (room.isRobot()) {
+            for (String account : room.getRobotList()) {
+                int delayTime = RandomUtils.nextInt(3) + 2;
+                robotEventDeal.changeRobotActionDetail(account, DdzConstant.DDZ_GAME_EVENT_GAME_DOUBLE, delayTime);
+            }
+        }
+    }
+
     /**
      * 开始出牌定时器
      * @param roomNo
@@ -2280,10 +2328,33 @@ public class DdzGameEventDeal {
     private int getCurDoubleCardCost(String roomNo, String account) {
         if (RoomManage.gameRoomMap.containsKey(roomNo) && RoomManage.gameRoomMap.get(roomNo) != null) {
             DdzGameRoom room = (DdzGameRoom) RoomManage.gameRoomMap.get(roomNo);
-            // 比赛场每场可以免费加倍一次
+            // 比赛场判断免费加倍次数及付费加倍次数 -1表示当前无法加倍
             if (room.getRoomType() == CommonConstant.ROOM_TYPE_MATCH && !Dto.stringIsNULL(room.getMatchNum())) {
-                if (!redisService.sHasKey("double_player_list_" + room.getMatchNum(), account)) {
-                    return 0;
+                String key = "match_info_" + room.getMatchNum();
+                try {
+                    Object object = redisService.queryValueByKey(key);
+                    if (object != null) {
+                        // 场次信息
+                        JSONObject matchInfo = JSONObject.fromObject(object);
+                        // 免费次数
+                        int freeTime = matchInfo.getInt("free_double_time");
+                        // 付费次数
+                        int payTime = matchInfo.getInt("pay_double_time");
+                        // 玩家加倍信息
+                        Object o = redisService.hget("double_info_" + room.getMatchNum(), account);
+                        // 未加倍或加倍次数小于免费次数不需要消耗加倍卡
+                        if (o == null || Integer.parseInt(String.valueOf(o)) < freeTime) {
+                            return 0;
+                        }
+                        // 加倍次数小于免费次数+付费次数消耗1张加倍卡
+                        if (Integer.parseInt(String.valueOf(o)) < freeTime + payTime) {
+                            return 1;
+                        }
+                    }
+                    return -1;
+                } catch (Exception e) {
+                    logger.error("请启动REmote DIctionary Server");
+                    return -1;
                 }
             }
         }

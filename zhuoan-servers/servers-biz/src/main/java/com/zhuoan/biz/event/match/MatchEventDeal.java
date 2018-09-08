@@ -613,6 +613,9 @@ public class MatchEventDeal {
             }
             int leftNum = totalCount - allPlayerInfo.size();
             JSONArray robotArray = matchBiz.getRobotList(leftNum);
+            if (robotArray.size() < leftNum) {
+                return;
+            }
             for (int i = 0; i < robotArray.size(); i++) {
                 initRankList(robotArray.getJSONObject(i).getString("account"), matchNum);
                 matchBiz.updateRobotStatus(robotArray.getJSONObject(i).getString("account"), 1);
@@ -709,6 +712,7 @@ public class MatchEventDeal {
                         redisService.deleteByKey("match_info_" + matchNum);
                         redisService.deleteByKey("robot_info_" + matchNum);
                         redisService.deleteByKey("player_info_" + matchNum);
+                        redisService.deleteByKey("double_info_" + matchNum);
                         // 更新机器人状态
                         updateAllRobotStatus(matchNum, 0);
                     } else {
@@ -746,6 +750,7 @@ public class MatchEventDeal {
                             // 移除缓存
                             redisService.deleteByKey("match_info_" + matchNum);
                             redisService.deleteByKey("robot_info_" + matchNum);
+                            redisService.deleteByKey("double_info_" + matchNum);
                         }
                     }
                 }
@@ -1523,6 +1528,8 @@ public class MatchEventDeal {
         cacheInfo.put("per_count", matchSetting.getInt("per_count"));
         cacheInfo.put("reward_detail", matchSetting.getJSONArray("reward_detail"));
         cacheInfo.put("type", matchSetting.getInt("type"));
+        cacheInfo.put("free_double_time", matchSetting.getInt("free_double_time"));
+        cacheInfo.put("pay_double_time", matchSetting.getInt("pay_double_time"));
         addMatchInfoIntoRedis(matchNum, cacheInfo);
         // 添加玩家信息
         addPlayerInfo(account, matchNum, uuid, String.valueOf(client.getSessionId()), 1000, 0);
