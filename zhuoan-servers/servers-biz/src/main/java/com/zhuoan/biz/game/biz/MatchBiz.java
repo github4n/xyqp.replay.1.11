@@ -76,8 +76,9 @@ public interface MatchBiz {
      * @param coins    金币
      * @param score    积分
      * @param roomCard 房卡
+     * @param yb 元宝
      */
-    void updateUserCoinsAndScoreByAccount(String account, int coins, int score, int roomCard);
+    void updateUserCoinsAndScoreByAccount(String account, int coins, int score, int roomCard, double yb);
 
     /**
      * 获取玩家获奖记录

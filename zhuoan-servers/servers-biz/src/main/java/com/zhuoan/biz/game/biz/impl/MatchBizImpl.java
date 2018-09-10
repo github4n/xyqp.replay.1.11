@@ -56,8 +56,8 @@ public class MatchBizImpl implements MatchBiz {
     }
 
     @Override
-    public void updateUserCoinsAndScoreByAccount(String account, int coins, int score, int roomCard) {
-        matchDao.updateUserCoinsAndScoreByAccount(account, coins, score, roomCard);
+    public void updateUserCoinsAndScoreByAccount(String account, int coins, int score, int roomCard, double yb) {
+        matchDao.updateUserCoinsAndScoreByAccount(account, coins, score, roomCard, yb);
     }
 
     @Override

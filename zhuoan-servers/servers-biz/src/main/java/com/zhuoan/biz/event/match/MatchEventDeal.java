@@ -321,13 +321,21 @@ public class MatchEventDeal {
                             // 扣除金币
                             int coins = 0;
                             int roomCard = 0;
+                            int score = 0;
+                            double yb = 0;
                             if ("coins".equals(type)) {
                                 coins = -costFee;
                             }
                             if ("roomcard".equals(type)) {
                                 roomCard = -costFee;
                             }
-                            matchBiz.updateUserCoinsAndScoreByAccount(account, coins, 0, roomCard);
+                            if ("score".equals(type)) {
+                                score = -costFee;
+                            }
+                            if ("yuanbao".equals(type)) {
+                                yb = -costFee;
+                            }
+                            matchBiz.updateUserCoinsAndScoreByAccount(account, coins, score, roomCard, yb);
                             JSONObject matchInfo = getMatchInfoByNumFromRedis(matchNum);
                             // 通知前端
                             result.put(CommonConstant.RESULT_KEY_CODE, CommonConstant.GLOBAL_YES);
@@ -456,13 +464,21 @@ public class MatchEventDeal {
                     }
                     int coins = 0;
                     int roomCard = 0;
+                    int score = 0;
+                    double yb = 0;
                     if ("coins".equals(playerObj.getString("type"))) {
                         coins = costFee;
                     }
                     if ("roomcard".equals(playerObj.getString("type"))) {
                         roomCard = costFee;
                     }
-                    matchBiz.updateUserCoinsAndScoreByAccount(account, coins, 0, roomCard);
+                    if ("score".equals(playerObj.getString("type"))) {
+                        score = costFee;
+                    }
+                    if ("yuanbao".equals(playerObj.getString("type"))) {
+                        yb = costFee;
+                    }
+                    matchBiz.updateUserCoinsAndScoreByAccount(account, coins, score, roomCard, yb);
                     result.put(CommonConstant.RESULT_KEY_CODE, CommonConstant.GLOBAL_YES);
                     result.put(CommonConstant.RESULT_KEY_MSG, "退赛成功");
                     result.put("type", matchSetting.getInt("type"));
@@ -538,7 +554,7 @@ public class MatchEventDeal {
             public void run() {
                 if (matchSetting.getInt("type") == MatchConstant.MATCH_TYPE_COUNT) {
                     // 满人开始的需要改变人数
-                    int time = RandomUtils.nextInt(5) + 5;
+                    int time = RandomUtils.nextInt(5) + 30;
                     for (int i = 0; i < time; i++) {
                         try {
                             Thread.sleep(1000);
@@ -555,8 +571,8 @@ public class MatchEventDeal {
                         int addCount = RandomUtils.nextInt(matchInfo.getInt("total_count") - matchInfo.getInt("sign_count"));
                         int signCount = matchInfo.getInt("sign_count") + addCount;
                         // 超出最大人数按最大人数计算
-                        if (signCount > matchInfo.getInt("total_count")) {
-                            signCount = matchInfo.getInt("total_count");
+                        if (signCount >= matchInfo.getInt("total_count")) {
+                            signCount = matchInfo.getInt("total_count") - 1;
                         }
                         matchInfo.put("sign_count", signCount);
                         // 更新缓存
@@ -582,6 +598,12 @@ public class MatchEventDeal {
                         if ("roomcard".equals(JSONObject.fromObject(player).getString("type"))) {
                             publicBiz.addUserWelfareRec(JSONObject.fromObject(player).getString("account"), -costFee,
                                 CommonConstant.CURRENCY_TYPE_ROOM_CARD - 1, matchSetting.getInt("game_id"));
+                        } else if ("yuanbao".equals(JSONObject.fromObject(player).getString("type"))) {
+                            publicBiz.addUserWelfareRec(JSONObject.fromObject(player).getString("account"), -costFee,
+                                CommonConstant.CURRENCY_TYPE_YB- 1, matchSetting.getInt("game_id"));
+                        } else if ("score".equals(JSONObject.fromObject(player).getString("type"))) {
+                            publicBiz.addUserWelfareRec(JSONObject.fromObject(player).getString("account"), -costFee,
+                                CommonConstant.CURRENCY_TYPE_SCORE - 1, matchSetting.getInt("game_id"));
                         }
                     }
                     // 初始化排行榜
@@ -932,17 +954,18 @@ public class MatchEventDeal {
                     int coins = 0;
                     // 奖励的积分
                     int score = 0;
+                    int roomCard = 0;
+                    double yb = 0;
                     for (Object rewardType : rewardTypes) {
                         JSONObject object = JSONObject.fromObject(rewardType);
                         if (object.getInt("type") == MatchConstant.MATCH_REWARD_TYPE_COINS) {
                             coins = object.getInt("value");
-                        }
-                        if (object.getInt("type") == MatchConstant.MATCH_REWARD_TYPE_SCORE) {
+                        }else if (object.getInt("type") == MatchConstant.MATCH_REWARD_TYPE_SCORE) {
                             score = object.getInt("value");
                         }
                     }
                     // 更新数据库
-                    matchBiz.updateUserCoinsAndScoreByAccount(account, coins, score, 0);
+                    matchBiz.updateUserCoinsAndScoreByAccount(account, coins, score, roomCard, yb);
                     // 添加获奖记录
                     JSONObject winningRecord = matchBiz.getUserWinningRecord(account, matchInfo.getInt("game_id"));
                     JSONObject object = new JSONObject();
@@ -1625,8 +1648,8 @@ public class MatchEventDeal {
             addPlayerInfo(account, unFullMatch.getString("match_num"), uuid, String.valueOf(client.getSessionId()), 1000, 0);
             int signCount = matchInfo.getInt("sign_count") + 1;
             // 超出最大人数按最大人数计算
-            if (signCount > matchInfo.getInt("total_count")) {
-                signCount = matchInfo.getInt("total_count");
+            if (signCount >= matchInfo.getInt("total_count")) {
+                signCount = matchInfo.getInt("total_count") - 1;
             }
             matchInfo.put("sign_count", signCount);
             addMatchInfoIntoRedis(unFullMatch.getString("match_num"), matchInfo);

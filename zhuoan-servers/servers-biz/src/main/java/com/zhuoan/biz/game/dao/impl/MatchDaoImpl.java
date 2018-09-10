@@ -74,9 +74,9 @@ public class MatchDaoImpl implements MatchDao {
     }
 
     @Override
-    public void updateUserCoinsAndScoreByAccount(String account, int coins, int score, int roomCard) {
-        String sql = "update za_users set coins=coins+?,score=score+?,roomcard=roomcard+? where account=?";
-        DBUtil.executeUpdateBySQL(sql, new Object[]{coins, score, roomCard, account});
+    public void updateUserCoinsAndScoreByAccount(String account, int coins, int score, int roomCard, double yb) {
+        String sql = "update za_users set coins=coins+?,score=score+?,roomcard=roomcard+?,yuanbao=yuanbao+? where account=?";
+        DBUtil.executeUpdateBySQL(sql, new Object[]{coins, score, roomCard, yb, account});
     }
 
     @Override

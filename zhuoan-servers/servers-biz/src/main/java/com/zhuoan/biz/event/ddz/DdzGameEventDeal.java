@@ -1803,6 +1803,7 @@ public class DdzGameEventDeal {
                 object.put("isLandlord",CommonConstant.GLOBAL_YES);
             }
             object.put("myPai",room.getUserPacketMap().get(account).getMyPai());
+            object.put("isDouble",room.getUserPacketMap().get(account).getDoubleTime());
             array.put(room.getPlayerMap().get(account).getMyIndex(),object);
         }
         obj.put("array",array);
@@ -1892,6 +1893,7 @@ public class DdzGameEventDeal {
         obj.put("doubleCardNum", getUserDoubleCardNum(roomNo,account));
         // 需要消耗的加倍卡数量
         obj.put("costNum", getCurDoubleCardCost(roomNo,account));
+        obj.put("doubleTip", getDoubleTip(roomNo));
         return obj;
     }
 
@@ -2359,5 +2361,36 @@ public class DdzGameEventDeal {
             }
         }
         return 1;
+    }
+
+    /**
+     * 加倍提示
+     * @param roomNo
+     * @return
+     */
+    private String getDoubleTip(String roomNo) {
+        if (RoomManage.gameRoomMap.containsKey(roomNo) && RoomManage.gameRoomMap.get(roomNo) != null) {
+            DdzGameRoom room = (DdzGameRoom) RoomManage.gameRoomMap.get(roomNo);
+            // 比赛场判断免费加倍次数及付费加倍次数 -1表示当前无法加倍
+            if (room.getRoomType() == CommonConstant.ROOM_TYPE_MATCH && !Dto.stringIsNULL(room.getMatchNum())) {
+                String key = "match_info_" + room.getMatchNum();
+                try {
+                    Object object = redisService.queryValueByKey(key);
+                    if (object != null) {
+                        // 场次信息
+                        JSONObject matchInfo = JSONObject.fromObject(object);
+                        // 免费次数
+                        int freeTime = matchInfo.getInt("free_double_time");
+                        // 付费次数
+                        int payTime = matchInfo.getInt("pay_double_time");
+                        return "每场比赛有" + freeTime + "次免费加倍，" + payTime + "次使用加倍卡的机会";
+                    }
+                } catch (Exception e) {
+                    logger.error("请启动REmote DIctionary Server");
+                    return "";
+                }
+            }
+        }
+        return "";
     }
 }
