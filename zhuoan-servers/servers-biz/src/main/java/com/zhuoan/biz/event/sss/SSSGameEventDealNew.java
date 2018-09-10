@@ -329,7 +329,7 @@ public class SSSGameEventDealNew {
         // 发牌
         room.faPai();
 
-        changeRobotCard(room);
+        //changeRobotCard(room);
 
     }
 

@@ -580,7 +580,7 @@ public class MatchEventDeal {
                     // 添加记录
                     for (Object player : playerArray) {
                         if ("roomcard".equals(JSONObject.fromObject(player).getString("type"))) {
-                            publicBiz.addUserWelfareRec(JSONObject.fromObject(player).getString("account"), costFee,
+                            publicBiz.addUserWelfareRec(JSONObject.fromObject(player).getString("account"), -costFee,
                                 CommonConstant.CURRENCY_TYPE_ROOM_CARD - 1, matchSetting.getInt("game_id"));
                         }
                     }

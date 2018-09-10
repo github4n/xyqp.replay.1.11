@@ -3000,7 +3000,7 @@ public class BaseEventDeal {
                     result.put(CommonConstant.RESULT_KEY_MSG, "购买成功");
                     if (costType.equals("roomcard")) {
                         // 添加记录
-                        publicBiz.addUserWelfareRec(account, propsPrice, CommonConstant.CURRENCY_TYPE_ROOM_CARD - 1, propsInfo.getInt("game_id"));
+                        publicBiz.addUserWelfareRec(account, -propsPrice, CommonConstant.CURRENCY_TYPE_ROOM_CARD - 1, propsInfo.getInt("game_id"));
                         result.put("roomcard", userInfo.getInt("roomcard") - propsPrice);
                     }else {
                         result.put("roomcard", userInfo.getInt("roomcard"));
