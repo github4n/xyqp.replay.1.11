@@ -36,6 +36,10 @@ public class SSSConstant {
      */
     public static final int SSS_GAME_EVENT_XZ = 7;
     /**
+     * 十三水游戏事件-提前开始
+     */
+    public static final int SSS_GAME_EVENT_START = 8;
+    /**
      * 十三水庄家类型-互比
      */
     public static final int SSS_BANKER_TYPE_HB = 0;
@@ -181,6 +185,10 @@ public class SSSConstant {
      * 马牌类型-全部随机
      */
     public static final int SSS_MP_TYPE_ALL = 5;
+    /**
+     * 开始游戏类别-人数未满未确认
+     */
+    public static final int START_GAME_TYPE_UNSURE = 0;
 
     public static final String SSS_DATA_KET_TYPE = "type";
     public static final String SSS_DATA_KET_MY_PAI = "myPai";

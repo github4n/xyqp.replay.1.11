@@ -66,7 +66,7 @@ public class GameRoom {
     /**
      * 是否允许中途加入（true：允许、false：不允许）
      */
-    private boolean isHalfwayIn = false;
+    private boolean isHalfwayIn = true;
     /**
      * 准备超时（0：不处理 1：自动准备 2：踢出房间）
      */

@@ -106,5 +106,15 @@ public class NNGameEvent {
                 producerService.sendMessage(nnQueueDestination, new Messages(client, data, CommonConstant.GAME_ID_NN, NNConstant.NN_GAME_EVENT_BE_BANKER));
             }
         });
+
+        /**
+         * 提前开始事件
+         */
+        server.addEventListener("gameStart_NN", Object.class, new DataListener<Object>() {
+            @Override
+            public void onData(SocketIOClient client, Object data, AckRequest ackSender) {
+                producerService.sendMessage(nnQueueDestination, new Messages(client, data, CommonConstant.GAME_ID_NN, NNConstant.NN_GAME_EVENT_GAME_START));
+            }
+        });
     }
 }

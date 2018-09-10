@@ -449,8 +449,8 @@ public class BaseEventDeal {
             gameRoom.setOpen(false);
         }
         // 是否允许玩家中途加入
-        if (baseInfo.containsKey("halfwayin") && baseInfo.getInt("halfwayin") == 1) {
-            gameRoom.setHalfwayIn(true);
+        if (baseInfo.containsKey("halfway") && baseInfo.getInt("halfway") == CommonConstant.GLOBAL_NO) {
+            gameRoom.setHalfwayIn(false);
         }
         //准备超时（0：不处理 1：自动准备 2：踢出房间）
         if (baseInfo.containsKey("readyovertime")) {
@@ -745,7 +745,8 @@ public class BaseEventDeal {
         // 房间号
         String roomNo = postData.getString(CommonConstant.DATA_KEY_ROOM_NO);
 
-        if (!RoomManage.gameRoomMap.containsKey(roomNo) || RoomManage.gameRoomMap.get(roomNo) == null) {
+        if (!RoomManage.gameRoomMap.containsKey(roomNo) || RoomManage.gameRoomMap.get(roomNo) == null ||
+            (!RoomManage.gameRoomMap.get(roomNo).isHalfwayIn() && RoomManage.gameRoomMap.get(roomNo).getGameIndex() > 0)) {
             result.element(CommonConstant.RESULT_KEY_CODE, CommonConstant.GLOBAL_NO);
             result.element(CommonConstant.RESULT_KEY_MSG, "房间不存在");
             CommonConstant.sendMsgEventToSingle(client, String.valueOf(result), "enterRoomPush_NN");

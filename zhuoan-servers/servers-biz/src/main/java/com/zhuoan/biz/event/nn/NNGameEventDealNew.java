@@ -19,6 +19,7 @@ import com.zhuoan.constant.DaoTypeConstant;
 import com.zhuoan.constant.NNConstant;
 import com.zhuoan.service.cache.RedisService;
 import com.zhuoan.service.jms.ProducerService;
+import com.zhuoan.service.socketio.impl.GameMain;
 import com.zhuoan.util.Dto;
 import com.zhuoan.util.thread.ThreadPoolHelper;
 import net.sf.json.JSONArray;
@@ -210,6 +211,7 @@ public class NNGameEventDealNew {
                 obj.put("bankerIsUse",CommonConstant.GLOBAL_YES);
             }
         }
+        obj.put("startIndex",getStartIndex(roomNo));
         return obj;
     }
 
@@ -334,6 +336,98 @@ public class NNGameEventDealNew {
             result.put("timer", room.getTimeLeft());
             CommonConstant.sendMsgEventToAll(room.getAllUUIDList(), result.toString(), "playerReadyPush_NN");
         }
+    }
+
+
+    /**
+     * 房主提前开始
+     * @param client
+     * @param data
+     */
+    public void gameStart(SocketIOClient client, Object data) {
+        JSONObject postData = JSONObject.fromObject(data);
+        // 不满足准备条件直接忽略
+        if (!CommonConstant.checkEvent(postData, NNConstant.NN_GAME_STATUS_INIT, client) &&
+            !CommonConstant.checkEvent(postData, NNConstant.NN_GAME_STATUS_READY, client)) {
+            return;
+        }
+        // 房间号
+        String roomNo = postData.getString(CommonConstant.DATA_KEY_ROOM_NO);
+        NNGameRoomNew room = (NNGameRoomNew) RoomManage.gameRoomMap.get(roomNo);
+        // 玩家账号
+        String account = postData.getString(CommonConstant.DATA_KEY_ACCOUNT);
+        int type = postData.getInt("type");
+        String eventName = "gameStartPush_NN";
+        // 只有房卡场和俱乐部有提前开始的功能
+        if (room.getRoomType() != CommonConstant.ROOM_TYPE_FK && room.getRoomType() != CommonConstant.ROOM_TYPE_CLUB) {
+            sendStartResultToSingle(client, eventName, CommonConstant.GLOBAL_NO, "当前房间不支持");
+            return;
+        }
+        // 不是房主无法提前开始
+        if (!account.equals(room.getOwner())) {
+            sendStartResultToSingle(client, eventName, CommonConstant.GLOBAL_NO, "当前没有开始权限");
+            return;
+        }
+        // 已经玩过无法提前开始
+        if (room.getGameIndex() != 0) {
+            sendStartResultToSingle(client, eventName, CommonConstant.GLOBAL_NO, "游戏已开局，无法提前开始");
+            return;
+        }
+        int readyCount = room.getUserPacketMap().get(account).getStatus() == NNConstant.NN_USER_STATUS_READY ?
+            room.getNowReadyCount() : room.getNowReadyCount() + 1;
+        // 实时准备人数不足
+        if (readyCount < NNConstant.NN_MIN_START_COUNT) {
+            sendStartResultToSingle(client, eventName, CommonConstant.GLOBAL_NO, "当前准备人数不足");
+            return;
+        }
+        // 需要提前退出的人
+        List<String> outList = new ArrayList<>();
+        for (String player : room.getUserPacketMap().keySet()) {
+            // 不是房主且未准备
+            if (!account.equals(player) && room.getUserPacketMap().get(player).getStatus() != NNConstant.NN_USER_STATUS_READY) {
+                outList.add(player);
+            }
+        }
+        // 第一次点开始游戏有人需要退出
+        if (type== NNConstant.START_GAME_TYPE_UNSURE && outList.size() > 0) {
+            sendStartResultToSingle(client, eventName, CommonConstant.GLOBAL_YES, "是否开始");
+            return;
+        }
+        // 房主未准备直接准备
+        if (room.getUserPacketMap().get(account).getStatus() != NNConstant.NN_USER_STATUS_READY) {
+            gameReady(client,data);
+        }
+        // 退出房间
+        for (String player : outList) {
+            if (room.getUserPacketMap().get(player).getStatus() != NNConstant.NN_USER_STATUS_READY) {
+                SocketIOClient playerClient = GameMain.server.getClient(room.getPlayerMap().get(player).getUuid());
+                JSONObject exitData = new JSONObject();
+                exitData.put(CommonConstant.DATA_KEY_ROOM_NO, roomNo);
+                exitData.put(CommonConstant.DATA_KEY_ACCOUNT, player);
+                exitData.put("notSend", CommonConstant.GLOBAL_YES);
+                exitData.put("notSendToMe", CommonConstant.GLOBAL_YES);
+                exitRoom(playerClient, exitData);
+                // 通知玩家
+                JSONObject result = new JSONObject();
+                result.put("type", CommonConstant.SHOW_MSG_TYPE_BIG);
+                result.put(CommonConstant.RESULT_KEY_MSG, "已被房主踢出房间");
+                CommonConstant.sendMsgEventToSingle(playerClient, result.toString(), "tipMsgPush");
+            }
+        }
+    }
+
+    /**
+     * 通知玩家
+     * @param client
+     * @param eventName
+     * @param code
+     * @param msg
+     */
+    private void sendStartResultToSingle(SocketIOClient client, String eventName,int code, String msg) {
+        JSONObject result = new JSONObject();
+        result.put(CommonConstant.RESULT_KEY_CODE, code);
+        result.put(CommonConstant.RESULT_KEY_MSG, msg);
+        CommonConstant.sendMsgEventToSingle(client, String.valueOf(result), eventName);
     }
 
     /**
@@ -1369,6 +1463,7 @@ public class NNGameEventDealNew {
                     result.put("showTimer", CommonConstant.GLOBAL_NO);
                 }
                 result.put("timer", room.getTimeLeft());
+                result.put("startIndex",getStartIndex(roomNo));
                 if (!postData.containsKey("notSend")) {
                     CommonConstant.sendMsgEventToAll(allUUIDList, result.toString(), "exitRoomPush_NN");
                 }
@@ -1729,5 +1824,25 @@ public class NNGameEventDealNew {
             }
         }
         return winUUID;
+    }
+
+    /**
+     * 开始游戏按钮下标
+     * @param roomNo
+     * @return
+     */
+    private int getStartIndex(String roomNo) {
+        if (RoomManage.gameRoomMap.containsKey(roomNo) && RoomManage.gameRoomMap.get(roomNo) != null) {
+            NNGameRoomNew room = (NNGameRoomNew) RoomManage.gameRoomMap.get(roomNo);
+            // 房卡场或俱乐部
+            if (room.getRoomType() == CommonConstant.ROOM_TYPE_FK || room.getRoomType() == CommonConstant.ROOM_TYPE_CLUB) {
+                // 房主在房间内返回房主的下标
+                if (!Dto.stringIsNULL(room.getOwner()) && room.getPlayerMap().containsKey(room.getOwner())
+                    && room.getPlayerMap().get(room.getOwner())!=null) {
+                    return room.getPlayerMap().get(room.getOwner()).getMyIndex();
+                }
+            }
+        }
+        return CommonConstant.NO_BANKER_INDEX;
     }
 }

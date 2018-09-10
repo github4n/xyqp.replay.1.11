@@ -411,6 +411,10 @@ public class GameEventDeal {
                 // 下注
                 sssGameEventDealNew.gameXiaZhu(client, data);
                 break;
+            case SSSConstant.SSS_GAME_EVENT_START:
+                // 房卡场房主提前开始游戏
+                sssGameEventDealNew.gameStart(client, data);
+                break;
             default:
                 break;
         }
@@ -441,6 +445,9 @@ public class GameEventDeal {
                 break;
             case NNConstant.NN_GAME_EVENT_BE_BANKER:
                 nnGameEventDealNew.gameBeBanker(client, data);
+                break;
+            case NNConstant.NN_GAME_EVENT_GAME_START:
+                nnGameEventDealNew.gameStart(client, data);
                 break;
             default:
                 break;

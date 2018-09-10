@@ -41,6 +41,10 @@ public class NNConstant {
      */
     public static final int NN_GAME_EVENT_BE_BANKER = 8;
     /**
+     * 牛牛游戏事件-提前开始
+     */
+    public static final int NN_GAME_EVENT_GAME_START = 9;
+    /**
      * 庄家类型-房主坐庄
      */
     public static final int NN_BANKER_TYPE_FZ = 0;
@@ -184,6 +188,10 @@ public class NNConstant {
      * 玩法-斗公牛
      */
     public static final int NN_GAME_TYPE = 1;
+    /**
+     * 玩法-斗公牛
+     */
+    public static final int START_GAME_TYPE_UNSURE = 0;
 
     public static final String DATA_KEY_VALUE = "value";
     public static final String DATA_KEY_MONEY = "money";
