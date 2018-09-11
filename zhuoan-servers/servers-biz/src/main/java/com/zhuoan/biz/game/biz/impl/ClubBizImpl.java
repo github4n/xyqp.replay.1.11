@@ -68,7 +68,7 @@ public class ClubBizImpl implements ClubBiz {
             // 更新余额
             clubDao.updateClubBalance(clubInfo.getLong("id"), sum);
             // 插入数据库记录
-            clubDao.addClubPumpRec(clubInfo.getLong("leaderId"), roomId, roomNo, gid, clubInfo.getInt("balance_type") - 1, sum,
+            clubDao.addClubPumpRec(clubInfo.getLong("leaderId"), roomId, roomNo, gid, clubInfo.getInt("balance_type") - 1, -sum,
                 TimeUtil.getNowDate(), clubInfo.getString("platform"), clubInfo.getDouble("balance") - sum, clubInfo.getDouble("balance"));
             return true;
 

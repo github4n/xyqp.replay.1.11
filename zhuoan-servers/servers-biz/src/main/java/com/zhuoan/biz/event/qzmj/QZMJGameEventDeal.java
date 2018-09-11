@@ -1458,7 +1458,8 @@ public class QZMJGameEventDeal {
                 if (gamePlay.getRoomType()==CommonConstant.ROOM_TYPE_YB) {
                     saveUserDeduction(roomNo);
                 }
-                if (gamePlay.getRoomType()==CommonConstant.ROOM_TYPE_FK||gamePlay.getRoomType() == CommonConstant.ROOM_TYPE_DK) {
+                if (gamePlay.getRoomType()==CommonConstant.ROOM_TYPE_FK||gamePlay.getRoomType() == CommonConstant.ROOM_TYPE_DK ||
+                    gamePlay.getRoomType() == CommonConstant.ROOM_TYPE_CLUB) {
                     updateRoomCard(roomNo);
                 }
                 if (gamePlay.isRobot()) {
@@ -3997,7 +3998,8 @@ public class QZMJGameEventDeal {
                 if (room.getRoomType()==CommonConstant.ROOM_TYPE_YB) {
                     saveUserDeduction(roomNo);
                 }
-                if (room.getRoomType()==CommonConstant.ROOM_TYPE_FK||room.getRoomType() == CommonConstant.ROOM_TYPE_DK) {
+                if (room.getRoomType()==CommonConstant.ROOM_TYPE_FK||room.getRoomType() == CommonConstant.ROOM_TYPE_DK
+                    || room.getRoomType() == CommonConstant.ROOM_TYPE_CLUB) {
                     updateRoomCard(roomNo);
                 }
             }

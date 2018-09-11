@@ -17,10 +17,7 @@ import net.sf.json.JSONObject;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 /**
  * ClubEventDeal
@@ -61,27 +58,44 @@ public class ClubEventDeal {
         JSONObject userClub = clubBiz.getUserClubByAccount(account);
         if (!Dto.isObjNull(userClub) && userClub.containsKey("clubIds") && !Dto.stringIsNULL(userClub.getString("clubIds"))) {
             result.put(CommonConstant.RESULT_KEY_CODE, CommonConstant.GLOBAL_YES);
-            List<JSONObject> clubList = new ArrayList<>();
-            // 当前所有已加入的俱乐部
-            String[] clubIds = userClub.getString("clubIds").substring(1, userClub.getString("clubIds").length() - 1).split("\\$");
-            // 当前已经入该俱乐部
-            for (int i = 0; i < clubIds.length; i++) {
-                JSONObject clubInfo = clubBiz.getClubById(Long.valueOf(clubIds[i]));
-                JSONObject leaderInfo = userBiz.getUserByID(clubInfo.getLong("leaderId"));
-                JSONObject obj = new JSONObject();
-                obj.put("clubId", clubInfo.getLong("id"));
-                obj.put("clubCode", clubInfo.getString("clubCode"));
-                obj.put("clubName", clubInfo.getString("clubName"));
-                obj.put("imgUrl", leaderInfo.getString("headimg"));
-                obj.put("isTop",userClub.containsKey("top_club") && Long.valueOf(clubIds[i]) == userClub.getLong("top_club") ? CommonConstant.GLOBAL_YES : CommonConstant.GLOBAL_NO);
-                clubList.add(obj);
-            }
+            List<JSONObject> clubList = getUserClubListInfo(userClub);
             result.put("clubList", clubList);
         } else {
             result.put(CommonConstant.RESULT_KEY_CODE, CommonConstant.GLOBAL_NO);
             result.put(CommonConstant.RESULT_KEY_MSG, "未加入俱乐部");
         }
         CommonConstant.sendMsgEventToSingle(client, String.valueOf(result), "getMyClubListPush");
+    }
+
+    /**
+     * 获取玩家俱乐部详情
+     * @param userClub
+     * @return
+     */
+    private List<JSONObject> getUserClubListInfo(JSONObject userClub) {
+        List<JSONObject> clubList = new ArrayList<>();
+        // 当前所有已加入的俱乐部
+        String[] clubIds = userClub.getString("clubIds").substring(1, userClub.getString("clubIds").length() - 1).split("\\$");
+        // 当前已经入该俱乐部
+        for (int i = 0; i < clubIds.length; i++) {
+            JSONObject clubInfo = clubBiz.getClubById(Long.valueOf(clubIds[i]));
+            JSONObject leaderInfo = userBiz.getUserByID(clubInfo.getLong("leaderId"));
+            JSONObject obj = new JSONObject();
+            obj.put("clubId", clubInfo.getLong("id"));
+            obj.put("clubCode", clubInfo.getString("clubCode"));
+            obj.put("clubName", clubInfo.getString("clubName"));
+            obj.put("imgUrl", leaderInfo.getString("headimg"));
+            obj.put("isTop",userClub.containsKey("top_club") && Long.valueOf(clubIds[i]) == userClub.getLong("top_club") ? CommonConstant.GLOBAL_YES : CommonConstant.GLOBAL_NO);
+            clubList.add(obj);
+        }
+        // 排序
+        Collections.sort(clubList, new Comparator<JSONObject>() {
+            @Override
+            public int compare(JSONObject o1, JSONObject o2) {
+                return o2.getInt("isTop") - o1.getInt("isTop");
+            }
+        });
+        return clubList;
     }
 
     /**
@@ -309,7 +323,17 @@ public class ClubEventDeal {
         // 更新数据库 置顶取当前俱乐部id，取消置顶取0
         long topClubId = top == CommonConstant.GLOBAL_YES ? clubInfo.getLong("id") : 0L;
         clubBiz.updateUserTopClub(account, topClubId);
-        sendPromptToSingle(client, CommonConstant.GLOBAL_YES, "修改成功", eventName);
+        JSONObject userClub = clubBiz.getUserClubByAccount(account);
+        // 通知玩家
+        JSONObject result = new JSONObject();
+        result.put(CommonConstant.RESULT_KEY_CODE, CommonConstant.GLOBAL_YES);
+        result.put(CommonConstant.RESULT_KEY_MSG, "修改成功");
+        if (!Dto.isObjNull(userClub) && userClub.containsKey("clubIds") && !Dto.stringIsNULL(userClub.getString("clubIds"))) {
+            result.put(CommonConstant.RESULT_KEY_CODE, CommonConstant.GLOBAL_YES);
+            List<JSONObject> clubList = getUserClubListInfo(userClub);
+            result.put("clubList", clubList);
+        }
+        CommonConstant.sendMsgEventToSingle(client, String.valueOf(result), eventName);
     }
 
     /**
@@ -321,13 +345,16 @@ public class ClubEventDeal {
         JSONObject postData = JSONObject.fromObject(data);
         // 俱乐部编号
         String clubCode = postData.getString("clubCode");
-        // 玩家账号
-        String account = postData.getString("account");
         // 游戏id
         long gid = postData.getLong("gid");
         JSONObject result = new JSONObject();
-        // TODO: 2018/8/29 在线人数
-        result.put("onlineNum", 1);
+        int onlineNum = 1;
+        for (String roomNo : RoomManage.gameRoomMap.keySet()) {
+            if (clubCode.equals(RoomManage.gameRoomMap.get(roomNo).getClubCode())) {
+                onlineNum += RoomManage.gameRoomMap.get(roomNo).getPlayerMap().size();
+            }
+        }
+        result.put("onlineNum", onlineNum);
         // 游戏id
         result.put("gid", gid);
         // 俱乐部编号
