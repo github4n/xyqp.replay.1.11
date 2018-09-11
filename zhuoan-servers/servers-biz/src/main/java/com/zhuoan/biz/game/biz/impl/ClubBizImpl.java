@@ -75,4 +75,9 @@ public class ClubBizImpl implements ClubBiz {
         }
         return false;
     }
+
+    @Override
+    public void updateUserTopClub(String account, long clubId) {
+        clubDao.updateUserTopClub(account, clubId);
+    }
 }

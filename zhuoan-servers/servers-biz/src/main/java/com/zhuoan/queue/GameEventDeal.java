@@ -573,6 +573,9 @@ public class GameEventDeal {
             case CommonConstant.BASE_GAME_EVENT_GET_CLUB_GAME_LOG:
                 baseEventDeal.getClubGameLogList(client,data);
                 break;
+            case CommonConstant.BASE_GAME_EVENT_GET_BACKPACK_INFO:
+                baseEventDeal.getBackpackInfo(client,data);
+                break;
             default:
                 break;
         }

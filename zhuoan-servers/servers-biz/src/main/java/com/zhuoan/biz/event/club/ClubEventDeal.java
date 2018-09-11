@@ -69,6 +69,7 @@ public class ClubEventDeal {
                 JSONObject clubInfo = clubBiz.getClubById(Long.valueOf(clubIds[i]));
                 JSONObject leaderInfo = userBiz.getUserByID(clubInfo.getLong("leaderId"));
                 JSONObject obj = new JSONObject();
+                obj.put("clubId", clubInfo.getLong("id"));
                 obj.put("clubCode", clubInfo.getString("clubCode"));
                 obj.put("clubName", clubInfo.getString("clubName"));
                 obj.put("imgUrl", leaderInfo.getString("headimg"));
@@ -276,7 +277,39 @@ public class ClubEventDeal {
     }
 
     public void toTop(SocketIOClient client, Object data) {
-
+        JSONObject postData = JSONObject.fromObject(data);
+        // 俱乐部编号
+        String clubCode = postData.getString("clubCode");
+        // 玩家账号
+        String account = postData.getString("account");
+        // 玩家uuid
+        String uuid = postData.getString("uuid");
+        // 是否置顶
+        int top = postData.getInt("top");
+        // 通知事件名称
+        String eventName = "toTopPush";
+        // 用户信息
+        JSONObject userInfo = clubBiz.getUserByAccountAndUuid(account, uuid);
+        // 验证用户信息是否合法
+        if (Dto.isObjNull(userInfo)) {
+            sendPromptToSingle(client, CommonConstant.GLOBAL_NO, "账号已在其他地方登录", eventName);
+            return;
+        }
+        // 是加入俱乐部
+        if (!userInfo.containsKey("clubIds") || Dto.stringIsNULL(userInfo.getString("clubIds"))) {
+            sendPromptToSingle(client, CommonConstant.GLOBAL_NO, "未加入俱乐部", eventName);
+            return;
+        }
+        // 俱乐部是否存在
+        JSONObject clubInfo = clubBiz.getClubByCode(clubCode);
+        if (Dto.isObjNull(clubInfo)) {
+            sendPromptToSingle(client, CommonConstant.GLOBAL_NO, "俱乐部不存在", eventName);
+            return;
+        }
+        // 更新数据库 置顶取当前俱乐部id，取消置顶取0
+        long topClubId = top == CommonConstant.GLOBAL_YES ? clubInfo.getLong("id") : 0L;
+        clubBiz.updateUserTopClub(account, topClubId);
+        sendPromptToSingle(client, CommonConstant.GLOBAL_YES, "修改成功", eventName);
     }
 
     /**
@@ -294,7 +327,7 @@ public class ClubEventDeal {
         long gid = postData.getLong("gid");
         JSONObject result = new JSONObject();
         // TODO: 2018/8/29 在线人数
-        result.put("onlineNum", 0);
+        result.put("onlineNum", 1);
         // 游戏id
         result.put("gid", gid);
         // 俱乐部编号
@@ -407,6 +440,7 @@ public class ClubEventDeal {
             // 随机加入
             Collections.shuffle(roomNoList);
             postData.put("room_no",roomNoList.get(0));
+            postData.put("clubId",clubInfo.getLong("id"));
             baseEventDeal.joinRoomBase(client,postData);
         }
     }

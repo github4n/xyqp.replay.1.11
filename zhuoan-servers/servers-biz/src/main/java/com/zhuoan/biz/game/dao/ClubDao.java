@@ -88,4 +88,12 @@ public interface ClubDao {
      * @param pocketOld pocketOld
      */
     void addClubPumpRec(long userId, long roomId, String roomNo, int gid, int type, double sum,String createTime, String platform, double pocketNew, double pocketOld);
+
+    /**
+     * 更新玩家置顶俱乐部
+     *
+     * @param account
+     * @param clubId
+     */
+    void updateUserTopClub(String account, long clubId);
 }

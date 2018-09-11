@@ -1306,11 +1306,16 @@ public class MatchEventDeal {
         room.setScore(score);
         room.setRobot(true);
         JSONObject setting = new JSONObject();
+        // 托管直接过
         setting.put("trustee_pass", CommonConstant.GLOBAL_YES);
+        // 托管包赔
         setting.put("trustee_lose", CommonConstant.GLOBAL_YES);
-        setting.put("auto_last", CommonConstant.GLOBAL_YES);
+        // 无人叫地主重新发牌
         setting.put("re_shuffle", CommonConstant.GLOBAL_YES);
+        // 允许加倍
         setting.put("is_double", CommonConstant.GLOBAL_YES);
+        // 成就奖励
+        setting.put("isAchievement", CommonConstant.GLOBAL_YES);
         room.setSetting(setting);
         List<Long> idList = new ArrayList<Long>();
         for (int j = 0; j < perCount; j++) {

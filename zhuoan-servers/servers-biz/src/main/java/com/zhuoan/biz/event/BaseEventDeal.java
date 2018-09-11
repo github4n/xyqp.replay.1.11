@@ -744,11 +744,11 @@ public class BaseEventDeal {
         String account = postData.getString(CommonConstant.DATA_KEY_ACCOUNT);
         // 房间号
         String roomNo = postData.getString(CommonConstant.DATA_KEY_ROOM_NO);
-
+        // 房间不存在或不允许中途加入的房间
         if (!RoomManage.gameRoomMap.containsKey(roomNo) || RoomManage.gameRoomMap.get(roomNo) == null ||
             (!RoomManage.gameRoomMap.get(roomNo).isHalfwayIn() && RoomManage.gameRoomMap.get(roomNo).getGameIndex() > 0)) {
             result.element(CommonConstant.RESULT_KEY_CODE, CommonConstant.GLOBAL_NO);
-            result.element(CommonConstant.RESULT_KEY_MSG, "房间不存在");
+            result.element(CommonConstant.RESULT_KEY_MSG, "房间不存在或已开局");
             CommonConstant.sendMsgEventToSingle(client, String.valueOf(result), "enterRoomPush_NN");
             return;
         }
@@ -785,6 +785,16 @@ public class BaseEventDeal {
         }
         // 重连不需要再次检查玩家积分
         if (!room.getPlayerMap().containsKey(account)||room.getPlayerMap().get(account)==null) {
+            if (room.getRoomType() == CommonConstant.ROOM_TYPE_CLUB) {
+                String clubIds = !userInfo.containsKey("clubIds") ? null : userInfo.getString("clubIds");
+                if (Dto.stringIsNULL(clubIds) || !postData.containsKey("clubId") ||
+                    !new ArrayList<>(Arrays.asList(clubIds.substring(1, clubIds.length()).split("\\$"))).contains(postData.getString("clubId"))) {
+                    result.element(CommonConstant.RESULT_KEY_CODE, CommonConstant.GLOBAL_NO);
+                    result.element(CommonConstant.RESULT_KEY_MSG, "房间不存在");
+                    CommonConstant.sendMsgEventToSingle(client, String.valueOf(result), "enterRoomPush_NN");
+                    return;
+                }
+            }
             if (room.getRoomType() == CommonConstant.ROOM_TYPE_YB && userInfo.containsKey("yuanbao")
                 && userInfo.getDouble("yuanbao") < room.getEnterScore()) {
                 // 元宝不足
@@ -2971,9 +2981,13 @@ public class BaseEventDeal {
                         props.put("user_account", account);
                         props.put("game_id", propsInfo.getInt("game_id"));
                         props.put("props_type", propsInfo.getInt("props_type"));
-                        props.put("props_name", propsInfo.getString("props_name"));
+
+                        props.put("props_name", propsInfo.getString("type_name"));
                         props.put("end_time", endTime);
-                        props.put("props_count", duration);
+                        // type为偶数需要更新数量
+                        if (propsInfo.getInt("props_type") % 2 == 0) {
+                            props.put("props_count", duration);
+                        }
                     }else {
                         // 当前是否过期
                         if (TimeUtil.isLatter(nowTime,userProps.getString("end_time"))) {
@@ -2983,7 +2997,10 @@ public class BaseEventDeal {
                         }
                         props.put("id", userProps.getString("id"));
                         props.put("end_time", endTime);
-                        props.put("props_count", userProps.getInt("props_count") + duration);
+                        // type为偶数需要更新数量
+                        if (propsInfo.getInt("props_type") % 2 == 0) {
+                            props.put("props_count", userProps.getInt("props_count") + duration);
+                        }
                     }
                     propsBiz.addOrUpdateUserProps(props);
                     // 扣除玩家金币房卡
@@ -3054,6 +3071,54 @@ public class BaseEventDeal {
             result.put(CommonConstant.RESULT_KEY_MSG, "道具不存在");
         }
         CommonConstant.sendMsgEventToSingle(client, String.valueOf(result), "userPurchasePush");
+    }
+
+    /**
+     * 获取用户背包详情
+     * @param client
+     * @param data
+     */
+    public void getBackpackInfo(SocketIOClient client, Object data) {
+        // 页面传递数据
+        JSONObject postData = JSONObject.fromObject(data);
+        // 玩家账号
+        String account = postData.getString(CommonConstant.DATA_KEY_ACCOUNT);
+        // 平台号
+        String platform = postData.getString("platform");
+        // 道具详情
+        List<JSONObject> propsList = new ArrayList<>();
+        // 当前时间
+        String nowDate = TimeUtil.getNowDate();
+        // 查询当前用户道具
+        JSONArray userProps = propsBiz.getUserPropsByAccount(account);
+        if (!Dto.isNull(userProps) && userProps.size() > 0) {
+            for (Object obj : userProps) {
+                JSONObject userProp = JSONObject.fromObject(obj);
+                // 按数量计算且当前数量大于0
+                if (userProp.getInt("props_type") % 2 == 0 && userProp.getInt("props_count") > 0) {
+                    JSONObject propsInfo = new JSONObject();
+                    propsInfo.put("type", userProp.getInt("props_type"));
+                    propsInfo.put("name", userProp.getString("props_name"));
+                    propsInfo.put("count", userProp.getInt("props_count"));
+                    propsList.add(propsInfo);
+                } else if (TimeUtil.isLatter(userProp.getString("end_time"),nowDate)) {
+                    // 按时间计算且当前时间未过期
+                    JSONObject propsInfo = new JSONObject();
+                    propsInfo.put("type", userProp.getInt("props_type"));
+                    propsInfo.put("name", userProp.getString("props_name"));
+                    propsInfo.put("endTime", userProp.getString("end_time"));
+                    propsList.add(propsInfo);
+                }
+            }
+        }
+        JSONObject result = new JSONObject();
+        if (propsList.size() > 0) {
+            result.put(CommonConstant.RESULT_KEY_CODE, CommonConstant.GLOBAL_YES);
+            result.put("propsList", propsList);
+        } else {
+            result.put(CommonConstant.RESULT_KEY_CODE, CommonConstant.GLOBAL_NO);
+        }
+        CommonConstant.sendMsgEventToSingle(client, String.valueOf(result), "getBackpackInfoPush");
     }
 
     /**

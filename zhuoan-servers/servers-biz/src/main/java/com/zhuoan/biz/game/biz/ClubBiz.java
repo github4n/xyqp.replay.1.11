@@ -77,4 +77,12 @@ public interface ClubBiz {
      * @return
      */
     boolean clubPump(String clubCode, double sum, long roomId,String roomNo, int gid);
+
+    /**
+     * 更新玩家置顶俱乐部
+     *
+     * @param account
+     * @param clubId
+     */
+    void updateUserTopClub(String account, long clubId);
 }

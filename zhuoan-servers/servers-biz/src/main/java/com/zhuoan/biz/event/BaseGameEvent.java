@@ -444,6 +444,16 @@ public class BaseGameEvent {
             }
         });
 
+        /**
+         * 获取背包详情
+         */
+        server.addEventListener("getBackpackInfo", Object.class, new DataListener<Object>() {
+            @Override
+            public void onData(SocketIOClient client, Object data, AckRequest ackSender) {
+                producerService.sendMessage(baseQueueDestination, new Messages(client, data, CommonConstant.GAME_BASE, CommonConstant.BASE_GAME_EVENT_GET_BACKPACK_INFO));
+            }
+        });
+
     }
 
 

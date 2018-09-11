@@ -72,4 +72,10 @@ public class ClubDaoImpl implements ClubDao {
         DBUtil.executeUpdateBySQL(sql, new Object[]{userId, roomId, roomNo, gid, type, sum, 2, createTime, "俱乐部抽水", platform, pocketNew, pocketOld,
             sum, CommonConstant.SCORE_CHANGE_TYPE_PUMP});
     }
+
+    @Override
+    public void updateUserTopClub(String account, long clubId) {
+        String sql = "update za_users set top_club=? where account=?";
+        DBUtil.executeUpdateBySQL(sql,new Object[]{clubId,account});
+    }
 }

@@ -11,22 +11,20 @@ import org.springframework.stereotype.Component;
 
 /**
  * @author wqm
- * @DESCRIPTION
  * @Date Created in 9:03 2018/7/25
- * @Modified By:
  **/
 @Component
 public class PropsDaoImpl implements PropsDao {
     @Override
     public JSONArray getPropsInfoByPlatform(String platform) {
-        String sql = "select id,game_id,props_type,props_name,props_price,cost_type,duration,status,platform,description,img_url " +
+        String sql = "select id,game_id,props_type,props_name,props_price,cost_type,duration,status,platform,description,img_url,type_name " +
             "from za_props_info where platform=? and status=1";
         return DBUtil.getObjectListBySQL(sql, new Object[]{platform});
     }
 
     @Override
     public JSONObject getPropsInfoById(long propsId) {
-        String sql = "select id,game_id,props_type,props_name,props_price,cost_type,duration,status,platform,description,img_url " +
+        String sql = "select id,game_id,props_type,props_name,props_price,cost_type,duration,status,platform,description,img_url,type_name " +
             "from za_props_info where id=?";
         return DBUtil.getObjectBySQL(sql, new Object[]{propsId});
     }
@@ -37,7 +35,7 @@ public class PropsDaoImpl implements PropsDao {
             "user_account=? and props_type=?";
         JSONObject userProps = DBUtil.getObjectBySQL(sql, new Object[]{account, propsType});
         if (!Dto.isObjNull(userProps)) {
-            return TimeUtil.transTimeStamp(DBUtil.getObjectBySQL(sql, new Object[]{account, propsType}),"yyyy-MM-dd HH:mm:ss","end_time");
+            return TimeUtil.transTimeStamp(userProps,"yyyy-MM-dd HH:mm:ss","end_time");
         }
         return userProps;
     }
@@ -51,5 +49,16 @@ public class PropsDaoImpl implements PropsDao {
     public void updateUserPropsCount(String account, int propsType, int sum) {
         String sql = "update za_user_props set props_count=props_count-? where user_account=? and props_type=?";
         DBUtil.executeUpdateBySQL(sql, new Object[]{sum, account, propsType});
+    }
+
+    @Override
+    public JSONArray getUserPropsByAccount(String account) {
+        String sql = "select id,user_account,game_id,props_type,props_name,end_time,status,props_count from za_user_props where " +
+            "user_account=?";
+        JSONArray userProps = DBUtil.getObjectListBySQL(sql, new Object[]{account});
+        if (!Dto.isNull(userProps)) {
+            return TimeUtil.transTimestamp(userProps,"end_time","yyyy-MM-dd HH:mm:ss");
+        }
+        return userProps;
     }
 }

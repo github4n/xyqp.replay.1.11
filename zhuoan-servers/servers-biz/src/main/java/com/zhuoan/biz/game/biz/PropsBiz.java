@@ -5,9 +5,7 @@ import net.sf.json.JSONObject;
 
 /**
  * @author wqm
- * @DESCRIPTION
  * @Date Created in 9:02 2018/7/25
- * @Modified By:
  **/
 public interface PropsBiz {
     /**
@@ -29,7 +27,7 @@ public interface PropsBiz {
      *
      * @param account 用户账号
      * @param propsType 道具类型
-     * @return
+     * @return JSONObject
      */
     JSONObject getUserPropsByType(String account, int propsType);
 
@@ -48,4 +46,12 @@ public interface PropsBiz {
      * @param sum sum
      */
     void updateUserPropsCount(String account, int propsType, int sum);
+
+    /**
+     * 获取用户道具
+     *
+     * @param account 用户账号
+     * @return JSONArray
+     */
+    JSONArray getUserPropsByAccount(String account);
 }

@@ -43,7 +43,7 @@ public class GameDaoImpl implements GameDao {
 
         String sql="select id,account,name,password,tel,sex,headimg,area,lv,roomcard,coins,score,createtime,ip,"
             + "logintime,openid,unionid,uuid,status,isAuthentication,memo,vip,safe,luck,safeprice,yuanbao,"
-            + "operatorMark,isManag,Losevalue,wholecost,sign,isown,platform,pumpVal from za_users where id=?";
+            + "operatorMark,isManag,Losevalue,wholecost,sign,isown,platform,pumpVal,clubIds from za_users where id=?";
         return DBUtil.getObjectBySQL(sql, new Object[]{id});
     }
 
@@ -58,7 +58,7 @@ public class GameDaoImpl implements GameDao {
 
         String sql="select id,account,name,password,tel,sex,headimg,area,lv,roomcard,coins,score,createtime,ip,"
             + "logintime,openid,unionid,uuid,status,isAuthentication,memo,vip,safe,luck,safeprice,yuanbao,"
-            + "operatorMark,isManag,Losevalue,wholecost,sign,isown,platform,gulidId,pumpVal,Identification from za_users where account=?";
+            + "operatorMark,isManag,Losevalue,wholecost,sign,isown,platform,gulidId,pumpVal,Identification,clubIds from za_users where account=?";
         return DBUtil.getObjectBySQL(sql, new Object[]{account});
     }
 

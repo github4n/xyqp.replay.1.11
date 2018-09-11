@@ -176,6 +176,10 @@ public class CommonConstant {
      */
     public static final int BASE_GAME_EVENT_GET_CLUB_GAME_LOG = 40;
     /**
+     * 公共游戏事件-获取背包道具详情
+     */
+    public static final int BASE_GAME_EVENT_GET_BACKPACK_INFO = 41;
+    /**
      * 游戏公共部分
      */
     public static final int GAME_BASE = 0;

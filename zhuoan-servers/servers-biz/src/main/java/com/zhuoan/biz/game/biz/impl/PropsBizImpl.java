@@ -10,9 +10,7 @@ import javax.annotation.Resource;
 
 /**
  * @author wqm
- * @DESCRIPTION
  * @Date Created in 9:02 2018/7/25
- * @Modified By:
  **/
 @Service
 public class PropsBizImpl implements PropsBiz {
@@ -43,5 +41,10 @@ public class PropsBizImpl implements PropsBiz {
     @Override
     public void updateUserPropsCount(String account, int propsType, int sum) {
         propsDao.updateUserPropsCount(account, propsType, sum);
+    }
+
+    @Override
+    public JSONArray getUserPropsByAccount(String account) {
+        return propsDao.getUserPropsByAccount(account);
     }
 }
