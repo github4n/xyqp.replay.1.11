@@ -3582,8 +3582,13 @@ public class BaseEventDeal {
         // 通知玩家
         JSONObject result = new JSONObject();
         if (userGameLogsByUserId.size() > 0) {
+            // 防止数字过长传输过程中丢失，转成string
+            List<JSONObject> gameLogList = new ArrayList<>();
+            for (int i = 0; i < userGameLogsByUserId.size(); i++) {
+                gameLogList.add(userGameLogsByUserId.getJSONObject(i).element("gamelog_id",userGameLogsByUserId.getJSONObject(i).getString("gamelog_id")));
+            }
             result.put(CommonConstant.RESULT_KEY_CODE, CommonConstant.GLOBAL_YES);
-            result.put("list", userGameLogsByUserId);
+            result.put("list", gameLogList);
         } else {
             result.put(CommonConstant.RESULT_KEY_CODE, CommonConstant.GLOBAL_NO);
         }
