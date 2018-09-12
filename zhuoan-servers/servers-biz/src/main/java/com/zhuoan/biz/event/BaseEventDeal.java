@@ -41,6 +41,7 @@ import net.sf.json.JSONObject;
 import org.apache.commons.lang.math.RandomUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
@@ -3690,4 +3691,55 @@ public class BaseEventDeal {
     }
 
 
+    public void checkUserOnlineStatus(SocketIOClient client) {
+        if (client.has(CommonConstant.DATA_KEY_ACCOUNT)) {
+            // 获取玩家账号
+            String account = client.get(CommonConstant.DATA_KEY_ACCOUNT);
+            // 存入缓存
+            redisService.hset("online_player_list", account, TimeUtil.getNowDate());
+            for (String roomNo : RoomManage.gameRoomMap.keySet()) {
+                // 如果当前玩家是离线状态则刷新，防止断掉心跳包没有触发重连
+                if (RoomManage.gameRoomMap.get(roomNo).getPlayerMap().containsKey(account) &&
+                    RoomManage.gameRoomMap.get(roomNo).getPlayerMap().get(account) != null &&
+                    RoomManage.gameRoomMap.get(roomNo).getPlayerMap().get(account).getStatus() == CommonConstant.GLOBAL_NO) {
+                    // 设置状态
+                    RoomManage.gameRoomMap.get(roomNo).getPlayerMap().get(account).setStatus(CommonConstant.GLOBAL_YES);
+                    JSONObject result = new JSONObject();
+                    result.put("index", RoomManage.gameRoomMap.get(roomNo).getPlayerMap().get(account).getMyIndex());
+                    // 通知玩家
+                    CommonConstant.sendMsgEventToAll(RoomManage.gameRoomMap.get(roomNo).getAllUUIDList(account), String.valueOf(result), "userReconnectPush");
+                    break;
+                }
+            }
+        }
+    }
+
+    @Scheduled(cron = "0/3 * * * * ?")
+    public void checkUserOnlineStatus() {
+        // 所有玩家的心跳集合
+        Map<Object, Object> onlinePlayerList = redisService.hmget("online_player_list");
+        if (onlinePlayerList != null && onlinePlayerList.size() > 0) {
+            for (Object account : onlinePlayerList.keySet()) {
+                // 上一次心跳时间
+                String lastPingTime = String.valueOf(onlinePlayerList.get(account));
+                String difference = TimeUtil.getDaysBetweenTwoTime(lastPingTime, TimeUtil.getNowDate(), 1000L);
+                // 超过3秒没有ping视为断线
+                if (Integer.parseInt(difference) > 3) {
+                    for (String roomNo : RoomManage.gameRoomMap.keySet()) {
+                        if (RoomManage.gameRoomMap.get(roomNo).getPlayerMap().containsKey(account) &&
+                            RoomManage.gameRoomMap.get(roomNo).getPlayerMap().get(account) != null) {
+                            RoomManage.gameRoomMap.get(roomNo).getPlayerMap().get(account).setStatus(CommonConstant.GLOBAL_NO);
+                            // 通知玩家
+                            JSONObject result = new JSONObject();
+                            result.put("index", RoomManage.gameRoomMap.get(roomNo).getPlayerMap().get(account).getMyIndex());
+                            CommonConstant.sendMsgEventToAll(RoomManage.gameRoomMap.get(roomNo).getAllUUIDList(), String.valueOf(result), "userDisconnectPush");
+                            // 删除缓存，防止多次通知
+                            redisService.hdel("online_player_list", account);
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+    }
  }

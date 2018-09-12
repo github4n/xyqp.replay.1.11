@@ -34,6 +34,9 @@ public class BaseGameEvent {
     @Resource
     private ProducerService producerService;
 
+    @Resource
+    private BaseEventDeal baseEventDeal;
+
     /**
      * Listener base game event.公共事件监听
      *
@@ -68,6 +71,7 @@ public class BaseGameEvent {
         server.addEventListener(AddingEventConstant.GAME_PING, Object.class, new DataListener<Object>() {
             @Override
             public void onData(SocketIOClient client, Object obj, AckRequest request) {
+                baseEventDeal.checkUserOnlineStatus(client);
                 client.sendEvent(SendingEventConstant.GAME_PONG, obj);
             }
         });
