@@ -396,6 +396,13 @@ public class ZJHGameEventDealNew {
         if (room.getUserPacketMap().get(account).getStatus()==ZJHConstant.ZJH_USER_STATUS_KP) {
             score *= 2;
         }
+        // 比牌下注翻倍  wqm  20180912
+        if (type == ZJHConstant.GAME_ACTION_TYPE_COMPARE) {
+            if (!Dto.isObjNull(room.getSetting()) && room.getSetting().containsKey("double_compare") &&
+                room.getSetting().getInt("double_compare") == CommonConstant.GLOBAL_YES) {
+                score *= 2;
+            }
+        }
         // 金币不足
         if (room.getRoomType()==CommonConstant.ROOM_TYPE_YB||room.getRoomType()==CommonConstant.ROOM_TYPE_JB) {
             if (room.getPlayerMap().get(account).getScore()<score) {
@@ -474,6 +481,11 @@ public class ZJHGameEventDealNew {
         if (xiaZhu(room,account,room.getCurrentScore(),ZJHConstant.GAME_ACTION_TYPE_COMPARE)) {
             double score = room.getCurrentScore();
             if (room.getUserPacketMap().get(account).getStatus()==ZJHConstant.ZJH_USER_STATUS_KP) {
+                score *= 2;
+            }
+            // 比牌下注翻倍  wqm  20180912
+            if (!Dto.isObjNull(room.getSetting()) && room.getSetting().containsKey("double_compare") &&
+                room.getSetting().getInt("double_compare") == CommonConstant.GLOBAL_YES) {
                 score *= 2;
             }
             for (String other : room.getPlayerMap().keySet()) {
@@ -1491,6 +1503,12 @@ public class ZJHGameEventDealNew {
         if (room.getJieSanTime() > 0) {
             obj.put("jiesan", CommonConstant.GLOBAL_YES);
             obj.put("jiesanData", room.getJieSanData());
+        }
+        // 豹子奖励
+        int score = !Dto.isObjNull(room.getSetting()) && room.getSetting().containsKey("boom_reward") ?
+            room.getSetting().getInt("boom_reward") : 0;
+        if (score > 0) {
+            obj.put("boom_reward", "豹子奖励：" + score);
         }
         return obj;
     }
