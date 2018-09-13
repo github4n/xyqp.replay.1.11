@@ -79,14 +79,16 @@ public class ClubEventDeal {
         // 当前已经入该俱乐部
         for (int i = 0; i < clubIds.length; i++) {
             JSONObject clubInfo = clubBiz.getClubById(Long.valueOf(clubIds[i]));
-            JSONObject leaderInfo = userBiz.getUserByID(clubInfo.getLong("leaderId"));
-            JSONObject obj = new JSONObject();
-            obj.put("clubId", clubInfo.getLong("id"));
-            obj.put("clubCode", clubInfo.getString("clubCode"));
-            obj.put("clubName", clubInfo.getString("clubName"));
-            obj.put("imgUrl", leaderInfo.getString("headimg"));
-            obj.put("isTop",userClub.containsKey("top_club") && Long.valueOf(clubIds[i]) == userClub.getLong("top_club") ? CommonConstant.GLOBAL_YES : CommonConstant.GLOBAL_NO);
-            clubList.add(obj);
+            if (!Dto.isObjNull(clubInfo)) {
+                JSONObject leaderInfo = userBiz.getUserByID(clubInfo.getLong("leaderId"));
+                JSONObject obj = new JSONObject();
+                obj.put("clubId", clubInfo.getLong("id"));
+                obj.put("clubCode", clubInfo.getString("clubCode"));
+                obj.put("clubName", clubInfo.getString("clubName"));
+                obj.put("imgUrl", leaderInfo.getString("headimg"));
+                obj.put("isTop",userClub.containsKey("top_club") && Long.valueOf(clubIds[i]) == userClub.getLong("top_club") ? CommonConstant.GLOBAL_YES : CommonConstant.GLOBAL_NO);
+                clubList.add(obj);
+            }
         }
         // 排序
         Collections.sort(clubList, new Comparator<JSONObject>() {
