@@ -1050,6 +1050,7 @@ public class ZJHGameEventDealNew {
         }
         userResult.put("totalScore", room.getPlayerMap().get(account).getScore());
         userResult.put("player", room.getPlayerMap().get(account).getName());
+        userResult.put("account", account);
         return userResult;
     }
 

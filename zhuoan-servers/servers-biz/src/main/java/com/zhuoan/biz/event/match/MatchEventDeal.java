@@ -623,34 +623,42 @@ public class MatchEventDeal {
      */
     private void initRank(JSONObject matchSetting, String matchNum) {
         JSONObject matchInfo = getMatchInfoByNumFromRedis(matchNum);
-        if (matchSetting.getInt("is_auto") == CommonConstant.GLOBAL_YES) {
-            // 所有玩家
-            Map<Object, Object> allPlayerInfo = redisService.hmget("player_info_" + matchNum);
-            // 已经在房间内的玩家退赛
-            Set<Object> players = allPlayerInfo.keySet();
-            for (Object player : players) {
-                if (allPlayerInfo.containsKey(player)) {
-                    for (String roomNo : RoomManage.gameRoomMap.keySet()) {
-                        if (RoomManage.gameRoomMap.get(roomNo).getPlayerMap().containsKey(player)) {
-                            JSONObject data = new JSONObject();
-                            data.put("account", String.valueOf(player));
-                            data.put("gid", matchInfo.getLong("game_id"));
-                            data.put("match_id", matchInfo.getLong("match_id"));
-                            matchCancelSign(null, data);
-                        }
+        // 所有玩家
+        Map<Object, Object> allPlayerInfo = redisService.hmget("player_info_" + matchNum);
+        // 已经在房间内的玩家退赛
+        Set<Object> players = allPlayerInfo.keySet();
+        for (Object player : players) {
+            if (allPlayerInfo.containsKey(player)) {
+                for (String roomNo : RoomManage.gameRoomMap.keySet()) {
+                    if (RoomManage.gameRoomMap.get(roomNo).getPlayerMap().containsKey(player)) {
+                        JSONObject data = new JSONObject();
+                        data.put("account", String.valueOf(player));
+                        data.put("gid", matchInfo.getLong("game_id"));
+                        data.put("match_id", matchInfo.getLong("match_id"));
+                        matchCancelSign(null, data);
                     }
                 }
             }
-            allPlayerInfo = redisService.hmget("player_info_" + matchNum);
-            matchInfo = getMatchInfoByNumFromRedis(matchNum);
-            if (allPlayerInfo.size() == 0 || Dto.isObjNull(matchInfo)) {
-                return;
+        }
+        allPlayerInfo = redisService.hmget("player_info_" + matchNum);
+        matchInfo = getMatchInfoByNumFromRedis(matchNum);
+        if (allPlayerInfo.size() == 0 || Dto.isObjNull(matchInfo)) {
+            return;
+        }
+        // 计算需要不足的机器人
+        int leftNum = 0;
+        if (matchSetting.getInt("player_count") <= allPlayerInfo.size()) {
+            int moreNum = allPlayerInfo.size() % matchSetting.getInt("per_count");
+            leftNum = moreNum == 0 ? moreNum : matchSetting.getInt("per_count") -  moreNum;
+        }else if (matchSetting.getInt("is_auto") == CommonConstant.GLOBAL_YES) {
+            int totalCount = matchInfo.getInt("total_count");
+            if (matchInfo.getJSONArray("promotion").getInt(0) > totalCount) {
+                totalCount = matchInfo.getJSONArray("promotion").getInt(0);
             }
-            int totalCount = matchSetting.getInt("player_count");
-            if (matchSetting.getJSONArray("promotion").getInt(0) > totalCount) {
-                totalCount = matchSetting.getJSONArray("promotion").getInt(0);
-            }
-            int leftNum = totalCount - allPlayerInfo.size();
+            leftNum = totalCount - allPlayerInfo.size();
+        }
+        // 需要补全机器人
+        if (leftNum > 0) {
             JSONArray robotArray = matchBiz.getRobotList(leftNum);
             if (robotArray.size() < leftNum) {
                 return;
