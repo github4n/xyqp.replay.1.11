@@ -746,10 +746,9 @@ public class BaseEventDeal {
         // 房间号
         String roomNo = postData.getString(CommonConstant.DATA_KEY_ROOM_NO);
         // 房间不存在或不允许中途加入的房间
-        if (!RoomManage.gameRoomMap.containsKey(roomNo) || RoomManage.gameRoomMap.get(roomNo) == null ||
-            (!RoomManage.gameRoomMap.get(roomNo).isHalfwayIn() && RoomManage.gameRoomMap.get(roomNo).getGameIndex() > 0)) {
+        if (!RoomManage.gameRoomMap.containsKey(roomNo) || RoomManage.gameRoomMap.get(roomNo) == null) {
             result.element(CommonConstant.RESULT_KEY_CODE, CommonConstant.GLOBAL_NO);
-            result.element(CommonConstant.RESULT_KEY_MSG, "房间不存在或已开局");
+            result.element(CommonConstant.RESULT_KEY_MSG, "房间不存在");
             CommonConstant.sendMsgEventToSingle(client, String.valueOf(result), "enterRoomPush_NN");
             return;
         }
@@ -795,6 +794,13 @@ public class BaseEventDeal {
                     CommonConstant.sendMsgEventToSingle(client, String.valueOf(result), "enterRoomPush_NN");
                     return;
                 }
+            }
+            // 房卡场禁止中途加入提示 wqm  2018/09/12
+            if (!room.isHalfwayIn() && room.getGameIndex() > 0) {
+                result.element(CommonConstant.RESULT_KEY_CODE, CommonConstant.GLOBAL_NO);
+                result.element(CommonConstant.RESULT_KEY_MSG, "已开局");
+                CommonConstant.sendMsgEventToSingle(client, String.valueOf(result), "enterRoomPush_NN");
+                return;
             }
             if (room.getRoomType() == CommonConstant.ROOM_TYPE_YB && userInfo.containsKey("yuanbao")
                 && userInfo.getDouble("yuanbao") < room.getEnterScore()) {
