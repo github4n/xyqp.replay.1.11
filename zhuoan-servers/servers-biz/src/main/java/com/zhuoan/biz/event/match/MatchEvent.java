@@ -88,5 +88,15 @@ public class MatchEvent {
                 producerService.sendMessage(matchQueueDestination, new Messages(client, data, CommonConstant.GAME_MATCH, MatchConstant.MATCH_EVENT_GET_SIGN_UP_INFO));
             }
         });
+
+        /**
+         * 检查比赛场开始状态
+         */
+        server.addEventListener("checkMatchStatus", Object.class, new DataListener<Object>() {
+            @Override
+            public void onData(SocketIOClient client, Object data, AckRequest ackSender) {
+                producerService.sendMessage(matchQueueDestination, new Messages(client, data, CommonConstant.GAME_MATCH, MatchConstant.MATCH_EVENT_CHECK_MATCH_STATUS));
+            }
+        });
     }
 }

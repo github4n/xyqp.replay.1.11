@@ -186,6 +186,22 @@ public class MatchEventDeal {
         CommonConstant.sendMsgEventToSingle(client, String.valueOf(result), "getSignUpInfoPush");
     }
 
+    public void checkMatchStatus(SocketIOClient client, Object data) {
+        JSONObject result = new JSONObject();
+        Object matchBeginTime = redisService.queryValueByKey("match_begin_time");
+        if (matchBeginTime != null) {
+            String nowDate = TimeUtil.getNowDate();
+            if (!TimeUtil.isLatter(nowDate, String.valueOf(matchBeginTime))) {
+                result.put(CommonConstant.RESULT_KEY_CODE, CommonConstant.GLOBAL_NO);
+                result.put("date", String.valueOf(matchBeginTime));
+                CommonConstant.sendMsgEventToSingle(client, String.valueOf(result), "checkMatchStatusPush");
+                return;
+            }
+        }
+        result.put(CommonConstant.RESULT_KEY_CODE,CommonConstant.GLOBAL_YES);
+        CommonConstant.sendMsgEventToSingle(client, String.valueOf(result), "checkMatchStatusPush");
+    }
+
     /**
      * 获取比赛场信息
      *
@@ -252,6 +268,67 @@ public class MatchEventDeal {
             matchSettings = matchBiz.getMatchSettingByType(type, createTime);
         }
         return matchSettings;
+    }
+
+    /**
+     * 获取场次晋级区间配置，存入缓存
+     *
+     * @param platform
+     * @return
+     */
+    private JSONArray getMatchSectionByPlatform(String platform) {
+        JSONArray matchSection;
+        try {
+            StringBuffer key = new StringBuffer();
+            key.append("match_section_");
+            key.append(platform);
+            Object object = redisService.queryValueByKey(String.valueOf(key));
+            if (object != null) {
+                matchSection = JSONArray.fromObject(redisService.queryValueByKey(String.valueOf(key)));
+            } else {
+                matchSection = matchBiz.getMatchSection(platform);
+                redisService.insertKey(String.valueOf(key), String.valueOf(matchSection), null);
+            }
+        } catch (Exception e) {
+            logger.error("请启动REmote DIctionary Server");
+            matchSection = matchBiz.getMatchSection(platform);
+        }
+        return matchSection;
+    }
+
+    /**
+     * 根据实时人数取对应的晋级规则
+     *
+     * @param platform
+     * @param currentCount
+     * @return
+     */
+    private JSONArray getMatchSectionByCurrentCount(String platform, int currentCount) {
+        // 当前平台标识所对应的所有晋级人数区间
+        JSONArray matchSections = getMatchSectionByPlatform(platform);
+        JSONObject maxMatchSection = new JSONObject();
+        if (matchSections != null) {
+            for (int i = 0; i < matchSections.size(); i++) {
+                JSONObject matchSection = matchSections.getJSONObject(i);
+                // 人数落在指定区间内则直接返回对应的晋级规则,否则设置当前最大晋级人数
+                if (matchSection.getInt("min_count") <= currentCount && matchSection.getInt("max_count") >= currentCount) {
+                    JSONArray promotion = matchSection.getJSONArray("promotion");
+                    // 将当前人数添加到晋级区间第一位
+                    promotion.add(0, currentCount);
+                    return promotion;
+                } else if (Dto.isObjNull(maxMatchSection) || maxMatchSection.getInt("max_count") < matchSection.getInt("max_count")) {
+                    maxMatchSection = matchSection;
+                }
+            }
+        }
+        // 若没有对应的晋级区间且最大区间为空或人数小于最高人数则返回空，否则返回最大人数对应的晋级区间
+        if (Dto.isObjNull(maxMatchSection) || maxMatchSection.getInt("max_count") < currentCount) {
+            return null;
+        }
+        JSONArray promotion = maxMatchSection.getJSONArray("promotion");
+        // 在当前晋级规则上加上实时人数
+        promotion.add(0, currentCount);
+        return promotion;
     }
 
     /**
@@ -667,6 +744,17 @@ public class MatchEventDeal {
                 initRankList(robotArray.getJSONObject(i).getString("account"), matchNum);
                 matchBiz.updateRobotStatus(robotArray.getJSONObject(i).getString("account"), 1);
             }
+        }
+        if (matchSetting.getInt("type") == MatchConstant.MATCH_TYPE_TIME) {
+            matchInfo.put("total_count", allPlayerInfo.size() + leftNum);
+            // 晋级规则
+            JSONArray promotion = getMatchSectionByCurrentCount(matchSetting.getString("platform"), allPlayerInfo.size() + leftNum);
+            if (promotion != null) {
+                matchInfo.put("promotion", promotion);
+                matchInfo.put("total_round", promotion.size() - 1);
+            }
+            // 修改晋级规则
+            addMatchInfoIntoRedis(matchNum, matchInfo);
         }
         // 开始匹配
         startMatch(matchNum);

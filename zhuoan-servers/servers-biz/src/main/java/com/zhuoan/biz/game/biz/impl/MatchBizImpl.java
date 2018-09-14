@@ -80,4 +80,9 @@ public class MatchBizImpl implements MatchBiz {
         return matchDao.getUnFullMatchInfo();
     }
 
+    @Override
+    public JSONArray getMatchSection(String platform) {
+        return matchDao.getMatchSection(platform);
+    }
+
 }

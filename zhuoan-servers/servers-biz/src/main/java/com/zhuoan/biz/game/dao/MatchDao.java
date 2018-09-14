@@ -111,4 +111,12 @@ public interface MatchDao {
      */
     JSONArray getUnFullMatchInfo();
 
+    /**
+     * 获取比赛场排名规则
+     *
+     * @param platform platform
+     * @return JSONArray
+     */
+    JSONArray getMatchSection(String platform);
+
 }

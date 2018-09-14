@@ -102,4 +102,10 @@ public class MatchDaoImpl implements MatchDao {
         return DBUtil.getObjectListBySQL(sql,new Object[]{0});
     }
 
+    @Override
+    public JSONArray getMatchSection(String platform) {
+        String sql = "select id,min_count,max_count,promotion,is_use,platform,memo from za_match_section where is_use=1 and platform=?";
+        return DBUtil.getObjectListBySQL(sql,new Object[]{platform});
+    }
+
 }
