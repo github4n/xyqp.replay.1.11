@@ -139,30 +139,19 @@ public class MatchEventDeal {
         JSONObject postData = JSONObject.fromObject(data);
         // 玩家账号
         String account = postData.getString(CommonConstant.DATA_KEY_ACCOUNT);
-        // 当前所有未开始比赛场信息
-        JSONArray unFullMatchInfo = matchBiz.getUnFullMatchInfo();
-        JSONObject curMatchInfo = new JSONObject();
         // 该玩家当前所在场次
-        for (int i = 0; i < unFullMatchInfo.size(); i++) {
-            JSONArray playerArray = unFullMatchInfo.getJSONObject(i).getJSONArray("player_array");
-            for (int j = 0; j < playerArray.size(); j++) {
-                if (playerArray.getJSONObject(j).getString("account").equals(account)) {
-                    curMatchInfo = unFullMatchInfo.getJSONObject(i);
-                    break;
-                }
-            }
-        }
+        Object playerSignUpInfo = redisService.hget("player_sign_up_info", account);
         JSONObject result = new JSONObject();
         result.put(CommonConstant.RESULT_KEY_CODE, CommonConstant.GLOBAL_NO);
-        if (!Dto.isObjNull(curMatchInfo)) {
+        if (playerSignUpInfo != null) {
             // 场次信息
-            JSONObject matchInfo = getMatchInfoByNumFromRedis(curMatchInfo.getString("match_num"));
+            JSONObject matchInfo = getMatchInfoByNumFromRedis(JSONObject.fromObject(playerSignUpInfo).getString("match_num"));
             if (!Dto.isObjNull(matchInfo)) {
                 result.put(CommonConstant.RESULT_KEY_CODE, CommonConstant.GLOBAL_YES);
-                int type = curMatchInfo.getInt("type");
+                int type = matchInfo.getInt("type");
                 result.put("type", type);
                 result.put("match_name", matchInfo.getString("match_name"));
-                result.put("matchNum", curMatchInfo.getString("match_num"));
+                result.put("matchNum", JSONObject.fromObject(playerSignUpInfo).getString("match_num"));
                 result.put("signCount", matchInfo.getInt("sign_count"));
                 // 满人开赛传当前人数 定时赛传总时间及剩余时间
                 if (type == MatchConstant.MATCH_TYPE_COUNT) {
@@ -221,12 +210,16 @@ public class MatchEventDeal {
         JSONObject result = new JSONObject();
         // 数据是否存在
         result.put(CommonConstant.RESULT_KEY_CODE, CommonConstant.GLOBAL_YES);
+        // 是否报名
+        Object playerSignUpInfo = redisService.hget("player_sign_up_info", account);
+        JSONObject matchInfo = new JSONObject();
+        if (playerSignUpInfo != null) {
+            matchInfo = getMatchInfoByNumFromRedis(JSONObject.fromObject(playerSignUpInfo).getString("match_num"));
+        }
         // 判断是否报名，是否需要倒计时
         for (int i = 0; i < matchSettings.size(); i++) {
             JSONObject matchSetting = matchSettings.getJSONObject(i);
-            // 是否报名
-            boolean isSignUp = redisService.sHasKey("match_sign_up_" + matchSetting.getInt("id"), account);
-            if (isSignUp) {
+            if (!Dto.isObjNull(matchInfo) && matchInfo.getLong("match_id") == matchSetting.getLong("id")) {
                 matchSetting.put("is_sign", CommonConstant.GLOBAL_YES);
             } else {
                 matchSetting.put("is_sign", CommonConstant.GLOBAL_NO);
@@ -352,9 +345,8 @@ public class MatchEventDeal {
         JSONObject result = new JSONObject();
         Map<String, JSONObject> beginMap = new HashMap<>();
         if (!Dto.isObjNull(matchSetting)) {
-            // 是否已报名该场次
-            boolean isSignUp = checkUserSign(account);
-            if (!isSignUp) {
+            Object playerSignUpInfo = redisService.hget("player_sign_up_info", account);
+            if (playerSignUpInfo == null) {
                 // 消耗类型
                 int costFee = -1;
                 JSONArray costType = matchSetting.getJSONArray("cost_type");
@@ -393,8 +385,6 @@ public class MatchEventDeal {
                                     beginMap.put(matchNum, matchSetting);
                                 }
                             }
-                            // 存入缓存
-                            redisService.sSet("match_sign_up_" + matchSetting.getInt("id"), account);
                             // 扣除金币
                             int coins = 0;
                             int roomCard = 0;
@@ -413,6 +403,12 @@ public class MatchEventDeal {
                                 yb = -costFee;
                             }
                             matchBiz.updateUserCoinsAndScoreByAccount(account, coins, score, roomCard, yb);
+                            // 添加用户报名信息缓存  wqm 2018/09/15
+                            JSONObject playerInfo = new JSONObject();
+                            playerInfo.put("match_num", matchNum);
+                            playerInfo.put("cost_type", type);
+                            playerInfo.put("cost_fee", costFee);
+                            redisService.hset("player_sign_up_info", account, String.valueOf(playerInfo));
                             JSONObject matchInfo = getMatchInfoByNumFromRedis(matchNum);
                             // 通知前端
                             result.put(CommonConstant.RESULT_KEY_CODE, CommonConstant.GLOBAL_YES);
@@ -458,22 +454,6 @@ public class MatchEventDeal {
         }
     }
 
-    private boolean checkUserSign(String account) {
-        JSONArray timeMatchSettings = getMatchSettingByType(MatchConstant.MATCH_TYPE_TIME, TimeUtil.getNowDate());
-        JSONArray countMatchSettings = getMatchSettingByType(MatchConstant.MATCH_TYPE_COUNT, null);
-        JSONArray matchSettings = new JSONArray();
-        matchSettings.addAll(timeMatchSettings);
-        matchSettings.addAll(countMatchSettings);
-        for (int i = 0; i < matchSettings.size(); i++) {
-            long matchId = matchSettings.getJSONObject(i).getLong("id");
-            if (redisService.sHasKey("match_sign_up_" + matchId, account)) {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
     /**
      * 取消报名
      *
@@ -491,9 +471,10 @@ public class MatchEventDeal {
         JSONObject result = new JSONObject();
         JSONObject matchSetting = matchBiz.getMatchSettingById(matchId, gameId);
         if (!Dto.isObjNull(matchSetting)) {
-            // 是否已报名该场次
-            boolean isSignUp = redisService.sHasKey("match_sign_up_" + matchId, account);
-            if (isSignUp) {
+            Object playerSignUpInfo = redisService.hget("player_sign_up_info", account);
+            if (playerSignUpInfo != null) {
+                // 玩家信息
+                JSONObject playerObj = JSONObject.fromObject(playerSignUpInfo);
                 // 所有未满场次
                 JSONObject unFullMatch = matchBiz.getMatchInfoByMatchId(matchId, 0, 0);
                 if (!Dto.isObjNull(unFullMatch)) {
@@ -514,19 +495,8 @@ public class MatchEventDeal {
                             addMatchInfoIntoRedis(unFullMatch.getString("match_num"), matchInfo);
                         }
                     }
-                    // 玩家信息
-                    JSONArray playerArray = unFullMatch.getJSONArray("player_array");
-                    List<String> playerList = new ArrayList<>();
-                    JSONObject playerObj = new JSONObject();
-                    for (Object player : playerArray) {
-                        if (!account.equals(JSONObject.fromObject(player).getString("account"))) {
-                            playerList.add(String.valueOf(player));
-                        } else {
-                            playerObj = JSONObject.fromObject(player);
-                        }
-                    }
+
                     obj.put("id", unFullMatch.getLong("id"));
-                    obj.put("player_array", String.valueOf(playerList));
                     obj.put("current_count", unFullMatch.getInt("current_count") - 1);
                     // 更新数据库
                     matchBiz.addOrUpdateMatchInfo(obj);
@@ -534,7 +504,7 @@ public class MatchEventDeal {
                     int costFee = 0;
                     JSONArray costType = matchSetting.getJSONArray("cost_type");
                     for (Object costObj : costType) {
-                        if (playerObj.getString("type").equals(JSONObject.fromObject(costObj).getString("type"))) {
+                        if (playerObj.getString("cost_type").equals(JSONObject.fromObject(costObj).getString("type"))) {
                             costFee = JSONObject.fromObject(costObj).getInt("value");
                             break;
                         }
@@ -543,16 +513,16 @@ public class MatchEventDeal {
                     int roomCard = 0;
                     int score = 0;
                     double yb = 0;
-                    if ("coins".equals(playerObj.getString("type"))) {
+                    if ("coins".equals(playerObj.getString("cost_type"))) {
                         coins = costFee;
                     }
-                    if ("roomcard".equals(playerObj.getString("type"))) {
+                    if ("roomcard".equals(playerObj.getString("cost_type"))) {
                         roomCard = costFee;
                     }
-                    if ("score".equals(playerObj.getString("type"))) {
+                    if ("score".equals(playerObj.getString("cost_type"))) {
                         score = costFee;
                     }
-                    if ("yuanbao".equals(playerObj.getString("type"))) {
+                    if ("yuanbao".equals(playerObj.getString("cost_type"))) {
                         yb = costFee;
                     }
                     matchBiz.updateUserCoinsAndScoreByAccount(account, coins, score, roomCard, yb);
@@ -660,27 +630,16 @@ public class MatchEventDeal {
                 // 当前场次未开始进行开始游戏(防止最后一个玩家报名与线程冲突开始多次)
                 if (!Dto.isObjNull(unFullMatch) && unFullMatch.getString("match_num").equals(matchNum)) {
                     // 玩家信息
-                    JSONArray playerArray = unFullMatch.getJSONArray("player_array");
-                    // 消耗类型
-                    int costFee = -1;
-                    JSONArray costType = matchSetting.getJSONArray("cost_type");
-                    for (Object costObj : costType) {
-                        if ("roomcard".equals(JSONObject.fromObject(costObj).getString("type"))) {
-                            costFee = JSONObject.fromObject(costObj).getInt("value");
-                            break;
-                        }
-                    }
+                    Map<String, JSONObject> playerSignUpInfo = getPlayerSignUpInfoByMatchNum(matchNum);
                     // 添加记录
-                    for (Object player : playerArray) {
-                        if ("roomcard".equals(JSONObject.fromObject(player).getString("type"))) {
-                            publicBiz.addUserWelfareRec(JSONObject.fromObject(player).getString("account"), -costFee,
-                                CommonConstant.CURRENCY_TYPE_ROOM_CARD - 1, matchSetting.getInt("game_id"));
-                        } else if ("yuanbao".equals(JSONObject.fromObject(player).getString("type"))) {
-                            publicBiz.addUserWelfareRec(JSONObject.fromObject(player).getString("account"), -costFee,
-                                CommonConstant.CURRENCY_TYPE_YB- 1, matchSetting.getInt("game_id"));
-                        } else if ("score".equals(JSONObject.fromObject(player).getString("type"))) {
-                            publicBiz.addUserWelfareRec(JSONObject.fromObject(player).getString("account"), -costFee,
-                                CommonConstant.CURRENCY_TYPE_SCORE - 1, matchSetting.getInt("game_id"));
+                    for (String account : playerSignUpInfo.keySet()) {
+                        int costFee = playerSignUpInfo.get(account).getInt("cost_fee");
+                        if ("roomcard".equals(playerSignUpInfo.get(account).getString("cost_type"))) {
+                            publicBiz.addUserWelfareRec(account, -costFee, CommonConstant.CURRENCY_TYPE_ROOM_CARD - 1, matchSetting.getInt("game_id"));
+                        } else if ("yuanbao".equals(playerSignUpInfo.get(account).getString("cost_type"))) {
+                            publicBiz.addUserWelfareRec(account, -costFee, CommonConstant.CURRENCY_TYPE_YB - 1, matchSetting.getInt("game_id"));
+                        } else if ("score".equals(playerSignUpInfo.get(account).getString("cost_type"))) {
+                            publicBiz.addUserWelfareRec(account, -costFee, CommonConstant.CURRENCY_TYPE_SCORE - 1, matchSetting.getInt("game_id"));
                         }
                     }
                     // 初始化排行榜
@@ -690,6 +649,24 @@ public class MatchEventDeal {
                 }
             }
         });
+    }
+
+    /**
+     * 根据场次编号获取玩家信息
+     * @param matchNum
+     * @return
+     */
+    private Map<String, JSONObject> getPlayerSignUpInfoByMatchNum(String matchNum) {
+        Map<String, JSONObject> signUpInfo = new HashMap<>();
+        Map<Object, Object> allPlayerSignUpInfo = redisService.hmget("player_sign_up_info");
+        for (Object account : allPlayerSignUpInfo.keySet()) {
+            JSONObject playerSignUpInfo = JSONObject.fromObject(allPlayerSignUpInfo.get(account));
+            // 取场相同的玩家信息
+            if (playerSignUpInfo.getString("match_num").equals(matchNum)) {
+                signUpInfo.put(String.valueOf(account), playerSignUpInfo);
+            }
+        }
+        return signUpInfo;
     }
 
     /**
@@ -834,7 +811,7 @@ public class MatchEventDeal {
                                 sendWinnerInfoToAll(matchNum, account, rank);
                             }
                             // 清除缓存
-                            redisService.setRemove("match_sign_up_" + matchInfo.getInt("match_id"), account);
+                            redisService.hdel("player_sign_up_info", account);
                         }
                         // 移除缓存
                         redisService.deleteByKey("match_info_" + matchNum);
@@ -1187,9 +1164,8 @@ public class MatchEventDeal {
     private void playerOutMatch(String matchNum, String account) {
         // 移除玩家信息
         redisService.hdel("player_info_" + matchNum, account);
-        // 移除报名信息
-        JSONObject matchInfo = getMatchInfoByNumFromRedis(matchNum);
-        redisService.setRemove("match_sign_up_" + matchInfo.getInt("match_id"), account);
+        // 移除玩家报名信息
+        redisService.hdel("player_sign_up_info", account);
     }
 
 
@@ -1673,10 +1649,6 @@ public class MatchEventDeal {
         obj.put("match_id", matchId);
         obj.put("type", matchSetting.getInt("type"));
         obj.put("create_time", TimeUtil.getNowDate());
-        List<JSONObject> playerList = new ArrayList<>();
-        JSONObject playerObj = getSignPlayerObj(account, type);
-        playerList.add(playerObj);
-        obj.put("player_array", String.valueOf(playerList));
         obj.put("total_round", matchSetting.getInt("total_round"));
         matchBiz.addOrUpdateMatchInfo(obj);
     }
@@ -1728,17 +1700,12 @@ public class MatchEventDeal {
      */
     private void joinMatch(String uuid, SocketIOClient client, String account, JSONObject matchSetting, JSONObject unFullMatch, String type) {
         // 添加数据库
-        List<JSONObject> playerList = new ArrayList<>();
-        playerList.addAll(unFullMatch.getJSONArray("player_array"));
-        JSONObject playerObj = getSignPlayerObj(account, type);
-        playerList.add(playerObj);
         int isFull = 0;
         if (unFullMatch.getInt("type") == MatchConstant.MATCH_TYPE_COUNT && unFullMatch.getInt("current_count") + 1 >= matchSetting.getInt("player_count")) {
             isFull = 1;
         }
         JSONObject obj = new JSONObject();
         obj.put("id", unFullMatch.getLong("id"));
-        obj.put("player_array", String.valueOf(playerList));
         obj.put("current_count", unFullMatch.getInt("current_count") + 1);
         obj.put("is_full", isFull);
         matchBiz.addOrUpdateMatchInfo(obj);
