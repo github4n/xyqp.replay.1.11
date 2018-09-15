@@ -1111,6 +1111,10 @@ public class DdzGameEventDeal {
         int cardIndex = 0;
         List<String> accountList = obtainAllPlayerAccount(roomNo);
         for (String account : accountList) {
+            // 比赛场准备失败
+            if (room.getRoomType() == CommonConstant.ROOM_TYPE_MATCH && room.getUserPacketMap().get(account).getStatus() != DdzConstant.DDZ_USER_STATUS_READY) {
+                room.getUserPacketMap().get(account).setStatus(DdzConstant.DDZ_USER_STATUS_READY);
+            }
             room.getUserPacketMap().get(account).setMyPai(cardList.get(cardIndex));
             cardIndex++;
         }
