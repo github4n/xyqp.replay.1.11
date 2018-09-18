@@ -320,7 +320,9 @@ public class MatchEventDeal {
         }
         JSONArray promotion = maxMatchSection.getJSONArray("promotion");
         // 在当前晋级规则上加上实时人数
-        promotion.add(0, currentCount);
+        if (promotion.getInt(0) < currentCount) {
+            promotion.add(0, currentCount);
+        }
         return promotion;
     }
 
