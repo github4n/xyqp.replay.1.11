@@ -620,7 +620,7 @@ public class MatchEventDeal {
                         int addCount = RandomUtils.nextInt(matchInfo.getInt("total_count") - matchInfo.getInt("sign_count"));
                         int signCount = matchInfo.getInt("sign_count") + addCount;
                         // 超出最大人数按最大人数计算
-                        if (signCount >= matchInfo.getInt("total_count")) {
+                        if (signCount >= matchInfo.getInt("total_count") && matchInfo.getInt("type") != MatchConstant.MATCH_TYPE_TIME) {
                             signCount = matchInfo.getInt("total_count") - 1;
                         }
                         matchInfo.put("sign_count", signCount);
@@ -829,7 +829,7 @@ public class MatchEventDeal {
                         boolean isContinue = userPromotion(matchNum, totalNum);
                         if (isContinue) {
                             // 通知晋级玩家
-                            sendPromotionToUser(matchNum, new ArrayList<String>(), curRound - 1, promotion, promotion.getInt(curRound - 1), 1);
+                            sendPromotionToUser(getAllPlayerUUID(matchNum), matchNum, new ArrayList<String>(), curRound - 1, promotion, promotion.getInt(curRound - 1), 1);
                             try {
                                 Thread.sleep(5000);
                             } catch (InterruptedException e) {
@@ -1444,7 +1444,7 @@ public class MatchEventDeal {
             // 当前总人数
             int totalNum = promotion.getInt(curRound);
             // 通知玩家晋级结果
-            sendPromotionToUser(matchNum, realPlayers, curRound, promotion, totalNum, 0);
+            sendPromotionToUser(getAllPlayerUUID(matchNum, realPlayers), matchNum, realPlayers, curRound, promotion, totalNum, 0);
             // 本轮全部完成
             if (checkIsAllFinish(matchNum, curRound)) {
                 allFinishDeal(matchNum);
@@ -1455,6 +1455,7 @@ public class MatchEventDeal {
     /**
      * 晋级结果通知
      *
+     * @param allPlayerUUID
      * @param matchNum
      * @param realPlayers
      * @param curRound
@@ -1462,9 +1463,8 @@ public class MatchEventDeal {
      * @param totalNum
      * @param isPromotion
      */
-    private void sendPromotionToUser(String matchNum, List<String> realPlayers, int curRound, JSONArray promotion, int totalNum, int isPromotion) {
+    private void sendPromotionToUser(Map<String, UUID> allPlayerUUID, String matchNum, List<String> realPlayers, int curRound, JSONArray promotion, int totalNum, int isPromotion) {
         // 通知玩家
-        Map<String, UUID> allPlayerUUID = getAllPlayerUUID(matchNum);
         for (String account : allPlayerUUID.keySet()) {
             JSONObject result = new JSONObject();
             result.put("type", 0);
@@ -1495,6 +1495,19 @@ public class MatchEventDeal {
             }
         }
         return -1;
+    }
+
+    private Map<String, UUID> getAllPlayerUUID(String matchNum, List<String> realPlayers) {
+        // 取出所有玩家
+        Map<Object, Object> allPlayerInfo = redisService.hmget("player_info_" + matchNum);
+        Map<String, UUID> allPlayerUUID = new HashMap<>();
+        for (Object player : allPlayerInfo.keySet()) {
+            if (realPlayers.contains(String.valueOf(player))) {
+                JSONObject playerInfo = JSONObject.fromObject(allPlayerInfo.get(player));
+                allPlayerUUID.put(String.valueOf(player), UUID.fromString(playerInfo.getString("sessionId")));
+            }
+        }
+        return allPlayerUUID;
     }
 
     private Map<String, UUID> getAllPlayerUUID(String matchNum) {
@@ -1724,7 +1737,7 @@ public class MatchEventDeal {
             addPlayerInfo(account, unFullMatch.getString("match_num"), uuid, String.valueOf(client.getSessionId()), 1000, 0);
             int signCount = matchInfo.getInt("sign_count") + 1;
             // 超出最大人数按最大人数计算
-            if (signCount >= matchInfo.getInt("total_count")) {
+            if (signCount >= matchInfo.getInt("total_count") && matchInfo.getInt("type") != MatchConstant.MATCH_TYPE_TIME) {
                 signCount = matchInfo.getInt("total_count") - 1;
             }
             matchInfo.put("sign_count", signCount);
