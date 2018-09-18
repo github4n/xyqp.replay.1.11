@@ -1033,8 +1033,10 @@ public class MatchEventDeal {
                         JSONObject object = JSONObject.fromObject(rewardType);
                         if (object.getInt("type") == MatchConstant.MATCH_REWARD_TYPE_COINS) {
                             coins = object.getInt("value");
-                        }else if (object.getInt("type") == MatchConstant.MATCH_REWARD_TYPE_SCORE) {
+                        } else if (object.getInt("type") == MatchConstant.MATCH_REWARD_TYPE_SCORE) {
                             score = object.getInt("value");
+                        } else if (object.getInt("type") == MatchConstant.MATCH_REWARD_TYPE_ROOM_CARD) {
+                            roomCard = object.getInt("value");
                         }
                     }
                     // 更新数据库
@@ -1067,6 +1069,10 @@ public class MatchEventDeal {
                     if (score > 0) {
                         // 添加记录
                         publicBiz.addUserWelfareRec(account, score, CommonConstant.TICKET_TYPE_THING, matchInfo.getInt("game_id"));
+                    }
+                    if (roomCard > 0) {
+                        // 添加记录
+                        publicBiz.addUserWelfareRec(account, score, CommonConstant.TICKET_TYPE_ROOM_CARD, matchInfo.getInt("game_id"));
                     }
 
                     return rewardInfo.getString("name");

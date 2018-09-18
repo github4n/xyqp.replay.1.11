@@ -398,6 +398,10 @@ public class CommonConstant {
      */
     public static final int TICKET_TYPE_THING = 2;
     /**
+     * 钻石
+     */
+    public static final int TICKET_TYPE_ROOM_CARD = 0;
+    /**
      * 签到信息事件类型-大厅检查
      */
     public static final int SIGN_INFO_EVENT_TYPE_HALL = 0;

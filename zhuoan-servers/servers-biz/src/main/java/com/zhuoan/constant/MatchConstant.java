@@ -33,6 +33,7 @@ public class MatchConstant {
      */
     public static final int MATCH_REWARD_TYPE_COINS = 0;
     public static final int MATCH_REWARD_TYPE_SCORE = 1;
+    public static final int MATCH_REWARD_TYPE_ROOM_CARD = 2;
 
 
     public static final int MATCH_WINNING_RECORD_SIZE = 5;
