@@ -1597,12 +1597,20 @@ public class DdzGameEventDeal {
         } else {
             timeLeft = 20;
         }
-        ThreadPoolHelper.executorService.submit(new Runnable() {
-            @Override
-            public void run() {
-                gameTimerDdz.gameEventOverTime(roomNo, nextPlayerAccount,timeLeft);
-            }
-        });
+//        ThreadPoolHelper.executorService.submit(new Runnable() {
+//            @Override
+//            public void run() {
+//                gameTimerDdz.gameEventOverTime(roomNo, nextPlayerAccount,timeLeft);
+//            }
+//        });
+        JSONObject data = new JSONObject();
+        data.put("timeLeft",timeLeft);
+        if (room.getUserPacketMap().get(nextPlayerAccount).getIsTrustee() == CommonConstant.GLOBAL_YES) {
+            data.put("timeLeft",0);
+        }
+        data.put("timerType",GameTimerDdz.TIMER_TYPE_EVENT);
+        data.put("nextPlayerAccount",nextPlayerAccount);
+        redisService.hset("room_map",roomNo,String.valueOf(data));
         // 机器人出牌
         if (room.isRobot()&&room.getRobotList().contains(nextPlayerAccount)) {
             int delayTime = RandomUtils.nextInt(3)+2;
@@ -1623,12 +1631,16 @@ public class DdzGameEventDeal {
         } else {
             timeLeft = 10;
         }
-        ThreadPoolHelper.executorService.submit(new Runnable() {
-            @Override
-            public void run() {
-                gameTimerDdz.doubleOverTime(roomNo, timeLeft);
-            }
-        });
+//        ThreadPoolHelper.executorService.submit(new Runnable() {
+//            @Override
+//            public void run() {
+//                gameTimerDdz.doubleOverTime(roomNo, timeLeft);
+//            }
+//        });
+        JSONObject data = new JSONObject();
+        data.put("timeLeft",timeLeft);
+        data.put("timerType",GameTimerDdz.TIMER_TYPE_DOUBLE);
+        redisService.hset("room_map",roomNo,String.valueOf(data));
         // 机器人出牌
         if (room.isRobot()) {
             for (String account : room.getRobotList()) {
@@ -1650,12 +1662,18 @@ public class DdzGameEventDeal {
         } else {
             timeLeft = 15;
         }
-        ThreadPoolHelper.executorService.submit(new Runnable() {
-            @Override
-            public void run() {
-                gameTimerDdz.gameRobOverTime(roomNo,focus,type,timeLeft);
-            }
-        });
+//        ThreadPoolHelper.executorService.submit(new Runnable() {
+//            @Override
+//            public void run() {
+//                gameTimerDdz.gameRobOverTime(roomNo,focus,type,timeLeft);
+//            }
+//        });
+        JSONObject data = new JSONObject();
+        data.put("timeLeft",timeLeft);
+        data.put("timerType",GameTimerDdz.TIMER_TYPE_ROB);
+        data.put("focus",focus);
+        data.put("type",type);
+        redisService.hset("room_map",roomNo,String.valueOf(data));
         // 机器人出牌
         if (room.isRobot()) {
             for (String robotAccount : obtainAllPlayerAccount(roomNo)) {
@@ -1840,6 +1858,18 @@ public class DdzGameEventDeal {
         if (room.getRoomType() == CommonConstant.ROOM_TYPE_MATCH) {
             obj.put("myRank",room.getPlayerMap().get(account).getMyRank());
             obj.put("totalPlayer",room.getTotalNum());
+            // 比赛场等待晋级恢复 20180919 wqm
+            if (room.getGameStatus() == DdzConstant.DDZ_GAME_STATUS_SUMMARY) {
+                Object object = redisService.queryValueByKey("match_info_" + room.getMatchNum());
+                if (object != null) {
+                    JSONObject matchInfo = JSONObject.fromObject(object);
+                    obj.put("rankArray", matchInfo.getJSONArray("promotion"));
+                    obj.put("isPromotion", CommonConstant.GLOBAL_NO);
+                    obj.put("rankIndex", matchInfo.getInt("cur_round"));
+                    obj.put("gameStatus", DdzConstant.DDZ_GAME_STATUS_WAIT_PROMOTION);
+                }
+            }
+            // ------end------
         }
         if (room.getGameStatus()==DdzConstant.DDZ_GAME_STATUS_SUMMARY) {
             obj.put("summaryData",obtainSummaryData(roomNo));

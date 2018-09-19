@@ -7,17 +7,20 @@ import com.zhuoan.biz.model.ddz.DdzGameRoom;
 import com.zhuoan.constant.CommonConstant;
 import com.zhuoan.constant.DdzConstant;
 import com.zhuoan.queue.Messages;
+import com.zhuoan.service.cache.RedisService;
 import com.zhuoan.service.jms.ProducerService;
 import com.zhuoan.service.socketio.impl.GameMain;
 import net.sf.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
 import javax.jms.Destination;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author wqm
@@ -145,6 +148,7 @@ public class GameTimerDdz {
                     data.put(CommonConstant.DATA_KEY_ACCOUNT,nextAccount);
                     data.put(DdzConstant.DDZ_DATA_KEY_TYPE,CommonConstant.GLOBAL_YES);
                     producerService.sendMessage(ddzQueueDestination, new Messages(null, data, CommonConstant.GAME_ID_DDZ, DdzConstant.DDZ_GAME_EVENT_TRUSTEE));
+                    break;
                 }
                 try {
                     Thread.sleep(1000);
@@ -188,6 +192,7 @@ public class GameTimerDdz {
                             break;
                         }
                     }
+                    break;
                 }
                 try {
                     Thread.sleep(1000);
@@ -286,6 +291,7 @@ public class GameTimerDdz {
                         SocketIOClient client = GameMain.server.getClient(room.getPlayerMap().get(account).getUuid());
                         producerService.sendMessage(ddzQueueDestination, new Messages(client, data, CommonConstant.GAME_ID_DDZ, DdzConstant.DDZ_GAME_EVENT_GAME_DOUBLE));
                     }
+                    break;
                 }
                 try {
                     Thread.sleep(1000);
@@ -297,4 +303,46 @@ public class GameTimerDdz {
             }
         }
     }
+
+    @Resource
+    private RedisService redisService;
+
+    @Scheduled(cron = "0/1 * * * * ?")
+    public void checkTimer() {
+        Map<Object, Object> roomMap = redisService.hmget("room_map");
+        if (roomMap != null && roomMap.size() > 0) {
+            for (Object roomNo : roomMap.keySet()) {
+                JSONObject roomInfo = JSONObject.fromObject(roomMap.get(roomNo));
+                int timeLeft = roomInfo.getInt("timeLeft") - 1;
+                if (timeLeft <= 0) {
+                    redisService.hdel("room_map", String.valueOf(roomNo));
+                    switch (roomInfo.getInt("timerType")) {
+                        case TIMER_TYPE_ROB:
+                            gameRobOverTime(String.valueOf(roomNo), roomInfo.getInt("focus"), roomInfo.getInt("type"), 0);
+                            break;
+                        case TIMER_TYPE_DOUBLE:
+                            doubleOverTime(String.valueOf(roomNo), 0);
+                            break;
+                        case TIMER_TYPE_EVENT:
+                            gameEventOverTime(String.valueOf(roomNo), roomInfo.getString("nextPlayerAccount"), 0);
+                            break;
+                        default:
+                            break;
+                    }
+
+
+                } else {
+                    if (RoomManage.gameRoomMap.containsKey(String.valueOf(roomNo)) && RoomManage.gameRoomMap.get(String.valueOf(roomNo)) != null) {
+                        RoomManage.gameRoomMap.get(String.valueOf(roomNo)).setTimeLeft(timeLeft);
+                    }
+                    redisService.hset("room_map", String.valueOf(roomNo), String.valueOf(roomInfo.element("timeLeft", timeLeft)));
+                }
+            }
+        }
+    }
+
+    public static final int TIMER_TYPE_READY = 1;
+    public static final int TIMER_TYPE_ROB = 2;
+    public static final int TIMER_TYPE_DOUBLE = 3;
+    public static final int TIMER_TYPE_EVENT = 4;
 }

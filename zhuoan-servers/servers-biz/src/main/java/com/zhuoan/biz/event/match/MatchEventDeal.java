@@ -22,6 +22,7 @@ import net.sf.json.JSONObject;
 import org.apache.commons.lang.math.RandomUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.aop.framework.AopContext;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
@@ -1322,18 +1323,18 @@ public class MatchEventDeal {
         // 遍历配桌结果
         for (List<String> singleMate : mateResult) {
             // 取出所有真实玩家
-            List<String> realPlayerList = getRealPlayer(singleMate, robotList);
+            List<String> realPlayerList = ((MatchEventDeal)AopContext.currentProxy()).getRealPlayer(singleMate, robotList);
             // 有真实玩才创建房间
             if (realPlayerList.size() > 0) {
                 // 创建一个房间实体
-                String roomNo = matchJoinDdz(matchNum, matchInfo, perCount);
+                String roomNo = ((MatchEventDeal)AopContext.currentProxy()).matchJoinDdz(matchNum, matchInfo, perCount);
                 for (int i = 0; i < singleMate.size(); i++) {
                     // 加入房间
                     JSONObject obj = new JSONObject();
                     obj.put("room_no", roomNo);
                     obj.put("account", singleMate.get(i));
                     if (!robotList.contains(singleMate.get(i))) {
-                        obj.put("my_rank", getUserRank(matchNum, singleMate.get(i)));
+                        obj.put("my_rank", ((MatchEventDeal)AopContext.currentProxy()).getUserRank(matchNum, singleMate.get(i)));
                         Object o = redisService.hget("player_info_" + matchNum, singleMate.get(i));
                         JSONObject playerInfo = JSONObject.fromObject(o);
                         obj.put("uuid", playerInfo.getString("uuid"));
@@ -1342,11 +1343,6 @@ public class MatchEventDeal {
                     } else {
                         changeRobotInfo(matchNum, singleMate.get(i), 0, matchInfo.getInt("cur_round") + 1, 17,0);
                         producerService.sendMessage(baseQueueDestination, new Messages(null, obj, CommonConstant.GAME_BASE, CommonConstant.BASE_GAME_EVENT_JOIN_ROOM));
-                    }
-                    try {
-                        Thread.sleep(1);
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
                     }
                 }
             }

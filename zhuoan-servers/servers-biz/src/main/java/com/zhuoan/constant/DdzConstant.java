@@ -103,6 +103,7 @@ public class DdzConstant {
     public static final int DDZ_GAME_STATUS_GAME_IN = 3;
     public static final int DDZ_GAME_STATUS_SUMMARY = 4;
     public static final int DDZ_GAME_STATUS_FINAL_SUMMARY = 5;
+    public static final int DDZ_GAME_STATUS_WAIT_PROMOTION = 6;
     public static final int DDZ_GAME_STATUS_DOUBLE = 10;
 
     public static final int DDZ_USER_STATUS_INIT = 0;
