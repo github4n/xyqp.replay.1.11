@@ -2,6 +2,7 @@ package com.zhuoan.biz.game.biz.impl;
 
 import com.zhuoan.biz.game.biz.GameLogBiz;
 import com.zhuoan.biz.game.dao.GameDao;
+import com.zhuoan.service.cache.RedisService;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 import org.springframework.stereotype.Service;
@@ -22,6 +23,9 @@ public class GameLogBizImpl implements GameLogBiz {
      */
     @Resource
     private GameDao gameDao;
+
+    @Resource
+    private RedisService redisService;
 
     /**
      * 保存游戏记录 (如果id<0或json中不包含id则新增一条记录,否则根据id更新记录)
@@ -56,7 +60,8 @@ public class GameLogBizImpl implements GameLogBiz {
      */
     @Override
     public int addUserGameLog(JSONObject usergamelog) {
-
+        // 清除缓存
+        redisService.hdel("user_game_log_list" + usergamelog.getInt("gid") + usergamelog.getInt("room_type"), usergamelog.getInt("user_id"));
         return gameDao.addUserGameLog(usergamelog);
     }
 
@@ -95,7 +100,13 @@ public class GameLogBizImpl implements GameLogBiz {
 
     @Override
     public JSONArray getUserGameLogsByUserId(long userId, int gameId, int roomType) {
-        return gameDao.getUserGameLogsByUserId(userId, gameId, roomType);
+        Object userGameLogList = redisService.hget("user_game_log_list" + gameId + roomType, String.valueOf(userId));
+        if (userGameLogList != null) {
+            return JSONArray.fromObject(userGameLogList);
+        }
+        JSONArray userGameLogsByUserId = gameDao.getUserGameLogsByUserId(userId, gameId, roomType);
+        redisService.hset("user_game_log_list" + gameId + roomType, String.valueOf(userId), String.valueOf(userGameLogsByUserId));
+        return userGameLogsByUserId;
     }
 
     @Override

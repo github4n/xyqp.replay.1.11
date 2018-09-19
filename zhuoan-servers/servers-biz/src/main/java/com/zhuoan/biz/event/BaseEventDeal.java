@@ -392,9 +392,10 @@ public class BaseEventDeal {
                 }
                 // 单个玩家需要扣除的房卡
                 if (turn.containsKey("AANum")) {
-                    gameRoom.setSinglePayNum(turn.getInt("AANum"));
+                    int singlePayNum = getRoomCardPayInfo(baseInfo);
+                    gameRoom.setSinglePayNum(singlePayNum);
                     if (gameRoom.getPayType() == CommonConstant.PAY_TYPE_AA) {
-                        gameRoom.setEnterScore(turn.getInt("AANum"));
+                        gameRoom.setEnterScore(singlePayNum);
                     }
                 }
             }else {
@@ -450,7 +451,7 @@ public class BaseEventDeal {
             gameRoom.setOpen(false);
         }
         // 是否允许玩家中途加入
-        if (baseInfo.containsKey("halfway") && baseInfo.getInt("halfway") == CommonConstant.GLOBAL_NO) {
+        if (baseInfo.containsKey("halfway") && baseInfo.getInt("halfway") == CommonConstant.GLOBAL_YES) {
             gameRoom.setHalfwayIn(false);
         }
         //准备超时（0：不处理 1：自动准备 2：踢出房间）
@@ -2287,6 +2288,9 @@ public class BaseEventDeal {
             JSONObject turn = baseInfo.getJSONObject("turn");
             if (turn.containsKey("AANum")) {
                 int single = turn.getInt("AANum");
+                if (turn.containsKey("increase") && turn.getInt("increase") == CommonConstant.GLOBAL_YES) {
+                    single += player > 4 ? player : 4;
+                }
                 if (payType==CommonConstant.PAY_TYPE_AA) {
                     roomCard = single;
                 }
@@ -2342,6 +2346,15 @@ public class BaseEventDeal {
         }
         postData.put("base_info",option);
         if (Dto.isObjNull(option)) {
+            return;
+        }
+        // 比赛场判断
+        Object playerSignUpInfo = redisService.hget("player_sign_up_info" + MatchConstant.MATCH_TYPE_COUNT, account);
+        if (playerSignUpInfo != null) {
+            JSONObject result = new JSONObject();
+            result.element(CommonConstant.RESULT_KEY_CODE, CommonConstant.GLOBAL_NO);
+            result.element(CommonConstant.RESULT_KEY_MSG, "已经报名比赛场");
+            CommonConstant.sendMsgEventToSingle(client, String.valueOf(result), "enterRoomPush_NN");
             return;
         }
         List<String> roomNoList = new ArrayList<String>();

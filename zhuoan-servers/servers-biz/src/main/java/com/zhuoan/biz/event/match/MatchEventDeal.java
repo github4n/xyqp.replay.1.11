@@ -140,7 +140,10 @@ public class MatchEventDeal {
         // 玩家账号
         String account = postData.getString(CommonConstant.DATA_KEY_ACCOUNT);
         // 该玩家当前所在场次
-        Object playerSignUpInfo = redisService.hget("player_sign_up_info", account);
+        Object playerSignUpInfo = redisService.hget("player_sign_up_info" + MatchConstant.MATCH_TYPE_COUNT, account);
+        if (playerSignUpInfo == null) {
+            playerSignUpInfo = redisService.hget("player_sign_up_info" + MatchConstant.MATCH_TYPE_TIME, account);
+        }
         JSONObject result = new JSONObject();
         result.put(CommonConstant.RESULT_KEY_CODE, CommonConstant.GLOBAL_NO);
         if (playerSignUpInfo != null) {
@@ -211,7 +214,7 @@ public class MatchEventDeal {
         // 数据是否存在
         result.put(CommonConstant.RESULT_KEY_CODE, CommonConstant.GLOBAL_YES);
         // 是否报名
-        Object playerSignUpInfo = redisService.hget("player_sign_up_info", account);
+        Object playerSignUpInfo = redisService.hget("player_sign_up_info" + type, account);
         JSONObject matchInfo = new JSONObject();
         if (playerSignUpInfo != null) {
             matchInfo = getMatchInfoByNumFromRedis(JSONObject.fromObject(playerSignUpInfo).getString("match_num"));
@@ -347,7 +350,7 @@ public class MatchEventDeal {
         JSONObject result = new JSONObject();
         Map<String, JSONObject> beginMap = new HashMap<>();
         if (!Dto.isObjNull(matchSetting)) {
-            Object playerSignUpInfo = redisService.hget("player_sign_up_info", account);
+            Object playerSignUpInfo = redisService.hget("player_sign_up_info" + matchSetting.getInt("type"), account);
             if (playerSignUpInfo == null) {
                 // 消耗类型
                 int costFee = -1;
@@ -410,7 +413,7 @@ public class MatchEventDeal {
                             playerInfo.put("match_num", matchNum);
                             playerInfo.put("cost_type", type);
                             playerInfo.put("cost_fee", costFee);
-                            redisService.hset("player_sign_up_info", account, String.valueOf(playerInfo));
+                            redisService.hset("player_sign_up_info" + matchSetting.getInt("type"), account, String.valueOf(playerInfo));
                             JSONObject matchInfo = getMatchInfoByNumFromRedis(matchNum);
                             // 通知前端
                             result.put(CommonConstant.RESULT_KEY_CODE, CommonConstant.GLOBAL_YES);
@@ -473,7 +476,7 @@ public class MatchEventDeal {
         JSONObject result = new JSONObject();
         JSONObject matchSetting = matchBiz.getMatchSettingById(matchId, gameId);
         if (!Dto.isObjNull(matchSetting)) {
-            Object playerSignUpInfo = redisService.hget("player_sign_up_info", account);
+            Object playerSignUpInfo = redisService.hget("player_sign_up_info" + matchSetting.getInt("type"), account);
             if (playerSignUpInfo != null) {
                 // 玩家信息
                 JSONObject playerObj = JSONObject.fromObject(playerSignUpInfo);
@@ -484,7 +487,7 @@ public class MatchEventDeal {
                     String matchNum = unFullMatch.getString("match_num");
                     JSONObject obj = new JSONObject();
                     // 清除缓存数据
-                    playerOutMatch(matchNum, account);
+                    playerOutMatch(matchNum, account, matchSetting.getInt("type"));
                     Map<Object, Object> allPlayerInfo = redisService.hmget("player_info_" + matchNum);
                     if (allPlayerInfo == null || allPlayerInfo.size() == 0) {
                         redisService.deleteByKey("match_info_" + matchNum);
@@ -632,7 +635,7 @@ public class MatchEventDeal {
                 // 当前场次未开始进行开始游戏(防止最后一个玩家报名与线程冲突开始多次)
                 if (!Dto.isObjNull(unFullMatch) && unFullMatch.getString("match_num").equals(matchNum)) {
                     // 玩家信息
-                    Map<String, JSONObject> playerSignUpInfo = getPlayerSignUpInfoByMatchNum(matchNum);
+                    Map<String, JSONObject> playerSignUpInfo = getPlayerSignUpInfoByMatchNum(matchNum, matchSetting.getInt("type"));
                     // 添加记录
                     for (String account : playerSignUpInfo.keySet()) {
                         int costFee = playerSignUpInfo.get(account).getInt("cost_fee");
@@ -658,9 +661,9 @@ public class MatchEventDeal {
      * @param matchNum
      * @return
      */
-    private Map<String, JSONObject> getPlayerSignUpInfoByMatchNum(String matchNum) {
+    private Map<String, JSONObject> getPlayerSignUpInfoByMatchNum(String matchNum, int type) {
         Map<String, JSONObject> signUpInfo = new HashMap<>();
-        Map<Object, Object> allPlayerSignUpInfo = redisService.hmget("player_sign_up_info");
+        Map<Object, Object> allPlayerSignUpInfo = redisService.hmget("player_sign_up_info" + type);
         for (Object account : allPlayerSignUpInfo.keySet()) {
             JSONObject playerSignUpInfo = JSONObject.fromObject(allPlayerSignUpInfo.get(account));
             // 取场相同的玩家信息
@@ -683,17 +686,29 @@ public class MatchEventDeal {
         Map<Object, Object> allPlayerInfo = redisService.hmget("player_info_" + matchNum);
         // 已经在房间内的玩家退赛
         Set<Object> players = allPlayerInfo.keySet();
+        List<String> outPlayerList = new ArrayList<>();
         for (Object player : players) {
             if (allPlayerInfo.containsKey(player)) {
-                for (String roomNo : RoomManage.gameRoomMap.keySet()) {
-                    if (RoomManage.gameRoomMap.get(roomNo).getPlayerMap().containsKey(player)) {
-                        JSONObject data = new JSONObject();
-                        data.put("account", String.valueOf(player));
-                        data.put("gid", matchInfo.getLong("game_id"));
-                        data.put("match_id", matchInfo.getLong("match_id"));
-                        matchCancelSign(null, data);
+                Object playerSignUpInfo = redisService.hget("player_sign_up_info" + MatchConstant.MATCH_TYPE_COUNT, String.valueOf(player));
+                if (matchInfo.getInt("type") == MatchConstant.MATCH_TYPE_TIME && playerSignUpInfo != null) {
+                    outPlayerList.add(String.valueOf(player));
+                } else {
+                    for (String roomNo : RoomManage.gameRoomMap.keySet()) {
+                        if (RoomManage.gameRoomMap.get(roomNo).getPlayerMap().containsKey(player)) {
+                            outPlayerList.add(String.valueOf(player));
+                        }
                     }
                 }
+            }
+        }
+        // 已在房间内退赛
+        if (outPlayerList.size() > 0) {
+            for (String player : outPlayerList) {
+                JSONObject data = new JSONObject();
+                data.put("account", player);
+                data.put("gid", matchInfo.getLong("game_id"));
+                data.put("match_id", matchInfo.getLong("match_id"));
+                matchCancelSign(null, data);
             }
         }
         allPlayerInfo = redisService.hmget("player_info_" + matchNum);
@@ -813,7 +828,7 @@ public class MatchEventDeal {
                                 sendWinnerInfoToAll(matchNum, account, rank);
                             }
                             // 清除缓存
-                            redisService.hdel("player_sign_up_info", account);
+                            redisService.hdel("player_sign_up_info" + matchInfo.getInt("type"), account);
                         }
                         // 移除缓存
                         redisService.deleteByKey("match_info_" + matchNum);
@@ -962,43 +977,46 @@ public class MatchEventDeal {
         Map<Object, Object> allPlayerInfo = redisService.hmget("player_info_" + matchNum);
         // 所有淘汰玩家
         List<Map.Entry<Object, Object>> outList = sortList.subList(totalNum, sortList.size());
-        for (int i = 0; i < outList.size(); i++) {
-            if (allRobotInfo.containsKey(outList.get(i).getKey())) {
-                matchBiz.updateRobotStatus(String.valueOf(outList.get(i).getKey()), 0);
-                redisService.hdel("robot_info_" + matchNum, String.valueOf(outList.get(i).getKey()));
-            } else if (allPlayerInfo.containsKey(outList.get(i).getKey())) {
-                // 当前排名 淘汰下标+未淘汰人数+1
-                int rank = i + totalNum + 1;
-                // 更新玩家奖励,返回奖励详情
-                String rewardInfo = updateUserReward(matchNum, rank, String.valueOf(outList.get(i).getKey()));
-                // 获取client对象
-                JSONObject o = JSONObject.fromObject(allPlayerInfo.get(outList.get(i).getKey()));
-                SocketIOClient client = GameMain.server.getClient(UUID.fromString(o.getString("sessionId")));
-                // 通知玩家
-                JSONObject result = new JSONObject();
-                result.put("type", MatchConstant.MATCH_PROMOTION_TYPE_FINISH);
-                result.put("myRank", rank);
-                result.put("rewardInfo", rewardInfo);
-                CommonConstant.sendMsgEventToSingle(client, String.valueOf(result), "matchSummaryResultPush");
-                outPlayerCount++;
-                // 清除玩家
-                playerOutMatch(matchNum, String.valueOf(outList.get(i).getKey()));
+        JSONObject matchInfo = getMatchInfoByNumFromRedis(matchNum);
+        if (!Dto.isObjNull(matchInfo)) {
+            for (int i = 0; i < outList.size(); i++) {
+                if (allRobotInfo.containsKey(outList.get(i).getKey())) {
+                    matchBiz.updateRobotStatus(String.valueOf(outList.get(i).getKey()), 0);
+                    redisService.hdel("robot_info_" + matchNum, String.valueOf(outList.get(i).getKey()));
+                } else if (allPlayerInfo.containsKey(outList.get(i).getKey())) {
+                    // 当前排名 淘汰下标+未淘汰人数+1
+                    int rank = i + totalNum + 1;
+                    // 更新玩家奖励,返回奖励详情
+                    String rewardInfo = updateUserReward(matchNum, rank, String.valueOf(outList.get(i).getKey()));
+                    // 获取client对象
+                    JSONObject o = JSONObject.fromObject(allPlayerInfo.get(outList.get(i).getKey()));
+                    SocketIOClient client = GameMain.server.getClient(UUID.fromString(o.getString("sessionId")));
+                    // 通知玩家
+                    JSONObject result = new JSONObject();
+                    result.put("type", MatchConstant.MATCH_PROMOTION_TYPE_FINISH);
+                    result.put("myRank", rank);
+                    result.put("rewardInfo", rewardInfo);
+                    CommonConstant.sendMsgEventToSingle(client, String.valueOf(result), "matchSummaryResultPush");
+                    outPlayerCount++;
+                    // 清除玩家
+                    playerOutMatch(matchNum, String.valueOf(outList.get(i).getKey()),matchInfo.getInt("type"));
+                }
             }
-        }
-        // 比赛场积分规则调整  wqm  20180903
-        Map<Object, Object> newAllPlayerInfo = redisService.hmget("player_info_" + matchNum);
-        if (newAllPlayerInfo != null && newAllPlayerInfo.size() > 0) {
-            for (Object o : newAllPlayerInfo.keySet()) {
-                JSONObject playerObj = JSONObject.fromObject(newAllPlayerInfo.get(o));
-                playerObj.put("score", (int) (playerObj.getInt("score") * 0.1) + 1000);
-                redisService.hset("player_info_" + matchNum, String.valueOf(o), String.valueOf(playerObj));
-            }
-            Map<Object, Object> newAllRobotInfo = redisService.hmget("robot_info_" + matchNum);
-            if (newAllRobotInfo != null && newAllRobotInfo.size() > 0) {
-                for (Object o : newAllRobotInfo.keySet()) {
-                    JSONObject robotObj = JSONObject.fromObject(newAllRobotInfo.get(o));
-                    robotObj.put("score", (int) (robotObj.getInt("score") * 0.1) + 1000);
-                    redisService.hset("robot_info_" + matchNum, String.valueOf(o), String.valueOf(robotObj));
+            // 比赛场积分规则调整  wqm  20180903
+            Map<Object, Object> newAllPlayerInfo = redisService.hmget("player_info_" + matchNum);
+            if (newAllPlayerInfo != null && newAllPlayerInfo.size() > 0) {
+                for (Object o : newAllPlayerInfo.keySet()) {
+                    JSONObject playerObj = JSONObject.fromObject(newAllPlayerInfo.get(o));
+                    playerObj.put("score", (int) (playerObj.getInt("score") * 0.1) + 1000);
+                    redisService.hset("player_info_" + matchNum, String.valueOf(o), String.valueOf(playerObj));
+                }
+                Map<Object, Object> newAllRobotInfo = redisService.hmget("robot_info_" + matchNum);
+                if (newAllRobotInfo != null && newAllRobotInfo.size() > 0) {
+                    for (Object o : newAllRobotInfo.keySet()) {
+                        JSONObject robotObj = JSONObject.fromObject(newAllRobotInfo.get(o));
+                        robotObj.put("score", (int) (robotObj.getInt("score") * 0.1) + 1000);
+                        redisService.hset("robot_info_" + matchNum, String.valueOf(o), String.valueOf(robotObj));
+                    }
                 }
             }
         }
@@ -1169,11 +1187,11 @@ public class MatchEventDeal {
      * @param matchNum
      * @param account
      */
-    private void playerOutMatch(String matchNum, String account) {
+    private void playerOutMatch(String matchNum, String account, int type) {
         // 移除玩家信息
         redisService.hdel("player_info_" + matchNum, account);
         // 移除玩家报名信息
-        redisService.hdel("player_sign_up_info", account);
+        redisService.hdel("player_sign_up_info" + type, account);
     }
 
 
