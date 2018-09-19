@@ -61,7 +61,7 @@ public class GameLogBizImpl implements GameLogBiz {
     @Override
     public int addUserGameLog(JSONObject usergamelog) {
         // 清除缓存
-        redisService.hdel("user_game_log_list" + usergamelog.getInt("gid") + usergamelog.getInt("room_type"), usergamelog.getInt("user_id"));
+        redisService.hdel("user_game_log_list" + String.valueOf(usergamelog.getInt("gid")) + String.valueOf(usergamelog.getInt("room_type")),String.valueOf(usergamelog.getInt("user_id")) );
         return gameDao.addUserGameLog(usergamelog);
     }
 

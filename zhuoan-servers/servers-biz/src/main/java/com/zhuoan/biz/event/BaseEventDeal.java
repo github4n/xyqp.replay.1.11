@@ -393,6 +393,10 @@ public class BaseEventDeal {
                 // 单个玩家需要扣除的房卡
                 if (turn.containsKey("AANum")) {
                     int singlePayNum = getRoomCardPayInfo(baseInfo);
+                    //  若是房主支付，则除去人数
+                    if(gameRoom.getPayType() == CommonConstant.PAY_TYPE_OWNER){
+                        singlePayNum = singlePayNum / playerNum;
+                    }
                     gameRoom.setSinglePayNum(singlePayNum);
                     if (gameRoom.getPayType() == CommonConstant.PAY_TYPE_AA) {
                         gameRoom.setEnterScore(singlePayNum);
@@ -2288,8 +2292,8 @@ public class BaseEventDeal {
             JSONObject turn = baseInfo.getJSONObject("turn");
             if (turn.containsKey("AANum")) {
                 int single = turn.getInt("AANum");
-                if (turn.containsKey("increase") && turn.getInt("increase") == CommonConstant.GLOBAL_YES) {
-                    single += player > 4 ? player : 4;
+                if (turn.containsKey("increase")) {
+                    single += player  > 4 ? player * turn.getInt("increase") : 4 * turn.getInt("increase");
                 }
                 if (payType==CommonConstant.PAY_TYPE_AA) {
                     roomCard = single;
