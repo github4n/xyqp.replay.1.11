@@ -2286,16 +2286,16 @@ public class BaseEventDeal {
      */
     public int getRoomCardPayInfo(JSONObject baseInfo) {
         int roomCard = 0;
-        if (baseInfo.containsKey("player")&&baseInfo.containsKey("paytype")) {
+        if (baseInfo.containsKey("player")) {
             int player = baseInfo.getInt("player");
-            int payType = baseInfo.getInt("paytype");
+            int payType = baseInfo.containsKey("paytype") ? baseInfo.getInt("paytype") : 2;
             JSONObject turn = baseInfo.getJSONObject("turn");
             if (turn.containsKey("AANum")) {
                 int single = turn.getInt("AANum");
                 if (turn.containsKey("increase")) {
                     single += player  > 4 ? player * turn.getInt("increase") : 4 * turn.getInt("increase");
                 }
-                if (payType==CommonConstant.PAY_TYPE_AA) {
+                if (payType==CommonConstant.PAY_TYPE_AA || payType == 2) {
                     roomCard = single;
                 }
                 if (payType==CommonConstant.PAY_TYPE_OWNER) {

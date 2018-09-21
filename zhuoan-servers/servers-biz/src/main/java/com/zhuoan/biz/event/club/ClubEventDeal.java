@@ -486,6 +486,9 @@ public class ClubEventDeal {
                 JSONObject turn = baseInfo.getJSONObject("turn");
                 if (turn.containsKey("AANum")) {
                     int aaNum = turn.getInt("AANum");
+                    if (turn.containsKey("increase")) {
+                        aaNum += player  > 4 ? player * turn.getInt("increase") : 4 * turn.getInt("increase");
+                    }
                     return player * aaNum;
                 }
             }
