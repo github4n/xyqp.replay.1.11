@@ -35,11 +35,18 @@ public class GameTimerDdz {
 
     private final static Logger logger = LoggerFactory.getLogger(GameTimerDdz.class);
 
+    public static final int TIMER_TYPE_ROB = 2;
+    public static final int TIMER_TYPE_DOUBLE = 3;
+    public static final int TIMER_TYPE_EVENT = 4;
+
     @Resource
     private Destination ddzQueueDestination;
 
     @Resource
     private ProducerService producerService;
+
+    @Resource
+    private RedisService redisService;
 
     /**
      * 准备倒计时
@@ -134,7 +141,7 @@ public class GameTimerDdz {
                     }
                 }
                 // 托管状态自动出牌
-                if (i==timeLeft-1&&room.getUserPacketMap().get(nextAccount).getIsTrustee()==CommonConstant.GLOBAL_YES) {
+                if (i==timeLeft&&room.getUserPacketMap().get(nextAccount).getIsTrustee()==CommonConstant.GLOBAL_YES) {
                     JSONObject data = new JSONObject();
                     data.put(CommonConstant.DATA_KEY_ROOM_NO,roomNo);
                     data.put(CommonConstant.DATA_KEY_ACCOUNT,nextAccount);
@@ -304,18 +311,15 @@ public class GameTimerDdz {
         }
     }
 
-    @Resource
-    private RedisService redisService;
-
     @Scheduled(cron = "0/1 * * * * ?")
-    public void checkTimer() {
-        Map<Object, Object> roomMap = redisService.hmget("room_map");
+    public void checkTimer0() {
+        String key = "room_map";
+        Map<Object, Object> roomMap = redisService.hmget(key);
         if (roomMap != null && roomMap.size() > 0) {
             for (Object roomNo : roomMap.keySet()) {
                 JSONObject roomInfo = JSONObject.fromObject(roomMap.get(roomNo));
                 int timeLeft = roomInfo.getInt("timeLeft") - 1;
-                if (timeLeft <= 0) {
-                    redisService.hdel("room_map", String.valueOf(roomNo));
+                if (timeLeft <= 1) {
                     switch (roomInfo.getInt("timerType")) {
                         case TIMER_TYPE_ROB:
                             gameRobOverTime(String.valueOf(roomNo), roomInfo.getInt("focus"), roomInfo.getInt("type"), 0);
@@ -329,20 +333,13 @@ public class GameTimerDdz {
                         default:
                             break;
                     }
-
-
                 } else {
                     if (RoomManage.gameRoomMap.containsKey(String.valueOf(roomNo)) && RoomManage.gameRoomMap.get(String.valueOf(roomNo)) != null) {
                         RoomManage.gameRoomMap.get(String.valueOf(roomNo)).setTimeLeft(timeLeft);
                     }
-                    redisService.hset("room_map", String.valueOf(roomNo), String.valueOf(roomInfo.element("timeLeft", timeLeft)));
+                    redisService.hset(key, String.valueOf(roomNo), String.valueOf(roomInfo.element("timeLeft", timeLeft)));
                 }
             }
         }
     }
-
-    public static final int TIMER_TYPE_READY = 1;
-    public static final int TIMER_TYPE_ROB = 2;
-    public static final int TIMER_TYPE_DOUBLE = 3;
-    public static final int TIMER_TYPE_EVENT = 4;
 }

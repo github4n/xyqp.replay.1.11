@@ -68,6 +68,9 @@ public class ActiveConfig {
     @Resource
     private MessageListener clubQueueMessageListener;
 
+    @Resource
+    private MessageListener matchDealQueueMessageListener;
+
 
     /**
      * Base queue destination queue.1、兴起队列 ZA_GAMES_BASE
@@ -199,7 +202,15 @@ public class ActiveConfig {
         return new ActiveMQQueue("ZA_GAMES_CLUB");
     }
 
-
+    /**
+     * matchDeal queue destination queue.
+     *
+     * @return the queue
+     */
+    @Bean
+    public Queue matchDealQueueDestination() {
+        return new ActiveMQQueue("ZA_GAMES_MATCH_DEAL");
+    }
 
 
     //===================================================================================================================
@@ -348,6 +359,17 @@ public class ActiveConfig {
         return configListenerMQ(connectionFactory, clubQueueMessageListener, clubQueueDestination());
     }
 
+    /**
+     * matchDeal queue listener container default message listener container.
+     *
+     * @param connectionFactory the connection factory
+     * @return the default message listener container
+     */
+    @Bean
+    public DefaultMessageListenerContainer matchDealQueueListenerContainer(ConnectionFactory connectionFactory) {
+        return configListenerMQ(connectionFactory, matchDealQueueMessageListener, matchDealQueueDestination());
+    }
+
 
 
 
@@ -394,7 +416,7 @@ public class ActiveConfig {
          * ({@link #setConcurrentConsumers}) and will slowly scale up to the maximum number
          * of consumers {@link #setMaxConcurrentConsumers} in case of increasing load.
          */
-        queueListenerContainer.setConcurrency("1-5");
+        queueListenerContainer.setConcurrency("1-10");
         return queueListenerContainer;
     }
 

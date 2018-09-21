@@ -28,7 +28,7 @@ public class DdzCore {
      * @return [[玩家1],[玩家2],[玩家3],[地主牌]]
      */
     public static List<List<String>> shuffleAndDeal() {
-        List<String> cards = ALL_CARD;
+        List<String> cards = new ArrayList<>(ALL_CARD);
         // 打乱牌序
         Collections.shuffle(cards);
         List<List<String>> cardArray = new ArrayList<>();

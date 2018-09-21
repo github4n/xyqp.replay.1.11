@@ -114,8 +114,9 @@ public class DdzGameEventDeal {
             JSONObject obj = obtainPlayerInfo(room.getRoomNo(),account);
             // 通知玩家
             CommonConstant.sendMsgEventToAll(room.getAllUUIDList(account), String.valueOf(obj), "playerEnterPush_DDZ");
-            if (room.getRoomType()==CommonConstant.ROOM_TYPE_MATCH) {
-                gameReady(null,data);
+            if (room.getRoomType()==CommonConstant.ROOM_TYPE_MATCH && room.getUserPacketMap().size() == DdzConstant.DDZ_PLAYER_NUMBER) {
+                // gameReady(null,data);
+                startGame(room.getRoomNo());
             }
             // 金币场开始准备定时器
             beginReadyTimer(room.getRoomNo(), room);
@@ -177,7 +178,7 @@ public class DdzGameEventDeal {
         // 金币场开始准备定时器
         beginReadyTimer(roomNo, room);
         // 房间内所有玩家都已经完成准备且人数为3通知开始游戏,否则通知玩家准备
-        if (isAllReady(roomNo) && room.getPlayerMap().size() >= DdzConstant.DDZ_PLAYER_NUMBER) {
+        if (isAllReady(roomNo) && room.getUserPacketMap().size() >= DdzConstant.DDZ_PLAYER_NUMBER) {
             // 初始化房间信息
             startGame(roomNo);
         } else {
@@ -517,6 +518,19 @@ public class DdzGameEventDeal {
             if (room.getGameStatus()==DdzConstant.DDZ_GAME_STATUS_FINAL_SUMMARY) {
                 result.put("isEnd",CommonConstant.GLOBAL_YES);
                 result.put("endData",obtainFinalSummaryData(roomNo));
+            }
+            // 比赛场结算界面修改  wqm  20180920
+            if (room.getRoomType() == CommonConstant.ROOM_TYPE_MATCH) {
+                Object object = redisService.queryValueByKey("match_info_" + room.getMatchNum());
+                if (object != null) {
+                    JSONObject obj = new JSONObject();
+                    obj.put("totalPlayer",room.getTotalNum());
+                    JSONObject matchInfo = JSONObject.fromObject(object);
+                    obj.put("rankArray", matchInfo.getJSONArray("promotion"));
+                    obj.put("isPromotion", CommonConstant.GLOBAL_NO);
+                    obj.put("rankIndex", matchInfo.getInt("cur_round"));
+                    result.put("matchWaittingData",obj);
+                }
             }
         }
         for (String player : obtainAllPlayerAccount(roomNo)) {
@@ -982,7 +996,7 @@ public class DdzGameEventDeal {
         String account = postData.getString(CommonConstant.DATA_KEY_ACCOUNT);
         // 设置状态
         // 设置房间准备状态
-        if (room.getGameStatus() != DdzConstant.DDZ_GAME_STATUS_READY) {
+        if (room.getRoomType() != CommonConstant.ROOM_TYPE_MATCH && room.getGameStatus() != DdzConstant.DDZ_GAME_STATUS_READY) {
             room.setGameStatus(DdzConstant.DDZ_GAME_STATUS_READY);
             for (String player : obtainAllPlayerAccount(roomNo)) {
                 room.getUserPacketMap().get(player).setStatus(DdzConstant.DDZ_USER_STATUS_INIT);
@@ -1108,6 +1122,13 @@ public class DdzGameEventDeal {
         redisService.insertKey("summaryTimes_ddz_"+room.getRoomNo(),"0",null);
         // 设置手牌
         List<List<String>> cardList = DdzCore.shuffleAndDeal();
+        Set<String> set = new HashSet<>();
+        for (List<String> list : cardList) {
+            set.addAll(list);
+        }
+        if (set.size() != 54) {
+            logger.warn(roomNo+"-"+cardList);
+        }
         int cardIndex = 0;
         List<String> accountList = obtainAllPlayerAccount(roomNo);
         for (String account : accountList) {
@@ -1193,6 +1214,7 @@ public class DdzGameEventDeal {
         }
         // 重置开始游戏防重
         redisService.insertKey("startTimes_ddz_"+roomNo,"0",null);
+        redisService.hdel("room_map",roomNo);
         DdzGameRoom room = (DdzGameRoom) RoomManage.gameRoomMap.get(roomNo);
         // 农民输赢分数=倍数*底
         double farmerScore = Dto.mul(room.getMultiple(),room.getScore());
@@ -1603,6 +1625,7 @@ public class DdzGameEventDeal {
 //                gameTimerDdz.gameEventOverTime(roomNo, nextPlayerAccount,timeLeft);
 //            }
 //        });
+        redisService.hdel("room_map", roomNo);
         JSONObject data = new JSONObject();
         data.put("timeLeft",timeLeft);
         if (room.getUserPacketMap().get(nextPlayerAccount).getIsTrustee() == CommonConstant.GLOBAL_YES) {
@@ -1637,6 +1660,7 @@ public class DdzGameEventDeal {
 //                gameTimerDdz.doubleOverTime(roomNo, timeLeft);
 //            }
 //        });
+        redisService.hdel("room_map", roomNo);
         JSONObject data = new JSONObject();
         data.put("timeLeft",timeLeft);
         data.put("timerType",GameTimerDdz.TIMER_TYPE_DOUBLE);
@@ -1668,6 +1692,7 @@ public class DdzGameEventDeal {
 //                gameTimerDdz.gameRobOverTime(roomNo,focus,type,timeLeft);
 //            }
 //        });
+        redisService.hdel("room_map", roomNo);
         JSONObject data = new JSONObject();
         data.put("timeLeft",timeLeft);
         data.put("timerType",GameTimerDdz.TIMER_TYPE_ROB);

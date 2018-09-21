@@ -8,7 +8,9 @@ import com.zhuoan.biz.model.GameRoom;
 import com.zhuoan.biz.model.RoomManage;
 import com.zhuoan.biz.model.ddz.DdzGameRoom;
 import com.zhuoan.constant.CommonConstant;
+import com.zhuoan.constant.DdzConstant;
 import com.zhuoan.constant.MatchConstant;
+import com.zhuoan.constant.MatchDealConstant;
 import com.zhuoan.queue.Messages;
 import com.zhuoan.service.cache.RedisService;
 import com.zhuoan.service.jms.ProducerService;
@@ -22,7 +24,6 @@ import net.sf.json.JSONObject;
 import org.apache.commons.lang.math.RandomUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.aop.framework.AopContext;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
@@ -55,6 +56,9 @@ public class MatchEventDeal {
 
     @Resource
     private Destination baseQueueDestination;
+
+    @Resource
+    private Destination matchDealQueueDestination;
 
     @Resource
     private ProducerService producerService;
@@ -1320,30 +1324,62 @@ public class MatchEventDeal {
         Map<Object, Object> allRobotInfo = redisService.hmget("robot_info_" + matchNum);
         List<Object> robotList = new ArrayList<>(allRobotInfo.keySet());
         Collections.shuffle(robotList);
+        List<Map.Entry<Object, Object>> sortList = getSortedPlayers(matchNum);
         // 遍历配桌结果
         for (List<String> singleMate : mateResult) {
-            // 取出所有真实玩家
-            List<String> realPlayerList = ((MatchEventDeal)AopContext.currentProxy()).getRealPlayer(singleMate, robotList);
-            // 有真实玩才创建房间
-            if (realPlayerList.size() > 0) {
-                // 创建一个房间实体
-                String roomNo = ((MatchEventDeal)AopContext.currentProxy()).matchJoinDdz(matchNum, matchInfo, perCount);
-                for (int i = 0; i < singleMate.size(); i++) {
-                    // 加入房间
-                    JSONObject obj = new JSONObject();
-                    obj.put("room_no", roomNo);
-                    obj.put("account", singleMate.get(i));
-                    if (!robotList.contains(singleMate.get(i))) {
-                        obj.put("my_rank", ((MatchEventDeal)AopContext.currentProxy()).getUserRank(matchNum, singleMate.get(i)));
-                        Object o = redisService.hget("player_info_" + matchNum, singleMate.get(i));
-                        JSONObject playerInfo = JSONObject.fromObject(o);
-                        obj.put("uuid", playerInfo.getString("uuid"));
-                        SocketIOClient client = GameMain.server.getClient(UUID.fromString(playerInfo.getString("sessionId")));
-                        producerService.sendMessage(baseQueueDestination, new Messages(client, obj, CommonConstant.GAME_BASE, CommonConstant.BASE_GAME_EVENT_JOIN_ROOM));
-                    } else {
-                        changeRobotInfo(matchNum, singleMate.get(i), 0, matchInfo.getInt("cur_round") + 1, 17,0);
-                        producerService.sendMessage(baseQueueDestination, new Messages(null, obj, CommonConstant.GAME_BASE, CommonConstant.BASE_GAME_EVENT_JOIN_ROOM));
+            JSONObject rankObj = new JSONObject();
+            for (int i = 0; i < singleMate.size(); i++) {
+                for (int j = 0; j < sortList.size(); j++) {
+                    if (String.valueOf(sortList.get(j).getKey()).equals(singleMate.get(i))) {
+                        rankObj.put(singleMate.get(i), j + 1);
+                        break;
                     }
+                }
+            }
+            JSONObject obj = new JSONObject();
+            obj.put("deal_type", MatchDealConstant.MATCH_DEAL_TYPE_JOIN);
+            obj.put("matchNum", matchNum);
+            obj.put("matchInfo", matchInfo);
+            obj.put("perCount", perCount);
+            obj.put("robotList", robotList);
+            obj.put("singleMate", singleMate);
+            obj.put("rankObj", rankObj);
+            producerService.sendMessage(matchDealQueueDestination, obj);
+
+        }
+    }
+
+    /**
+     * 单桌匹配
+     * @param matchNum
+     * @param matchInfo
+     * @param perCount
+     * @param robotList
+     * @param singleMate
+     */
+    public void singleJoin(String matchNum, JSONObject matchInfo, int perCount, List<Object> robotList, List<String> singleMate, JSONObject rankObj) {
+        // 取出所有真实玩家
+        List<String> realPlayerList = getRealPlayer(singleMate, robotList);
+        // 有真实玩才创建房间
+        if (realPlayerList.size() > 0) {
+            // 创建一个房间实体
+            String roomNo = matchJoinDdz(matchNum, matchInfo, perCount);
+            for (int i = 0; i < singleMate.size(); i++) {
+                // 加入房间
+                JSONObject obj = new JSONObject();
+                obj.put("room_no", roomNo);
+                obj.put("account", singleMate.get(i));
+                if (!robotList.contains(singleMate.get(i))) {
+                    obj.put("my_rank", rankObj.containsKey(singleMate.get(i)) ? rankObj.getInt(singleMate.get(i)) : 1);
+                    obj.put("myIndex", i);
+                    Object o = redisService.hget("player_info_" + matchNum, singleMate.get(i));
+                    JSONObject playerInfo = JSONObject.fromObject(o);
+                    obj.put("uuid", playerInfo.getString("uuid"));
+                    SocketIOClient client = GameMain.server.getClient(UUID.fromString(playerInfo.getString("sessionId")));
+                    producerService.sendMessage(baseQueueDestination, new Messages(client, obj, CommonConstant.GAME_BASE, CommonConstant.BASE_GAME_EVENT_JOIN_ROOM));
+                } else {
+                    changeRobotInfo(matchNum, singleMate.get(i), 0, matchInfo.getInt("cur_round") + 1, 17, 0);
+                    producerService.sendMessage(baseQueueDestination, new Messages(null, obj, CommonConstant.GAME_BASE, CommonConstant.BASE_GAME_EVENT_JOIN_ROOM));
                 }
             }
         }
@@ -1390,6 +1426,7 @@ public class MatchEventDeal {
         room.setPlayerCount(perCount);
         room.setGameCount(1);
         room.setGameIndex(0);
+        room.setGameStatus(DdzConstant.DDZ_GAME_STATUS_READY);
         int score = 30;
         try {
             Object object = redisService.queryValueByKey(String.valueOf("match_room_score"));
@@ -1458,7 +1495,7 @@ public class MatchEventDeal {
             // 当前总人数
             int totalNum = promotion.getInt(curRound);
             // 通知玩家晋级结果
-            sendPromotionToUser(getAllPlayerUUID(matchNum, realPlayers), matchNum, realPlayers, curRound, promotion, totalNum, 0);
+            //sendPromotionToUser(getAllPlayerUUID(matchNum, realPlayers), matchNum, realPlayers, curRound, promotion, totalNum, 0);
             // 本轮全部完成
             if (checkIsAllFinish(matchNum, curRound)) {
                 allFinishDeal(matchNum);
