@@ -1838,12 +1838,24 @@ public class MatchEventDeal {
         if (RoomManage.gameRoomMap.containsKey(roomNo) && RoomManage.gameRoomMap.get(roomNo) != null) {
             if (RoomManage.gameRoomMap.get(roomNo).getPlayerMap().containsKey(account)
                 && RoomManage.gameRoomMap.get(roomNo).getPlayerMap().get(account) != null) {
-                List<Map.Entry<Object, Object>> sortedPlayers = getSortedPlayers(RoomManage.gameRoomMap.get(roomNo).getMatchNum());
-                // 获取玩家排名
-                int userRank = getUserRank(sortedPlayers, account);
-                // 更新玩家排名
-                if (userRank != -1) {
-                    RoomManage.gameRoomMap.get(roomNo).getPlayerMap().get(account).setMyRank(userRank);
+                JSONObject matchInfo = getMatchInfoByNumFromRedis(RoomManage.gameRoomMap.get(roomNo).getMatchNum());
+                if (!Dto.isObjNull(matchInfo)) {
+                    // 晋级人数
+                    JSONArray promotion = matchInfo.getJSONArray("promotion");
+                    // 当前轮数
+                    int curRound = matchInfo.getInt("cur_round");
+                    // 当前总人数
+                    int totalNum = promotion.getInt(curRound);
+                    // 冠亚季军打两局
+                    if (totalNum == promotion.getInt(promotion.size() - 2)) {
+                        List<Map.Entry<Object, Object>> sortedPlayers = getSortedPlayers(RoomManage.gameRoomMap.get(roomNo).getMatchNum());
+                        // 获取玩家排名
+                        int userRank = getUserRank(sortedPlayers, account);
+                        // 更新玩家排名
+                        if (userRank != -1) {
+                            RoomManage.gameRoomMap.get(roomNo).getPlayerMap().get(account).setMyRank(userRank);
+                        }
+                    }
                 }
             }
         }

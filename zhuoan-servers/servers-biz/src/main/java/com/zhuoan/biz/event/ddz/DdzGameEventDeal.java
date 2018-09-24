@@ -603,12 +603,12 @@ public class DdzGameEventDeal {
                             matchEventDeal.changePlayerInfo(room.getMatchNum(), null, null, player,
                                 (int) room.getUserPacketMap().get(player).getScore(), 0, room.getUserPacketMap().get(player).getMyPai().size(), win);
                         }
+                        // 重置状态
+                        room.getUserPacketMap().get(player).setStatus(DdzConstant.DDZ_USER_STATUS_INIT);
                     }
                     for (String player : obtainAllPlayerAccount(roomNo)) {
                         // 刷新玩家排名
                         matchEventDeal.refreshUserRank(roomNo, player);
-                        // 重置状态
-                        room.getUserPacketMap().get(player).setStatus(DdzConstant.DDZ_USER_STATUS_INIT);
                         // 组织数据初始化
                         JSONObject data = new JSONObject().element(CommonConstant.DATA_KEY_ACCOUNT, player).element(CommonConstant.DATA_KEY_ROOM_NO, roomNo);
                         if (room.getRobotList().contains(player)) {
