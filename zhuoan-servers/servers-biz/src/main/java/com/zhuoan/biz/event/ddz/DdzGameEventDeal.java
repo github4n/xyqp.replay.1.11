@@ -520,7 +520,7 @@ public class DdzGameEventDeal {
                 result.put("endData",obtainFinalSummaryData(roomNo));
             }
             // 比赛场结算界面修改  wqm  20180920
-            if (room.getRoomType() == CommonConstant.ROOM_TYPE_MATCH) {
+            if (room.getRoomType() == CommonConstant.ROOM_TYPE_MATCH && room.getGameCount() <= room.getGameIndex()) {
                 Object object = redisService.queryValueByKey("match_info_" + room.getMatchNum());
                 if (object != null) {
                     JSONObject obj = new JSONObject();
@@ -1326,8 +1326,6 @@ public class DdzGameEventDeal {
             if (room.getGameIndex() == room.getGameCount()) {
                 // 玩家游戏详情
                 List<JSONObject> userDetails = new ArrayList<>();
-                // 玩家
-                List<String> realList = new ArrayList<>();
                 String firstAccount = getFirstAccountInRoom(roomNo);
                 for (String player : obtainAllPlayerAccount(roomNo)) {
                     JSONObject userDetail = new JSONObject();
@@ -1337,12 +1335,11 @@ public class DdzGameEventDeal {
                     userDetail.put("card",room.getUserPacketMap().get(player).getMyPai().size());
                     if (!room.getRobotList().contains(player)) {
                         userDetail.put("round",1);
-                        realList.add(player);
                     }
                     userDetail.put("win", player.equals(firstAccount) ? 10 : 1);
                     userDetails.add(userDetail);
                 }
-                matchEventDeal.userFinish(room.getMatchNum(), userDetails, realList);
+                matchEventDeal.userFinish(room.getMatchNum(), userDetails);
             }
         }
         // 更新成就信息

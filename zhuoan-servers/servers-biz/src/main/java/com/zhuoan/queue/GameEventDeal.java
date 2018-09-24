@@ -188,7 +188,7 @@ public class GameEventDeal {
                 matchEventDeal.getSignUpInfo(client,data);
                 break;
             case MatchConstant.MATCH_EVENT_CHECK_MATCH_STATUS:
-                matchEventDeal.checkMatchStatus(client,data);
+                matchEventDeal.checkMatchStatus(client);
                 break;
             default:
                 break;

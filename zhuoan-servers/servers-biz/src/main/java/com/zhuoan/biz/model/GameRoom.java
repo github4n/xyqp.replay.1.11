@@ -7,6 +7,7 @@ import com.zhuoan.util.TimeUtil;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -18,7 +19,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * @Date Created in 14:24 2018/4/21
  * @Modified By:
  **/
-public class GameRoom {
+public class GameRoom implements Serializable{
     /**
      * 房间号
      */

@@ -46,6 +46,9 @@ public class GameTimerDdz {
     private ProducerService producerService;
 
     @Resource
+    private Destination matchDealQueueDestination;
+
+    @Resource
     private RedisService redisService;
 
     /**
@@ -312,34 +315,46 @@ public class GameTimerDdz {
     }
 
     @Scheduled(cron = "0/1 * * * * ?")
-    public void checkTimer0() {
+    public void checkTimer() {
         String key = "room_map";
         Map<Object, Object> roomMap = redisService.hmget(key);
         if (roomMap != null && roomMap.size() > 0) {
             for (Object roomNo : roomMap.keySet()) {
-                JSONObject roomInfo = JSONObject.fromObject(roomMap.get(roomNo));
-                int timeLeft = roomInfo.getInt("timeLeft") - 1;
-                if (timeLeft <= 1) {
-                    switch (roomInfo.getInt("timerType")) {
-                        case TIMER_TYPE_ROB:
-                            gameRobOverTime(String.valueOf(roomNo), roomInfo.getInt("focus"), roomInfo.getInt("type"), 0);
-                            break;
-                        case TIMER_TYPE_DOUBLE:
-                            doubleOverTime(String.valueOf(roomNo), 0);
-                            break;
-                        case TIMER_TYPE_EVENT:
-                            gameEventOverTime(String.valueOf(roomNo), roomInfo.getString("nextPlayerAccount"), 0);
-                            break;
-                        default:
-                            break;
+                Object roomObj = redisService.hget("room_map", String.valueOf(roomNo));
+                if (roomObj != null) {
+                    JSONObject roomInfo = JSONObject.fromObject(roomObj);
+                    int timeLeft = roomInfo.getInt("timeLeft") - 1;
+                    if (timeLeft <= 8) {
+//                        JSONObject obj = new JSONObject();
+//                        obj.put("deal_type", MatchDealConstant.MATCH_DEAL_TYPE_TIME);
+//                        obj.put("roomNo", String.valueOf(roomNo));
+//                        obj.put("roomInfo", roomInfo);
+//                        producerService.sendMessage(matchDealQueueDestination, obj);
+                        doOverTimeDeal(roomNo, roomInfo);
+                    } else {
+                        if (RoomManage.gameRoomMap.containsKey(String.valueOf(roomNo)) && RoomManage.gameRoomMap.get(String.valueOf(roomNo)) != null) {
+                            RoomManage.gameRoomMap.get(String.valueOf(roomNo)).setTimeLeft(timeLeft);
+                        }
+                        redisService.hset(key, String.valueOf(roomNo), String.valueOf(roomInfo.element("timeLeft", timeLeft)));
                     }
-                } else {
-                    if (RoomManage.gameRoomMap.containsKey(String.valueOf(roomNo)) && RoomManage.gameRoomMap.get(String.valueOf(roomNo)) != null) {
-                        RoomManage.gameRoomMap.get(String.valueOf(roomNo)).setTimeLeft(timeLeft);
-                    }
-                    redisService.hset(key, String.valueOf(roomNo), String.valueOf(roomInfo.element("timeLeft", timeLeft)));
                 }
             }
+        }
+    }
+
+    public void doOverTimeDeal(Object roomNo, JSONObject roomInfo) {
+        switch (roomInfo.getInt("timerType")) {
+            case TIMER_TYPE_ROB:
+                gameRobOverTime(String.valueOf(roomNo), roomInfo.getInt("focus"), roomInfo.getInt("type"), 0);
+                break;
+            case TIMER_TYPE_DOUBLE:
+                doubleOverTime(String.valueOf(roomNo), 0);
+                break;
+            case TIMER_TYPE_EVENT:
+                gameEventOverTime(String.valueOf(roomNo), roomInfo.getString("nextPlayerAccount"), 0);
+                break;
+            default:
+                break;
         }
     }
 }

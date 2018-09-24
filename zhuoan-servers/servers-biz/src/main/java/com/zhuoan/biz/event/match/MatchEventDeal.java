@@ -71,6 +71,9 @@ public class MatchEventDeal {
         updateTimeMatchSettings();
     }
 
+    /**
+     * 更新定时赛信息
+     */
     private void updateTimeMatchSettings() {
         // 更新实时场次配置
         JSONArray newTimeMatchSettings = new JSONArray();
@@ -113,6 +116,9 @@ public class MatchEventDeal {
         redisService.insertKey(String.valueOf(timeKey), String.valueOf(newTimeMatchSettings), null);
     }
 
+    /**
+     * 更新满人开赛信息
+     */
     private void updateCountMatchSettings() {
         // 更新满人开赛场次信息
         JSONArray countMatchSettings = getMatchSettingByType(MatchConstant.MATCH_TYPE_COUNT, null);
@@ -183,7 +189,11 @@ public class MatchEventDeal {
         CommonConstant.sendMsgEventToSingle(client, String.valueOf(result), "getSignUpInfoPush");
     }
 
-    public void checkMatchStatus(SocketIOClient client, Object data) {
+    /**
+     * 检查比赛场状态
+     * @param client
+     */
+    public void checkMatchStatus(SocketIOClient client) {
         JSONObject result = new JSONObject();
         Object matchBeginTime = redisService.queryValueByKey("match_begin_time");
         if (matchBeginTime != null) {
@@ -564,6 +574,7 @@ public class MatchEventDeal {
         JSONObject postData = JSONObject.fromObject(data);
         int gameId = postData.getInt("gid");
         String account = postData.getString("account");
+        // 查询获奖记录
         JSONObject winningRecord = matchBiz.getUserWinningRecord(account, gameId);
         JSONObject result = new JSONObject();
         if (!Dto.isObjNull(winningRecord)) {
@@ -818,9 +829,10 @@ public class MatchEventDeal {
                     int curRound = matchInfo.getInt("cur_round");
                     if (curRound >= promotion.size() - 1) {
                         Map<String, UUID> allPlayerUUID = getAllPlayerUUID(matchNum);
+                        List<Map.Entry<Object, Object>> sortedPlayers = getSortedPlayers(matchNum);
                         for (String account : allPlayerUUID.keySet()) {
                             // 当前排名 淘汰下标+未淘汰人数+1
-                            int rank = getUserRank(matchNum, account);
+                            int rank = getUserRank(sortedPlayers, account);
                             // 更新玩家奖励,返回奖励详情
                             String rewardInfo = updateUserReward(matchNum, rank, account);
                             JSONObject result = new JSONObject();
@@ -851,15 +863,16 @@ public class MatchEventDeal {
                             // 通知晋级玩家
                             sendPromotionToUser(getAllPlayerUUID(matchNum), matchNum, new ArrayList<String>(), curRound - 1, promotion, promotion.getInt(curRound - 1), 1);
                             try {
-                                Thread.sleep(5000);
+                                Thread.sleep(3000);
                             } catch (InterruptedException e) {
                                 e.printStackTrace();
                             }
                             Map<String, UUID> allPlayerUUID = getAllPlayerUUID(matchNum);
+                            List<Map.Entry<Object, Object>> sortedPlayers = getSortedPlayers(matchNum);
                             for (String account : allPlayerUUID.keySet()) {
                                 JSONObject result = new JSONObject();
                                 result.put("type", MatchConstant.MATCH_PROMOTION_TYPE_CONTINUE);
-                                result.put("myRank", getUserRank(matchNum, account));
+                                result.put("myRank", getUserRank(sortedPlayers, account));
                                 CommonConstant.sendMsgEventToSingle(allPlayerUUID.get(account), String.valueOf(result), "matchSummaryResultPush");
                             }
                             // 继续下一轮
@@ -902,6 +915,13 @@ public class MatchEventDeal {
         }
     }
 
+    /**
+     * 发送滚动公告
+     * @param account
+     * @param rank
+     * @param rewardDetails
+     * @param matchName
+     */
     private void sendWinnerInfoToAll(String account, int rank, JSONArray rewardDetails, String matchName) {
         JSONObject rewardInfo = new JSONObject();
         // 获取第一名奖励
@@ -1160,8 +1180,8 @@ public class MatchEventDeal {
     /**
      * 根据玩家积分排序
      *
-     * @param matchNum
-     * @return
+     * @param matchNum matchNum
+     * @return List<Map.Entry<Object, Object>>
      */
     private List<Map.Entry<Object, Object>> getSortedPlayers(String matchNum) {
         Map<Object, Object> allPlayer = new HashMap<>();
@@ -1189,8 +1209,8 @@ public class MatchEventDeal {
     /**
      * 玩家退出
      *
-     * @param matchNum
-     * @param account
+     * @param matchNum matchNum
+     * @param account account
      */
     private void playerOutMatch(String matchNum, String account, int type) {
         // 移除玩家信息
@@ -1203,9 +1223,9 @@ public class MatchEventDeal {
     /**
      * 改变分数
      *
-     * @param matchNum
-     * @param curRound
-     * @param perCount
+     * @param matchNum matchNum
+     * @param curRound curRound
+     * @param perCount perCount
      */
     private void startChangeUserScore(final String matchNum, final int curRound, final int perCount) {
         ThreadPoolHelper.executorService.submit(new Runnable() {
@@ -1250,13 +1270,13 @@ public class MatchEventDeal {
                                 userDetails.add(getUserDetail(curRoundRobotList.get(j * perCount), score * 2, curRound + 1,0));
                                 userDetails.add(getUserDetail(curRoundRobotList.get(j * perCount + 1), -score, curRound + 1, RandomUtils.nextInt(17) + 1));
                                 userDetails.add(getUserDetail(curRoundRobotList.get(j * perCount + 2), -score, curRound + 1, RandomUtils.nextInt(17) + 1));
-                                userFinish(matchNum, userDetails, new ArrayList<String>());
+                                userFinish(matchNum, userDetails);
                             } else {
                                 List<JSONObject> userDetails = new ArrayList<>();
                                 userDetails.add(getUserDetail(curRoundRobotList.get(j * perCount), -score * 2, curRound + 1, RandomUtils.nextInt(17) + 1));
                                 userDetails.add(getUserDetail(curRoundRobotList.get(j * perCount + 1), score, curRound + 1, RandomUtils.nextInt(17) + 1));
                                 userDetails.add(getUserDetail(curRoundRobotList.get(j * perCount + 2), score, curRound + 1, 0));
-                                userFinish(matchNum, userDetails, new ArrayList<String>());
+                                userFinish(matchNum, userDetails);
                             }
                         }
                         curRoundRobotList = getCurRoundRobotList(matchNum, curRound);
@@ -1274,7 +1294,7 @@ public class MatchEventDeal {
                         for (String account : curRoundRobotList) {
                             userDetails.add(getUserDetail(account, 0, curRound + 1, RandomUtils.nextInt(17) + 1));
                         }
-                        userFinish(matchNum, userDetails, new ArrayList<String>());
+                        userFinish(matchNum, userDetails);
                         curRoundRobotList = getCurRoundRobotList(matchNum, curRound);
                     }
                 }
@@ -1282,6 +1302,12 @@ public class MatchEventDeal {
         });
     }
 
+    /**
+     * 取当前机器人
+     * @param matchNum matchNum
+     * @param curRound curRound
+     * @return List<String>
+     */
     private List<String> getCurRoundRobotList(String matchNum, int curRound) {
         Map<Object, Object> allRobotInfo = redisService.hmget("robot_info_" + matchNum);
         List<String> robotList = new ArrayList<>();
@@ -1296,10 +1322,10 @@ public class MatchEventDeal {
     /**
      * 获取用户详情
      *
-     * @param account
-     * @param score
-     * @param round
-     * @return
+     * @param account score
+     * @param score score
+     * @param round round
+     * @return JSONObject
      */
     private JSONObject getUserDetail(String account, int score, int round, int card) {
         JSONObject userDetail = new JSONObject();
@@ -1314,10 +1340,10 @@ public class MatchEventDeal {
     /**
      * 比赛场加入房间
      *
-     * @param matchNum
-     * @param matchInfo
-     * @param perCount
-     * @param mateResult
+     * @param matchNum matchNum
+     * @param matchInfo matchInfo
+     * @param perCount perCount
+     * @param mateResult mateResult
      */
     private void matchJoinRoom(String matchNum, JSONObject matchInfo, int perCount, List<List<String>> mateResult) {
         // 当前场次所有机器人
@@ -1351,11 +1377,11 @@ public class MatchEventDeal {
 
     /**
      * 单桌匹配
-     * @param matchNum
-     * @param matchInfo
-     * @param perCount
-     * @param robotList
-     * @param singleMate
+     * @param matchNum matchNum
+     * @param matchInfo matchInfo
+     * @param perCount perCount
+     * @param robotList robotList
+     * @param singleMate singleMate
      */
     public void singleJoin(String matchNum, JSONObject matchInfo, int perCount, List<Object> robotList, List<String> singleMate, JSONObject rankObj) {
         // 取出所有真实玩家
@@ -1386,35 +1412,12 @@ public class MatchEventDeal {
     }
 
     /**
-     * 获取第一个空闲的机器人
-     *
-     * @param robotList
-     * @return
-     */
-    private String getRobotList(List<Object> robotList) {
-        if (robotList.size() == 0) {
-            return null;
-        }
-        String account = String.valueOf(robotList.get(0));
-        // 是否已经在游戏中
-        boolean isGameIn = redisService.sHasKey("game_in_robot_list", account);
-        if (!isGameIn) {
-            // 存入缓存
-            redisService.sSet("game_in_robot_list", account);
-            return account;
-        }
-        // 移除第一个
-        robotList.remove(0);
-        return getRobotList(robotList);
-    }
-
-    /**
      * 创建斗地主房间
      *
-     * @param matchNum
-     * @param matchInfo
-     * @param perCount
-     * @return
+     * @param matchNum matchNum
+     * @param matchInfo matchInfo
+     * @param perCount perCount
+     * @return String
      */
     private String matchJoinDdz(String matchNum, JSONObject matchInfo, int perCount) {
         String roomNo = randomRoomNo();
@@ -1475,10 +1478,10 @@ public class MatchEventDeal {
     /**
      * 积分变更
      *
-     * @param matchNum
-     * @param userDetails
+     * @param matchNum matchNum
+     * @param userDetails userDetails
      */
-    public void userFinish(String matchNum, List<JSONObject> userDetails, List<String> realPlayers) {
+    public void userFinish(String matchNum, List<JSONObject> userDetails) {
         // 更改分数
         for (JSONObject userDetail : userDetails) {
             changeRobotInfo(matchNum, userDetail.getString("account"), userDetail.getInt("score"), userDetail.getInt("round"),
@@ -1490,12 +1493,6 @@ public class MatchEventDeal {
         if (!Dto.isObjNull(matchInfo)) {
             // 当前轮数
             int curRound = matchInfo.getInt("cur_round");
-            // 晋级人数
-            JSONArray promotion = matchInfo.getJSONArray("promotion");
-            // 当前总人数
-            int totalNum = promotion.getInt(curRound);
-            // 通知玩家晋级结果
-            //sendPromotionToUser(getAllPlayerUUID(matchNum, realPlayers), matchNum, realPlayers, curRound, promotion, totalNum, 0);
             // 本轮全部完成
             if (checkIsAllFinish(matchNum, curRound)) {
                 allFinishDeal(matchNum);
@@ -1506,15 +1503,16 @@ public class MatchEventDeal {
     /**
      * 晋级结果通知
      *
-     * @param allPlayerUUID
-     * @param matchNum
-     * @param realPlayers
-     * @param curRound
-     * @param promotion
-     * @param totalNum
-     * @param isPromotion
+     * @param allPlayerUUID allPlayerUUID
+     * @param matchNum matchNum
+     * @param realPlayers realPlayers
+     * @param curRound curRound
+     * @param promotion promotion
+     * @param totalNum totalNum
+     * @param isPromotion isPromotion
      */
     private void sendPromotionToUser(Map<String, UUID> allPlayerUUID, String matchNum, List<String> realPlayers, int curRound, JSONArray promotion, int totalNum, int isPromotion) {
+        List<Map.Entry<Object, Object>> sortedPlayers = getSortedPlayers(matchNum);
         // 通知玩家
         for (String account : allPlayerUUID.keySet()) {
             JSONObject result = new JSONObject();
@@ -1522,7 +1520,7 @@ public class MatchEventDeal {
             if (realPlayers.contains(account)) {
                 result.put("type", 1);
             }
-            result.put("myRank", getUserRank(matchNum, account));
+            result.put("myRank", getUserRank(sortedPlayers, account));
             result.put("totalPlayer", totalNum);
             result.put("rankArray", promotion);
             result.put("rankIndex", curRound);
@@ -1534,12 +1532,11 @@ public class MatchEventDeal {
     /**
      * 获取玩家排名
      *
-     * @param matchNum
-     * @param account
-     * @return
+     * @param sortList sortList
+     * @param account account
+     * @return int
      */
-    public int getUserRank(String matchNum, String account) {
-        List<Map.Entry<Object, Object>> sortList = getSortedPlayers(matchNum);
+    public int getUserRank(List<Map.Entry<Object, Object>> sortList, String account) {
         for (int i = 0; i < sortList.size(); i++) {
             if (String.valueOf(sortList.get(i).getKey()).equals(account)) {
                 return i + 1;
@@ -1548,19 +1545,11 @@ public class MatchEventDeal {
         return -1;
     }
 
-    private Map<String, UUID> getAllPlayerUUID(String matchNum, List<String> realPlayers) {
-        // 取出所有玩家
-        Map<Object, Object> allPlayerInfo = redisService.hmget("player_info_" + matchNum);
-        Map<String, UUID> allPlayerUUID = new HashMap<>();
-        for (Object player : allPlayerInfo.keySet()) {
-            if (realPlayers.contains(String.valueOf(player))) {
-                JSONObject playerInfo = JSONObject.fromObject(allPlayerInfo.get(player));
-                allPlayerUUID.put(String.valueOf(player), UUID.fromString(playerInfo.getString("sessionId")));
-            }
-        }
-        return allPlayerUUID;
-    }
-
+    /**
+     * 获取所有的玩家
+     * @param matchNum matchNum
+     * @return Map<String, UUID>
+     */
     private Map<String, UUID> getAllPlayerUUID(String matchNum) {
         // 取出所有玩家
         Map<Object, Object> allPlayerInfo = redisService.hmget("player_info_" + matchNum);
@@ -1575,9 +1564,9 @@ public class MatchEventDeal {
     /**
      * 是否全部完成
      *
-     * @param matchNum
-     * @param curRound
-     * @return
+     * @param matchNum matchNum
+     * @param curRound curRound
+     * @return boolean
      */
     private boolean checkIsAllFinish(String matchNum, int curRound) {
         Map<Object, Object> allPlayer = new HashMap<>();
@@ -1599,10 +1588,10 @@ public class MatchEventDeal {
     /**
      * 更新机器人信息
      *
-     * @param matchNum
-     * @param account
-     * @param score
-     * @param round
+     * @param matchNum matchNum
+     * @param account account
+     * @param score score
+     * @param round round
      */
     public void changeRobotInfo(String matchNum, String account, int score, int round, int card, int win) {
         Object o = redisService.hget("robot_info_" + matchNum, account);
@@ -1621,10 +1610,10 @@ public class MatchEventDeal {
     /**
      * 更新玩家信息
      *
-     * @param matchNum
-     * @param account
-     * @param score
-     * @param round
+     * @param matchNum matchNum
+     * @param account account
+     * @param score score
+     * @param round round
      */
     public void changePlayerInfo(String matchNum, String sessionId, String uuid, String account, int score, int round, int card, int win) {
         Object o = redisService.hget("player_info_" + matchNum, account);
@@ -1649,8 +1638,8 @@ public class MatchEventDeal {
     /**
      * 取所有玩家
      *
-     * @param playerList
-     * @return
+     * @param playerList playerList
+     * @return List<String>
      */
     private List<String> getRealPlayer(List<String> playerList, List<Object> robotList) {
         List<String> realPlayerList = new ArrayList<>();
@@ -1663,32 +1652,14 @@ public class MatchEventDeal {
     }
 
     /**
-     * 获取当前需要的机器人人数
-     *
-     * @param playNum
-     * @param curRound
-     * @param totalRound
-     * @param perCount
-     * @param totalNum
-     * @return
-     */
-    private int getRobotNum(int playNum, int curRound, int totalRound, int perCount, int totalNum) {
-        // 按照轮次每轮增加对应的机器人
-        int maxNum = (perCount * (totalRound - curRound) - 1) * playNum;
-        // 超除总人数返回总人数-实际人数
-        return maxNum + playNum > totalNum ? (totalNum - playNum) : maxNum;
-    }
-
-
-    /**
      * 创建比赛场
      *
-     * @param client
-     * @param account
-     * @param matchId
-     * @param matchSetting
-     * @param matchNum
-     * @param type
+     * @param client client
+     * @param account account
+     * @param matchId matchId
+     * @param matchSetting matchSetting
+     * @param matchNum matchNum
+     * @param type type
      */
     private void createMatch(String uuid, SocketIOClient client, String account, int matchId, JSONObject matchSetting, String matchNum, String type) {
         // 添加缓存
@@ -1726,28 +1697,14 @@ public class MatchEventDeal {
     }
 
     /**
-     * 获取报名用户信息
-     *
-     * @param account
-     * @param type
-     * @return
-     */
-    private JSONObject getSignPlayerObj(String account, String type) {
-        JSONObject playerObj = new JSONObject();
-        playerObj.put("account", account);
-        playerObj.put("type", type);
-        return playerObj;
-    }
-
-    /**
      * 添加玩家信息
      *
-     * @param account
-     * @param matchNum
-     * @param uuid
-     * @param sessionId
-     * @param score
-     * @param round
+     * @param account account
+     * @param matchNum matchNum
+     * @param uuid uuid
+     * @param sessionId sessionId
+     * @param score score
+     * @param round round
      */
     private void addPlayerInfo(String account, String matchNum, String uuid, String sessionId, int score, int round) {
         JSONObject playerInfo = new JSONObject();
@@ -1763,12 +1720,12 @@ public class MatchEventDeal {
     /**
      * 加入比赛场
      *
-     * @param uuid
-     * @param client
-     * @param account
-     * @param matchSetting
-     * @param unFullMatch
-     * @param type
+     * @param uuid uuid
+     * @param client client
+     * @param account account
+     * @param matchSetting matchSetting
+     * @param unFullMatch unFullMatch
+     * @param type type
      */
     private void joinMatch(String uuid, SocketIOClient client, String account, JSONObject matchSetting, JSONObject unFullMatch, String type) {
         // 添加数据库
@@ -1799,8 +1756,8 @@ public class MatchEventDeal {
     /**
      * 初始化排行榜
      *
-     * @param account
-     * @param matchNum
+     * @param account account
+     * @param matchNum matchNum
      */
     private void initRankList(String account, String matchNum) {
         JSONObject robotInfo = new JSONObject();
@@ -1814,8 +1771,8 @@ public class MatchEventDeal {
     /**
      * 添加缓存
      *
-     * @param matchNum
-     * @param matchInfo
+     * @param matchNum matchNum
+     * @param matchInfo matchInfo
      */
     private void addMatchInfoIntoRedis(String matchNum, JSONObject matchInfo) {
         String key = "match_info_" + matchNum;
@@ -1829,8 +1786,8 @@ public class MatchEventDeal {
     /**
      * 获取缓存
      *
-     * @param matchNum
-     * @return
+     * @param matchNum matchNum
+     * @return JSONObject
      */
     private JSONObject getMatchInfoByNumFromRedis(String matchNum) {
         String key = "match_info_" + matchNum;
@@ -1848,7 +1805,7 @@ public class MatchEventDeal {
     /**
      * 生成不重复场次编号
      *
-     * @return matchNum
+     * @return String
      */
     private String randomMatchNum() {
         String matchNum = MathDelUtil.getRandomStr(8);
@@ -1861,7 +1818,7 @@ public class MatchEventDeal {
     /**
      * 生成随机房间号
      *
-     * @return
+     * @return String
      */
     private String randomRoomNo() {
         String roomNo = MathDelUtil.getRandomStr(6);
@@ -1874,15 +1831,16 @@ public class MatchEventDeal {
     /**
      * 刷新用户排名
      *
-     * @param roomNo
+     * @param roomNo roomNo
      */
     public void refreshUserRank(String roomNo, String account) {
         // 房间是否存在
         if (RoomManage.gameRoomMap.containsKey(roomNo) && RoomManage.gameRoomMap.get(roomNo) != null) {
             if (RoomManage.gameRoomMap.get(roomNo).getPlayerMap().containsKey(account)
                 && RoomManage.gameRoomMap.get(roomNo).getPlayerMap().get(account) != null) {
+                List<Map.Entry<Object, Object>> sortedPlayers = getSortedPlayers(RoomManage.gameRoomMap.get(roomNo).getMatchNum());
                 // 获取玩家排名
-                int userRank = getUserRank(RoomManage.gameRoomMap.get(roomNo).getMatchNum(), account);
+                int userRank = getUserRank(sortedPlayers, account);
                 // 更新玩家排名
                 if (userRank != -1) {
                     RoomManage.gameRoomMap.get(roomNo).getPlayerMap().get(account).setMyRank(userRank);

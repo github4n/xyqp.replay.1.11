@@ -41,7 +41,6 @@ import net.sf.json.JSONObject;
 import org.apache.commons.lang.math.RandomUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
@@ -3737,7 +3736,7 @@ public class BaseEventDeal {
         }
     }
 
-    @Scheduled(cron = "0/3 * * * * ?")
+    //@Scheduled(cron = "0/3 * * * * ?")
     public void checkUserOnlineStatus() {
         // 所有玩家的心跳集合
         Map<Object, Object> onlinePlayerList = redisService.hmget("online_player_list");

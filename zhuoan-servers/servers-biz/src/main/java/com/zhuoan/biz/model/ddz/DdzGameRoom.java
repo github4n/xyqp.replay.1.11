@@ -3,6 +3,7 @@ package com.zhuoan.biz.model.ddz;
 import com.zhuoan.biz.model.GameRoom;
 import net.sf.json.JSONObject;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
@@ -14,7 +15,7 @@ import java.util.concurrent.ConcurrentMap;
  * @Date Created in 13:33 2018/6/27
  * @Modified By:
  **/
-public class DdzGameRoom extends GameRoom {
+public class DdzGameRoom extends GameRoom implements Serializable{
     /**
      * 倍数
      */

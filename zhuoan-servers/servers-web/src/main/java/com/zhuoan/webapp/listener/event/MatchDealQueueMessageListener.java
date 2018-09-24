@@ -53,6 +53,7 @@ public class MatchDealQueueMessageListener implements MessageListener {
                 matchEventDeal.singleJoin(matchNum, matchInfo, perCount, robotList, singleMate, rankObj);
                 break;
             case MatchDealConstant.MATCH_DEAL_TYPE_TIME:
+                gameTimerDdz.doOverTimeDeal(object.getString("roomNo"), object.getJSONObject("roomInfo"));
                 break;
             default:
                 break;
