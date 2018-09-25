@@ -1,10 +1,10 @@
 package com.zhuoan.queue;
 
 import com.corundumstudio.socketio.SocketIOClient;
-import com.zhuoan.biz.event.BaseEventDeal;
+import com.zhuoan.biz.event.BaseEventDsDeal;
 import com.zhuoan.biz.event.bdx.BDXGameEventDealNew;
 import com.zhuoan.biz.event.club.ClubEventDeal;
-import com.zhuoan.biz.event.ddz.DdzGameEventDeal;
+import com.zhuoan.biz.event.ddz.DdzGameEventDsDeal;
 import com.zhuoan.biz.event.gppj.GPPJGameEventDeal;
 import com.zhuoan.biz.event.match.MatchEventDeal;
 import com.zhuoan.biz.event.nn.NNGameEventDealNew;
@@ -40,7 +40,7 @@ public class GameEventDeal {
     private final static Logger logger = LoggerFactory.getLogger(GameEventDeal.class);
 
     @Resource
-    private BaseEventDeal baseEventDeal;
+    private BaseEventDsDeal baseEventDeal;
 
     @Resource
     private NNGameEventDealNew nnGameEventDealNew;
@@ -64,7 +64,7 @@ public class GameEventDeal {
     private SwGameEventDeal swGameEventDeal;
 
     @Resource
-    private DdzGameEventDeal ddzGameEventDeal;
+    private DdzGameEventDsDeal ddzGameEventDeal;
 
     @Resource
     private MatchEventDeal matchEventDeal;

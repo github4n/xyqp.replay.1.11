@@ -1,5 +1,6 @@
 package com.zhuoan.biz.model.ddz;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -9,7 +10,7 @@ import java.util.List;
  * @Date Created in 13:38 2018/6/27
  * @Modified By:
  **/
-public class UserPacketDdz {
+public class UserPacketDdz implements Serializable{
     /**
      * 游戏状态
      */
