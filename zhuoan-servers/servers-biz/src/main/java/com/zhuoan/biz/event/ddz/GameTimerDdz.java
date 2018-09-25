@@ -13,7 +13,6 @@ import com.zhuoan.service.socketio.impl.GameMain;
 import net.sf.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
@@ -314,7 +313,7 @@ public class GameTimerDdz {
         }
     }
 
-    @Scheduled(cron = "0/1 * * * * ?")
+//    @Scheduled(cron = "0/1 * * * * ?")
     public void checkTimer() {
         String key = "room_map";
         Map<Object, Object> roomMap = redisService.hmget(key);
@@ -325,11 +324,6 @@ public class GameTimerDdz {
                     JSONObject roomInfo = JSONObject.fromObject(roomObj);
                     int timeLeft = roomInfo.getInt("timeLeft") - 1;
                     if (timeLeft <= 8) {
-//                        JSONObject obj = new JSONObject();
-//                        obj.put("deal_type", MatchDealConstant.MATCH_DEAL_TYPE_TIME);
-//                        obj.put("roomNo", String.valueOf(roomNo));
-//                        obj.put("roomInfo", roomInfo);
-//                        producerService.sendMessage(matchDealQueueDestination, obj);
                         doOverTimeDeal(roomNo, roomInfo);
                     } else {
                         if (RoomManage.gameRoomMap.containsKey(String.valueOf(roomNo)) && RoomManage.gameRoomMap.get(String.valueOf(roomNo)) != null) {

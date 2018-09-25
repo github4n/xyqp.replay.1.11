@@ -1,10 +1,10 @@
 package com.zhuoan.queue;
 
 import com.corundumstudio.socketio.SocketIOClient;
-import com.zhuoan.biz.event.BaseEventDsDeal;
+import com.zhuoan.biz.event.BaseEventDeal;
 import com.zhuoan.biz.event.bdx.BDXGameEventDealNew;
 import com.zhuoan.biz.event.club.ClubEventDeal;
-import com.zhuoan.biz.event.ddz.DdzGameEventDsDeal;
+import com.zhuoan.biz.event.ddz.DdzGameEventDeal;
 import com.zhuoan.biz.event.gppj.GPPJGameEventDeal;
 import com.zhuoan.biz.event.match.MatchEventDeal;
 import com.zhuoan.biz.event.nn.NNGameEventDealNew;
@@ -40,7 +40,7 @@ public class GameEventDeal {
     private final static Logger logger = LoggerFactory.getLogger(GameEventDeal.class);
 
     @Resource
-    private BaseEventDsDeal baseEventDsDeal;
+    private BaseEventDeal baseEventDeal;
 
     @Resource
     private NNGameEventDealNew nnGameEventDealNew;
@@ -64,7 +64,7 @@ public class GameEventDeal {
     private SwGameEventDeal swGameEventDeal;
 
     @Resource
-    private DdzGameEventDsDeal ddzGameEventDsDeal;
+    private DdzGameEventDeal ddzGameEventDeal;
 
     @Resource
     private MatchEventDeal matchEventDeal;
@@ -198,40 +198,40 @@ public class GameEventDeal {
     private void ddzEvents(Object data, Integer sorts, SocketIOClient client) {
         switch (sorts) {
             case DdzConstant.DDZ_GAME_EVENT_READY:
-                ddzGameEventDsDeal.gameReady(client,data);
+                ddzGameEventDeal.gameReady(client,data);
                 break;
             case DdzConstant.DDZ_GAME_EVENT_CALL_AND_ROB:
-                ddzGameEventDsDeal.gameBeLandlord(client,data);
+                ddzGameEventDeal.gameBeLandlord(client,data);
                 break;
             case DdzConstant.DDZ_GAME_EVENT_GAME_IN:
-                ddzGameEventDsDeal.gameEvent(client,data);
+                ddzGameEventDeal.gameEvent(client,data);
                 break;
             case DdzConstant.DDZ_GAME_EVENT_RECONNECT:
-                ddzGameEventDsDeal.reconnectGame(client,data);
+                ddzGameEventDeal.reconnectGame(client,data);
                 break;
             case DdzConstant.DDZ_GAME_EVENT_PROMPT:
-                ddzGameEventDsDeal.gamePrompt(client,data);
+                ddzGameEventDeal.gamePrompt(client,data);
                 break;
             case DdzConstant.DDZ_GAME_EVENT_CONTINUE:
-                ddzGameEventDsDeal.gameContinue(client,data);
+                ddzGameEventDeal.gameContinue(client,data);
                 break;
             case DdzConstant.DDZ_GAME_EVENT_EXIT_ROOM:
-                ddzGameEventDsDeal.exitRoom(client,data);
+                ddzGameEventDeal.exitRoom(client,data);
                 break;
             case DdzConstant.DDZ_GAME_EVENT_CLOSE_ROOM:
-                ddzGameEventDsDeal.closeRoom(client,data);
+                ddzGameEventDeal.closeRoom(client,data);
                 break;
             case DdzConstant.DDZ_GAME_EVENT_TRUSTEE:
-                ddzGameEventDsDeal.gameTrustee(client,data);
+                ddzGameEventDeal.gameTrustee(client,data);
                 break;
             case DdzConstant.DDZ_GAME_EVENT_AUTO_PLAY:
-                ddzGameEventDsDeal.gameAutoPlay(client,data);
+                ddzGameEventDeal.gameAutoPlay(client,data);
                 break;
             case DdzConstant.DDZ_GAME_EVENT_GET_OUT_INFO:
-                ddzGameEventDsDeal.getOutInfo(client,data);
+                ddzGameEventDeal.getOutInfo(client,data);
                 break;
             case DdzConstant.DDZ_GAME_EVENT_GAME_DOUBLE:
-                ddzGameEventDsDeal.gameDouble(client,data);
+                ddzGameEventDeal.gameDouble(client,data);
                 break;
             default:
                 break;
@@ -460,124 +460,124 @@ public class GameEventDeal {
     private void baseEvents(Object data, Integer sorts, SocketIOClient client) {
         switch (sorts) {
             case CommonConstant.BASE_GAME_GET_USER_INFO:
-                baseEventDsDeal.getUserInfo(client, data);
+                baseEventDeal.getUserInfo(client, data);
                 break;
             case CommonConstant.BASE_GAME_EVENT_CHECK_USER:
-                baseEventDsDeal.checkUser(client, data);
+                baseEventDeal.checkUser(client, data);
                 break;
             case CommonConstant.BASE_GAME_EVENT_GET_GAME_SETTING:
-                baseEventDsDeal.getGameSetting(client, data);
+                baseEventDeal.getGameSetting(client, data);
                 break;
             case CommonConstant.BASE_GAME_EVENT_GET_ALL_ROOM_LIST:
-                baseEventDsDeal.getAllRoomList(client, data);
+                baseEventDeal.getAllRoomList(client, data);
                 break;
             case CommonConstant.BASE_GAME_EVENT_CREATE_ROOM:
-                baseEventDsDeal.createRoomBase(client, data);
+                baseEventDeal.createRoomBase(client, data);
                 break;
             case CommonConstant.BASE_GAME_EVENT_JOIN_ROOM:
-                baseEventDsDeal.joinRoomBase(client, data);
+                baseEventDeal.joinRoomBase(client, data);
                 break;
             case CommonConstant.BASE_GAME_EVENT_GET_SHUFFLE_INFO:
-                baseEventDsDeal.getShuffleInfo(client, data);
+                baseEventDeal.getShuffleInfo(client, data);
                 break;
             case CommonConstant.BASE_GAME_EVENT_DO_SHUFFLE:
-                baseEventDsDeal.doShuffle(client, data);
+                baseEventDeal.doShuffle(client, data);
                 break;
             case CommonConstant.BASE_GAME_EVENT_SEND_MESSAGE:
-                baseEventDsDeal.sendMessage(client, data);
+                baseEventDeal.sendMessage(client, data);
                 break;
             case CommonConstant.BASE_GAME_EVENT_SEND_VOICE:
-                baseEventDsDeal.sendVoice(client, data);
+                baseEventDeal.sendVoice(client, data);
                 break;
             case CommonConstant.BASE_GAME_EVENT_GET_USER_GAME_LOGS:
-                baseEventDsDeal.getUserGameLogs(client, data);
+                baseEventDeal.getUserGameLogs(client, data);
                 break;
             case CommonConstant.BASE_GAME_EVENT_DISSOLVE_ROOM:
-                baseEventDsDeal.dissolveRoom(client, data);
+                baseEventDeal.dissolveRoom(client, data);
                 break;
             case CommonConstant.BASE_GAME_EVENT_ON_OR_OFF_GAME:
-                baseEventDsDeal.onOrOffGame(client, data);
+                baseEventDeal.onOrOffGame(client, data);
                 break;
             case CommonConstant.BASE_GAME_EVENT_SEND_NOTICE:
-                baseEventDsDeal.sendNotice(client, data);
+                baseEventDeal.sendNotice(client, data);
                 break;
             case CommonConstant.BASE_GAME_EVENT_GET_NOTICE:
-                baseEventDsDeal.getNotice(client, data);
+                baseEventDeal.getNotice(client, data);
                 break;
             case CommonConstant.BASE_GAME_EVENT_GET_ROOM_AND_PLAYER_COUNT:
-                baseEventDsDeal.getRoomAndPlayerCount(client, data);
+                baseEventDeal.getRoomAndPlayerCount(client, data);
                 break;
             case CommonConstant.BASE_GAME_EVENT_SON_GAME:
-                baseEventDsDeal.getRoomGid(client, data);
+                baseEventDeal.getRoomGid(client, data);
                 break;
             case CommonConstant.BASE_GAME_EVENT_JOIN_COIN_ROOM:
-                baseEventDsDeal.joinCoinRoom(client, data);
+                baseEventDeal.joinCoinRoom(client, data);
                 break;
             case CommonConstant.BASE_GAME_EVENT_GET_ROOM_CARD_PAY_INFO:
-                baseEventDsDeal.getRoomCardPayInfo(client, data);
+                baseEventDeal.getRoomCardPayInfo(client, data);
                 break;
             case CommonConstant.BASE_GAME_EVENT_GET_COIN_SETTING:
-                baseEventDsDeal.getCoinSetting(client, data);
+                baseEventDeal.getCoinSetting(client, data);
                 break;
             case CommonConstant.BASE_GAME_EVENT_GET_USER_SIGN_INFO:
-                baseEventDsDeal.checkSignIn(client, data);
+                baseEventDeal.checkSignIn(client, data);
                 break;
             case CommonConstant.BASE_GAME_EVENT_DO_USER_SIGN:
-                baseEventDsDeal.doUserSignIn(client, data);
+                baseEventDeal.doUserSignIn(client, data);
                 break;
             case CommonConstant.BASE_GAME_EVENT_GET_COMPETITIVE_INFO:
-                baseEventDsDeal.getCompetitiveInfo(client, data);
+                baseEventDeal.getCompetitiveInfo(client, data);
                 break;
             case CommonConstant.BASE_GAME_EVENT_JOIN_COMPETITIVE_ROOM:
-                baseEventDsDeal.joinCompetitiveRoom(client, data);
+                baseEventDeal.joinCompetitiveRoom(client, data);
                 break;
             case CommonConstant.BASE_GAME_EVENT_CHECK_IP:
-                baseEventDsDeal.gameCheckIp(client, data);
+                baseEventDeal.gameCheckIp(client, data);
                 break;
             case CommonConstant.BASE_GAME_EVENT_GET_PROXY_ROOM_LIST:
-                baseEventDsDeal.getProxyRoomList(client, data);
+                baseEventDeal.getProxyRoomList(client, data);
                 break;
             case CommonConstant.BASE_GAME_EVENT_DISSOLVE_PROXY_ROOM:
-                baseEventDsDeal.dissolveProxyRoom(client, data);
+                baseEventDeal.dissolveProxyRoom(client, data);
                 break;
             case CommonConstant.BASE_GAME_EVENT_GET_USER_ACHIEVEMENT_INFO:
-                baseEventDsDeal.getUserAchievementInfo(client, data);
+                baseEventDeal.getUserAchievementInfo(client, data);
                 break;
             case CommonConstant.BASE_GAME_EVENT_GET_PROPS_INFO:
-                baseEventDsDeal.getPropsInfo(client, data);
+                baseEventDeal.getPropsInfo(client, data);
                 break;
             case CommonConstant.BASE_GAME_EVENT_USER_PURCHASE:
-                baseEventDsDeal.userPurchase(client, data);
+                baseEventDeal.userPurchase(client, data);
                 break;
             case CommonConstant.BASE_GAME_EVENT_GET_ACHIEVEMENT_RANK:
-                baseEventDsDeal.getAchievementRank(client, data);
+                baseEventDeal.getAchievementRank(client, data);
                 break;
             case CommonConstant.BASE_GAME_EVENT_GET_DRAW_INFO:
-                baseEventDsDeal.getDrawInfo(client, data);
+                baseEventDeal.getDrawInfo(client, data);
                 break;
             case CommonConstant.BASE_GAME_EVENT_GAME_DRAW:
-                baseEventDsDeal.gameDraw(client, data);
+                baseEventDeal.gameDraw(client, data);
                 break;
             case CommonConstant.BASE_GAME_EVENT_GET_ACHIEVEMENT_DETAIL:
-                baseEventDsDeal.getAchievementDetail(client, data);
+                baseEventDeal.getAchievementDetail(client, data);
                 break;
             case CommonConstant.BASE_GAME_EVENT_DRAW_ACHIEVEMENT_REWARD:
-                baseEventDsDeal.drawAchievementReward(client, data);
+                baseEventDeal.drawAchievementReward(client, data);
                 break;
             case CommonConstant.BASE_GAME_EVENT_CHANGE_ROOM:
-                baseEventDsDeal.changeRoomBase(client,data);
+                baseEventDeal.changeRoomBase(client,data);
                 break;
             case CommonConstant.BASE_GAME_EVENT_GET_ROOM_CARD_GAME_LOG:
-                baseEventDsDeal.getRoomCardGameLogList(client,data);
+                baseEventDeal.getRoomCardGameLogList(client,data);
                 break;
             case CommonConstant.BASE_GAME_EVENT_GET_ROOM_CARD_GAME_LOG_DETAIL:
-                baseEventDsDeal.getRoomCardGameLogDetail(client,data);
+                baseEventDeal.getRoomCardGameLogDetail(client,data);
                 break;
             case CommonConstant.BASE_GAME_EVENT_GET_CLUB_GAME_LOG:
-                baseEventDsDeal.getClubGameLogList(client,data);
+                baseEventDeal.getClubGameLogList(client,data);
                 break;
             case CommonConstant.BASE_GAME_EVENT_GET_BACKPACK_INFO:
-                baseEventDsDeal.getBackpackInfo(client,data);
+                baseEventDeal.getBackpackInfo(client,data);
                 break;
             default:
                 break;
