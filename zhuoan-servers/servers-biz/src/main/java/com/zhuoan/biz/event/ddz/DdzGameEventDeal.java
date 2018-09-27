@@ -1122,13 +1122,6 @@ public class DdzGameEventDeal {
         redisService.insertKey("summaryTimes_ddz_"+room.getRoomNo(),"0",null);
         // 设置手牌
         List<List<String>> cardList = DdzCore.shuffleAndDeal();
-        Set<String> set = new HashSet<>();
-        for (List<String> list : cardList) {
-            set.addAll(list);
-        }
-        if (set.size() != 54) {
-            logger.warn(roomNo+"-"+cardList);
-        }
         int cardIndex = 0;
         List<String> accountList = obtainAllPlayerAccount(roomNo);
         for (String account : accountList) {
@@ -1163,6 +1156,7 @@ public class DdzGameEventDeal {
         // 通知玩家
         for (String account : accountList) {
             JSONObject result = new JSONObject();
+            result.put("room_no",roomNo);
             result.put("myPai",room.getUserPacketMap().get(account).getMyPai());
             result.put("number",room.getFocusIndex());
             result.put("multiple",room.getMultiple());
@@ -1214,7 +1208,6 @@ public class DdzGameEventDeal {
         }
         // 重置开始游戏防重
         redisService.insertKey("startTimes_ddz_"+roomNo,"0",null);
-//        redisService.hdel("room_map",roomNo);
         DdzGameRoom room = (DdzGameRoom) RoomManage.gameRoomMap.get(roomNo);
         // 农民输赢分数=倍数*底
         double farmerScore = Dto.mul(room.getMultiple(),room.getScore());
@@ -1622,15 +1615,6 @@ public class DdzGameEventDeal {
                 gameTimerDdz.gameEventOverTime(roomNo, nextPlayerAccount,timeLeft);
             }
         });
-//        redisService.hdel("room_map", roomNo);
-//        JSONObject data = new JSONObject();
-//        data.put("timeLeft",timeLeft);
-//        if (room.getUserPacketMap().get(nextPlayerAccount).getIsTrustee() == CommonConstant.GLOBAL_YES) {
-//            data.put("timeLeft",0);
-//        }
-//        data.put("timerType",GameTimerDdz.TIMER_TYPE_EVENT);
-//        data.put("nextPlayerAccount",nextPlayerAccount);
-//        redisService.hset("room_map",roomNo,String.valueOf(data));
         // 机器人出牌
         if (room.isRobot()&&room.getRobotList().contains(nextPlayerAccount)) {
             int delayTime = RandomUtils.nextInt(3)+2;
@@ -1657,11 +1641,6 @@ public class DdzGameEventDeal {
                 gameTimerDdz.doubleOverTime(roomNo, timeLeft);
             }
         });
-//        redisService.hdel("room_map", roomNo);
-//        JSONObject data = new JSONObject();
-//        data.put("timeLeft",timeLeft);
-//        data.put("timerType",GameTimerDdz.TIMER_TYPE_DOUBLE);
-//        redisService.hset("room_map",roomNo,String.valueOf(data));
         // 机器人出牌
         if (room.isRobot()) {
             for (String account : room.getRobotList()) {
@@ -1689,13 +1668,6 @@ public class DdzGameEventDeal {
                 gameTimerDdz.gameRobOverTime(roomNo,focus,type,timeLeft);
             }
         });
-//        redisService.hdel("room_map", roomNo);
-//        JSONObject data = new JSONObject();
-//        data.put("timeLeft",timeLeft);
-//        data.put("timerType",GameTimerDdz.TIMER_TYPE_ROB);
-//        data.put("focus",focus);
-//        data.put("type",type);
-//        redisService.hset("room_map",roomNo,String.valueOf(data));
         // 机器人出牌
         if (room.isRobot()) {
             for (String robotAccount : obtainAllPlayerAccount(roomNo)) {

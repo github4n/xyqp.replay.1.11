@@ -195,17 +195,13 @@ public class MatchEventDeal {
      */
     public void checkMatchStatus(SocketIOClient client) {
         JSONObject result = new JSONObject();
-        Object matchBeginTime = redisService.queryValueByKey("match_begin_time");
-        if (matchBeginTime != null) {
-            String nowDate = TimeUtil.getNowDate();
-            if (!TimeUtil.isLatter(nowDate, String.valueOf(matchBeginTime))) {
-                result.put(CommonConstant.RESULT_KEY_CODE, CommonConstant.GLOBAL_NO);
-                result.put("date", String.valueOf(matchBeginTime));
-                CommonConstant.sendMsgEventToSingle(client, String.valueOf(result), "checkMatchStatusPush");
-                return;
-            }
+        JSONArray showList = new JSONArray();
+        Object adList = redisService.queryValueByKey("ad_list");
+        if (adList != null) {
+            showList = JSONArray.fromObject(adList);
         }
-        result.put(CommonConstant.RESULT_KEY_CODE,CommonConstant.GLOBAL_YES);
+        result.put(CommonConstant.RESULT_KEY_CODE, CommonConstant.GLOBAL_YES);
+        result.put("showList",showList);
         CommonConstant.sendMsgEventToSingle(client, String.valueOf(result), "checkMatchStatusPush");
     }
 
@@ -776,6 +772,14 @@ public class MatchEventDeal {
      * @param matchNum
      */
     private void startMatch(String matchNum) {
+        // 防重
+        String matchTimesKey = "matchTimes_ddz_" + matchNum;
+        long matchTimes = redisService.incr(matchTimesKey, 1);
+        if (matchTimes > 1) {
+            return;
+        }
+        // 重置防重
+        redisService.insertKey("finishTimes_ddz_" + matchNum, "0", null);
         JSONObject matchInfo = getMatchInfoByNumFromRedis(matchNum);
         // 当前轮数
         int curRound = matchInfo.getInt("cur_round");
@@ -791,7 +795,7 @@ public class MatchEventDeal {
         List<List<String>> mateResult = new ArrayList<>();
         for (int i = 0; i < allPlayerList.size(); i = i + perCount) {
             List<String> singleResult = new ArrayList<>();
-            singleResult.addAll(allPlayerList.subList(i, i + perCount));
+            singleResult.addAll(new ArrayList<>(allPlayerList.subList(i, i + perCount)));
             mateResult.add(singleResult);
         }
         // 根据匹配结果加入房间
@@ -808,6 +812,14 @@ public class MatchEventDeal {
      * @param matchNum
      */
     public void allFinishDeal(final String matchNum) {
+        // 防重处理
+        String finishTimesKey = "finishTimes_ddz_" + matchNum;
+        long finishTimes = redisService.incr(finishTimesKey, 1);
+        if (finishTimes > 1) {
+            return;
+        }
+        // 重置防重
+        redisService.insertKey("matchTimes_ddz_" + matchNum, "0", null);
         ThreadPoolHelper.executorService.submit(new Runnable() {
             @Override
             public void run() {
@@ -852,6 +864,8 @@ public class MatchEventDeal {
                         redisService.deleteByKey("robot_info_" + matchNum);
                         redisService.deleteByKey("player_info_" + matchNum);
                         redisService.deleteByKey("double_info_" + matchNum);
+                        redisService.deleteByKey("finishTimes_ddz_" + matchNum);
+                        redisService.deleteByKey("matchTimes_ddz_" + matchNum);
                         // 更新机器人状态
                         updateAllRobotStatus(matchNum, 0);
                     } else {
@@ -863,7 +877,7 @@ public class MatchEventDeal {
                             // 通知晋级玩家
                             sendPromotionToUser(getAllPlayerUUID(matchNum), matchNum, new ArrayList<String>(), curRound - 1, promotion, promotion.getInt(curRound - 1), 1);
                             try {
-                                Thread.sleep(3000);
+                                Thread.sleep(5000);
                             } catch (InterruptedException e) {
                                 e.printStackTrace();
                             }
@@ -891,6 +905,8 @@ public class MatchEventDeal {
                             redisService.deleteByKey("match_info_" + matchNum);
                             redisService.deleteByKey("robot_info_" + matchNum);
                             redisService.deleteByKey("double_info_" + matchNum);
+                            redisService.deleteByKey("finishTimes_ddz_" + matchNum);
+                            redisService.deleteByKey("matchTimes_ddz_" + matchNum);
                         }
                     }
                 }

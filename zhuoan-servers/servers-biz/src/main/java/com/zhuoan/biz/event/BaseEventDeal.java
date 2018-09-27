@@ -5,6 +5,7 @@ import com.zhuoan.biz.core.nn.UserPacket;
 import com.zhuoan.biz.event.bdx.BDXGameEventDealNew;
 import com.zhuoan.biz.event.ddz.DdzGameEventDeal;
 import com.zhuoan.biz.event.gppj.GPPJGameEventDeal;
+import com.zhuoan.biz.event.match.MatchEventDeal;
 import com.zhuoan.biz.event.nn.NNGameEventDealNew;
 import com.zhuoan.biz.event.qzmj.QZMJGameEventDeal;
 import com.zhuoan.biz.event.sss.SSSGameEventDealNew;
@@ -122,6 +123,9 @@ public class BaseEventDeal {
 
     @Resource
     private FundEventDeal fundEventDeal;
+
+    @Resource
+    private MatchEventDeal matchEventDeal;
 
     /**
      * 创建房间判断是否满足条件
@@ -1732,6 +1736,18 @@ public class BaseEventDeal {
                         return;
                     }
                 }
+            }
+            // 该玩家当前所在场次
+            Object playerSignUpInfo = redisService.hget("player_sign_up_info" + MatchConstant.MATCH_TYPE_COUNT, account);
+            // 更新uuid
+            if (playerSignUpInfo != null) {
+                matchEventDeal.changePlayerInfo(JSONObject.fromObject(playerSignUpInfo).getString("match_num"),
+                    String.valueOf(client.getSessionId()),null,account,0,0, 0,0);
+            }
+            playerSignUpInfo = redisService.hget("player_sign_up_info" + MatchConstant.MATCH_TYPE_TIME, account);
+            if (playerSignUpInfo != null) {
+                matchEventDeal.changePlayerInfo(JSONObject.fromObject(playerSignUpInfo).getString("match_num"),
+                    String.valueOf(client.getSessionId()),null,account,0,0, 0,0);
             }
             JSONObject result = new JSONObject();
             result.put(CommonConstant.RESULT_KEY_CODE, CommonConstant.GLOBAL_YES);
