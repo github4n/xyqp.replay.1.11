@@ -299,7 +299,10 @@ public class SSSGameEventDealNew {
             });
         }
         // 房间内所有玩家都已经完成准备且人数大于最低开始人数通知开始游戏,否则通知玩家准备
-        if (room.isAllReady()&&room.getUserPacketMap().size()>=room.getMinPlayer()) {
+        // 是否满人开始可配  20180830  wqm
+        int minStartCount = !Dto.isObjNull(room.getSetting()) && room.getSetting().containsKey("mustFull") ?
+            room.getPlayerCount() : room.getMinPlayer();
+        if (room.isAllReady()&&room.getUserPacketMap().size()>=minStartCount) {
             startGame(room);
         }else {
             JSONObject result = new JSONObject();
@@ -1248,7 +1251,10 @@ public class SSSGameEventDealNew {
                     }
                 }
                 // 房间内所有玩家都已经完成准备且人数大于最低开始人数通知开始游戏
-                if (room.isAllReady()&&room.getPlayerMap().size()>=room.getMinPlayer()) {
+                // 是否满人开始可配  20180830  wqm
+                int minStartCount =!Dto.isObjNull(room.getSetting()) && room.getSetting().containsKey("mustFull") ?
+                    room.getPlayerCount() : room.getMinPlayer();
+                if (room.isAllReady()&&room.getPlayerMap().size()>=minStartCount) {
                     startGame(room);
                 }
                 // 所有人都退出清除房间数据

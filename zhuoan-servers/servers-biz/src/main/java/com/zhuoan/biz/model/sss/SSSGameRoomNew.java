@@ -680,6 +680,10 @@ public class SSSGameRoomNew extends GameRoom{
             return getFinalSummaryData();
         }
         JSONArray array = new JSONArray();
+        ArrayList<Double> score = new ArrayList<>();
+        for(String account :userPacketMap.keySet()){
+            score.add(getPlayerMap().get(account).getScore());
+        }
         for (String account : getUserPacketMap().keySet()) {
             if (getUserPacketMap().containsKey(account)&&getUserPacketMap().get(account)!=null) {
                 if (getUserPacketMap().get(account).getStatus()>SSSConstant.SSS_USER_STATUS_INIT) {
@@ -693,7 +697,7 @@ public class SSSGameRoomNew extends GameRoom{
                         obj.put("isFangzhu",CommonConstant.GLOBAL_YES);
                     }
                     obj.put("isWinner",CommonConstant.GLOBAL_NO);
-                    if (getPlayerMap().get(account).getScore()>0) {
+                    if (getPlayerMap().get(account).getScore()==maxScore(score)) {
                         obj.put("isWinner",CommonConstant.GLOBAL_YES);
                     }
                     obj.put("winTimes",getUserPacketMap().get(account).getWinTimes());

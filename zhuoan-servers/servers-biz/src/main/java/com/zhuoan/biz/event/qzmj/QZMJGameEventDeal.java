@@ -1987,7 +1987,7 @@ public class QZMJGameEventDeal {
                     Playerinfo p = room.getPlayerMap().get(uuid);
                     UserPacketQZMJ userPacketQZMJ = room.getUserPacketMap().get(uuid);
                     int difen = 0;
-                    if (room.getHuType()==QZMJConstant.HU_TYPE_ZM) {
+                    if (room.getHuType()==QZMJConstant.HU_TYPE_ZM || room.getHuType()==QZMJConstant.HU_TYPE_QGH) {
                         difen = QZMJConstant.SCORE_TYPE_NA_ZM;
                     }else if (room.getHuType()==QZMJConstant.HU_TYPE_YJ) {
                         difen = QZMJConstant.SCORE_TYPE_NA_YJ;
@@ -2291,8 +2291,15 @@ public class QZMJGameEventDeal {
                 if(type==1){
                     //抓，补杠
                     List<Integer> indexList = new ArrayList<Integer>();
+                    //取得当前的牌是否能有人胡牌
+                    for(String player: gamePlay.getUserPacketMap().keySet()){
+                        if(MaJiangCore.isHu(gamePlay.getUserPacketMap().get(player).getMyPai(),pai,gamePlay.getJin())){
+                            indexList.add(gamePlay.getPlayerIndex(player));
+                        }
+                    }
+
                     // 有玩家可以抢杠
-                    if(indexList.size()>0){
+                    if(indexList.size()>0&&RoomManage.gameRoomMap.get(roomNo).getSetting().containsKey("canQGH")){
 
                         back = new int[indexList.size()+1];
                         back[0] = -1;

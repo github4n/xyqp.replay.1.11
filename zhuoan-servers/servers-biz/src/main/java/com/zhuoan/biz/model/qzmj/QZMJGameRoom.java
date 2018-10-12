@@ -812,7 +812,7 @@ public class QZMJGameRoom extends GameRoom{
 
             score = (difen + fan)*QZMJConstant.SCORE_TYPE_PH;
 
-        }else if(huType == QZMJConstant.HU_TYPE_ZM){
+        }else if(huType == QZMJConstant.HU_TYPE_ZM  || huType == QZMJConstant.HU_TYPE_QGH){
 
             score = (difen + fan)*QZMJConstant.SCORE_TYPE_ZM;
 

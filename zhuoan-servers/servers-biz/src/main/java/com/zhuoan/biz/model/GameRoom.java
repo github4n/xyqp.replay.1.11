@@ -766,4 +766,21 @@ public class GameRoom implements Serializable{
         gamelog.put("roomtype", getRoomType());
         return gamelog;
     }
+    /**
+     * 取出最大分数
+     * @param score
+     * @return
+     */
+    public double maxScore(ArrayList<Double> score ){
+        if(score.size() >0){
+            double bigWinner =0;
+            for(int i=0;i<score.size();i++){
+                if(score.get(i) > bigWinner){
+                    bigWinner = score.get(i);
+                }
+            }
+            return bigWinner;
+        }
+        return 0;
+    }
 }
