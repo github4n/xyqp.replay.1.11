@@ -305,7 +305,9 @@ public class SSSGameEventDealNew {
         }
         // 房间内所有玩家都已经完成准备且人数大于最低开始人数通知开始游戏,否则通知玩家准备
         // 是否满人开始可配  20180830  wqm
-        int minStartCount = !Dto.isObjNull(room.getSetting())&&room.getRoomType()==CommonConstant.ROOM_TYPE_FK && room.getSetting().containsKey("mustFull") ?
+        int minStartCount = !Dto.isObjNull(room.getSetting())&&
+            (room.getRoomType()==CommonConstant.ROOM_TYPE_FK||room.getRoomType()==CommonConstant.ROOM_TYPE_CLUB)&&
+            room.getSetting().containsKey("mustFull") ?
             room.getPlayerCount() : room.getMinPlayer();
         if (room.isAllReady()&&room.getUserPacketMap().size()>=minStartCount) {
             startGame(room);
@@ -1257,7 +1259,9 @@ public class SSSGameEventDealNew {
                 }
                 // 房间内所有玩家都已经完成准备且人数大于最低开始人数通知开始游戏
                 // 是否满人开始可配  20180830  wqm
-                int minStartCount = !Dto.isObjNull(room.getSetting())&&room.getRoomType()==CommonConstant.ROOM_TYPE_FK && room.getSetting().containsKey("mustFull") ?
+                int minStartCount = !Dto.isObjNull(room.getSetting())&&
+                    (room.getRoomType()==CommonConstant.ROOM_TYPE_FK||room.getRoomType()==CommonConstant.ROOM_TYPE_CLUB)&&
+                    room.getSetting().containsKey("mustFull") ?
                     room.getPlayerCount() : room.getMinPlayer();
                 // 若是提前开始方法调用 则重新设置人数
                 if(postData.containsKey("gameStart")){

@@ -324,7 +324,9 @@ public class NNGameEventDealNew {
             });
         }
         // 是否满人开始可配  20180830  wqm
-        int minStartCount = !Dto.isObjNull(room.getSetting())&&room.getRoomType()==CommonConstant.ROOM_TYPE_FK && room.getSetting().containsKey("mustFull") ?
+        int minStartCount = !Dto.isObjNull(room.getSetting())&&
+            (room.getRoomType()==CommonConstant.ROOM_TYPE_FK||room.getRoomType()==CommonConstant.ROOM_TYPE_CLUB)&&
+            room.getSetting().containsKey("mustFull") ?
             room.getPlayerCount() : NNConstant.NN_MIN_START_COUNT;
         // 房间内所有玩家都已经完成准备且人数大于最低开始人数通知开始游戏,否则通知玩家准备
         if (room.isAllReady() && room.getPlayerMap().size() >= minStartCount) {
@@ -1500,7 +1502,9 @@ public class NNGameEventDealNew {
                 }
                 // 房间内所有玩家都已经完成准备且人数大于两人通知开始游戏
                 // 是否满人开始可配  20180830  wqm
-                int minStartCount = !Dto.isObjNull(room.getSetting())&&room.getRoomType()==CommonConstant.ROOM_TYPE_FK && room.getSetting().containsKey("mustFull") ?
+                int minStartCount = !Dto.isObjNull(room.getSetting())&&
+                    (room.getRoomType()==CommonConstant.ROOM_TYPE_FK||room.getRoomType()==CommonConstant.ROOM_TYPE_CLUB)&&
+                    room.getSetting().containsKey("mustFull") ?
                     room.getPlayerCount() : NNConstant.NN_MIN_START_COUNT;
                 // 若是提前开始方法调用 则重新设置人数
                 if(postData.containsKey("gameStart")){
