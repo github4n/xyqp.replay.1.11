@@ -324,7 +324,7 @@ public class NNGameEventDealNew {
             });
         }
         // 是否满人开始可配  20180830  wqm
-        int minStartCount = !Dto.isObjNull(room.getSetting()) && room.getSetting().containsKey("mustFull") ?
+        int minStartCount = !Dto.isObjNull(room.getSetting())&&room.getRoomType()==CommonConstant.ROOM_TYPE_FK && room.getSetting().containsKey("mustFull") ?
             room.getPlayerCount() : NNConstant.NN_MIN_START_COUNT;
         // 房间内所有玩家都已经完成准备且人数大于最低开始人数通知开始游戏,否则通知玩家准备
         if (room.isAllReady() && room.getPlayerMap().size() >= minStartCount) {
@@ -400,6 +400,10 @@ public class NNGameEventDealNew {
         if (room.getUserPacketMap().get(account).getStatus() != NNConstant.NN_USER_STATUS_READY) {
             gameReady(client,data);
         }
+        // 若房主连同其他玩家都已经准备好,则直接比较人数开始
+        if (outList.size()==0&&room.isAllReady()&&room.getUserPacketMap().size()>=NNConstant.NN_MIN_START_COUNT) {
+            startGame(room);
+        }
         // 退出房间
         for (String player : outList) {
             if (room.getUserPacketMap().get(player).getStatus() != NNConstant.NN_USER_STATUS_READY) {
@@ -409,6 +413,7 @@ public class NNGameEventDealNew {
                 exitData.put(CommonConstant.DATA_KEY_ACCOUNT, player);
                 exitData.put("notSend", CommonConstant.GLOBAL_YES);
                 exitData.put("notSendToMe", CommonConstant.GLOBAL_YES);
+                exitData.put("gameStart",CommonConstant.GLOBAL_YES);
                 exitRoom(playerClient, exitData);
                 // 通知玩家
                 JSONObject result = new JSONObject();
@@ -1495,8 +1500,12 @@ public class NNGameEventDealNew {
                 }
                 // 房间内所有玩家都已经完成准备且人数大于两人通知开始游戏
                 // 是否满人开始可配  20180830  wqm
-                int minStartCount = !Dto.isObjNull(room.getSetting()) && room.getSetting().containsKey("mustFull") ?
+                int minStartCount = !Dto.isObjNull(room.getSetting())&&room.getRoomType()==CommonConstant.ROOM_TYPE_FK && room.getSetting().containsKey("mustFull") ?
                     room.getPlayerCount() : NNConstant.NN_MIN_START_COUNT;
+                // 若是提前开始方法调用 则重新设置人数
+                if(postData.containsKey("gameStart")){
+                    minStartCount = NNConstant.NN_MIN_START_COUNT;
+                }
                 if (room.isAllReady() && room.getPlayerMap().size() >= minStartCount) {
                     startGame(room);
                 }
