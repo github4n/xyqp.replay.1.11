@@ -1178,6 +1178,7 @@ public class BaseEventDeal {
             }
             room.setSpecialType(specialType);
         }
+        room.setSetting(setting);
         // 抢庄是否要加倍
         if (baseInfo.containsKey("qzTimes")) {
             room.qzTimes = baseInfo.getJSONArray("qzTimes");
@@ -2386,7 +2387,7 @@ public class BaseEventDeal {
                 }
             }
         }
-        if (roomNoList.size()<=5) {
+        if (roomNoList.size()<=0) {
             createRoomBase(client,postData);
         }else {
             // 随机加入

@@ -182,26 +182,33 @@ public class SSSGameEventDealNew {
             sendStartResultToSingle(client, eventName, CommonConstant.GLOBAL_YES, "是否开始");
             return;
         }
+        if (!Dto.isObjNull(room.getSetting())) {
+            room.getSetting().remove("mustFull");
+        }
         // 房主未准备直接准备
         if (room.getUserPacketMap().get(account).getStatus() != SSSConstant.SSS_USER_STATUS_READY) {
             gameReady(client,data);
         }
-        // 退出房间
-        for (String player : outList) {
-            if (room.getUserPacketMap().get(player).getStatus() != SSSConstant.SSS_USER_STATUS_READY) {
-                SocketIOClient playerClient = GameMain.server.getClient(room.getPlayerMap().get(player).getUuid());
-                JSONObject exitData = new JSONObject();
-                exitData.put(CommonConstant.DATA_KEY_ROOM_NO, roomNo);
-                exitData.put(CommonConstant.DATA_KEY_ACCOUNT, player);
-                exitData.put("notSend", CommonConstant.GLOBAL_YES);
-                exitData.put("notSendToMe", CommonConstant.GLOBAL_YES);
-                exitRoom(playerClient, exitData);
-                // 通知玩家
-                JSONObject result = new JSONObject();
-                result.put("type", CommonConstant.SHOW_MSG_TYPE_BIG);
-                result.put(CommonConstant.RESULT_KEY_MSG, "已被房主踢出");
-                CommonConstant.sendMsgEventToSingle(playerClient, result.toString(), "tipMsgPush");
+        if (outList.size() > 0) {
+            // 退出房间
+            for (String player : outList) {
+                if (room.getUserPacketMap().get(player).getStatus() != SSSConstant.SSS_USER_STATUS_READY) {
+                    SocketIOClient playerClient = GameMain.server.getClient(room.getPlayerMap().get(player).getUuid());
+                    JSONObject exitData = new JSONObject();
+                    exitData.put(CommonConstant.DATA_KEY_ROOM_NO, roomNo);
+                    exitData.put(CommonConstant.DATA_KEY_ACCOUNT, player);
+                    exitData.put("notSend", CommonConstant.GLOBAL_YES);
+                    exitData.put("notSendToMe", CommonConstant.GLOBAL_YES);
+                    exitRoom(playerClient, exitData);
+                    // 通知玩家
+                    JSONObject result = new JSONObject();
+                    result.put("type", CommonConstant.SHOW_MSG_TYPE_BIG);
+                    result.put(CommonConstant.RESULT_KEY_MSG, "已被房主踢出");
+                    CommonConstant.sendMsgEventToSingle(playerClient, result.toString(), "tipMsgPush");
+                }
             }
+        } else {
+            startGame(room);
         }
     }
 
@@ -298,8 +305,14 @@ public class SSSGameEventDealNew {
                 }
             });
         }
+        int minStartPlayer = room.getMinPlayer();
+        if (room.getRoomType() == CommonConstant.ROOM_TYPE_FK || room.getRoomType() == CommonConstant.ROOM_TYPE_CLUB) {
+            if (!Dto.isObjNull(room.getSetting()) && room.getSetting().containsKey("mustFull")) {
+                minStartPlayer = room.getPlayerCount();
+            }
+        }
         // 房间内所有玩家都已经完成准备且人数大于最低开始人数通知开始游戏,否则通知玩家准备
-        if (room.isAllReady()&&room.getUserPacketMap().size()>=room.getMinPlayer()) {
+        if (room.isAllReady()&&room.getUserPacketMap().size() >= minStartPlayer) {
             startGame(room);
         }else {
             JSONObject result = new JSONObject();
@@ -1247,8 +1260,14 @@ public class SSSGameEventDealNew {
                         }
                     }
                 }
+                int minStartPlayer = room.getMinPlayer();
+                if (room.getRoomType() == CommonConstant.ROOM_TYPE_FK || room.getRoomType() == CommonConstant.ROOM_TYPE_CLUB) {
+                    if (!Dto.isObjNull(room.getSetting()) && room.getSetting().containsKey("mustFull")) {
+                        minStartPlayer = room.getPlayerCount();
+                    }
+                }
                 // 房间内所有玩家都已经完成准备且人数大于最低开始人数通知开始游戏
-                if (room.isAllReady()&&room.getPlayerMap().size()>=room.getMinPlayer()) {
+                if (room.isAllReady()&&room.getPlayerMap().size() >= minStartPlayer) {
                     startGame(room);
                 }
                 // 所有人都退出清除房间数据
