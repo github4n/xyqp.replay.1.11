@@ -558,6 +558,10 @@ public class NNGameRoomNew extends GameRoom{
             return getFinalSummaryData();
         }
         JSONArray array = new JSONArray();
+        ArrayList<Double> score = new ArrayList<>();
+        for(String account :userPacketMap.keySet() ){
+            score.add(getPlayerMap().get(account).getScore());
+        }
         for (String account : userPacketMap.keySet()) {
             if (userPacketMap.containsKey(account)&&userPacketMap.get(account)!=null) {
                 JSONObject obj = new JSONObject();
@@ -570,7 +574,7 @@ public class NNGameRoomNew extends GameRoom{
                     obj.put("isFangzhu",CommonConstant.GLOBAL_YES);
                 }
                 obj.put("isWinner",CommonConstant.GLOBAL_NO);
-                if (getPlayerMap().get(account).getScore()>0) {
+                if (getPlayerMap().get(account).getScore()==maxScore(score)) {
                     obj.put("isWinner",CommonConstant.GLOBAL_YES);
                 }
                 obj.put("tongShaTimes",userPacketMap.get(account).getTongShaTimes());

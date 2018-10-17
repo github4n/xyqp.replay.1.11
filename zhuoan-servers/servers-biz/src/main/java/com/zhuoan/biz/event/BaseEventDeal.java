@@ -1218,6 +1218,7 @@ public class BaseEventDeal {
         if (baseInfo.getInt("roomType")!=CommonConstant.ROOM_TYPE_DK) {
             room.getUserPacketMap().put(account, new UserPacket());
         }
+        room.setSetting(setting);
     }
 
     /**
