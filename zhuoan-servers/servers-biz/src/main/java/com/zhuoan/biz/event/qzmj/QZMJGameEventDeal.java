@@ -24,6 +24,8 @@ import com.zhuoan.util.thread.ThreadPoolHelper;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 import org.apache.commons.lang.math.RandomUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
@@ -38,6 +40,8 @@ import java.util.*;
  **/
 @Component
 public class QZMJGameEventDeal {
+
+    private final static Logger logger = LoggerFactory.getLogger(QZMJGameEventDeal.class);
 
     public static int GAME_QZMJ = 1;
 
@@ -2781,6 +2785,7 @@ public class QZMJGameEventDeal {
                 // 3、开始摸牌（补花）
                 int[] pais = new int[huaCount];
                 for (int i = 0; i < huaCount; i++) {
+                    changePai(roomNo, mPaier);
                     int index=room.getIndex();
                     int[] pai=room.getPai();
                     int newpai=-1;
@@ -3042,6 +3047,7 @@ public class QZMJGameEventDeal {
         //获取本次应该出牌的人
         if(RoomManage.gameRoomMap.containsKey(roomNo) && RoomManage.gameRoomMap.get(roomNo)!=null){
             QZMJGameRoom room = (QZMJGameRoom) RoomManage.gameRoomMap.get(roomNo);
+            changePai(roomNo, moPaiUUID);
             int index = room.getIndex();
             int[] pai = room.getPai();
 
@@ -3073,6 +3079,55 @@ public class QZMJGameEventDeal {
             }
         }
         return newpai;
+    }
+
+    private static void changePai(String roomNo, String moPaiUUID) {
+        try {
+            if (RoomManage.gameRoomMap.containsKey(roomNo) && RoomManage.gameRoomMap.get(roomNo) != null) {
+                QZMJGameRoom room = (QZMJGameRoom) RoomManage.gameRoomMap.get(roomNo);
+                UserPacketQZMJ userPacketQZMJ = room.getUserPacketMap().get(moPaiUUID);
+                int index = room.getIndex();
+                int[] pai = room.getPai();
+                // 当前的牌
+                int curPai = pai[index];
+                // 是否有杠
+                List<DontMovePai> penghistory = userPacketQZMJ.getPengList();
+                int[] back = MaJiangCore.isGang(userPacketQZMJ.getMyPai(), curPai, 1, penghistory);
+                // 牌下标
+                int changeIndex = QZMJConstant.ALL_PAI.length - QZMJConstant.LEFT_PAI_COUNT;
+                //  有杠
+                while (back[0] > 0 && changeIndex < QZMJConstant.ALL_PAI.length) {
+                    boolean hu = false;
+                    //取得当前的牌是否能有人胡牌
+                    for (String player : room.getUserPacketMap().keySet()) {
+                        if (!player.equals(moPaiUUID) && MaJiangCore.isHu(room.getUserPacketMap().get(player).getMyPai(), curPai, room.getJin())) {
+                            hu = true;
+                            break;
+                        }
+                    }
+                    if (hu) {
+                        // 取非金牌
+                        int newPai = pai[changeIndex];
+                        while (newPai == room.getJin()) {
+                            changeIndex++;
+                            newPai = pai[changeIndex];
+                        }
+                        // 交换
+                        pai[index] = newPai;
+                        pai[changeIndex] = curPai;
+                        changeIndex++;
+                        room.setPai(pai);
+                        // 重新赋值
+                        curPai = pai[index];
+                        back = MaJiangCore.isGang(userPacketQZMJ.getMyPai(), curPai, 1, penghistory);
+                    } else {
+                        back = new int[]{0};
+                    }
+                }
+            }
+        } catch (Exception e) {
+            logger.error("", e);
+        }
     }
 
     /**
