@@ -1257,6 +1257,29 @@ public class SSSComputeCards {
 			return -1;
 		}else{
 			if (p1.size()==3&&p2.size()==3) {
+			    // ============加入同花三条判断 wqm 20181025 start==================
+                ArrayList<ArrayList<Integer>> p11=getListByNum(player1);
+                ArrayList<ArrayList<Integer>> p22=getListByNum(player2);
+                boolean containsThree1 = false;
+                boolean containsThree2 = false;
+                for(int i=0;i<p11.size();i++){
+                    if (p11.get(i).size()==3) {
+                        containsThree1 = true;
+                    }
+                }
+                for(int i=0;i<p11.size();i++){
+                    if (p22.get(i).size()==3) {
+                        containsThree2 = true;
+                    }
+                }
+                if (containsThree1 && containsThree2) {
+                    return compareThree(player1,player2);
+                } else if (containsThree1 && !containsThree2) {
+                    return 1;
+                } else if (!containsThree1 && containsThree2) {
+                    return -1;
+                }
+                // ============================end=============================
 				return	compareTwo(player1, player2);
 			}else if(p1.size()==4&&p2.size()==4){
 				return	compareOne(player1, player2);

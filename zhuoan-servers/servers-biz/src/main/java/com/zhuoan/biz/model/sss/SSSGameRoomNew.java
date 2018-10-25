@@ -419,11 +419,23 @@ public class SSSGameRoomNew extends GameRoom{
             pai.addAll(oneFlower);
             pai.addAll(twoFlower);
             pai.addAll(threeFlower);
+            if (mode==1) {
+                pai.addAll(FourFlower);
+            }else if(mode==2){
+                pai.addAll(FourFlower);
+                pai.addAll(oneFlower);
+            }
         }else if(perNum==8){
             pai.addAll(oneFlower);
             pai.addAll(twoFlower);
             pai.addAll(threeFlower);
             pai.addAll(FourFlower);
+            if (mode==1) {
+                pai.addAll(oneFlower);
+            }else if(mode==2){
+                pai.addAll(oneFlower);
+                pai.addAll(twoFlower);
+            }
         }
         // 洗牌
         Collections.shuffle(pai);
