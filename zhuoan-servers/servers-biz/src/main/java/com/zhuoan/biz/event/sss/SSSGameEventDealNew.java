@@ -338,6 +338,10 @@ public class SSSGameEventDealNew {
         redisService.insertKey("summaryTimes_sss"+room.getRoomNo(),"0",null);
         // 初始化房间信息
         room.initGame();
+        // 更新游戏局数
+        if (room.getRoomType() == CommonConstant.ROOM_TYPE_FK && !Dto.isObjNull(room.getSetting()) && room.getSetting().containsKey("update_index")) {
+            roomBiz.increaseRoomIndexByRoomNo(room.getRoomNo());
+        }
         if (room.getBankerType()==SSSConstant.SSS_BANKER_TYPE_BWZ||room.getBankerType()==SSSConstant.SSS_BANKER_TYPE_HB) {
             startGameCommon(room.getRoomNo());
         }else if (room.getBankerType()==SSSConstant.SSS_BANKER_TYPE_ZZ) {

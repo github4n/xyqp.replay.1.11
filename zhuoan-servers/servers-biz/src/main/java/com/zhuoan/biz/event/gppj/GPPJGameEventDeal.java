@@ -880,6 +880,10 @@ public class GPPJGameEventDeal {
         GPPJGameRoom room = (GPPJGameRoom) RoomManage.gameRoomMap.get(roomNo);
         // 游戏局数+1
         room.setGameIndex(room.getGameIndex()+1);
+        // 更新游戏局数
+        if (room.getRoomType() == CommonConstant.ROOM_TYPE_FK && !Dto.isObjNull(room.getSetting()) && room.getSetting().containsKey("update_index")) {
+            roomBiz.increaseRoomIndexByRoomNo(roomNo);
+        }
         double minScore = 0;
         String minAccount = "";
         // 获取上局输家

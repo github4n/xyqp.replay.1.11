@@ -281,5 +281,10 @@ public class RoomBizImpl implements RoomBiz{
         gameDao.updateRobotStatus(robotAccount, status);
     }
 
+    @Override
+    public void increaseRoomIndexByRoomNo(String roomNo) {
+
+    }
+
 
 }

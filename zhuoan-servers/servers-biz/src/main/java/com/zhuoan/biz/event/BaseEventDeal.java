@@ -1328,6 +1328,7 @@ public class BaseEventDeal {
         // 房主
         room.setOwner(account);
         JSONObject setting = getGameInfoById(CommonConstant.GAME_ID_GP_PJ);
+        room.setSetting(setting);
         // 下注倍数
         if (baseInfo.containsKey("baseNum")) {
             room.setBaseNum(baseInfo.getJSONArray("baseNum"));

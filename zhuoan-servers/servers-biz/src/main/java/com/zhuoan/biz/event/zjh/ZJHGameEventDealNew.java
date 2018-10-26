@@ -213,6 +213,10 @@ public class ZJHGameEventDealNew {
         redisService.insertKey("summaryTimes_zjh"+room.getRoomNo(),"0",null);
         // 初始化房间信息
         room.initGame();
+        // 更新游戏局数
+        if (room.getRoomType() == CommonConstant.ROOM_TYPE_FK && !Dto.isObjNull(room.getSetting()) && room.getSetting().containsKey("update_index")) {
+            roomBiz.increaseRoomIndexByRoomNo(room.getRoomNo());
+        }
         ((ZJHGameEventDealNew)AopContext.currentProxy()).shuffleAndFp(room);
         // 弃牌可见 20180827 wqm
         for (String account : room.getUserPacketMap().keySet()) {

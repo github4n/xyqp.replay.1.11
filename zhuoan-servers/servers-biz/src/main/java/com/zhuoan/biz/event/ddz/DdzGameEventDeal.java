@@ -1118,6 +1118,10 @@ public class DdzGameEventDeal {
         room.setGameStatus(DdzConstant.DDZ_GAME_STATUS_CHOICE_LANDLORD);
         // 初始化房间信息
         initRoom(roomNo);
+        // 更新游戏局数
+        if (room.getRoomType() == CommonConstant.ROOM_TYPE_FK && !Dto.isObjNull(room.getSetting()) && room.getSetting().containsKey("update_index")) {
+            roomBiz.increaseRoomIndexByRoomNo(roomNo);
+        }
         // 清空结算防重
         redisService.insertKey("summaryTimes_ddz_"+room.getRoomNo(),"0",null);
         // 设置手牌

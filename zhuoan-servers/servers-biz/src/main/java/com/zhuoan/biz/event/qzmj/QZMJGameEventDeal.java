@@ -1488,6 +1488,10 @@ public class QZMJGameEventDeal {
         // 确定庄家
         if (room.choiceBanker()) {
             room.initGame();
+            // 更新游戏局数
+            if (room.getRoomType() == CommonConstant.ROOM_TYPE_FK && !Dto.isObjNull(room.getSetting()) && room.getSetting().containsKey("update_index")) {
+                roomBiz.increaseRoomIndexByRoomNo(roomNo);
+            }
             RoomManage.gameRoomMap.get(roomNo).setGameStatus(QZMJConstant.QZ_GAME_STATUS_ING);
             // 摇骰子
             room.obtainDice();

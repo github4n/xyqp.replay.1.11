@@ -775,5 +775,11 @@ public class GameDaoImpl implements GameDao {
         sql += " ORDER BY id DESC";
         return DBUtil.getObjectListBySQL(sql,new Object[]{userId, gameId, roomType});
     }
+
+    @Override
+    public void increaseRoomIndexByRoomNo(String roomNo) {
+        String sql = "update za_gamerooms set game_index=game_index+1 where room_no=? and status=?";
+        DBUtil.executeUpdateBySQL(sql, new Object[]{roomNo, 0});
+    }
 }
 

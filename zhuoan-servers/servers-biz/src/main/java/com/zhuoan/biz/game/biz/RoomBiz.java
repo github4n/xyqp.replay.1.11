@@ -121,4 +121,11 @@ public interface RoomBiz {
      */
     public void updateRobotStatus(String robotAccount,int status);
 
+    /**
+     * 增加游戏下标
+     *
+     * @param roomNo roomNo
+     */
+    void increaseRoomIndexByRoomNo(String roomNo);
+
 }

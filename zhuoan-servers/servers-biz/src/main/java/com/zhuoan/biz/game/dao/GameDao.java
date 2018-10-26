@@ -390,5 +390,10 @@ public interface GameDao {
      */
     JSONArray getUserGameLogsByUserId(long userId, int gameId, int roomType, List<String> roomList, String clubCode);
 
-
+    /**
+     * 增加游戏下标
+     *
+     * @param roomNo roomNo
+     */
+    void increaseRoomIndexByRoomNo(String roomNo);
 }

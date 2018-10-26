@@ -498,6 +498,10 @@ public class NNGameEventDealNew {
         redisService.insertKey("summaryTimes_nn"+room.getRoomNo(),"0",null);
         // 初始化房间信息
         room.initGame();
+        // 更新游戏局数
+        if (room.getRoomType() == CommonConstant.ROOM_TYPE_FK && !Dto.isObjNull(room.getSetting()) && room.getSetting().containsKey("update_index")) {
+            roomBiz.increaseRoomIndexByRoomNo(room.getRoomNo());
+        }
         if (room.getBankerType() == NNConstant.NN_BANKER_TYPE_MP) {
             // 明牌抢庄开始游戏
             startGameMp(room);
