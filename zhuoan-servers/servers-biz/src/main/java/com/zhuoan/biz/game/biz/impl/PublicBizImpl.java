@@ -147,4 +147,9 @@ public class PublicBizImpl implements PublicBiz{
             gameDao.addUserWelfareRec(obj);
         }
     }
+
+    @Override
+    public JSONObject getAppSettingInfo(String platform) {
+        return gameDao.getAppSettingInfo(platform);
+    }
 }

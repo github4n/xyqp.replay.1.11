@@ -2552,11 +2552,11 @@ public class BaseEventDeal {
             if (object != null) {
                 signRewardInfo = JSONObject.fromObject(redisService.queryValueByKey(String.valueOf(sb)));
             }else {
-                signRewardInfo = publicBiz.getSignRewardInfoByPlatform(platform);
+                signRewardInfo = publicBiz.getAppSettingInfo(platform);
                 redisService.insertKey(String.valueOf(sb), String.valueOf(signRewardInfo), null);
             }
         } catch (Exception e) {
-            signRewardInfo = publicBiz.getSignRewardInfoByPlatform(platform);
+            signRewardInfo = publicBiz.getAppSettingInfo(platform);
             logger.error("请启动REmote DIctionary Server");
         }
         return signRewardInfo;
@@ -2586,6 +2586,30 @@ public class BaseEventDeal {
             return signRewardInfo.getInt("signin_base");
         }
         return maxReward;
+    }
+
+    /**
+     * 获取签到奖励道具类型
+     *
+     * @param platform platform
+     * @return String
+     */
+    private String getCoinsSignRewardType(String platform) {
+        String rewardType = null;
+        JSONObject signRewardInfo = getCoinsSignRewardInfo(platform);
+        if (!Dto.isObjNull(signRewardInfo)&&signRewardInfo.containsKey("signin_prop")) {
+            switch (signRewardInfo.getInt("signin_prop")) {
+                case CommonConstant.CURRENCY_TYPE_ROOM_CARD:
+                    rewardType = "roomcard";
+                    break;
+                case CommonConstant.CURRENCY_TYPE_COINS:
+                    rewardType = "coins";
+                    break;
+                default:
+                    break;
+            }
+        }
+        return rewardType;
     }
 
     /**
@@ -2641,13 +2665,14 @@ public class BaseEventDeal {
         if (!Dto.isObjNull(object)) {
             int back = publicBiz.addOrUpdateUserSign(object);
             JSONObject userInfo = userBiz.getUserByAccount(account);
-            if (back>0&&!Dto.isObjNull(userInfo)) {
+            String rewardType = getCoinsSignRewardType(platform);
+            if (back>0 && !Dto.isObjNull(userInfo) && !Dto.stringIsNULL(rewardType)) {
                 result.put(CommonConstant.RESULT_KEY_CODE,CommonConstant.GLOBAL_YES);
                 result.put("newScore",userInfo.getInt("coins")+reward);
                 result.put("days",object.getInt("singnum"));
                 JSONObject obj = new JSONObject();
                 obj.put("account", account);
-                obj.put("updateType", "coins");
+                obj.put("updateType", rewardType);
                 obj.put("sum", reward);
                 producerService.sendMessage(daoQueueDestination, new PumpDao(DaoTypeConstant.UPDATE_USER_INFO, obj));
             }else {

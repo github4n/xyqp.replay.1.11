@@ -781,5 +781,11 @@ public class GameDaoImpl implements GameDao {
         String sql = "update za_gamerooms set game_index=game_index+1 where room_no=? and status=?";
         DBUtil.executeUpdateBySQL(sql, new Object[]{roomNo, 0});
     }
+
+    @Override
+    public JSONObject getAppSettingInfo(String platform) {
+        String sql = "select signin_prop,signin_base,signin_max,signin_min from operator_appsetting where platform=?";
+        return DBUtil.getObjectBySQL(sql, new Object[]{platform});
+    }
 }
 

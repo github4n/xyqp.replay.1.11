@@ -115,4 +115,12 @@ public interface PublicBiz {
      * @param gameId
      */
     void addUserWelfareRec(String account, double sum, int type, int gameId);
+
+    /**
+     * 获取app配置
+     *
+     * @param platform platform
+     * @return JSONObject
+     */
+    JSONObject getAppSettingInfo(String platform);
 }

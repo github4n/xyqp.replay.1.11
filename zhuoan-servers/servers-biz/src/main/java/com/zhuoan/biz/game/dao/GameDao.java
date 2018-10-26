@@ -396,4 +396,12 @@ public interface GameDao {
      * @param roomNo roomNo
      */
     void increaseRoomIndexByRoomNo(String roomNo);
+
+    /**
+     * 获取app配置
+     *
+     * @param platform platform
+     * @return JSONObject
+     */
+    JSONObject getAppSettingInfo(String platform);
 }
