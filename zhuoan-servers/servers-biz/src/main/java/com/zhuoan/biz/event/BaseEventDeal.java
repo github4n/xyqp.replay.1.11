@@ -2668,7 +2668,7 @@ public class BaseEventDeal {
             String rewardType = getCoinsSignRewardType(platform);
             if (back>0 && !Dto.isObjNull(userInfo) && !Dto.stringIsNULL(rewardType)) {
                 result.put(CommonConstant.RESULT_KEY_CODE,CommonConstant.GLOBAL_YES);
-                result.put("newScore",userInfo.getInt("coins")+reward);
+                result.put("newScore",userInfo.getInt(rewardType)+reward);
                 result.put("days",object.getInt("singnum"));
                 JSONObject obj = new JSONObject();
                 obj.put("account", account);
