@@ -1491,9 +1491,11 @@ public class BaseEventDeal {
         // 添加牌局信息
         if (baseInfo.getInt("roomType") != CommonConstant.ROOM_TYPE_DK) {
             UserPacketDdz up = new UserPacketDdz();
-            Object winTimeInfo = redisService.hget("win_time_info_" + baseInfo.getDouble("di"), account);
-            if (!Dto.isNull(winTimeInfo)) {
-                up.setWinStreakTime(Integer.parseInt(String.valueOf(winTimeInfo)));
+            if (baseInfo.containsKey("di")) {
+                Object winTimeInfo = redisService.hget("win_time_info_" + baseInfo.getDouble("di"), account);
+                if (!Dto.isNull(winTimeInfo)) {
+                    up.setWinStreakTime(Integer.parseInt(String.valueOf(winTimeInfo)));
+                }
             }
             room.getUserPacketMap().put(account, up);
         }

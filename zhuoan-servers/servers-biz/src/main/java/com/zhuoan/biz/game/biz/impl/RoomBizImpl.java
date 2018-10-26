@@ -283,7 +283,7 @@ public class RoomBizImpl implements RoomBiz{
 
     @Override
     public void increaseRoomIndexByRoomNo(String roomNo) {
-
+        gameDao.increaseRoomIndexByRoomNo(roomNo);
     }
 
 
