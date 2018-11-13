@@ -37,7 +37,15 @@ public class CacheKeyConstant {
      */
     public static final String GAME_SETTING = "game_setting";
     /**
-     * The constant ROOM_INFO_BY_RNO.
+     * The constant VERIFICATION_MAP.
      */
     public static final String ROOM_INFO_BY_RNO = "room_info_by_rno";
+    /**
+     * The constant VERIFICATION_MAP.
+     */
+    public static final String VERIFICATION_MAP = "verification_map";
+    /**
+     * The constant VERIFICATION_SET.
+     */
+    public static final String VERIFICATION_SET = "verification_set";
 }

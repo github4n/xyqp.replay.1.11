@@ -243,6 +243,7 @@ public class RedisServiceImpl implements RedisService {
      * @param time  时间(秒)  注意:如果已存在的hash表有时间,这里将会替换原有的时间
      * @return true 成功 false失败
      */
+    @Override
     public boolean hset(String key, String item, Object value, long time) {
         try {
             redisTemplate.opsForHash().put(key, item, value);
@@ -362,6 +363,7 @@ public class RedisServiceImpl implements RedisService {
      * @param values 值 可以是多个
      * @return 成功个数
      */
+    @Override
     public long sSetAndTime(String key, long time, Object... values) {
         try {
             Long count = redisTemplate.opsForSet().add(key, values);

@@ -57,6 +57,17 @@ public interface RedisService {
     boolean hset(String key, String item, Object value);
 
     /**
+     * 向一张hash表中放入数据,如果不存在将创建
+     *
+     * @param key   键
+     * @param item  项
+     * @param value 值
+     * @param time  时间(秒)  注意:如果已存在的hash表有时间,这里将会替换原有的时间
+     * @return true 成功 false失败
+     */
+    boolean hset(String key, String item, Object value, long time);
+
+    /**
      * 获取hashKey对应的所有键值
      *
      * @param key 键
@@ -98,6 +109,16 @@ public interface RedisService {
      * @return 成功个数
      */
     long sSet(String key, Object... values);
+
+    /**
+     * 将set数据放入缓存
+     *
+     * @param key    键
+     * @param time   时间(秒)
+     * @param values 值 可以是多个
+     * @return 成功个数
+     */
+    long sSetAndTime(String key, long time, Object... values);
 
     /**
      * 移除值为value的
