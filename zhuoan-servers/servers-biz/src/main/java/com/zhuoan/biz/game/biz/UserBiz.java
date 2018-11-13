@@ -90,4 +90,25 @@ public interface UserBiz {
      */
     void addUserTicketRec(JSONObject ticketRec);
 
+    /**
+     * 根据手机号获取用户信息
+     *
+     * @param tel tel
+     * @return JSONObject
+     */
+    JSONObject getUserInfoByTel(String tel);
+
+    /**
+     * 更新用户信息
+     * @param userInfo userInfo
+     * @return int
+     */
+    int updateUserInfo(JSONObject userInfo);
+
+    /**
+     * 删除用户
+     * @param id id
+     * @return int
+     */
+    int deleteUserInfoById(long id);
 }

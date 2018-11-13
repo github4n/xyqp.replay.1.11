@@ -180,6 +180,14 @@ public class CommonConstant {
      */
     public static final int BASE_GAME_EVENT_GET_BACKPACK_INFO = 41;
     /**
+     * 公共游戏事件-获取玩家绑定状态
+     */
+    public static final int BASE_GAME_EVENT_CHECK_BIND_STATUS = 42;
+    /**
+     * 公共游戏事件-用户绑定
+     */
+    public static final int BASE_GAME_EVENT_USER_BIND = 43;
+    /**
      * 游戏公共部分
      */
     public static final int GAME_BASE = 0;

@@ -85,7 +85,7 @@ public class DBJsonUtil {
 			String key = (String) iterator.next();
 			Object value = jsonObject.get(key);
             //where条件
-			if(key=="id") {
+			if("id".equals(key)) {
 				paramTail=value;
 			} else {  //需更新的字段
 				sql+=key+"=?,";

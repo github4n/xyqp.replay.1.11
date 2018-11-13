@@ -48,6 +48,7 @@ import javax.annotation.Resource;
 import javax.jms.Destination;
 import java.math.BigDecimal;
 import java.util.*;
+import java.util.regex.Pattern;
 
 import static net.sf.json.JSONObject.fromObject;
 
@@ -3809,5 +3810,90 @@ public class BaseEventDeal {
                 }
             }
         }
+    }
+
+    /**
+     * 检查用户绑定状态
+     * @param client
+     * @param data
+     */
+    public void checkBindStatus(SocketIOClient client, Object data) {
+        JSONObject postData = JSONObject.fromObject(data);
+        String account = postData.getString(CommonConstant.DATA_KEY_ACCOUNT);
+        JSONObject result = new JSONObject();
+        if (redisService.sHasKey(CacheKeyConstant.BIND_SET, account)) {
+            result.put(CommonConstant.RESULT_KEY_CODE, CommonConstant.GLOBAL_YES);
+        } else {
+            JSONObject userInfo = userBiz.getUserByAccount(account);
+            if (!Dto.isObjNull(userInfo) && !Dto.stringIsNULL(userInfo.getString("tel")) &&
+                Pattern.matches(RegexConstant.REGEX_MOBILE, userInfo.getString("tel"))) {
+                redisService.sSet(CacheKeyConstant.BIND_SET,account);
+                result.put(CommonConstant.RESULT_KEY_CODE, CommonConstant.GLOBAL_YES);
+            } else {
+                result.put(CommonConstant.RESULT_KEY_CODE, CommonConstant.GLOBAL_NO);
+            }
+        }
+        CommonConstant.sendMsgEventToSingle(client, String.valueOf(result), "checkBindStatusPush");
+    }
+
+    public void userBind(SocketIOClient client, Object data) {
+        JSONObject postData = JSONObject.fromObject(data);
+        String account = postData.getString(CommonConstant.DATA_KEY_ACCOUNT);
+        String uuid = postData.getString("uuid");
+        String tel = postData.getString("tel");
+        String password = postData.getString("password");
+        String authCode = postData.getString("authCode");
+        JSONObject result = new JSONObject();
+        if (Pattern.matches(RegexConstant.REGEX_MOBILE, tel)) {
+            Object verificationInfo = redisService.hget(CacheKeyConstant.VERIFICATION_MAP, tel);
+            if (!Dto.isNull(verificationInfo) && String.valueOf(verificationInfo).equals(authCode)) {
+                JSONObject userInfo = userBiz.getUserByAccount(account);
+                // 用户是否存在
+                if (!Dto.isObjNull(userInfo)) {
+                    // uuid是否匹配
+                    if (userInfo.containsKey("uuid") && !Dto.stringIsNULL(userInfo.getString("uuid")) && userInfo.getString("uuid").equals(uuid)) {
+                        // 不可重复绑定
+                        if (!Dto.stringIsNULL(userInfo.getString("tel")) && Pattern.matches(RegexConstant.REGEX_MOBILE, userInfo.getString("tel"))) {
+                            result.put(CommonConstant.RESULT_KEY_CODE, CommonConstant.GLOBAL_NO);
+                            result.put(CommonConstant.RESULT_KEY_MSG, "不可重复绑定");
+                        } else {
+                            JSONObject userInfoByTel = userBiz.getUserInfoByTel(tel);
+                            // 有用户同步信息，没用注册
+                            if (!Dto.isObjNull(userInfoByTel)) {
+                                long oldUserId = userInfoByTel.getLong("id");
+                                userInfoByTel.put("id", userInfo.getLong("id"));
+                                userInfoByTel.put("password", password);
+                                int updateLine = userBiz.updateUserInfo(userInfoByTel);
+                                if (updateLine > 0) {
+                                    // 删除用户数据
+                                    userBiz.deleteUserInfoById(oldUserId);
+                                }
+                            } else {
+                                JSONObject updateInfo = new JSONObject();
+                                updateInfo.put("id", userInfo.getLong("id"));
+                                updateInfo.put("tel", tel);
+                                updateInfo.put("password", password);
+                                userBiz.updateUserInfo(updateInfo);
+                            }
+                            result.put(CommonConstant.RESULT_KEY_CODE, CommonConstant.GLOBAL_YES);
+                            result.put(CommonConstant.RESULT_KEY_MSG, "绑定成功");
+                        }
+                    } else {
+                        result.put(CommonConstant.RESULT_KEY_CODE, CommonConstant.GLOBAL_NO);
+                        result.put(CommonConstant.RESULT_KEY_MSG, "账号已在其他地方登陆");
+                    }
+                } else {
+                    result.put(CommonConstant.RESULT_KEY_CODE, CommonConstant.GLOBAL_NO);
+                    result.put(CommonConstant.RESULT_KEY_MSG, "用户信息不存在");
+                }
+            } else {
+                result.put(CommonConstant.RESULT_KEY_CODE, CommonConstant.GLOBAL_NO);
+                result.put(CommonConstant.RESULT_KEY_MSG, "请输入正确的验证码");
+            }
+        } else {
+            result.put(CommonConstant.RESULT_KEY_CODE, CommonConstant.GLOBAL_NO);
+            result.put(CommonConstant.RESULT_KEY_MSG, "请输入正确的手机号");
+        }
+        CommonConstant.sendMsgEventToSingle(client, String.valueOf(result), "userBindPush");
     }
  }

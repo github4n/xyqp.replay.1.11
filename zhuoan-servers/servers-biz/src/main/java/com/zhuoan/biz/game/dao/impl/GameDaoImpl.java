@@ -62,6 +62,23 @@ public class GameDaoImpl implements GameDao {
         return DBUtil.getObjectBySQL(sql, new Object[]{account});
     }
 
+    @Override
+    public JSONObject getUserInfoByTel(String tel) {
+        String sql = "select id,gulidId,password,tel,roomcard,coins,score,yuanbao,parUserId,parUsers from za_users where tel=? and status=1";
+        return DBUtil.getObjectBySQL(sql, new Object[]{tel});
+    }
+
+    @Override
+    public int updateUserInfo(JSONObject userInfo) {
+        return DBJsonUtil.saveOrUpdate(userInfo, "za_users");
+    }
+
+    @Override
+    public int deleteUserInfoById(long id) {
+        String sql = "delete from za_users where id=?";
+        return DBUtil.executeUpdateBySQL(sql, new Object[]{id});
+    }
+
 
     /**
      * 更新用户 余额

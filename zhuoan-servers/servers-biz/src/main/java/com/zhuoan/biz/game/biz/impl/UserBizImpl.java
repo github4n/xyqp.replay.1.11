@@ -149,4 +149,19 @@ public class UserBizImpl implements UserBiz {
     public void addUserTicketRec(JSONObject ticketRec) {
         gameDao.addUserTicketRec(ticketRec);
     }
+
+    @Override
+    public JSONObject getUserInfoByTel(String tel) {
+        return gameDao.getUserInfoByTel(tel);
+    }
+
+    @Override
+    public int updateUserInfo(JSONObject userInfo) {
+        return gameDao.updateUserInfo(userInfo);
+    }
+
+    @Override
+    public int deleteUserInfoById(long id) {
+        return gameDao.deleteUserInfoById(id);
+    }
 }

@@ -579,6 +579,12 @@ public class GameEventDeal {
             case CommonConstant.BASE_GAME_EVENT_GET_BACKPACK_INFO:
                 baseEventDeal.getBackpackInfo(client,data);
                 break;
+            case CommonConstant.BASE_GAME_EVENT_CHECK_BIND_STATUS:
+                baseEventDeal.checkBindStatus(client,data);
+                break;
+            case CommonConstant.BASE_GAME_EVENT_USER_BIND:
+                baseEventDeal.userBind(client,data);
+                break;
             default:
                 break;
         }

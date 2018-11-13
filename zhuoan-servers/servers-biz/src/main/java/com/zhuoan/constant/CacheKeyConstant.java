@@ -48,4 +48,8 @@ public class CacheKeyConstant {
      * The constant VERIFICATION_SET.
      */
     public static final String VERIFICATION_SET = "verification_set";
+    /**
+     * The constant BIND_SET.
+     */
+    public static final String BIND_SET = "bind_set";
 }

@@ -458,6 +458,26 @@ public class BaseGameEvent {
             }
         });
 
+        /**
+         * 获取绑定状态
+         */
+        server.addEventListener("checkBindStatus", Object.class, new DataListener<Object>() {
+            @Override
+            public void onData(SocketIOClient client, Object data, AckRequest ackSender) {
+                producerService.sendMessage(baseQueueDestination, new Messages(client, data, CommonConstant.GAME_BASE, CommonConstant.BASE_GAME_EVENT_CHECK_BIND_STATUS));
+            }
+        });
+
+        /**
+         * 用户绑定
+         */
+        server.addEventListener("userBind", Object.class, new DataListener<Object>() {
+            @Override
+            public void onData(SocketIOClient client, Object data, AckRequest ackSender) {
+                producerService.sendMessage(baseQueueDestination, new Messages(client, data, CommonConstant.GAME_BASE, CommonConstant.BASE_GAME_EVENT_USER_BIND));
+            }
+        });
+
     }
 
 
