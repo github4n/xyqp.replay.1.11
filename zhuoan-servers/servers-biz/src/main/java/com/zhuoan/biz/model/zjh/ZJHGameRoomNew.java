@@ -88,6 +88,8 @@ public class ZJHGameRoomNew extends GameRoom{
      */
     private List<JSONObject> outUserData = new ArrayList<JSONObject>();
 
+    private List<JSONObject> processList = new ArrayList<>();
+
     public List<JSONObject> getOutUserData() {
         return outUserData;
     }
@@ -206,6 +208,14 @@ public class ZJHGameRoomNew extends GameRoom{
 
     public void setXiaZhuList(JSONArray xiaZhuList) {
         this.xiaZhuList = xiaZhuList;
+    }
+
+    public List<JSONObject> getProcessList() {
+        return processList;
+    }
+
+    public void setProcessList(List<JSONObject> processList) {
+        this.processList = processList;
     }
 
     /**

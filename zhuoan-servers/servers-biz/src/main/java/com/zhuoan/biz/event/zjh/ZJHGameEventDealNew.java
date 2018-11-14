@@ -259,6 +259,12 @@ public class ZJHGameEventDealNew {
                     userPai.put("name", room.getPlayerMap().get(account).getName());
                     userPai.put("pai", room.getUserPacketMap().get(account).getPai());
                     gameProcessFP.add(userPai);
+                    JSONObject processObj = new JSONObject();
+                    processObj.put("index", myIndex);
+                    processObj.put("type", 10);
+                    processObj.put("val", room.getUserPacketMap().get(account).getPai());
+                    processObj.put("paiType", room.getUserPacketMap().get(account).getType());
+                    room.getProcessList().add(processObj);
                 }
             }
         }
@@ -356,6 +362,7 @@ public class ZJHGameEventDealNew {
         result.put("index",room.getPlayerIndex(account));
         result.put("type",ZJHConstant.GAME_ACTION_TYPE_GDD);
         CommonConstant.sendMsgEventToSingle(client, result.toString(), "gameActionPush_ZJH");
+        room.getProcessList().add(result);
         if (room.getFocus().equals(account)&&room.getUserPacketMap().get(account).isGenDaoDi) {
             xiaZhu(room,account,room.getCurrentScore(),ZJHConstant.GAME_ACTION_TYPE_GZ);
         }
@@ -377,6 +384,7 @@ public class ZJHGameEventDealNew {
                 if (uuid.equals(account)) {
                     result.put("mypai",room.getUserPacketMap().get(account).getPai());
                     result.put("paiType",room.getUserPacketMap().get(account).getType());
+                    room.getProcessList().add(result);
                 }
                 CommonConstant.sendMsgEventToSingle(room.getPlayerMap().get(uuid).getUuid(),result.toString(),"gameActionPush_ZJH");
             }
@@ -462,11 +470,34 @@ public class ZJHGameEventDealNew {
                     if (isGameOver==1){
                         result.put("jiesuan",obtainSummaryData(room));
                         result.put("showPai",room.getUserPacketMap().get(uuid).getBipaiList());
+                        room.setSummaryData(result);
+                    }
+                    if (account.equals(uuid)) {
+                        room.getProcessList().add(result);
                     }
                     CommonConstant.sendMsgEventToSingle(room.getPlayerMap().get(uuid).getUuid(),result.toString(),"gameActionPush_ZJH");
                 }
             }
+            if (isGameOver == 1) {
+                if (room.getRoomType()!= CommonConstant.ROOM_TYPE_JB) {
+                    saveGameLogs(room.getRoomNo());
+                }
+            }
             sendFianlSummaryToPlayer(isGameOver,room);
+        } else if (type == ZJHConstant.GAME_ACTION_TYPE_COMPARE) {
+            result.put(CommonConstant.RESULT_KEY_CODE, CommonConstant.GLOBAL_YES);
+            result.put("gameStatus", room.getGameStatus());
+            result.put("index", room.getPlayerMap().get(account).getMyIndex());
+            result.put("nextNum", room.getPlayerIndex(nextPlayer));
+            result.put("gameNum", room.getGameNum());
+            result.put("currentScore", room.getCurrentScore());
+            result.put("totalScore", room.getTotalScore());
+            result.put("myScore", room.getUserPacketMap().get(account).getScore());
+            result.put("score", score);
+            result.put("realScore", room.getPlayerMap().get(account).getScore());
+            result.put("type", type);
+            result.put("isGameover", isGameOver);
+            room.getProcessList().add(result);
         }
         // 游戏结束
         if (type==ZJHConstant.GAME_ACTION_TYPE_COMPARE&&isGameOver==1) {
@@ -566,6 +597,9 @@ public class ZJHGameEventDealNew {
                                 result.put("type", ZJHConstant.GAME_ACTION_TYPE_COMPARE);
                                 result.put("result", compareResult);
                                 result.put("isGameover", isGameOver);
+                                if (account.equals(uid)) {
+                                    room.getProcessList().add(result);
+                                }
                                 CommonConstant.sendMsgEventToSingle(room.getPlayerMap().get(uid).getUuid(),result.toString(),"gameActionPush_ZJH");
                             }
                         }
@@ -596,6 +630,10 @@ public class ZJHGameEventDealNew {
                                 if(isGameOver==1){
                                     result.put("jiesuan",obtainSummaryData(room));
                                     result.put("showPai",room.getUserPacketMap().get(uid).getBipaiList());
+                                    room.setSummaryData(result);
+                                }
+                                if (account.equals(uid)) {
+                                    room.getProcessList().add(result);
                                 }
                                 CommonConstant.sendMsgEventToSingle(room.getPlayerMap().get(uid).getUuid(),result.toString(),"gameActionPush_ZJH");
                             }
@@ -611,6 +649,8 @@ public class ZJHGameEventDealNew {
                                     gameTimerZJH.gameOverTime(room.getRoomNo(),ZJHConstant.ZJH_GAME_STATUS_GAME,nextPlayer, eventTime);
                                 }
                             });
+                        } else if (room.getRoomType()!= CommonConstant.ROOM_TYPE_JB) {
+                            saveGameLogs(room.getRoomNo());
                         }
                         sendFianlSummaryToPlayer(isGameOver,room);
                     }
@@ -731,16 +771,23 @@ public class ZJHGameEventDealNew {
                 result.put("myScore", room.getUserPacketMap().get(account).getScore());
                 result.put("type", ZJHConstant.GAME_ACTION_TYPE_GIVE_UP);
                 result.put("isGameover", isGameOver);
+                if(isGameOver==1){
+                    result.put("jiesuan",obtainSummaryData(room));
+                    result.put("showPai",room.getUserPacketMap().get(uid).getBipaiList());
+                    room.setSummaryData(result);
+                }
                 // 自己的牌型可知 20180827 wqm
                 if (uid.equals(account)) {
                     result.put("mypai", room.getUserPacketMap().get(account).getPai());
                     result.put("paiType", room.getUserPacketMap().get(account).getType());
-                }
-                if(isGameOver==1){
-                    result.put("jiesuan",obtainSummaryData(room));
-                    result.put("showPai",room.getUserPacketMap().get(uid).getBipaiList());
+                    room.getProcessList().add(result);
                 }
                 CommonConstant.sendMsgEventToSingle(room.getPlayerMap().get(uid).getUuid(),result.toString(),"gameActionPush_ZJH");
+            }
+        }
+        if (isGameOver == 1) {
+            if (room.getRoomType()!= CommonConstant.ROOM_TYPE_JB) {
+                saveGameLogs(room.getRoomNo());
             }
         }
         sendFianlSummaryToPlayer(isGameOver,room);
@@ -859,9 +906,6 @@ public class ZJHGameEventDealNew {
         updateUserScore(room.getRoomNo());
         if (room.getRoomType()==CommonConstant.ROOM_TYPE_YB) {
             saveUserDeductionData(room.getRoomNo());
-        }
-        if (room.getRoomType()!= CommonConstant.ROOM_TYPE_JB) {
-            saveGameLogs(room.getRoomNo());
         }
         if (room.getRoomType()==CommonConstant.ROOM_TYPE_FK) {
             room.setNeedFinalSummary(true);
@@ -1028,7 +1072,7 @@ public class ZJHGameEventDealNew {
         }
         logger.info(room.getRoomNo()+"---"+String.valueOf(room.getGameProcess()));
         // 战绩信息
-        JSONObject gameLogObj = room.obtainGameLog(gameLogResults.toString(), room.getGameProcess().toString());
+        JSONObject gameLogObj = room.obtainGameLog(String.valueOf(gameLogResults), String.valueOf(room.getProcessList()));
         producerService.sendMessage(daoQueueDestination, new PumpDao(DaoTypeConstant.INSERT_GAME_LOG, gameLogObj));
         JSONArray userGameLogs = room.obtainUserGameLog(gameLogObj.getLong("id"), array, gameResult.toString());
         for (int i = 0; i < userGameLogs.size(); i++) {

@@ -1,6 +1,7 @@
 package com.zhuoan.biz.model;
 
 import com.zhuoan.biz.model.qzmj.QZMJGameRoom;
+import com.zhuoan.biz.model.zjh.ZJHGameRoomNew;
 import com.zhuoan.constant.CommonConstant;
 import com.zhuoan.util.Dto;
 import com.zhuoan.util.TimeUtil;
@@ -754,7 +755,23 @@ public class GameRoom implements Serializable{
             baseInfo.put("jin", ((QZMJGameRoom)this).getJin());
             baseInfo.put("users", ((QZMJGameRoom)this).getAllPlayer());
             gamelog.put("base_info",baseInfo);
-            gamelog.put("result",((QZMJGameRoom)this).getSummaryData());
+            gamelog.put("result",getSummaryData());
+        } else if (getGid() == CommonConstant.GAME_ID_ZJH && this instanceof ZJHGameRoomNew) {
+            StringBuffer roominfo = new StringBuffer();
+            roominfo.append(getWfType()).append(" ").append(getPlayerCount()).append("人 ").append(getGameCount()).append("局");
+            baseInfo.put("roominfo", String.valueOf(roominfo));
+            baseInfo.put("game_count", getGameCount());
+            baseInfo.put("zhuang", ((ZJHGameRoomNew) this).getPlayerIndex(getBanker()));
+            baseInfo.put("gameNum", ((ZJHGameRoomNew) this).getTotalGameNum());
+            baseInfo.put("currentScore", getScore());
+            baseInfo.put("totalScore", 0);
+            int score = !Dto.isObjNull(getSetting()) && getSetting().containsKey("boom_reward") ? getSetting().getInt("boom_reward") : 0;
+            if (score > 0) {
+                baseInfo.put("boom_reward", "豹子奖励：" + score);
+            }
+            baseInfo.put("users", ((ZJHGameRoomNew) this).getAllPlayer());
+            gamelog.put("base_info", baseInfo);
+            gamelog.put("result", getSummaryData());
         }
         gamelog.put("action_records", gameProcess);
         String nowTime = TimeUtil.getNowDate();

@@ -3825,7 +3825,7 @@ public class BaseEventDeal {
             result.put(CommonConstant.RESULT_KEY_CODE, CommonConstant.GLOBAL_YES);
         } else {
             JSONObject userInfo = userBiz.getUserByAccount(account);
-            if (!Dto.isObjNull(userInfo) && !Dto.stringIsNULL(userInfo.getString("tel")) &&
+            if (!Dto.isObjNull(userInfo) && userInfo.containsKey("tel") && !Dto.stringIsNULL(userInfo.getString("tel")) &&
                 Pattern.matches(RegexConstant.REGEX_MOBILE, userInfo.getString("tel"))) {
                 redisService.sSet(CacheKeyConstant.BIND_SET,account);
                 result.put(CommonConstant.RESULT_KEY_CODE, CommonConstant.GLOBAL_YES);
@@ -3853,7 +3853,7 @@ public class BaseEventDeal {
                     // uuid是否匹配
                     if (userInfo.containsKey("uuid") && !Dto.stringIsNULL(userInfo.getString("uuid")) && userInfo.getString("uuid").equals(uuid)) {
                         // 不可重复绑定
-                        if (!Dto.stringIsNULL(userInfo.getString("tel")) && Pattern.matches(RegexConstant.REGEX_MOBILE, userInfo.getString("tel"))) {
+                        if (userInfo.containsKey("tel") && !Dto.stringIsNULL(userInfo.getString("tel")) && Pattern.matches(RegexConstant.REGEX_MOBILE, userInfo.getString("tel"))) {
                             result.put(CommonConstant.RESULT_KEY_CODE, CommonConstant.GLOBAL_NO);
                             result.put(CommonConstant.RESULT_KEY_MSG, "不可重复绑定");
                         } else {
