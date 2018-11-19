@@ -3655,7 +3655,9 @@ public class BaseEventDeal {
             // 防止数字过长传输过程中丢失，转成string
             List<JSONObject> gameLogList = new ArrayList<>();
             for (int i = 0; i < userGameLogsByUserId.size(); i++) {
-                gameLogList.add(userGameLogsByUserId.getJSONObject(i).element("gamelog_id",userGameLogsByUserId.getJSONObject(i).getString("gamelog_id")));
+                if (userGameLogsByUserId.getJSONObject(i).getString("room_no").equals(room_no)) {
+                    gameLogList.add(userGameLogsByUserId.getJSONObject(i).element("gamelog_id",userGameLogsByUserId.getJSONObject(i).getString("gamelog_id")));
+                }
             }
             result.put(CommonConstant.RESULT_KEY_CODE, CommonConstant.GLOBAL_YES);
             result.put("list", gameLogList);

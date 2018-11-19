@@ -267,6 +267,7 @@ public class ZJHGameRoomNew extends GameRoom{
         yiXiaZhu.clear();
         xiaZhuList.clear();
         outUserData.clear();
+        processList.clear();
         for (String account : getUserPacketMap().keySet()) {
             if (getUserPacketMap().containsKey(account)&&getUserPacketMap().get(account)!=null) {
                 getUserPacketMap().get(account).initUserPacket();
