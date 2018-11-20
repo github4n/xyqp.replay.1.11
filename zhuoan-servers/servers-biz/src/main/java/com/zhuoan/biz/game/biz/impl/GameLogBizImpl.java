@@ -116,12 +116,6 @@ public class GameLogBizImpl implements GameLogBiz {
 
     @Override
     public JSONArray getUserGameLogsByUserId(long userId, int gameId, int roomType, List<String> roomList, String clubCode) {
-        Object userGameLogList = redisService.hget("user_game_log_list" + gameId + roomType, String.valueOf(userId));
-        if (userGameLogList != null) {
-            return JSONArray.fromObject(userGameLogList);
-        }
-        JSONArray userGameLogsByUserId = gameDao.getUserGameLogsByUserId(userId, gameId, roomType);
-        redisService.hset("user_game_log_list" + gameId + roomType, String.valueOf(userId), String.valueOf(userGameLogsByUserId));
         return gameDao.getUserGameLogsByUserId(userId, gameId, roomType, roomList, clubCode);
     }
 }
