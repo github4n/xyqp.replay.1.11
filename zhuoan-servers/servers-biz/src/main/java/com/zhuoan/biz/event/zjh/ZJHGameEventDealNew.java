@@ -2,6 +2,7 @@ package com.zhuoan.biz.event.zjh;
 
 import com.corundumstudio.socketio.SocketIOClient;
 import com.zhuoan.biz.core.zjh.ZhaJinHuaCore;
+import com.zhuoan.biz.game.biz.ClubBiz;
 import com.zhuoan.biz.game.biz.RoomBiz;
 import com.zhuoan.biz.game.biz.UserBiz;
 import com.zhuoan.biz.model.Playerinfo;
@@ -60,6 +61,9 @@ public class ZJHGameEventDealNew {
 
     @Resource
     private UserBiz userBiz;
+
+    @Resource
+    private ClubBiz clubBiz;
 
     /**
      * 创建房间通知自己
@@ -214,8 +218,10 @@ public class ZJHGameEventDealNew {
         // 初始化房间信息
         room.initGame();
         // 更新游戏局数
-        if (room.getRoomType() == CommonConstant.ROOM_TYPE_FK && !Dto.isObjNull(room.getSetting()) && room.getSetting().containsKey("update_index")) {
-            roomBiz.increaseRoomIndexByRoomNo(room.getRoomNo());
+        if (room.getRoomType() == CommonConstant.ROOM_TYPE_FK || room.getRoomType() == CommonConstant.ROOM_TYPE_CLUB) {
+            if (!Dto.isObjNull(room.getSetting()) && room.getSetting().containsKey("update_index")) {
+                roomBiz.increaseRoomIndexByRoomNo(room.getRoomNo());
+            }
         }
         ((ZJHGameEventDealNew)AopContext.currentProxy()).shuffleAndFp(room);
         // 弃牌可见 20180827 wqm
@@ -483,7 +489,7 @@ public class ZJHGameEventDealNew {
                     saveGameLogs(room.getRoomNo());
                 }
             }
-            sendFianlSummaryToPlayer(isGameOver,room);
+            sendFinalSummaryToPlayer(isGameOver,room);
         } else if (type == ZJHConstant.GAME_ACTION_TYPE_COMPARE) {
             result.put(CommonConstant.RESULT_KEY_CODE, CommonConstant.GLOBAL_YES);
             result.put("gameStatus", room.getGameStatus());
@@ -652,7 +658,7 @@ public class ZJHGameEventDealNew {
                         } else if (room.getRoomType()!= CommonConstant.ROOM_TYPE_JB) {
                             saveGameLogs(room.getRoomNo());
                         }
-                        sendFianlSummaryToPlayer(isGameOver,room);
+                        sendFinalSummaryToPlayer(isGameOver,room);
                     }
                 }
             }
@@ -664,10 +670,10 @@ public class ZJHGameEventDealNew {
      * @param isGameOver
      * @param room
      */
-    public void sendFianlSummaryToPlayer(int isGameOver,ZJHGameRoomNew room) {
-        if (isGameOver==1&&room.getRoomType()==CommonConstant.ROOM_TYPE_FK) {
+    public void sendFinalSummaryToPlayer(int isGameOver, ZJHGameRoomNew room) {
+        if (room.getRoomType()==CommonConstant.ROOM_TYPE_FK || room.getRoomType() == CommonConstant.ROOM_TYPE_CLUB) {
             // 局数到了之后触发总结算
-            if (room.getGameIndex()==room.getGameCount()) {
+            if (isGameOver==1&&room.getGameIndex()==room.getGameCount()) {
                 room.setGameStatus(ZJHConstant.ZJH_GAME_STATUS_FINAL_SUMMARY);
                 room.setIsClose(CommonConstant.CLOSE_ROOM_TYPE_FINISH);
                 JSONObject result = new JSONObject();
@@ -790,7 +796,7 @@ public class ZJHGameEventDealNew {
                 saveGameLogs(room.getRoomNo());
             }
         }
-        sendFianlSummaryToPlayer(isGameOver,room);
+        sendFinalSummaryToPlayer(isGameOver,room);
     }
 
 
@@ -907,7 +913,7 @@ public class ZJHGameEventDealNew {
         if (room.getRoomType()==CommonConstant.ROOM_TYPE_YB) {
             saveUserDeductionData(room.getRoomNo());
         }
-        if (room.getRoomType()==CommonConstant.ROOM_TYPE_FK) {
+        if (room.getRoomType()==CommonConstant.ROOM_TYPE_FK || room.getRoomType() == CommonConstant.ROOM_TYPE_CLUB) {
             room.setNeedFinalSummary(true);
             roomCardSummary(room.getRoomNo());
             updateRoomCard(room.getRoomNo());
@@ -972,27 +978,33 @@ public class ZJHGameEventDealNew {
         ZJHGameRoomNew room = (ZJHGameRoomNew) RoomManage.gameRoomMap.get(roomNo);
         JSONArray array = new JSONArray();
         int roomCardCount = 0;
-        for (String account : room.getUserPacketMap().keySet()) {
-            if (room.getUserPacketMap().containsKey(account)&&room.getUserPacketMap().get(account)!=null) {
-                // 房主支付
-                if (room.getPayType()==CommonConstant.PAY_TYPE_OWNER) {
-                    if (account.equals(room.getOwner())) {
+        if (room.getRoomType()==CommonConstant.ROOM_TYPE_FK) {
+            for (String account : room.getUserPacketMap().keySet()) {
+                if (room.getUserPacketMap().containsKey(account)&&room.getUserPacketMap().get(account)!=null) {
+                    // 房主支付
+                    if (room.getPayType()==CommonConstant.PAY_TYPE_OWNER) {
+                        if (account.equals(room.getOwner())) {
+                            // 参与第一局需要扣房卡
+                            if (room.getUserPacketMap().get(account).getPlayTimes()==1) {
+                                array.add(room.getPlayerMap().get(account).getId());
+                                roomCardCount = room.getPlayerCount()*room.getSinglePayNum();
+                            }
+                        }
+                    }
+                    // 房费AA
+                    if (room.getPayType()==CommonConstant.PAY_TYPE_AA) {
                         // 参与第一局需要扣房卡
                         if (room.getUserPacketMap().get(account).getPlayTimes()==1) {
                             array.add(room.getPlayerMap().get(account).getId());
-                            roomCardCount = room.getPlayerCount()*room.getSinglePayNum();
+                            roomCardCount = room.getSinglePayNum();
                         }
                     }
                 }
-                // 房费AA
-                if (room.getPayType()==CommonConstant.PAY_TYPE_AA) {
-                    // 参与第一局需要扣房卡
-                    if (room.getUserPacketMap().get(account).getPlayTimes()==1) {
-                        array.add(room.getPlayerMap().get(account).getId());
-                        roomCardCount = room.getSinglePayNum();
-                    }
-                }
             }
+        } else if (room.getRoomType() == CommonConstant.ROOM_TYPE_CLUB && room.getGameIndex() == 1) {
+            roomCardCount = room.getPlayerCount()*room.getSinglePayNum();
+            boolean pump = clubBiz.clubPump(room.getClubCode(), roomCardCount, room.getId(), roomNo, room.getGid());
+            room.setCost(pump);
         }
         if (array.size()>0) {
             producerService.sendMessage(daoQueueDestination, new PumpDao(DaoTypeConstant.PUMP, room.getRoomCardChangeObject(array,roomCardCount)));
@@ -1219,7 +1231,7 @@ public class ZJHGameEventDealNew {
                     outUserData.put("obj",obj);
                     room.getOutUserData().add(outUserData);
                 }
-            }else if (room.getRoomType() == CommonConstant.ROOM_TYPE_FK) {
+            }else if (room.getRoomType() == CommonConstant.ROOM_TYPE_FK || room.getRoomType() == CommonConstant.ROOM_TYPE_CLUB) {
                 // 房卡场没玩过可以退出
                 if (room.getUserPacketMap().get(account).getPlayTimes()==0) {
                     if (room.getPayType()==CommonConstant.PAY_TYPE_AA||!room.getOwner().equals(account)) {
@@ -1242,7 +1254,7 @@ public class ZJHGameEventDealNew {
                 // 更新数据库
                 JSONObject roomInfo = new JSONObject();
                 roomInfo.put("room_no", room.getRoomNo());
-                if (room.getRoomType()!=CommonConstant.ROOM_TYPE_FK) {
+                if (room.getRoomType() != CommonConstant.ROOM_TYPE_FK && room.getRoomType() != CommonConstant.ROOM_TYPE_CLUB) {
                     roomInfo.put("user_id" + room.getPlayerMap().get(account).getMyIndex(), 0);
                 }
                 // 移除数据
@@ -1491,7 +1503,7 @@ public class ZJHGameEventDealNew {
             obj.put("roominfo", roominfo.toString());
             obj.put("roominfo2", room.getWfType());
         }
-        if (room.getRoomType()==CommonConstant.ROOM_TYPE_FK) {
+        if (room.getRoomType() == CommonConstant.ROOM_TYPE_FK || room.getRoomType() == CommonConstant.ROOM_TYPE_CLUB) {
             StringBuffer roominfo = new StringBuffer();
             roominfo.append(room.getWfType());
             roominfo.append(" ");
