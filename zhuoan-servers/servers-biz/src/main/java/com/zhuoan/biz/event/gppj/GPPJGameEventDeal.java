@@ -2,6 +2,7 @@ package com.zhuoan.biz.event.gppj;
 
 import com.corundumstudio.socketio.SocketIOClient;
 import com.zhuoan.biz.core.gppj.GPPJCore;
+import com.zhuoan.biz.game.biz.ClubBiz;
 import com.zhuoan.biz.game.biz.RoomBiz;
 import com.zhuoan.biz.game.biz.UserBiz;
 import com.zhuoan.biz.model.Playerinfo;
@@ -45,6 +46,9 @@ public class GPPJGameEventDeal {
 
     @Resource
     private UserBiz userBiz;
+
+    @Resource
+    private ClubBiz clubBiz;
 
     @Resource
     private Destination daoQueueDestination;
@@ -531,7 +535,7 @@ public class GPPJGameEventDeal {
                 room.getGameStatus() == GPPJConstant.GP_PJ_GAME_STATUS_SUMMARY) {// 初始及准备阶段可以退出
                 canExit = true;
             }
-        }else if (room.getRoomType() == CommonConstant.ROOM_TYPE_FK) {
+        }else if (room.getRoomType() == CommonConstant.ROOM_TYPE_FK || room.getRoomType() == CommonConstant.ROOM_TYPE_CLUB) {
             // 总结算之后可以退出房间
             if (room.getGameStatus() == GPPJConstant.GP_PJ_GAME_STATUS_FINAL_SUMMARY) {
                 canExit = true;
@@ -548,7 +552,7 @@ public class GPPJGameEventDeal {
             // 更新数据库
             JSONObject roomInfo = new JSONObject();
             roomInfo.put("room_no", room.getRoomNo());
-            if (room.getRoomType()!=CommonConstant.ROOM_TYPE_FK) {
+            if (room.getRoomType()!=CommonConstant.ROOM_TYPE_FK && room.getRoomType() != CommonConstant.ROOM_TYPE_CLUB) {
                 roomInfo.put("user_id" + room.getPlayerMap().get(account).getMyIndex(), 0);
             }
             // 移除数据
@@ -704,7 +708,7 @@ public class GPPJGameEventDeal {
         // 通知玩家
         changeGameStatus(roomNo);
         // 房卡场触发总结算
-        if (room.getRoomType() == CommonConstant.ROOM_TYPE_FK) {
+        if (room.getRoomType() == CommonConstant.ROOM_TYPE_FK || room.getRoomType() == CommonConstant.ROOM_TYPE_CLUB) {
             // 玩完一局之后解散需要触发总结算
             room.setNeedFinalSummary(true);
             // 局数到了之后触发总结算
@@ -727,29 +731,35 @@ public class GPPJGameEventDeal {
         GPPJGameRoom room = (GPPJGameRoom) RoomManage.gameRoomMap.get(roomNo);
         JSONArray array = new JSONArray();
         int roomCardCount = 0;
-        for (String account : room.getUserPacketMap().keySet()) {
-            if (room.getUserPacketMap().containsKey(account)&&room.getUserPacketMap().get(account)!=null) {
-                if (room.getUserPacketMap().get(account).getStatus()>GPPJConstant.GP_PJ_USER_STATUS_INIT) {
-                    // 房主支付
-                    if (room.getPayType()==CommonConstant.PAY_TYPE_OWNER) {
-                        if (account.equals(room.getOwner())) {
-                            // 参与第一局需要扣房卡
-                            if (room.getUserPacketMap().get(account).getPlayTimes()==1) {
-                                roomCardCount = room.getPlayerCount()*room.getSinglePayNum();
-                                array.add(room.getPlayerMap().get(room.getOwner()).getId());
+        if (room.getRoomType() == CommonConstant.ROOM_TYPE_FK) {
+            for (String account : room.getUserPacketMap().keySet()) {
+                if (room.getUserPacketMap().containsKey(account)&&room.getUserPacketMap().get(account)!=null) {
+                    if (room.getUserPacketMap().get(account).getStatus()>GPPJConstant.GP_PJ_USER_STATUS_INIT) {
+                        // 房主支付
+                        if (room.getPayType()==CommonConstant.PAY_TYPE_OWNER) {
+                            if (account.equals(room.getOwner())) {
+                                // 参与第一局需要扣房卡
+                                if (room.getUserPacketMap().get(account).getPlayTimes()==1) {
+                                    roomCardCount = room.getPlayerCount()*room.getSinglePayNum();
+                                    array.add(room.getPlayerMap().get(room.getOwner()).getId());
+                                }
                             }
                         }
-                    }
-                    // 房费AA
-                    if (room.getPayType()==CommonConstant.PAY_TYPE_AA) {
-                        // 参与第一局需要扣房卡
-                        if (room.getUserPacketMap().get(account).getPlayTimes()==1) {
-                            array.add(room.getPlayerMap().get(account).getId());
-                            roomCardCount = room.getSinglePayNum();
+                        // 房费AA
+                        if (room.getPayType()==CommonConstant.PAY_TYPE_AA) {
+                            // 参与第一局需要扣房卡
+                            if (room.getUserPacketMap().get(account).getPlayTimes()==1) {
+                                array.add(room.getPlayerMap().get(account).getId());
+                                roomCardCount = room.getSinglePayNum();
+                            }
                         }
                     }
                 }
             }
+        } else if (room.getRoomType() == CommonConstant.ROOM_TYPE_CLUB && room.getGameIndex() == 1) {
+            roomCardCount = room.getPlayerCount()*room.getSinglePayNum();
+            boolean pump = clubBiz.clubPump(room.getClubCode(), roomCardCount, room.getId(), roomNo, room.getGid());
+            room.setCost(pump);
         }
         if (array.size()>0) {
             producerService.sendMessage(daoQueueDestination, new PumpDao(DaoTypeConstant.PUMP, room.getRoomCardChangeObject(array,roomCardCount)));
@@ -855,7 +865,7 @@ public class GPPJGameEventDeal {
                 obj.put("gameData", obtainGameData(roomNo, account));
                 obj.put("showStartBtn", obtainStartBtnStatus(roomNo));
                 // 总结算
-                if (room.getRoomType()==CommonConstant.ROOM_TYPE_FK) {
+                if (room.getRoomType()==CommonConstant.ROOM_TYPE_FK || room.getRoomType() == CommonConstant.ROOM_TYPE_CLUB) {
                     if (room.getGameStatus()==GPPJConstant.GP_PJ_GAME_STATUS_FINAL_SUMMARY) {
                         obj.put("summaryData", obtainFinalSummaryData(roomNo));
                     }
@@ -881,8 +891,10 @@ public class GPPJGameEventDeal {
         // 游戏局数+1
         room.setGameIndex(room.getGameIndex()+1);
         // 更新游戏局数
-        if (room.getRoomType() == CommonConstant.ROOM_TYPE_FK && !Dto.isObjNull(room.getSetting()) && room.getSetting().containsKey("update_index")) {
-            roomBiz.increaseRoomIndexByRoomNo(roomNo);
+        if (room.getRoomType() == CommonConstant.ROOM_TYPE_FK || room.getRoomType() == CommonConstant.ROOM_TYPE_CLUB) {
+            if (!Dto.isObjNull(room.getSetting()) && room.getSetting().containsKey("update_index")) {
+                roomBiz.increaseRoomIndexByRoomNo(roomNo);
+            }
         }
         double minScore = 0;
         String minAccount = "";
@@ -1074,7 +1086,7 @@ public class GPPJGameEventDeal {
      */
     public void summaryCompare(String roomNo) {
         GPPJGameRoom room = (GPPJGameRoom) RoomManage.gameRoomMap.get(roomNo);
-        if (room.getRoomType()==CommonConstant.ROOM_TYPE_FK) {
+        if (room.getRoomType()==CommonConstant.ROOM_TYPE_FK || room.getRoomType() == CommonConstant.ROOM_TYPE_CLUB) {
             room.setScore(10);
         }
         List<String> gameList = new ArrayList<String>();
@@ -1247,7 +1259,7 @@ public class GPPJGameEventDeal {
         obj.put("player_count", room.getPlayerCount());
         obj.put("di", room.getScore());
         // 房卡场
-        if (room.getRoomType() == CommonConstant.ROOM_TYPE_FK) {
+        if (room.getRoomType() == CommonConstant.ROOM_TYPE_FK || room.getRoomType() == CommonConstant.ROOM_TYPE_CLUB) {
             StringBuffer roomInfo = new StringBuffer();
             roomInfo.append(room.getWfType());
             roomInfo.append("   ");
@@ -1283,7 +1295,7 @@ public class GPPJGameEventDeal {
             obj.put("closeData", obtainCloseData(roomNo));
 
         }
-        if (room.getRoomType()==CommonConstant.ROOM_TYPE_FK) {
+        if (room.getRoomType()==CommonConstant.ROOM_TYPE_FK || room.getRoomType() == CommonConstant.ROOM_TYPE_CLUB) {
             if (room.getGameStatus() == GPPJConstant.GP_PJ_GAME_STATUS_FINAL_SUMMARY) {
                 obj.put("summaryData", obtainFinalSummaryData(roomNo));
             }
@@ -1465,7 +1477,7 @@ public class GPPJGameEventDeal {
             obj.put("val",value);
             obj.put("isUse",CommonConstant.GLOBAL_NO);
             // 房卡场不做分数判断
-            if (room.getRoomType()==CommonConstant.ROOM_TYPE_FK) {
+            if (room.getRoomType()==CommonConstant.ROOM_TYPE_FK || room.getRoomType() == CommonConstant.ROOM_TYPE_CLUB) {
                 obj.put("isUse",CommonConstant.GLOBAL_YES);
             }
             array.add(obj);
@@ -1487,7 +1499,7 @@ public class GPPJGameEventDeal {
             JSONObject obj = xzTimes.getJSONObject(i);
             obj.put("isUse",CommonConstant.GLOBAL_NO);
             // 房卡场不做分数判断
-            if (room.getRoomType()==CommonConstant.ROOM_TYPE_FK) {
+            if (room.getRoomType()==CommonConstant.ROOM_TYPE_FK || room.getRoomType() == CommonConstant.ROOM_TYPE_CLUB) {
                 obj.put("isUse",CommonConstant.GLOBAL_YES);
             }
             array.add(obj);

@@ -3,10 +3,7 @@ package com.zhuoan.biz.event.ddz;
 import com.corundumstudio.socketio.SocketIOClient;
 import com.zhuoan.biz.core.ddz.DdzCore;
 import com.zhuoan.biz.event.match.MatchEventDeal;
-import com.zhuoan.biz.game.biz.AchievementBiz;
-import com.zhuoan.biz.game.biz.PropsBiz;
-import com.zhuoan.biz.game.biz.RoomBiz;
-import com.zhuoan.biz.game.biz.UserBiz;
+import com.zhuoan.biz.game.biz.*;
 import com.zhuoan.biz.model.Playerinfo;
 import com.zhuoan.biz.model.RoomManage;
 import com.zhuoan.biz.model.dao.PumpDao;
@@ -55,6 +52,9 @@ public class DdzGameEventDeal {
 
     @Resource
     private PropsBiz propsBiz;
+
+    @Resource
+    private ClubBiz clubBiz;
 
     @Resource
     private Destination daoQueueDestination;
@@ -249,7 +249,8 @@ public class DdzGameEventDeal {
         // 抢地主翻倍
         if (type==DdzConstant.DDZ_BE_LANDLORD_TYPE_ROB&&isChoice==CommonConstant.GLOBAL_YES) {
             room.setMultiple(room.getMultiple()*2);
-            if (room.getRoomType()==CommonConstant.ROOM_TYPE_FK || room.getRoomType() == CommonConstant.ROOM_TYPE_DK) {
+            if (room.getRoomType()==CommonConstant.ROOM_TYPE_FK || room.getRoomType() == CommonConstant.ROOM_TYPE_DK
+                || room.getRoomType() == CommonConstant.ROOM_TYPE_CLUB) {
                 room.getUserPacketMap().get(account).setCallNum(room.getUserPacketMap().get(account).getCallNum()+1);
             }
         }
@@ -810,7 +811,8 @@ public class DdzGameEventDeal {
                 room.getGameStatus() == DdzConstant.DDZ_GAME_STATUS_SUMMARY) {// 初始及准备阶段可以退出
                 canExit = true;
             }
-        }else if (room.getRoomType() == CommonConstant.ROOM_TYPE_FK || room.getRoomType() == CommonConstant.ROOM_TYPE_DK) {
+        }else if (room.getRoomType() == CommonConstant.ROOM_TYPE_FK || room.getRoomType() == CommonConstant.ROOM_TYPE_DK ||
+            room.getRoomType() == CommonConstant.ROOM_TYPE_CLUB) {
             // 总结算之后可以退出房间
             if (room.getGameStatus() == DdzConstant.DDZ_GAME_STATUS_FINAL_SUMMARY) {
                 canExit = true;
@@ -834,7 +836,8 @@ public class DdzGameEventDeal {
             // 更新数据库
             JSONObject roomInfo = new JSONObject();
             roomInfo.put("room_no", room.getRoomNo());
-            if (room.getRoomType()!=CommonConstant.ROOM_TYPE_FK && room.getRoomType() != CommonConstant.ROOM_TYPE_DK) {
+            if (room.getRoomType()!=CommonConstant.ROOM_TYPE_FK && room.getRoomType() != CommonConstant.ROOM_TYPE_DK &&
+                room.getRoomType() != CommonConstant.ROOM_TYPE_CLUB) {
                 roomInfo.put("user_id" + room.getPlayerMap().get(account).getMyIndex(), 0);
             }
             // 移除数据
@@ -1119,8 +1122,11 @@ public class DdzGameEventDeal {
         // 初始化房间信息
         initRoom(roomNo);
         // 更新游戏局数
-        if (room.getRoomType() == CommonConstant.ROOM_TYPE_FK && !Dto.isObjNull(room.getSetting()) && room.getSetting().containsKey("update_index")) {
-            roomBiz.increaseRoomIndexByRoomNo(roomNo);
+        if (room.getRoomType() == CommonConstant.ROOM_TYPE_FK || room.getRoomType() == CommonConstant.ROOM_TYPE_DK
+            || room.getRoomType() == CommonConstant.ROOM_TYPE_CLUB) {
+            if (!Dto.isObjNull(room.getSetting()) && room.getSetting().containsKey("update_index")) {
+                roomBiz.increaseRoomIndexByRoomNo(roomNo);
+            }
         }
         // 清空结算防重
         redisService.insertKey("summaryTimes_ddz_"+room.getRoomNo(),"0",null);
@@ -1291,7 +1297,8 @@ public class DdzGameEventDeal {
         // 重置重新发牌次数
         room.setReShuffleTime(0);
         // 房卡场
-        if (room.getRoomType()==CommonConstant.ROOM_TYPE_FK || room.getRoomType() == CommonConstant.ROOM_TYPE_DK) {
+        if (room.getRoomType()==CommonConstant.ROOM_TYPE_FK || room.getRoomType() == CommonConstant.ROOM_TYPE_DK
+            || room.getRoomType() == CommonConstant.ROOM_TYPE_CLUB) {
             for (String account : obtainAllPlayerAccount(roomNo)) {
                 // 游戏局数+1
                 room.getUserPacketMap().get(account).setPlayTimes(room.getUserPacketMap().get(account).getPlayTimes()+1);
@@ -1448,6 +1455,10 @@ public class DdzGameEventDeal {
                 roomCardCount = room.getPlayerCount()*room.getSinglePayNum();
                 array.add(userInfo.getLong("id"));
             }
+        } else if (room.getRoomType() == CommonConstant.ROOM_TYPE_CLUB && room.getGameIndex() == 1) {
+            roomCardCount = room.getPlayerCount()*room.getSinglePayNum();
+            boolean pump = clubBiz.clubPump(room.getClubCode(), roomCardCount, room.getId(), roomNo, room.getGid());
+            room.setCost(pump);
         }
         if (array.size()>0) {
             producerService.sendMessage(daoQueueDestination, new PumpDao(DaoTypeConstant.PUMP, room.getRoomCardChangeObject(array,roomCardCount)));
