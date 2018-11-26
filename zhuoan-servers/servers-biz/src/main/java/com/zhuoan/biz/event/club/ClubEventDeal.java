@@ -43,6 +43,8 @@ public class ClubEventDeal {
     @Resource
     private BaseEventDeal baseEventDeal;
 
+    private String clubName = "亲友团";
+
     /**
      * 获取玩家俱乐部列表
      * @param client
@@ -62,7 +64,7 @@ public class ClubEventDeal {
             result.put("clubList", clubList);
         } else {
             result.put(CommonConstant.RESULT_KEY_CODE, CommonConstant.GLOBAL_NO);
-            result.put(CommonConstant.RESULT_KEY_MSG, "未加入俱乐部");
+            result.put(CommonConstant.RESULT_KEY_MSG, "未加入" + clubName);
         }
         CommonConstant.sendMsgEventToSingle(client, String.valueOf(result), "getMyClubListPush");
     }
@@ -255,13 +257,13 @@ public class ClubEventDeal {
         }
         // 是加入俱乐部
         if (!userInfo.containsKey("clubIds") || Dto.stringIsNULL(userInfo.getString("clubIds"))) {
-            sendPromptToSingle(client, CommonConstant.GLOBAL_NO, "未加入俱乐部", eventName);
+            sendPromptToSingle(client, CommonConstant.GLOBAL_NO, "未加入" + clubName, eventName);
             return;
         }
         // 俱乐部是否存在
         JSONObject clubInfo = clubBiz.getClubByCode(clubCode);
         if (Dto.isObjNull(clubInfo)) {
-            sendPromptToSingle(client, CommonConstant.GLOBAL_NO, "俱乐部不存在", eventName);
+            sendPromptToSingle(client, CommonConstant.GLOBAL_NO, clubName + "不存在", eventName);
             return;
         }
         // 当前用户所在的所有俱乐部
@@ -270,7 +272,7 @@ public class ClubEventDeal {
         String clubId = clubInfo.getString("id");
         // 未加入当前俱乐部提示，已加入更新数据库
         if (!clubIdList.contains(clubId)) {
-            sendPromptToSingle(client, CommonConstant.GLOBAL_NO, "未加入该俱乐部", eventName);
+            sendPromptToSingle(client, CommonConstant.GLOBAL_NO, "未加入该" + clubName, eventName);
             return;
         } else {
             // 移除当前俱乐部
@@ -313,13 +315,13 @@ public class ClubEventDeal {
         }
         // 是加入俱乐部
         if (!userInfo.containsKey("clubIds") || Dto.stringIsNULL(userInfo.getString("clubIds"))) {
-            sendPromptToSingle(client, CommonConstant.GLOBAL_NO, "未加入俱乐部", eventName);
+            sendPromptToSingle(client, CommonConstant.GLOBAL_NO, "未加入" + clubName, eventName);
             return;
         }
         // 俱乐部是否存在
         JSONObject clubInfo = clubBiz.getClubByCode(clubCode);
         if (Dto.isObjNull(clubInfo)) {
-            sendPromptToSingle(client, CommonConstant.GLOBAL_NO, "俱乐部不存在", eventName);
+            sendPromptToSingle(client, CommonConstant.GLOBAL_NO, clubName + "不存在", eventName);
             return;
         }
         // 更新数据库 置顶取当前俱乐部id，取消置顶取0
@@ -420,13 +422,13 @@ public class ClubEventDeal {
         // 俱乐部不存在
         JSONObject clubInfo = clubBiz.getClubByCode(clubCode);
         if (Dto.isObjNull(clubInfo)) {
-            sendPromptToSingle(client, CommonConstant.GLOBAL_NO, "俱乐部不存在", eventName);
+            sendPromptToSingle(client, CommonConstant.GLOBAL_NO, clubName + "不存在", eventName);
             return;
         }
         // 用户信息不存在
         JSONObject userInfo = clubBiz.getUserByAccountAndUuid(account, postData.getString("uuid"));;
         if (Dto.isObjNull(userInfo) || !getUserClubList(userInfo).contains(clubInfo.getString("id"))) {
-            sendPromptToSingle(client, CommonConstant.GLOBAL_NO, "未加入该俱乐部", eventName);
+            sendPromptToSingle(client, CommonConstant.GLOBAL_NO, "未加入该" + clubName, eventName);
             return;
         }
         if (postData.containsKey("base_info")) {
