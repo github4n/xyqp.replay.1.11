@@ -155,7 +155,7 @@ public class ClubEventDeal {
         if (!Dto.isObjNull(clubInfo)) {
             JSONObject leaderInfo = userBiz.getUserByID(clubInfo.getLong("leaderId"));
             if (!Dto.isObjNull(leaderInfo)) {
-                result.put("leader_img", leaderInfo.getString("headimg"));
+                result.put("leader_img", Constant.cfgProperties.getProperty("server_domain") + leaderInfo.getString("headimg"));
                 result.put("leader_name", leaderInfo.getString("name"));
                 result.put("clubName", clubInfo.getString("clubName"));
                 result.put("clubCode", clubInfo.getString("clubCode"));
