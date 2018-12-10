@@ -809,6 +809,7 @@ public class GPPJGameEventDeal {
                     gameLogResults.add(gameLogResult);
                     // 用户战绩
                     JSONObject userResult = new JSONObject();
+                    userResult.put("account", account);
                     userResult.put("zhuang", room.getBanker());
                     userResult.put("isWinner", CommonConstant.GLOBAL_NO);
                     if (room.getUserPacketMap().get(account).getScore() > 0) {

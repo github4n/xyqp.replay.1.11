@@ -3694,7 +3694,7 @@ public class BaseEventDeal {
                     obj.put("result", getTotalSumList(gameLogByRoomNo));
                     summaryList.add(obj);
                 } catch (Exception e) {
-
+                    logger.error("",e);
                 }
             }
         }

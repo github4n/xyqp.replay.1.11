@@ -1533,6 +1533,7 @@ public class DdzGameEventDeal {
                 gameLogResults.add(gameLogResult);
                 // 用户战绩
                 JSONObject userResult = new JSONObject();
+                userResult.put("account", account);
                 userResult.put("isWinner", CommonConstant.GLOBAL_NO);
                 if (room.getUserPacketMap().get(account).getScore() > 0) {
                     userResult.put("isWinner", CommonConstant.GLOBAL_YES);

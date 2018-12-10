@@ -221,8 +221,10 @@ public class ClubEventDeal {
             newClubInfo.put("notice", notice);
         }
         if (!Dto.stringIsNULL(setting) && !Dto.stringIsNULL(quickSetting)) {
-            newClubInfo.put("setting", clubInfo.getJSONObject("setting").element(String.valueOf(gameId),setting));
-            newClubInfo.put("quick_setting", clubInfo.getJSONObject("quick_setting").element(String.valueOf(gameId),quickSetting));
+            JSONObject settingObj = clubInfo.containsKey("setting") ? clubInfo.getJSONObject("setting") : new JSONObject();
+            JSONObject quickSettingObj = clubInfo.containsKey("quick_setting") ? clubInfo.getJSONObject("quick_setting") : new JSONObject();
+            newClubInfo.put("setting", settingObj.element(String.valueOf(gameId),setting));
+            newClubInfo.put("quick_setting", quickSettingObj.element(String.valueOf(gameId),quickSetting));
         }
         clubBiz.updateClubInfo(newClubInfo);
         // 通知玩家
