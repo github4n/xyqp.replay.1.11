@@ -1021,47 +1021,49 @@ public class SSSGameEventDealNew {
         if (room.getRoomType() == CommonConstant.ROOM_TYPE_FK || room.getRoomType() == CommonConstant.ROOM_TYPE_CLUB) {
             for (String account : room.getUserPacketMap().keySet()) {
                 if (room.getUserPacketMap().containsKey(account)&&room.getUserPacketMap().get(account)!=null) {
-                    // 参与第一局需要扣房卡
-                    if (room.getUserPacketMap().get(account).getPlayTimes()==1) {
-                        // 房主支付
-                        if (room.getPayType()==CommonConstant.PAY_TYPE_OWNER) {
-                            if (account.equals(room.getOwner())) {
+                    // 房主支付
+                    if (room.getPayType()==CommonConstant.PAY_TYPE_OWNER) {
+                        if (account.equals(room.getOwner())) {
+                            // 参与第一局需要扣房卡
+                            if (room.getUserPacketMap().get(account).getPlayTimes()==1) {
                                 array.add(room.getPlayerMap().get(account).getId());
                                 roomCardCount = room.getPlayerCount()*room.getSinglePayNum();
                             }
                         }
-                        // 房费AA
-                        if (room.getPayType()==CommonConstant.PAY_TYPE_AA) {
-                            // 参与第一局需要扣房卡
+                    }
+                    // 房费AA
+                    if (room.getPayType()==CommonConstant.PAY_TYPE_AA) {
+                        // 参与第一局需要扣房卡
+                        if (room.getUserPacketMap().get(account).getPlayTimes()==1) {
                             array.add(room.getPlayerMap().get(account).getId());
                             roomCardCount = room.getSinglePayNum();
                         }
-                        // 房主（会长）支付，非一次性扣清
-                        if (room.getPayType() == CommonConstant.PAY_TYPE_OWNER2) {
-                            if (account.equals(room.getOwner())) {
-                                for (String player : room.getUserPacketMap().keySet()) {
-                                    if (room.getUserPacketMap().get(player) != null && room.getUserPacketMap().get(player).getPlayTimes() == 1) {
-                                        roomCardCount += room.getSinglePayNum();
-                                    }
+                    }
+                    // 房主（会长）支付，非一次性扣清
+                    if (room.getPayType() == CommonConstant.PAY_TYPE_OWNER2) {
+                        if (account.equals(room.getOwner())) {
+                            for (String player : room.getUserPacketMap().keySet()) {
+                                if (room.getUserPacketMap().get(player) != null && room.getUserPacketMap().get(player).getPlayTimes() == 1) {
+                                    roomCardCount += room.getSinglePayNum();
                                 }
-                                if (roomCardCount > 0) {
-                                    if (room.getRoomType() == CommonConstant.ROOM_TYPE_FK) {
-                                        array.add(room.getPlayerMap().get(account).getId());
-                                    } else if (room.getRoomType() == CommonConstant.ROOM_TYPE_CLUB) {
-                                        clubBiz.clubPump(room.getClubCode(), roomCardCount, room.getId(), roomNo, room.getGid());
-                                    }
+                            }
+                            if (roomCardCount > 0) {
+                                if (room.getRoomType() == CommonConstant.ROOM_TYPE_FK) {
+                                    array.add(room.getPlayerMap().get(account).getId());
+                                } else if (room.getRoomType() == CommonConstant.ROOM_TYPE_CLUB) {
+                                    clubBiz.clubPump(room.getClubCode(), roomCardCount, room.getId(), roomNo, room.getGid());
                                 }
                             }
                         }
-                        // 俱乐部会长支付（一次性扣清房间人数）
-                        if (room.getPayType() == CommonConstant.PAY_TYPE_LORD) {
-                            if (room.getGameIndex() == 1) {
-                                if (room.getRoomType() == CommonConstant.ROOM_TYPE_CLUB) {
-                                    if (!room.isCost()) {
-                                        roomCardCount = room.getPlayerCount()*room.getSinglePayNum();
-                                        boolean pump = clubBiz.clubPump(room.getClubCode(), roomCardCount, room.getId(), roomNo, room.getGid());
-                                        room.setCost(pump);
-                                    }
+                    }
+                    // 俱乐部会长支付（一次性扣清房间人数）
+                    if (room.getPayType() == CommonConstant.PAY_TYPE_LORD) {
+                        if (room.getGameIndex() == 1) {
+                            if (room.getRoomType() == CommonConstant.ROOM_TYPE_CLUB) {
+                                if (!room.isCost()) {
+                                    roomCardCount = room.getPlayerCount()*room.getSinglePayNum();
+                                    boolean pump = clubBiz.clubPump(room.getClubCode(), roomCardCount, room.getId(), roomNo, room.getGid());
+                                    room.setCost(pump);
                                 }
                             }
                         }
