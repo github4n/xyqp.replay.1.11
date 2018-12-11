@@ -25,13 +25,13 @@ public class ClubDaoImpl implements ClubDao {
 
     @Override
     public JSONObject getClubByCode(String clubCode) {
-        String sql = "select id,clubCode,platform,notice,setting,leaderId,clubName,quick_setting,balance,balance_type from club where clubCode=? and isUse=1";
+        String sql = "select id,clubCode,platform,notice,setting,leaderId,clubName,quick_setting,balance,balance_type,payType from club where clubCode=? and isUse=1";
         return DBUtil.getObjectBySQL(sql, new Object[]{clubCode});
     }
 
     @Override
     public JSONObject getClubById(long id) {
-        String sql = "select id,clubCode,platform,notice,setting,leaderId,clubName,quick_setting,balance,balance_type from club where id=? and isUse=1";
+        String sql = "select id,clubCode,platform,notice,setting,leaderId,clubName,quick_setting,balance,balance_type,payType from club where id=? and isUse=1";
         return DBUtil.getObjectBySQL(sql, new Object[]{id});
     }
 
@@ -43,7 +43,7 @@ public class ClubDaoImpl implements ClubDao {
 
     @Override
     public JSONObject getUserByAccountAndUuid(String account, String uuid) {
-        String sql = "select id,clubIds from za_users where account=? and uuid=?";
+        String sql = "select id,clubIds,roomcard,yuanbao from za_users where account=? and uuid=?";
         return DBUtil.getObjectBySQL(sql, new Object[]{account, uuid});
     }
 

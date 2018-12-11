@@ -436,10 +436,19 @@ public class ClubEventDeal {
         if (postData.containsKey("base_info")) {
             // 判断余额是否足够
             // 当前俱乐部总余额必须大于已开房未扣费的房间需要消耗的总和+当前房间需要消耗的
-            int cost = getRoomCostByBaseInfo(postData.getJSONObject("base_info"));
-            if (cost == -1 || cost + getClubCost(clubCode) > clubInfo.getDouble("balance")) {
-                sendPromptToSingle(client, CommonConstant.GLOBAL_NO, "余额不足，请联系会长充值", eventName);
-                return;
+            int cost = getRoomCostByBaseInfo(postData.getJSONObject("base_info"), clubInfo.getInt("payType"));
+            if (clubInfo.getInt("payType") == CommonConstant.PAY_TYPE_AA) {
+                double userBalance = clubInfo.getInt("balance_type") == CommonConstant.CURRENCY_TYPE_ROOM_CARD ?
+                    userInfo.getInt("roomcard") : userInfo.getDouble("yuanbao");
+                if (cost == -1 || cost > userBalance) {
+                    sendPromptToSingle(client, CommonConstant.GLOBAL_NO, "余额不足，无法创建房间", eventName);
+                    return;
+                }
+            } else {
+                if (cost == -1 || cost + getClubCost(clubCode) > clubInfo.getDouble("balance")) {
+                    sendPromptToSingle(client, CommonConstant.GLOBAL_NO, "余额不足，请联系会长充值", eventName);
+                    return;
+                }
             }
             baseEventDeal.createRoomBase(client,data);
             return;
@@ -459,10 +468,19 @@ public class ClubEventDeal {
                 clubInfo.getJSONObject("quick_setting").getJSONObject(String.valueOf(gameId)) : null;
             if (!Dto.isObjNull(quickSetting)) {
                 // 判断余额是否足够
-                int cost = getRoomCostByBaseInfo(quickSetting);
-                if (cost == -1 || cost + getClubCost(clubCode) > clubInfo.getDouble("balance")) {
-                    sendPromptToSingle(client, CommonConstant.GLOBAL_NO, "余额不足，请联系会长充值", eventName);
-                    return;
+                int cost = getRoomCostByBaseInfo(quickSetting, clubInfo.getInt("payType"));
+                if (clubInfo.getInt("payType") == CommonConstant.PAY_TYPE_AA) {
+                    double userBalance = clubInfo.getInt("balance_type") == CommonConstant.CURRENCY_TYPE_ROOM_CARD ?
+                        userInfo.getInt("roomcard") : userInfo.getDouble("yuanbao");
+                    if (cost == -1 || cost > userBalance) {
+                        sendPromptToSingle(client, CommonConstant.GLOBAL_NO, "余额不足，请前往充值", eventName);
+                        return;
+                    }
+                } else {
+                    if (cost == -1 || cost + getClubCost(clubCode) > clubInfo.getDouble("balance")) {
+                        sendPromptToSingle(client, CommonConstant.GLOBAL_NO, "余额不足，请联系会长充值", eventName);
+                        return;
+                    }
                 }
                 postData.put("base_info", quickSetting);
                 baseEventDeal.createRoomBase(client,postData);
@@ -483,7 +501,7 @@ public class ClubEventDeal {
      * @param baseInfo
      * @return
      */
-    private int getRoomCostByBaseInfo(JSONObject baseInfo) {
+    private int getRoomCostByBaseInfo(JSONObject baseInfo, int payType) {
         try {
             if (baseInfo.containsKey("player") && baseInfo.containsKey("turn")) {
                 int player = baseInfo.getInt("player");
@@ -493,7 +511,7 @@ public class ClubEventDeal {
                     if (turn.containsKey("increase")) {
                         aaNum += player  > 4 ? player * turn.getInt("increase") : 4 * turn.getInt("increase");
                     }
-                    return player * aaNum;
+                    return payType == CommonConstant.PAY_TYPE_AA ? aaNum : player * aaNum;
                 }
             }
         } catch (Exception e) {

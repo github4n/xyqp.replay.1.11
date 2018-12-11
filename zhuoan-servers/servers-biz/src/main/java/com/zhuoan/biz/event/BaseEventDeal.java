@@ -803,6 +803,16 @@ public class BaseEventDeal {
                     CommonConstant.sendMsgEventToSingle(client, String.valueOf(result), "enterRoomPush_NN");
                     return;
                 }
+                JSONObject clubInfo = clubBiz.getClubById(postData.getLong("clubId"));
+                if (clubInfo.getInt("payType") == CommonConstant.PAY_TYPE_AA) {
+                    String updateType = room.getCurrencyType();
+                    if (!userInfo.containsKey(updateType) || userInfo.getDouble(updateType) < room.getEnterScore()) {
+                        result.element(CommonConstant.RESULT_KEY_CODE, CommonConstant.GLOBAL_NO);
+                        result.element(CommonConstant.RESULT_KEY_MSG, "钻石不足");
+                        CommonConstant.sendMsgEventToSingle(client, String.valueOf(result), "enterRoomPush_NN");
+                        return;
+                    }
+                }
             }
             // 房卡场禁止中途加入提示 wqm  2018/09/12
             if (!room.isHalfwayIn() && room.getGameIndex() > 0) {
