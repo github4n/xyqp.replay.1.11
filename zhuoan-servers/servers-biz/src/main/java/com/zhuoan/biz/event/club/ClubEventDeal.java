@@ -2,6 +2,12 @@ package com.zhuoan.biz.event.club;
 
 import com.corundumstudio.socketio.SocketIOClient;
 import com.zhuoan.biz.event.BaseEventDeal;
+import com.zhuoan.biz.event.ddz.DdzGameEventDeal;
+import com.zhuoan.biz.event.gppj.GPPJGameEventDeal;
+import com.zhuoan.biz.event.nn.NNGameEventDealNew;
+import com.zhuoan.biz.event.qzmj.QZMJGameEventDeal;
+import com.zhuoan.biz.event.sss.SSSGameEventDealNew;
+import com.zhuoan.biz.event.zjh.ZJHGameEventDealNew;
 import com.zhuoan.biz.game.biz.ClubBiz;
 import com.zhuoan.biz.game.biz.RoomBiz;
 import com.zhuoan.biz.game.biz.UserBiz;
@@ -10,6 +16,7 @@ import com.zhuoan.biz.model.RoomManage;
 import com.zhuoan.constant.ClubConstant;
 import com.zhuoan.constant.CommonConstant;
 import com.zhuoan.constant.Constant;
+import com.zhuoan.constant.GPPJConstant;
 import com.zhuoan.service.cache.RedisService;
 import com.zhuoan.util.Dto;
 import net.sf.json.JSONArray;
@@ -18,6 +25,8 @@ import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
 import java.util.*;
+
+import static net.sf.json.JSONObject.fromObject;
 
 /**
  * ClubEventDeal
@@ -44,6 +53,24 @@ public class ClubEventDeal {
     private BaseEventDeal baseEventDeal;
 
     private String clubName = "亲友团";
+
+    @Resource
+    private NNGameEventDealNew nnGameEventDealNew;
+
+    @Resource
+    private DdzGameEventDeal ddzGameEventDeal;
+
+    @Resource
+    private QZMJGameEventDeal qzmjGameEventDeal;
+
+    @Resource
+    private SSSGameEventDealNew sssGameEventDealNew;
+
+    @Resource
+    private GPPJGameEventDeal gppjGameEventDeal;
+
+    @Resource
+    private ZJHGameEventDealNew zjhGameEventDealNew;
 
     /**
      * 获取玩家俱乐部列表
@@ -433,6 +460,13 @@ public class ClubEventDeal {
             sendPromptToSingle(client, CommonConstant.GLOBAL_NO, "未加入该" + clubName, eventName);
             return;
         }
+        if (postData.containsKey(CommonConstant.DATA_KEY_ROOM_NO) && !Dto.stringIsNULL(postData.getString(CommonConstant.DATA_KEY_ROOM_NO))) {
+            boolean canJoin = exitRoom(postData.getString(CommonConstant.DATA_KEY_ROOM_NO), account);
+            if (!canJoin) {
+                sendPromptToSingle(client, CommonConstant.GLOBAL_NO, "已加入其他房间", eventName);
+                return;
+            }
+        }
         if (postData.containsKey("base_info")) {
             // 判断余额是否足够
             // 当前俱乐部总余额必须大于已开房未扣费的房间需要消耗的总和+当前房间需要消耗的
@@ -459,7 +493,9 @@ public class ClubEventDeal {
             // 当前俱乐部的所有房间
             if (!Dto.stringIsNULL(clubCode) && clubCode.equals(room.getClubCode()) && room.getGid() == gameId
                 && !room.getPlayerMap().containsKey(account) && room.getPlayerMap().size() < room.getPlayerCount()) {
-                roomNoList.add(roomNo);
+                if (!postData.containsKey(CommonConstant.DATA_KEY_ROOM_NO) || !roomNo.equals(postData.getString(CommonConstant.DATA_KEY_ROOM_NO))) {
+                    roomNoList.add(roomNo);
+                }
             }
         }
         // 快速加入有房间加入房间 没有房间创建房间
@@ -589,5 +625,45 @@ public class ClubEventDeal {
             }
         }
         return null;
+    }
+
+    private boolean exitRoom(String roomNo, String account) {
+        if (RoomManage.gameRoomMap.containsKey(roomNo) && RoomManage.gameRoomMap.get(roomNo) != null) {
+            GameRoom room = RoomManage.gameRoomMap.get(roomNo);
+            JSONObject exitData = new JSONObject();
+            exitData.put(CommonConstant.DATA_KEY_ACCOUNT,account);
+            exitData.put(CommonConstant.DATA_KEY_ROOM_NO,roomNo);
+            exitData.put("notSend",1);
+            exitData.put("notSendToMe",1);
+            switch (room.getGid()) {
+                case CommonConstant.GAME_ID_NN:
+                    nnGameEventDealNew.exitRoom(null, exitData);
+                    break;
+                case CommonConstant.GAME_ID_DDZ:
+                    ddzGameEventDeal.exitRoom(null,exitData);
+                    break;
+                case CommonConstant.GAME_ID_QZMJ:
+                    qzmjGameEventDeal.exitRoom(null,exitData);
+                    break;
+                case CommonConstant.GAME_ID_SSS:
+                    sssGameEventDealNew.exitRoom(null, exitData);
+                    break;
+                case CommonConstant.GAME_ID_GP_PJ:
+                    gppjGameEventDeal.exitRoom(null, exitData);
+                case CommonConstant.GAME_ID_ZJH:
+                    zjhGameEventDealNew.exitRoom(null, exitData);
+                    break;
+                default:
+                    break;
+            }
+        }
+        for (String roomNum : RoomManage.gameRoomMap.keySet()) {
+            if (RoomManage.gameRoomMap.containsKey(roomNum)&&RoomManage.gameRoomMap.get(roomNum)!=null) {
+                if (RoomManage.gameRoomMap.get(roomNum).getPlayerMap().containsKey(account)) {
+                    return false;
+                }
+            }
+        }
+        return true;
     }
 }
