@@ -2189,7 +2189,7 @@ public class QZMJGameEventDeal {
         QZMJGameRoom room = (QZMJGameRoom) RoomManage.gameRoomMap.get(roomNo);
         JSONArray array = new JSONArray();
         int roomCardCount = 0;
-        if (room.getRoomType()==CommonConstant.ROOM_TYPE_FK) {
+        if (room.getRoomType()==CommonConstant.ROOM_TYPE_FK || room.getRoomType() == CommonConstant.ROOM_TYPE_CLUB) {
             for (String account : room.getUserPacketMap().keySet()) {
                 if (room.getUserPacketMap().containsKey(account)&&room.getUserPacketMap().get(account)!=null) {
                     // 房主支付
@@ -2210,6 +2210,35 @@ public class QZMJGameEventDeal {
                             roomCardCount = room.getSinglePayNum();
                         }
                     }
+                    // 房主（会长）支付，非一次性扣清
+                    if (room.getPayType() == CommonConstant.PAY_TYPE_OWNER2) {
+                        if (account.equals(room.getOwner())) {
+                            for (String player : room.getUserPacketMap().keySet()) {
+                                if (room.getUserPacketMap().get(player) != null && room.getUserPacketMap().get(player).getPlayTimes() == 1) {
+                                    roomCardCount += room.getSinglePayNum();
+                                }
+                            }
+                            if (roomCardCount > 0) {
+                                if (room.getRoomType() == CommonConstant.ROOM_TYPE_FK) {
+                                    array.add(room.getPlayerMap().get(account).getId());
+                                } else if (room.getRoomType() == CommonConstant.ROOM_TYPE_CLUB) {
+                                    clubBiz.clubPump(room.getClubCode(), roomCardCount, room.getId(), roomNo, room.getGid());
+                                }
+                            }
+                        }
+                    }
+                    // 俱乐部会长支付（一次性扣清房间人数）
+                    if (room.getPayType() == CommonConstant.PAY_TYPE_LORD) {
+                        if (room.getGameIndex() == 1) {
+                            if (room.getRoomType() == CommonConstant.ROOM_TYPE_CLUB) {
+                                if (!room.isCost()) {
+                                    roomCardCount = room.getPlayerCount()*room.getSinglePayNum();
+                                    boolean pump = clubBiz.clubPump(room.getClubCode(), roomCardCount, room.getId(), roomNo, room.getGid());
+                                    room.setCost(pump);
+                                }
+                            }
+                        }
+                    }
                 }
             }
         }else if (room.getRoomType()==CommonConstant.ROOM_TYPE_DK&&room.getGameIndex()==1) {
@@ -2218,10 +2247,6 @@ public class QZMJGameEventDeal {
                 roomCardCount = room.getPlayerCount()*room.getSinglePayNum();
                 array.add(userInfo.getLong("id"));
             }
-        }  else if (room.getRoomType() == CommonConstant.ROOM_TYPE_CLUB && room.getGameIndex() == 1) {
-            roomCardCount = room.getPlayerCount()*room.getSinglePayNum();
-            boolean pump = clubBiz.clubPump(room.getClubCode(), roomCardCount, room.getId(), roomNo, room.getGid());
-            room.setCost(pump);
         }
         if (array.size()>0) {
             producerService.sendMessage(daoQueueDestination, new PumpDao(DaoTypeConstant.PUMP, room.getRoomCardChangeObject(array,roomCardCount)));

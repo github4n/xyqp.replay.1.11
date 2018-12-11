@@ -383,6 +383,16 @@ public class BaseEventDeal {
         if (baseInfo.containsKey("paytype")) {
             gameRoom.setPayType(baseInfo.getInt("paytype"));
         }
+        // 俱乐部支付方式设置
+        if (gameRoom.getRoomType() == CommonConstant.ROOM_TYPE_CLUB) {
+            gameRoom.setPayType(CommonConstant.PAY_TYPE_LORD);
+            if (!Dto.stringIsNULL(gameRoom.getClubCode())) {
+                JSONObject clubInfo = clubBiz.getClubByCode(gameRoom.getClubCode());
+                if (!Dto.isObjNull(clubInfo) && clubInfo.containsKey("payType")) {
+                    gameRoom.setPayType(clubInfo.getInt("payType"));
+                }
+            }
+        }
         if (gameRoom.getRoomType() == CommonConstant.ROOM_TYPE_YB || gameRoom.getRoomType() == CommonConstant.ROOM_TYPE_JB || gameRoom.getRoomType() == CommonConstant.ROOM_TYPE_COMPETITIVE) {
             gameRoom.setGameCount(9999);
         }else if (gameRoom.getRoomType() == CommonConstant.ROOM_TYPE_FK || gameRoom.getRoomType() == CommonConstant.ROOM_TYPE_DK

@@ -669,6 +669,8 @@ public class GameRoom implements Serializable{
                 return "yuanbao";
             case CommonConstant.ROOM_TYPE_COMPETITIVE:
                 return "roomcard";
+            case CommonConstant.ROOM_TYPE_CLUB:
+                return "roomcard";
             default:
                 return "";
         }

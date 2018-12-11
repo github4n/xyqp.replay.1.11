@@ -289,6 +289,14 @@ public class CommonConstant {
      * 支付类型-AA
      */
     public static final int PAY_TYPE_AA = 1;
+    /**
+     * 支付类型-房主支付(非一次性扣除)
+     */
+    public static final int PAY_TYPE_OWNER2 = 2;
+    /**
+     * 支付类型-群主支付
+     */
+    public static final int PAY_TYPE_LORD = 3;
 
     /**
      * 准备超时-不处理
