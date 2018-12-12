@@ -114,6 +114,7 @@ public class ClubEventDeal {
                 obj.put("clubId", clubInfo.getLong("id"));
                 obj.put("clubCode", clubInfo.getString("clubCode"));
                 obj.put("clubName", clubInfo.getString("clubName"));
+                obj.put("payType", clubInfo.getInt("payType"));
                 obj.put("imgUrl", Constant.cfgProperties.getProperty("server_domain") + leaderInfo.getString("headimg"));
                 obj.put("isTop",userClub.containsKey("top_club") && Long.valueOf(clubIds[i]) == userClub.getLong("top_club") ? CommonConstant.GLOBAL_YES : CommonConstant.GLOBAL_NO);
                 clubList.add(obj);
