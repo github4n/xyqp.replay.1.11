@@ -1284,6 +1284,9 @@ public class GPPJGameEventDeal {
         obj.put("game_count", room.getGameCount());
         obj.put("player_count", room.getPlayerCount());
         obj.put("di", room.getScore());
+        if (room.getRoomType() == CommonConstant.ROOM_TYPE_CLUB) {
+            obj.put("clubCode",room.getClubCode());
+        }
         // 房卡场
         if (room.getRoomType() == CommonConstant.ROOM_TYPE_FK || room.getRoomType() == CommonConstant.ROOM_TYPE_CLUB) {
             StringBuffer roomInfo = new StringBuffer();

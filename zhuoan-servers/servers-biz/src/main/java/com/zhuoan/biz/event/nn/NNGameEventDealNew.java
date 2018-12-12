@@ -145,6 +145,9 @@ public class NNGameEventDealNew {
         obj.put("game_count", room.getGameCount());
         obj.put("di", room.getScore());
         obj.put("banker_type", room.getBankerType());
+        if (room.getRoomType() == CommonConstant.ROOM_TYPE_CLUB) {
+            obj.put("clubCode",room.getClubCode());
+        }
         // 元宝场
         if (room.getRoomType() == CommonConstant.ROOM_TYPE_YB) {
             StringBuffer roomInfo = new StringBuffer();

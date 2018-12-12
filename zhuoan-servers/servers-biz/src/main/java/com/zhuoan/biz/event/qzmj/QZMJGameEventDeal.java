@@ -1135,6 +1135,9 @@ public class QZMJGameEventDeal {
             result.put("jiesan", CommonConstant.GLOBAL_YES);
             result.put("jiesanData", room.getCloseRoomData());
         }
+        if (room.getRoomType() == CommonConstant.ROOM_TYPE_CLUB) {
+            result.put("clubCode",room.getClubCode());
+        }
         CommonConstant.sendMsgEventToSingle(client,String.valueOf(result),"reconnectGamePush");
     }
 
@@ -1719,6 +1722,9 @@ public class QZMJGameEventDeal {
         obj.put("myIndex",room.getPlayerMap().get(account).getMyIndex());
         obj.put("gid",room.getGid());
         obj.put("roomType",room.getRoomType());
+        if (room.getRoomType() == CommonConstant.ROOM_TYPE_CLUB) {
+            obj.put("clubCode",room.getClubCode());
+        }
         StringBuffer roomInfo = new StringBuffer();
         roomInfo.append(room.getPlayerCount());
         roomInfo.append("人 ");

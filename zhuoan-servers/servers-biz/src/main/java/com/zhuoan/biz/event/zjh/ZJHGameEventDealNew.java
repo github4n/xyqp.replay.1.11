@@ -1507,6 +1507,9 @@ public class ZJHGameEventDealNew {
         obj.put("roomType", room.getRoomType());
         obj.put("game_count", room.getGameCount());
         obj.put("xzTimer", room.getSetting().containsKey("eventTime") ? room.getSetting().getInt("eventTime"): ZJHConstant.ZJH_TIMER_XZ);
+        if (room.getRoomType() == CommonConstant.ROOM_TYPE_CLUB) {
+            obj.put("clubCode",room.getClubCode());
+        }
         if (room.getRoomType() == CommonConstant.ROOM_TYPE_YB) {
             StringBuffer roominfo = new StringBuffer();
             roominfo.append("底注:");

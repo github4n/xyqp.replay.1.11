@@ -1552,6 +1552,9 @@ public class SSSGameEventDealNew {
             roomData.put("roomType",room.getRoomType());
             roomData.put("game_count",room.getGameCount());
             roomData.put("di",room.getScore());
+            if (room.getRoomType() == CommonConstant.ROOM_TYPE_CLUB) {
+                roomData.put("clubCode",room.getClubCode());
+            }
             if (room.getMaPaiType()>0 && !Dto.stringIsNULL(room.getMaPai())) {
                 String[] ma = room.getMaPai().split("-");
                 roomData.put("mapai",Integer.valueOf(ma[1])+20*(Integer.valueOf(ma[0])-1));

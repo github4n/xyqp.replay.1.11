@@ -1890,6 +1890,9 @@ public class DdzGameEventDeal {
         obj.put("myPai",room.getUserPacketMap().get(account).getMyPai());
         obj.put("focus",room.getFocusIndex());
         obj.put("map",obtainOperateRecord(roomNo));
+        if (room.getRoomType() == CommonConstant.ROOM_TYPE_CLUB) {
+            obj.put("clubCode",room.getClubCode());
+        }
         if (room.getRoomType() == CommonConstant.ROOM_TYPE_MATCH) {
             obj.put("myRank",room.getPlayerMap().get(account).getMyRank());
             obj.put("totalPlayer",room.getTotalNum());
