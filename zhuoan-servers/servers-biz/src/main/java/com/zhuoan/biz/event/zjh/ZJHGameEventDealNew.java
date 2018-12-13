@@ -674,6 +674,9 @@ public class ZJHGameEventDealNew {
         if (room.getRoomType()==CommonConstant.ROOM_TYPE_FK || room.getRoomType() == CommonConstant.ROOM_TYPE_CLUB) {
             // 局数到了之后触发总结算
             if (isGameOver==1&&room.getGameIndex()==room.getGameCount()) {
+                if (room.getRoomType() == CommonConstant.ROOM_TYPE_CLUB) {
+                    room.setOpen(false);
+                }
                 room.setGameStatus(ZJHConstant.ZJH_GAME_STATUS_FINAL_SUMMARY);
                 room.setIsClose(CommonConstant.CLOSE_ROOM_TYPE_FINISH);
                 JSONObject result = new JSONObject();
@@ -1410,6 +1413,9 @@ public class ZJHGameEventDealNew {
                     }
                     // 强制结算
                     room.setGameStatus(ZJHConstant.ZJH_GAME_STATUS_FINAL_SUMMARY);
+                    if (room.getRoomType() == CommonConstant.ROOM_TYPE_CLUB) {
+                        room.setOpen(false);
+                    }
                     result.put(CommonConstant.RESULT_KEY_CODE,CommonConstant.GLOBAL_YES);
                     result.put("type",ZJHConstant.GAME_ACTION_TYPE_FINAL_SUMMARY);
                     result.put("isClose",CommonConstant.GLOBAL_YES);

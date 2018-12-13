@@ -705,6 +705,9 @@ public class QZMJGameEventDeal {
                         return;
                     }
                     room.setGameStatus(QZMJConstant.QZ_GAME_STATUS_FINAL_SUMMARY);
+                    if (room.getRoomType() == CommonConstant.ROOM_TYPE_CLUB) {
+                        room.setOpen(false);
+                    }
                     // 清除原有结算数据
                     room.getSummaryData().clear();
                     // 强制结算
@@ -1069,6 +1072,9 @@ public class QZMJGameEventDeal {
                 backObj.put("type", 1);
                 backObj.put("data1", jiesuanArray);
                 gamePlay.setGameStatus(QZMJConstant.QZ_GAME_STATUS_FINAL_SUMMARY);
+                if (gamePlay.getRoomType() == CommonConstant.ROOM_TYPE_CLUB) {
+                    gamePlay.setOpen(false);
+                }
             }else if (gamePlay.getGameStatus()==QZMJConstant.QZ_GAME_STATUS_FINAL_SUMMARY) {
                 // 保存结算汇总数据
                 JSONArray jiesuanArray = obtainFinalSummaryArray(gamePlay);
@@ -4083,6 +4089,9 @@ public class QZMJGameEventDeal {
                     result.put("type", 1);
                     room.setIsClose(CommonConstant.CLOSE_ROOM_TYPE_FINISH);
                     room.setGameStatus(QZMJConstant.QZ_GAME_STATUS_FINAL_SUMMARY);
+                    if (room.getRoomType() == CommonConstant.ROOM_TYPE_CLUB) {
+                        room.setOpen(false);
+                    }
                 }
                 room.setSummaryData(result);
                 CommonConstant.sendMsgEventToAll(room.getAllUUIDList(),String.valueOf(result),"gameLiuJuPush");

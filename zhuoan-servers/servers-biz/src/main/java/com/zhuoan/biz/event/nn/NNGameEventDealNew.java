@@ -985,6 +985,9 @@ public class NNGameEventDealNew {
             || room.getRoomType() == CommonConstant.ROOM_TYPE_CLUB) {
             if (room.getGameStatus()==NNConstant.NN_GAME_STATUS_JS&&room.getGameIndex()==room.getGameCount()) {
                 room.setIsClose(CommonConstant.CLOSE_ROOM_TYPE_FINISH);
+                if (room.getRoomType() == CommonConstant.ROOM_TYPE_CLUB) {
+                    room.setOpen(false);
+                }
                 room.setGameStatus(NNConstant.NN_GAME_STATUS_ZJS);
             }
         }
@@ -1714,6 +1717,9 @@ public class NNGameEventDealNew {
                         result.put(CommonConstant.RESULT_KEY_MSG,"房间已被解散");
                         CommonConstant.sendMsgEventToAll(uuidList,result.toString(),"tipMsgPush");
                         return;
+                    }
+                    if (room.getRoomType() == CommonConstant.ROOM_TYPE_CLUB) {
+                        room.setOpen(false);
                     }
                     room.setGameStatus(NNConstant.NN_GAME_STATUS_ZJS);
                     changeGameStatus(room);

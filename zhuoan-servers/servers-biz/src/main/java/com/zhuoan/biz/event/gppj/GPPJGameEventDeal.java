@@ -666,6 +666,9 @@ public class GPPJGameEventDeal {
                         CommonConstant.sendMsgEventToAll(uuidList,result.toString(),"tipMsgPush");
                         return;
                     }
+                    if (room.getRoomType() == CommonConstant.ROOM_TYPE_CLUB) {
+                        room.setOpen(false);
+                    }
                     room.setGameStatus(GPPJConstant.GP_PJ_GAME_STATUS_FINAL_SUMMARY);
                     changeGameStatus(roomNo);
                 } else {// 刷新数据
@@ -714,6 +717,9 @@ public class GPPJGameEventDeal {
             // 局数到了之后触发总结算
             if (room.getGameStatus()== GPPJConstant.GP_PJ_GAME_STATUS_SUMMARY&&room.getGameIndex()==room.getGameCount()) {
                 room.setIsClose(CommonConstant.CLOSE_ROOM_TYPE_FINISH);
+                if (room.getRoomType() == CommonConstant.ROOM_TYPE_CLUB) {
+                    room.setOpen(false);
+                }
                 room.setGameStatus(GPPJConstant.GP_PJ_GAME_STATUS_FINAL_SUMMARY);
             }
             // 更新房卡数

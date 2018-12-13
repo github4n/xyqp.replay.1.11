@@ -968,6 +968,9 @@ public class DdzGameEventDeal {
                         CommonConstant.sendMsgEventToAll(uuidList,String.valueOf(result),"tipMsgPush");
                         return;
                     }
+                    if (room.getRoomType() == CommonConstant.ROOM_TYPE_CLUB) {
+                        room.setOpen(false);
+                    }
                     room.setGameStatus(DdzConstant.DDZ_GAME_STATUS_FINAL_SUMMARY);
                     changeGameStatus(roomNo);
                 } else {// 刷新数据
@@ -1315,6 +1318,9 @@ public class DdzGameEventDeal {
             room.setNeedFinalSummary(true);
             // 局数到了之后触发总结算
             if (room.getGameIndex()==room.getGameCount()) {
+                if (room.getRoomType() == CommonConstant.ROOM_TYPE_CLUB) {
+                    room.setOpen(false);
+                }
                 room.setGameStatus(DdzConstant.DDZ_GAME_STATUS_FINAL_SUMMARY);
             }
             // 扣房卡

@@ -463,7 +463,9 @@ public class BaseEventDeal {
         if (baseInfo.containsKey("leaveYB") && baseInfo.getDouble("leaveYB") > 0) {
             gameRoom.setLeaveScore(baseInfo.getDouble("leaveYB"));
         }
-        if (baseInfo.containsKey("open") && baseInfo.getInt("open") == 1 && postData.getInt("gid") != CommonConstant.GAME_ID_BDX) {
+        if (gameRoom.getRoomType() == CommonConstant.ROOM_TYPE_CLUB) {
+            gameRoom.setOpen(true);
+        } else if (baseInfo.containsKey("open") && baseInfo.getInt("open") == 1 && postData.getInt("gid") != CommonConstant.GAME_ID_BDX) {
             gameRoom.setOpen(true);
         } else {
             gameRoom.setOpen(false);

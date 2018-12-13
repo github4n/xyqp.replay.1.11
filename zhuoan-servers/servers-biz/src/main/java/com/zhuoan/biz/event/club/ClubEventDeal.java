@@ -397,7 +397,7 @@ public class ClubEventDeal {
         for (String roomNo : RoomManage.gameRoomMap.keySet()) {
             GameRoom room = RoomManage.gameRoomMap.get(roomNo);
             // 当前俱乐部的所有房间
-            if (!Dto.stringIsNULL(clubCode) && clubCode.equals(room.getClubCode())) {
+            if (!Dto.stringIsNULL(clubCode) && clubCode.equals(room.getClubCode()) && room.isOpen()) {
                 // gid为0刷新全部，否则只刷新当前房间
                 if (gid == 0 || room.getGid() == gid) {
                     JSONObject roomObj = new JSONObject();
@@ -493,7 +493,7 @@ public class ClubEventDeal {
             GameRoom room = RoomManage.gameRoomMap.get(roomNo);
             // 当前俱乐部的所有房间
             if (!Dto.stringIsNULL(clubCode) && clubCode.equals(room.getClubCode()) && room.getGid() == gameId
-                && !room.getPlayerMap().containsKey(account) && room.getPlayerMap().size() < room.getPlayerCount()) {
+                && !room.getPlayerMap().containsKey(account) && room.getPlayerMap().size() < room.getPlayerCount() && room.isOpen()) {
                 if (!postData.containsKey(CommonConstant.DATA_KEY_ROOM_NO) || !roomNo.equals(postData.getString(CommonConstant.DATA_KEY_ROOM_NO))) {
                     roomNoList.add(roomNo);
                 }

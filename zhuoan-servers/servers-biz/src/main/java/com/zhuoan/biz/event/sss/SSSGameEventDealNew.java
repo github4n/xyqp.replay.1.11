@@ -813,6 +813,9 @@ public class SSSGameEventDealNew {
                             if (room.getRoomType()==CommonConstant.ROOM_TYPE_FK || room.getRoomType() == CommonConstant.ROOM_TYPE_DK
                                 || room.getRoomType() == CommonConstant.ROOM_TYPE_CLUB) {
                                 if (room.getGameStatus()==SSSConstant.SSS_GAME_STATUS_SUMMARY&&room.getGameIndex()==room.getGameCount()) {
+                                    if (room.getRoomType() == CommonConstant.ROOM_TYPE_CLUB) {
+                                        room.setOpen(false);
+                                    }
                                     room.setIsClose(CommonConstant.CLOSE_ROOM_TYPE_FINISH);
                                     room.setGameStatus(SSSConstant.SSS_GAME_STATUS_FINAL_SUMMARY);
                                 }
@@ -1394,6 +1397,9 @@ public class SSSGameEventDealNew {
                         result.put(CommonConstant.RESULT_KEY_MSG,"解散房间成功");
                         CommonConstant.sendMsgEventToAll(uuidList,result.toString(),"tipMsgPush");
                         return;
+                    }
+                    if (room.getRoomType() == CommonConstant.ROOM_TYPE_CLUB) {
+                        room.setOpen(false);
                     }
                     room.setGameStatus(SSSConstant.SSS_GAME_STATUS_FINAL_SUMMARY);
                     changeGameStatus(room);
