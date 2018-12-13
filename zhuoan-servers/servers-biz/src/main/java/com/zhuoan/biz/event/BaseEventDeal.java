@@ -3760,6 +3760,12 @@ public class BaseEventDeal {
                     }
                 }
             }
+            Collections.sort(totalSum, new Comparator<JSONObject>() {
+                @Override
+                public int compare(JSONObject o1, JSONObject o2) {
+                    return o2.getInt("score") - o1.getInt("score");
+                }
+            });
         }
         return totalSum;
     }

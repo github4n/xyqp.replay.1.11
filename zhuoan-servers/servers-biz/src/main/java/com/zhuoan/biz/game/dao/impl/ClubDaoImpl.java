@@ -38,7 +38,7 @@ public class ClubDaoImpl implements ClubDao {
     @Override
     public JSONArray getClubMember(long clubId) {
         String sql = "select id,account,platform,clubIds,top_club,name,headimg from za_users where clubIds like ?";
-        return DBUtil.getObjectListBySQL(sql, new Object[]{"%" + clubId + "%"});
+        return DBUtil.getObjectListBySQL(sql, new Object[]{"%$" + clubId + "$%"});
     }
 
     @Override
