@@ -20,7 +20,7 @@ import javax.jms.Destination;
 public class ClubEvent {
 
     @Resource
-    private Destination bdxQueueDestination;
+    private Destination clubQueueDestination;
 
     @Resource
     private ProducerService producerService;
@@ -34,7 +34,7 @@ public class ClubEvent {
 
             @Override
             public void onData(SocketIOClient client, Object data, AckRequest ackSender) {
-                producerService.sendMessage(bdxQueueDestination, new Messages(client, data, CommonConstant.GAME_CLUB, ClubConstant.CLUB_EVENT_JOIN_CLUB));
+                producerService.sendMessage(clubQueueDestination, new Messages(client, data, CommonConstant.GAME_CLUB, ClubConstant.CLUB_EVENT_JOIN_CLUB));
             }
         });
 
@@ -45,7 +45,7 @@ public class ClubEvent {
 
             @Override
             public void onData(SocketIOClient client, Object data, AckRequest ackSender) {
-                producerService.sendMessage(bdxQueueDestination, new Messages(client, data, CommonConstant.GAME_CLUB, ClubConstant.CLUB_EVENT_GET_MY_CLUB_LIST));
+                producerService.sendMessage(clubQueueDestination, new Messages(client, data, CommonConstant.GAME_CLUB, ClubConstant.CLUB_EVENT_GET_MY_CLUB_LIST));
             }
         });
 
@@ -57,7 +57,7 @@ public class ClubEvent {
 
             @Override
             public void onData(SocketIOClient client, Object data, AckRequest ackSender) {
-                producerService.sendMessage(bdxQueueDestination, new Messages(client, data, CommonConstant.GAME_CLUB, ClubConstant.CLUB_EVENT_GET_CLUB_MEMBERS));
+                producerService.sendMessage(clubQueueDestination, new Messages(client, data, CommonConstant.GAME_CLUB, ClubConstant.CLUB_EVENT_GET_CLUB_MEMBERS));
             }
         });
 
@@ -68,7 +68,7 @@ public class ClubEvent {
 
             @Override
             public void onData(SocketIOClient client, Object data, AckRequest ackSender) {
-                producerService.sendMessage(bdxQueueDestination, new Messages(client, data, CommonConstant.GAME_CLUB, ClubConstant.CLUB_EVENT_GET_CLUB_SETTING));
+                producerService.sendMessage(clubQueueDestination, new Messages(client, data, CommonConstant.GAME_CLUB, ClubConstant.CLUB_EVENT_GET_CLUB_SETTING));
             }
         });
 
@@ -79,7 +79,7 @@ public class ClubEvent {
 
             @Override
             public void onData(SocketIOClient client, Object data, AckRequest ackSender) {
-                producerService.sendMessage(bdxQueueDestination, new Messages(client, data, CommonConstant.GAME_CLUB, ClubConstant.CLUB_EVENT_CHANGE_CLUB_SETTING));
+                producerService.sendMessage(clubQueueDestination, new Messages(client, data, CommonConstant.GAME_CLUB, ClubConstant.CLUB_EVENT_CHANGE_CLUB_SETTING));
             }
         });
 
@@ -90,7 +90,7 @@ public class ClubEvent {
 
             @Override
             public void onData(SocketIOClient client, Object data, AckRequest ackSender) {
-                producerService.sendMessage(bdxQueueDestination, new Messages(client, data, CommonConstant.GAME_CLUB, ClubConstant.CLUB_EVENT_EXIT_CLUB));
+                producerService.sendMessage(clubQueueDestination, new Messages(client, data, CommonConstant.GAME_CLUB, ClubConstant.CLUB_EVENT_EXIT_CLUB));
             }
         });
 
@@ -101,7 +101,7 @@ public class ClubEvent {
 
             @Override
             public void onData(SocketIOClient client, Object data, AckRequest ackSender) {
-                producerService.sendMessage(bdxQueueDestination, new Messages(client, data, CommonConstant.GAME_CLUB, ClubConstant.CLUB_EVENT_TO_TOP));
+                producerService.sendMessage(clubQueueDestination, new Messages(client, data, CommonConstant.GAME_CLUB, ClubConstant.CLUB_EVENT_TO_TOP));
             }
         });
 
@@ -112,7 +112,7 @@ public class ClubEvent {
 
             @Override
             public void onData(SocketIOClient client, Object data, AckRequest ackSender) {
-                producerService.sendMessage(bdxQueueDestination, new Messages(client, data, CommonConstant.GAME_CLUB, ClubConstant.CLUB_EVENT_REFRESH_CLUB_INFO));
+                producerService.sendMessage(clubQueueDestination, new Messages(client, data, CommonConstant.GAME_CLUB, ClubConstant.CLUB_EVENT_REFRESH_CLUB_INFO));
             }
         });
 
@@ -123,7 +123,40 @@ public class ClubEvent {
 
             @Override
             public void onData(SocketIOClient client, Object data, AckRequest ackSender) {
-                producerService.sendMessage(bdxQueueDestination, new Messages(client, data, CommonConstant.GAME_CLUB, ClubConstant.CLUB_EVENT_QUICK_JOIN_CLUB_ROOM));
+                producerService.sendMessage(clubQueueDestination, new Messages(client, data, CommonConstant.GAME_CLUB, ClubConstant.CLUB_EVENT_QUICK_JOIN_CLUB_ROOM));
+            }
+        });
+
+        /**
+         * 获取俱乐部会长审批列表
+         */
+        server.addEventListener("getClubApplyList", Object.class, new DataListener<Object>() {
+
+            @Override
+            public void onData(SocketIOClient client, Object data, AckRequest ackSender) {
+                producerService.sendMessage(clubQueueDestination, new Messages(client, data, CommonConstant.GAME_CLUB, ClubConstant.CLUB_EVENT_GET_CLUB_APPLY_LIST));
+            }
+        });
+
+        /**
+         * 俱乐部会长审批
+         */
+        server.addEventListener("clubApplyReview", Object.class, new DataListener<Object>() {
+
+            @Override
+            public void onData(SocketIOClient client, Object data, AckRequest ackSender) {
+                producerService.sendMessage(clubQueueDestination, new Messages(client, data, CommonConstant.GAME_CLUB, ClubConstant.CLUB_EVENT_CLUB_APPLY_REVIEW));
+            }
+        });
+
+        /**
+         * 俱乐部会长邀请
+         */
+        server.addEventListener("clubLeaderInvite", Object.class, new DataListener<Object>() {
+
+            @Override
+            public void onData(SocketIOClient client, Object data, AckRequest ackSender) {
+                producerService.sendMessage(clubQueueDestination, new Messages(client, data, CommonConstant.GAME_CLUB, ClubConstant.CLUB_EVENT_CLUB_LEADER_INVITE));
             }
         });
 

@@ -52,7 +52,7 @@ public class ClubEventDeal {
     @Resource
     private BaseEventDeal baseEventDeal;
 
-    private String clubName = "亲友团";
+    private String clubName = "亲友圈";
 
     @Resource
     private NNGameEventDealNew nnGameEventDealNew;
@@ -666,5 +666,147 @@ public class ClubEventDeal {
             }
         }
         return true;
+    }
+
+    /**
+     * 获取审批列表
+     *
+     * @param client client
+     * @param data data
+     */
+    public void getClubApplyList(SocketIOClient client, Object data) {
+        JSONObject postData = JSONObject.fromObject(data);
+        String clubCode = postData.containsKey("clubCode") ? postData.getString("clubCode") : "";
+        String leader = postData.getString("leader");
+        String uuid = postData.getString("uuid");
+        String eventName = "getClubApplyListPush";
+        JSONObject leaderInfo = clubBiz.getUserByAccountAndUuid(leader, uuid);
+        // 验证用户信息是否合法
+        if (Dto.isObjNull(leaderInfo)) {
+            sendPromptToSingle(client, CommonConstant.GLOBAL_NO, "账号已在其他地方登录", eventName);
+            return;
+        }
+        // 俱乐部不存在或非会长发起
+        JSONObject clubInfo = clubBiz.getClubByCode(clubCode);
+        if (Dto.isObjNull(clubInfo) || clubInfo.getLong("leaderId") != leaderInfo.getLong("id")) {
+            sendPromptToSingle(client, CommonConstant.GLOBAL_NO, "无修改权限", eventName);
+            return;
+        }
+        JSONArray clubInviteRec = clubBiz.getClubInviteRec(ClubConstant.CLUB_INVITE_STATUS_APPLY, clubInfo.getLong("id"));
+        for (int i = 0; i < clubInviteRec.size(); i++) {
+            clubInviteRec.getJSONObject(i).put("headimg",Constant.cfgProperties.getProperty("server_domain") + clubInviteRec.getJSONObject(i).getString("headimg"));
+        }
+        JSONObject result = new JSONObject();
+        result.put(CommonConstant.RESULT_KEY_CODE, CommonConstant.GLOBAL_YES);
+        result.put(CommonConstant.RESULT_KEY_MSG, "获取成功");
+        result.put("applyList", clubInviteRec);
+        CommonConstant.sendMsgEventToSingle(client, String.valueOf(result), eventName);
+    }
+
+    /**
+     * 会长审批
+     * @param client
+     * @param data
+     */
+    public void clubApplyReview(SocketIOClient client, Object data) {
+        JSONObject postData = JSONObject.fromObject(data);
+        String clubCode = postData.containsKey("clubCode") ? postData.getString("clubCode") : "";
+        String leader = postData.getString("leader");
+        String uuid = postData.getString("uuid");
+        String account = postData.getString("account");
+        int type = postData.getInt("type");
+        long clubApplyRecId = postData.getInt("clubApplyRecId");
+        String eventName = "clubApplyReviewPush";
+        JSONObject leaderInfo = clubBiz.getUserByAccountAndUuid(leader, uuid);
+        // 验证用户信息是否合法
+        if (Dto.isObjNull(leaderInfo)) {
+            sendPromptToSingle(client, CommonConstant.GLOBAL_NO, "账号已在其他地方登录", eventName);
+            return;
+        }
+        // 俱乐部不存在或非会长发起
+        JSONObject clubInfo = clubBiz.getClubByCode(clubCode);
+        if (Dto.isObjNull(clubInfo) || clubInfo.getLong("leaderId") != leaderInfo.getLong("id")) {
+            sendPromptToSingle(client, CommonConstant.GLOBAL_NO, "无修改权限", eventName);
+            return;
+        }
+        if (type != ClubConstant.CLUB_INVITE_STATUS_AGREE && type != ClubConstant.CLUB_INVITE_STATUS_DISAGREE) {
+            sendPromptToSingle(client, CommonConstant.GLOBAL_NO, "参数不正确", eventName);
+            return;
+        }
+        // 玩家是否存在
+        JSONObject userInfo = clubBiz.getUserClubByAccount(account);
+        if (Dto.isObjNull(userInfo)) {
+            clubBiz.updateClubInviteRecStatus(ClubConstant.CLUB_INVITE_STATUS_DISAGREE, clubApplyRecId);
+            sendPromptToSingle(client, CommonConstant.GLOBAL_NO, "玩家不存在", eventName);
+            return;
+        }
+        if (userInfo.containsKey("clubIds") && !Dto.stringIsNULL(userInfo.getString("clubIds"))
+            && userInfo.getString("clubIds").contains("$"+clubInfo.getLong("id")+"$")) {
+            clubBiz.updateClubInviteRecStatus(ClubConstant.CLUB_INVITE_STATUS_DISAGREE, clubApplyRecId);
+            sendPromptToSingle(client, CommonConstant.GLOBAL_NO, "该玩家已在当前" + clubName + "中", eventName);
+            return;
+        }
+        // 更新邀请记录状态
+        clubBiz.updateClubInviteRecStatus(type, clubApplyRecId);
+        // 同意需要更新玩家俱乐部信息
+        if (type == ClubConstant.CLUB_INVITE_STATUS_AGREE) {
+            String clubIds = "$"+clubInfo.getLong("id")+"$";
+            // 已加入俱乐部进行拼接
+            if (userInfo.containsKey("clubIds") && !Dto.stringIsNULL(userInfo.getString("clubIds"))) {
+                clubIds = userInfo.getString("clubIds") + clubInfo.getLong("id") + "$";
+            }
+            clubBiz.updateUserClubIds(userInfo.getLong("id"), clubIds);
+        }
+        // 通知玩家
+        sendPromptToSingle(client, CommonConstant.GLOBAL_YES, "操作成功", eventName);
+    }
+
+    /**
+     * 俱乐部会长邀请
+     *
+     * @param client
+     * @param data
+     */
+    public void clubLeaderInvite(SocketIOClient client, Object data) {
+        JSONObject postData = JSONObject.fromObject(data);
+        String clubCode = postData.containsKey("clubCode") ? postData.getString("clubCode") : "";
+        String leader = postData.getString("leader");
+        String uuid = postData.getString("uuid");
+        String account = postData.getString("account");
+        String eventName = "clubLeaderInvitePush";
+        JSONObject leaderInfo = clubBiz.getUserByAccountAndUuid(leader, uuid);
+        // 验证用户信息是否合法
+        if (Dto.isObjNull(leaderInfo)) {
+            sendPromptToSingle(client, CommonConstant.GLOBAL_NO, "账号已在其他地方登录", eventName);
+            return;
+        }
+        // 俱乐部不存在或非会长发起
+        JSONObject clubInfo = clubBiz.getClubByCode(clubCode);
+        if (Dto.isObjNull(clubInfo) || clubInfo.getLong("leaderId") != leaderInfo.getLong("id")) {
+            sendPromptToSingle(client, CommonConstant.GLOBAL_NO, "无修改权限", eventName);
+            return;
+        }
+        // 玩家是否存在
+        JSONObject userInfo = clubBiz.getUserClubByAccount(account);
+        if (Dto.isObjNull(userInfo)) {
+            sendPromptToSingle(client, CommonConstant.GLOBAL_NO, "玩家不存在", eventName);
+            return;
+        }
+        if (userInfo.containsKey("clubIds") && !Dto.stringIsNULL(userInfo.getString("clubIds"))
+            && userInfo.getString("clubIds").contains("$"+clubInfo.getLong("id")+"$")) {
+            sendPromptToSingle(client, CommonConstant.GLOBAL_NO, "该玩家已在当前" + clubName + "中", eventName);
+            return;
+        }
+        // 添加邀请记录
+        clubBiz.addClubInviteRec(userInfo.getLong("id"),clubInfo.getLong("id"),clubInfo.getLong("leaderId"),"来自会长邀请",ClubConstant.CLUB_INVITE_STATUS_AGREE);
+        // 更新玩家俱乐部信息
+        String clubIds = "$"+clubInfo.getLong("id")+"$";
+        // 已加入俱乐部进行拼接
+        if (userInfo.containsKey("clubIds") && !Dto.stringIsNULL(userInfo.getString("clubIds"))) {
+            clubIds = userInfo.getString("clubIds") + clubInfo.getLong("id") + "$";
+        }
+        clubBiz.updateUserClubIds(userInfo.getLong("id"), clubIds);
+        // 通知玩家
+        sendPromptToSingle(client, CommonConstant.GLOBAL_YES, "邀请成功", eventName);
     }
 }

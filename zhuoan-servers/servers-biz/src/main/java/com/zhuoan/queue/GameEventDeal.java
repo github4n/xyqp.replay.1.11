@@ -162,6 +162,15 @@ public class GameEventDeal {
             case ClubConstant.CLUB_EVENT_QUICK_JOIN_CLUB_ROOM:
                 clubEventDeal.quickJoinClubRoom(client, data);
                 break;
+            case ClubConstant.CLUB_EVENT_GET_CLUB_APPLY_LIST:
+                clubEventDeal.getClubApplyList(client, data);
+                break;
+            case ClubConstant.CLUB_EVENT_CLUB_APPLY_REVIEW:
+                clubEventDeal.clubApplyReview(client, data);
+                break;
+            case ClubConstant.CLUB_EVENT_CLUB_LEADER_INVITE:
+                clubEventDeal.clubLeaderInvite(client, data);
+                break;
             default:
                 break;
         }

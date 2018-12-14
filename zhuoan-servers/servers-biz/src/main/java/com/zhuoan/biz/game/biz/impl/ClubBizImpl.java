@@ -80,4 +80,24 @@ public class ClubBizImpl implements ClubBiz {
     public void updateUserTopClub(String account, long clubId) {
         clubDao.updateUserTopClub(account, clubId);
     }
+
+    @Override
+    public JSONArray getClubInviteRec(int status, long clubId) {
+        return clubDao.getClubInviteRec(status, clubId);
+    }
+
+    @Override
+    public void updateClubInviteRecStatus(int status, long clubInviteRecId) {
+        clubDao.updateClubInviteRecStatus(status, clubInviteRecId);
+    }
+
+    @Override
+    public void updateUserClub(long userId, String clubIds) {
+        clubDao.updateUserClub(userId, clubIds);
+    }
+
+    @Override
+    public void addClubInviteRec(long userId, long clubId, long parId, String memo, int status) {
+        clubDao.addClubInviteRec(userId, clubId, parId, memo, status);
+    }
 }

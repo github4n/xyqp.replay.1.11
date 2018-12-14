@@ -43,6 +43,30 @@ public class ClubConstant {
      * 俱乐部快速加入
      */
     public static final int CLUB_EVENT_QUICK_JOIN_CLUB_ROOM = 9;
+    /**
+     * 俱乐部获取审批列表
+     */
+    public static final int CLUB_EVENT_GET_CLUB_APPLY_LIST = 10;
+    /**
+     * 俱乐部会长审批
+     */
+    public static final int CLUB_EVENT_CLUB_APPLY_REVIEW = 11;
+    /**
+     * 俱乐部会邀请玩家
+     */
+    public static final int CLUB_EVENT_CLUB_LEADER_INVITE = 12;
+    /**
+     * 俱乐部申请状态-不同意
+     */
+    public static final int CLUB_INVITE_STATUS_DISAGREE = 0;
+    /**
+     * 俱乐部申请状态-审核中
+     */
+    public static final int CLUB_INVITE_STATUS_APPLY = 1;
+    /**
+     * 俱乐部申请状态-同意
+     */
+    public static final int CLUB_INVITE_STATUS_AGREE = 2;
 
 
     public static final String DATA_KEY_CLUB_CODE = "clubCode";

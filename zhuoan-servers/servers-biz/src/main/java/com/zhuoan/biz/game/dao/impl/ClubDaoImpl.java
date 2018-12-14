@@ -4,6 +4,7 @@ import com.zhuoan.biz.game.dao.ClubDao;
 import com.zhuoan.constant.CommonConstant;
 import com.zhuoan.dao.DBJsonUtil;
 import com.zhuoan.dao.DBUtil;
+import com.zhuoan.util.TimeUtil;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 import org.springframework.stereotype.Component;
@@ -77,5 +78,30 @@ public class ClubDaoImpl implements ClubDao {
     public void updateUserTopClub(String account, long clubId) {
         String sql = "update za_users set top_club=? where account=?";
         DBUtil.executeUpdateBySQL(sql,new Object[]{clubId,account});
+    }
+
+    @Override
+    public JSONArray getClubInviteRec(int status, long clubId) {
+        String sql = "SELECT a.id,a.clubId,a.userId,b.account,b.`name`,b.headimg FROM `club_invite_rec` a " +
+            "LEFT JOIN za_users b ON a.userId=b.id where a.status=? and a.clubId=? ORDER BY a.id DESC";
+        return DBUtil.getObjectListBySQL(sql, new Object[]{status, clubId});
+    }
+
+    @Override
+    public void updateClubInviteRecStatus(int status, long clubInviteRecId) {
+        String sql = "update club_invite_rec set status=?,modifyTime=? where id=?";
+        DBUtil.executeUpdateBySQL(sql, new Object[]{status, TimeUtil.getNowDate(), clubInviteRecId});
+    }
+
+    @Override
+    public void updateUserClub(long userId, String clubIds) {
+        String sql = "update za_users set clubIds=? where id=?";
+        DBUtil.executeUpdateBySQL(sql, new Object[]{clubIds, userId});
+    }
+
+    @Override
+    public void addClubInviteRec(long userId, long clubId, long parId, String memo, int status) {
+        String sql = "insert into club_invite_rec(clubId,userId,parId,description,status,createTime,modifyTime) values(?,?,?,?,?,?,?)";
+        DBUtil.executeUpdateBySQL(sql, new Object[]{clubId, userId , parId, memo, status, TimeUtil.getNowDate(), TimeUtil.getNowDate()});
     }
 }

@@ -85,4 +85,40 @@ public interface ClubBiz {
      * @param clubId
      */
     void updateUserTopClub(String account, long clubId);
+
+    /**
+     * 获取记录申请记录
+     *
+     * @param status status
+     * @param clubId clubId
+     * @return JSONArray
+     */
+    JSONArray getClubInviteRec(int status, long clubId);
+
+    /**
+     * 更新俱乐部邀请状态
+     *
+     * @param status status
+     * @param clubInviteRecId clubInviteRecId
+     */
+    void updateClubInviteRecStatus(int status, long clubInviteRecId);
+
+    /**
+     * 更新玩家俱乐部
+     *
+     * @param userId
+     * @param clubIds
+     */
+    void updateUserClub(long userId, String clubIds);
+
+    /**
+     * 添加邀请记录
+     * @param userId
+     * @param clubId
+     * @param parId
+     * @param memo
+     * @param status
+     * @return
+     */
+    void addClubInviteRec(long userId, long clubId, long parId, String memo, int status);
 }
