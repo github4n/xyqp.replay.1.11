@@ -160,5 +160,16 @@ public class ClubEvent {
             }
         });
 
+        /**
+         * 俱乐部会长踢出
+         */
+        server.addEventListener("clubLeaderOut", Object.class, new DataListener<Object>() {
+
+            @Override
+            public void onData(SocketIOClient client, Object data, AckRequest ackSender) {
+                producerService.sendMessage(clubQueueDestination, new Messages(client, data, CommonConstant.GAME_CLUB, ClubConstant.CLUB_EVENT_CLUB_LEADER_OUT));
+            }
+        });
+
     }
 }

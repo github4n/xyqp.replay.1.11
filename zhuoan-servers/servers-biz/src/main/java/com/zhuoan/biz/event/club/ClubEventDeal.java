@@ -809,4 +809,51 @@ public class ClubEventDeal {
         // 通知玩家
         sendPromptToSingle(client, CommonConstant.GLOBAL_YES, "邀请成功", eventName);
     }
+
+    /**
+     * 俱乐部会长邀请
+     *
+     * @param client
+     * @param data
+     */
+    public void clubLeaderOut(SocketIOClient client, Object data) {
+        JSONObject postData = JSONObject.fromObject(data);
+        String clubCode = postData.containsKey("clubCode") ? postData.getString("clubCode") : "";
+        String leader = postData.getString("leader");
+        String uuid = postData.getString("uuid");
+        String account = postData.getString("account");
+        String eventName = "clubLeaderOutPush";
+        JSONObject leaderInfo = clubBiz.getUserByAccountAndUuid(leader, uuid);
+        // 验证用户信息是否合法
+        if (Dto.isObjNull(leaderInfo)) {
+            sendPromptToSingle(client, CommonConstant.GLOBAL_NO, "账号已在其他地方登录", eventName);
+            return;
+        }
+        // 俱乐部不存在或非会长发起
+        JSONObject clubInfo = clubBiz.getClubByCode(clubCode);
+        if (Dto.isObjNull(clubInfo) || clubInfo.getLong("leaderId") != leaderInfo.getLong("id")) {
+            sendPromptToSingle(client, CommonConstant.GLOBAL_NO, "无修改权限", eventName);
+            return;
+        }
+        // 玩家是否存在
+        JSONObject userInfo = clubBiz.getUserClubByAccount(account);
+        if (Dto.isObjNull(userInfo)) {
+            sendPromptToSingle(client, CommonConstant.GLOBAL_NO, "玩家不存在", eventName);
+            return;
+        }
+        if (!userInfo.containsKey("clubIds") || Dto.stringIsNULL(userInfo.getString("clubIds"))
+            || !userInfo.getString("clubIds").contains("$" + clubInfo.getLong("id") + "$")) {
+            sendPromptToSingle(client, CommonConstant.GLOBAL_NO, "该玩家已不在当前" + clubName + "中", eventName);
+            return;
+        }
+        // 更新玩家俱乐部信息
+        String clubIds = userInfo.getString("clubIds").replace("$" + clubInfo.getLong("id") + "$", "$");
+        // 已加入俱乐部进行拼接
+        if (clubIds.equals("$")) {
+            clubIds = "";
+        }
+        clubBiz.updateUserClubIds(userInfo.getLong("id"), clubIds);
+        // 通知玩家
+        sendPromptToSingle(client, CommonConstant.GLOBAL_YES, "移除成功", eventName);
+    }
 }

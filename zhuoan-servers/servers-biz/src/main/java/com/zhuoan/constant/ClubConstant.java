@@ -52,9 +52,13 @@ public class ClubConstant {
      */
     public static final int CLUB_EVENT_CLUB_APPLY_REVIEW = 11;
     /**
-     * 俱乐部会邀请玩家
+     * 俱乐部会长邀请玩家
      */
     public static final int CLUB_EVENT_CLUB_LEADER_INVITE = 12;
+    /**
+     * 俱乐部会长踢出玩家
+     */
+    public static final int CLUB_EVENT_CLUB_LEADER_OUT = 13;
     /**
      * 俱乐部申请状态-不同意
      */

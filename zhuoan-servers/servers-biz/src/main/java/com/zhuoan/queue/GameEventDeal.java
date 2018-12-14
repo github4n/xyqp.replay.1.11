@@ -171,6 +171,9 @@ public class GameEventDeal {
             case ClubConstant.CLUB_EVENT_CLUB_LEADER_INVITE:
                 clubEventDeal.clubLeaderInvite(client, data);
                 break;
+            case ClubConstant.CLUB_EVENT_CLUB_LEADER_OUT:
+                clubEventDeal.clubLeaderOut(client, data);
+                break;
             default:
                 break;
         }
