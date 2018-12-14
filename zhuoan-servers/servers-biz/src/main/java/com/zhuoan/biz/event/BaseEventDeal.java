@@ -3720,6 +3720,16 @@ public class BaseEventDeal {
                 }
             }
         }
+        Collections.sort(summaryList, new Comparator<JSONObject>() {
+            @Override
+            public int compare(JSONObject o1, JSONObject o2) {
+                if (TimeUtil.isLatter(o2.getString("createtime"), o1.getString("createtime"))) {
+                    return 1;
+                } else {
+                    return -1;
+                }
+            }
+        });
         return summaryList;
     }
 

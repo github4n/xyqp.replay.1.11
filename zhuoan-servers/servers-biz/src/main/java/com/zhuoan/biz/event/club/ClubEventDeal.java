@@ -461,13 +461,6 @@ public class ClubEventDeal {
             sendPromptToSingle(client, CommonConstant.GLOBAL_NO, "未加入该" + clubName, eventName);
             return;
         }
-        if (postData.containsKey(CommonConstant.DATA_KEY_ROOM_NO) && !Dto.stringIsNULL(postData.getString(CommonConstant.DATA_KEY_ROOM_NO))) {
-            boolean canJoin = exitRoom(postData.getString(CommonConstant.DATA_KEY_ROOM_NO), account);
-            if (!canJoin) {
-                sendPromptToSingle(client, CommonConstant.GLOBAL_NO, "已加入其他房间", eventName);
-                return;
-            }
-        }
         if (postData.containsKey("base_info")) {
             // 判断余额是否足够
             // 当前俱乐部总余额必须大于已开房未扣费的房间需要消耗的总和+当前房间需要消耗的
@@ -501,7 +494,7 @@ public class ClubEventDeal {
         }
         // 快速加入有房间加入房间 没有房间创建房间
         if (roomNoList.size() == 0) {
-            JSONObject quickSetting = !Dto.isObjNull(clubInfo.getJSONObject("quick_setting")) ?
+            JSONObject quickSetting = clubInfo.containsKey("quick_setting") && !Dto.isObjNull(clubInfo.getJSONObject("quick_setting")) ?
                 clubInfo.getJSONObject("quick_setting").getJSONObject(String.valueOf(gameId)) : null;
             if (!Dto.isObjNull(quickSetting)) {
                 // 判断余额是否足够
@@ -519,12 +512,26 @@ public class ClubEventDeal {
                         return;
                     }
                 }
+                if (postData.containsKey(CommonConstant.DATA_KEY_ROOM_NO) && !Dto.stringIsNULL(postData.getString(CommonConstant.DATA_KEY_ROOM_NO))) {
+                    boolean canJoin = exitRoom(postData.getString(CommonConstant.DATA_KEY_ROOM_NO), account);
+                    if (!canJoin) {
+                        sendPromptToSingle(client, CommonConstant.GLOBAL_NO, "已加入其他房间", eventName);
+                        return;
+                    }
+                }
                 postData.put("base_info", quickSetting);
                 baseEventDeal.createRoomBase(client,postData);
             } else {
                 sendPromptToSingle(client, CommonConstant.GLOBAL_NO, "参数不正确,请联系会长修改", eventName);
             }
         }else {
+            if (postData.containsKey(CommonConstant.DATA_KEY_ROOM_NO) && !Dto.stringIsNULL(postData.getString(CommonConstant.DATA_KEY_ROOM_NO))) {
+                boolean canJoin = exitRoom(postData.getString(CommonConstant.DATA_KEY_ROOM_NO), account);
+                if (!canJoin) {
+                    sendPromptToSingle(client, CommonConstant.GLOBAL_NO, "已加入其他房间", eventName);
+                    return;
+                }
+            }
             // 随机加入
             Collections.shuffle(roomNoList);
             postData.put("room_no",roomNoList.get(0));

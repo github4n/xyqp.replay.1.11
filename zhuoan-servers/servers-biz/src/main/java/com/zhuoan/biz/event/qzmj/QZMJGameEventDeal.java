@@ -1498,8 +1498,10 @@ public class QZMJGameEventDeal {
         if (room.choiceBanker()) {
             room.initGame();
             // 更新游戏局数
-            if (room.getRoomType() == CommonConstant.ROOM_TYPE_FK && !Dto.isObjNull(room.getSetting()) && room.getSetting().containsKey("update_index")) {
-                roomBiz.increaseRoomIndexByRoomNo(roomNo);
+            if (room.getRoomType() == CommonConstant.ROOM_TYPE_FK || room.getRoomType() == CommonConstant.ROOM_TYPE_CLUB) {
+                if (!Dto.isObjNull(room.getSetting()) && room.getSetting().containsKey("update_index")) {
+                    roomBiz.increaseRoomIndexByRoomNo(room.getRoomNo());
+                }
             }
             RoomManage.gameRoomMap.get(roomNo).setGameStatus(QZMJConstant.QZ_GAME_STATUS_ING);
             // 摇骰子
