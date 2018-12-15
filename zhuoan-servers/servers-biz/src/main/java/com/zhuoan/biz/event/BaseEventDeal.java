@@ -745,7 +745,7 @@ public class BaseEventDeal {
                 gameSetting = JSONObject.fromObject(redisService.queryValueByKey(CacheKeyConstant.GAME_SETTING));
             }else {
                 gameSetting = roomBiz.getGameSetting();
-                redisService.insertKey(CacheKeyConstant.GAME_SETTING, String.valueOf(gameSetting), null);
+                redisService.insertKey(CacheKeyConstant.GAME_SETTING, String.valueOf(gameSetting), 300);
             }
         } catch (Exception e) {
             logger.error("请启动REmote DIctionary Server");
@@ -1643,7 +1643,7 @@ public class BaseEventDeal {
 
             }else {
                 gameInfoById = roomBiz.getGameInfoByID(gameId).getJSONObject("setting");
-                redisService.insertKey(String.valueOf(key), String.valueOf(gameInfoById), null);
+                redisService.insertKey(String.valueOf(key), String.valueOf(gameInfoById), 300);
             }
         } catch (Exception e) {
             logger.error("请启动REmote DIctionary Server");
@@ -1701,7 +1701,7 @@ public class BaseEventDeal {
                     gameSetting = JSONArray.fromObject(object);
                 }else {
                     gameSetting = publicBiz.getRoomSetting(gid, platform, flag);
-                    redisService.insertKey(String.valueOf(sb), String.valueOf(gameSetting), null);
+                    redisService.insertKey(String.valueOf(sb), String.valueOf(gameSetting), 300);
                 }
             } catch (Exception e) {
                 logger.error("请启动REmote DIctionary Server");
@@ -1723,7 +1723,7 @@ public class BaseEventDeal {
 
             }else {
                 gameInfoById = roomBiz.getGameInfoByID(gameId);
-                redisService.insertKey(String.valueOf(key), String.valueOf(gameInfoById), null);
+                redisService.insertKey(String.valueOf(key), String.valueOf(gameInfoById), 300);
             }
         } catch (Exception e) {
             logger.error("请启动REmote DIctionary Server");
@@ -2443,7 +2443,7 @@ public class BaseEventDeal {
                 goldSettings = JSONArray.fromObject(redisService.queryValueByKey(String.valueOf(sb)));
             }else {
                 goldSettings = publicBiz.getGoldSetting(obj);
-                redisService.insertKey(String.valueOf(sb), String.valueOf(goldSettings), null);
+                redisService.insertKey(String.valueOf(sb), String.valueOf(goldSettings), 300);
             }
         } catch (Exception e) {
             goldSettings = publicBiz.getGoldSetting(obj);
@@ -2576,7 +2576,7 @@ public class BaseEventDeal {
                 signRewardInfo = JSONObject.fromObject(redisService.queryValueByKey(String.valueOf(sb)));
             }else {
                 signRewardInfo = publicBiz.getAppSettingInfo(platform);
-                redisService.insertKey(String.valueOf(sb), String.valueOf(signRewardInfo), null);
+                redisService.insertKey(String.valueOf(sb), String.valueOf(signRewardInfo), 300);
             }
         } catch (Exception e) {
             signRewardInfo = publicBiz.getAppSettingInfo(platform);
