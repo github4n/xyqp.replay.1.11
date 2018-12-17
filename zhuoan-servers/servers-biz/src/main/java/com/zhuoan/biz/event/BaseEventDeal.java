@@ -633,7 +633,12 @@ public class BaseEventDeal {
             case CommonConstant.GAME_ID_GP_PJ:
                 gameRoom = new GPPJGameRoom();
                 ((GPPJGameRoom)gameRoom).getUserPacketMap().put(userInfo.getString("account"), new UserPacketGPPJ());
-                createRoomGPPJ((GPPJGameRoom) gameRoom, baseInfo, userInfo.getString("account"));
+                createRoomGPPJ((GPPJGameRoom) gameRoom, baseInfo, userInfo.getString("account"),gameId);
+                break;
+            case CommonConstant.GAME_ID_MJ_PJ:
+                gameRoom = new GPPJGameRoom();
+                ((GPPJGameRoom)gameRoom).getUserPacketMap().put(userInfo.getString("account"), new UserPacketGPPJ());
+                createRoomGPPJ((GPPJGameRoom) gameRoom, baseInfo, userInfo.getString("account"),gameId);
                 break;
             case CommonConstant.GAME_ID_SW:
                 gameRoom = new SwGameRoom();
@@ -680,6 +685,9 @@ public class BaseEventDeal {
                 qzmjGameEventDeal.createRoom(client, object);
                 break;
             case CommonConstant.GAME_ID_GP_PJ:
+                gppjGameEventDeal.createRoom(client, object);
+                break;
+            case CommonConstant.GAME_ID_MJ_PJ:
                 gppjGameEventDeal.createRoom(client, object);
                 break;
             case CommonConstant.GAME_ID_SW:
@@ -1042,6 +1050,13 @@ public class BaseEventDeal {
                 }
                 gppjGameEventDeal.joinRoom(client, joinData);
                 break;
+            case CommonConstant.GAME_ID_MJ_PJ:
+                // 重连不需要重新设置用户牌局信息
+                if (!((GPPJGameRoom) gameRoom).getUserPacketMap().containsKey(userInfo.getString("account"))) {
+                    ((GPPJGameRoom) gameRoom).getUserPacketMap().put(userInfo.getString("account"), new UserPacketGPPJ());
+                }
+                gppjGameEventDeal.joinRoom(client, joinData);
+                break;
             case CommonConstant.GAME_ID_SW:
                 swGameEventDeal.joinRoom(client, joinData);
                 break;
@@ -1327,8 +1342,9 @@ public class BaseEventDeal {
      * @param room
      * @param baseInfo
      * @param account
+     * @param gameId
      */
-    public void createRoomGPPJ(GPPJGameRoom room, JSONObject baseInfo, String account) {
+    public void createRoomGPPJ(GPPJGameRoom room, JSONObject baseInfo, String account, int gameId) {
         room.setBankerType(baseInfo.getInt("type"));
         // 玩法
         String wanFa = "";
@@ -1350,7 +1366,7 @@ public class BaseEventDeal {
         room.setBanker(account);
         // 房主
         room.setOwner(account);
-        JSONObject setting = getGameInfoById(CommonConstant.GAME_ID_GP_PJ);
+        JSONObject setting = getGameInfoById(gameId);
         room.setSetting(setting);
         // 下注倍数
         if (baseInfo.containsKey("baseNum")) {

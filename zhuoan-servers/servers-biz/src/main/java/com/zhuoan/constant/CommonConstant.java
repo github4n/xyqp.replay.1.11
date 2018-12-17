@@ -244,6 +244,10 @@ public class CommonConstant {
      */
     public static final int GAME_ID_PDK = 15;
     /**
+     * 游戏id-麻将牌九
+     */
+    public static final int GAME_ID_MJ_PJ = 17;
+    /**
      * 房间类型-房卡
      */
     public static final int ROOM_TYPE_FK = 0;
