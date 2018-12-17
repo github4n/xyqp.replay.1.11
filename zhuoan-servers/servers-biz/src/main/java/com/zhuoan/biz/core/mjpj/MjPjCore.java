@@ -19,13 +19,13 @@ public class MjPjCore {
      * 点数：10、9、8、7、6、5、4、3、2、1
      */
     private static final List<String> ALL_CARD = Arrays.asList(
-        "4-7-17-2", "4-7-17-2", "4-7-17-2",
+        "4-7-17-2", "4-7-17-2",
         "3-6-16-2", "3-6-16-2",
         "3-5-15-8", "3-5-15-8",
         "3-4-14-4", "3-4-14-4",
         "2-3-13-6", "2-3-13-6", "2-3-12-4", "2-3-12-4", "4-3-11-10", "4-3-11-10",
         "3-2-10-6", "3-2-10-6", "3-2-9-7", "3-2-9-7", "4-2-8-10", "4-2-8-10", "3-2-7-1", "3-2-7-1",
-        "3-1-6-9", "3-1-6-9", "3-1-6-9", "2-1-5-8", "2-1-5-8", "2-1-4-7", "2-1-4-7", "3-1-3-5", "3-1-3-5",
+        "3-1-6-9", "3-1-6-9", "2-1-5-8", "2-1-5-8", "2-1-4-7", "2-1-4-7", "3-1-3-5", "3-1-3-5",
         "1-1-2-6", "1-1-1-3"
     );
 
@@ -418,7 +418,7 @@ public class MjPjCore {
         for (int i = 0; i < allCards.size(); i++) {
             for (int j = i + 1; j < allCards.size(); j++) {
                 int compareCard = compareCard(allCards.get(i), allCards.get(j));
-                System.out.println("庄家手牌:"+getCardNameList(allCards.get(i)) + "(" + cardTypeNameMap.get(getCardType(allCards.get(i))) + ")   与   闲家手牌:" +
+                System.out.println("闲家手牌:"+getCardNameList(allCards.get(i)) + "(" + cardTypeNameMap.get(getCardType(allCards.get(i))) + ")   与   庄家手牌:" +
                     getCardNameList(allCards.get(j)) + "(" + cardTypeNameMap.get(getCardType((allCards.get(j)))) + ")   比牌结果为:" +
                     (compareCard == 1 ? "胜" : compareCard == 0 ? "平" : "负"));
             }
