@@ -998,7 +998,7 @@ public class GPPJGameEventDeal {
         if (room.getGid() == CommonConstant.GAME_ID_GP_PJ) {
             pai = GPPJCore.ShufflePai();
         } else {
-            pai = MjPjCore.ShuffleCard();
+            pai = MjPjCore.shuffleCard();
         }
         // 获取筛子
         JSONArray dice = dice();

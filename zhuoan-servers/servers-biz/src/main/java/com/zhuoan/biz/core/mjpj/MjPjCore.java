@@ -162,7 +162,7 @@ public class MjPjCore {
      *
      * @return String[]
      */
-    public static String[] ShuffleCard() {
+    public static String[] shuffleCard() {
         // 初始牌
         List<String> initCard = new ArrayList<>(ALL_CARD);
         // 打乱排序
