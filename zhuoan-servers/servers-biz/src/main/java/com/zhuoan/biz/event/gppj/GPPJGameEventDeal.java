@@ -2,6 +2,7 @@ package com.zhuoan.biz.event.gppj;
 
 import com.corundumstudio.socketio.SocketIOClient;
 import com.zhuoan.biz.core.gppj.GPPJCore;
+import com.zhuoan.biz.core.mjpj.MjPjCore;
 import com.zhuoan.biz.game.biz.ClubBiz;
 import com.zhuoan.biz.game.biz.RoomBiz;
 import com.zhuoan.biz.game.biz.UserBiz;
@@ -252,7 +253,11 @@ public class GPPJGameEventDeal {
                     int[] myPai = new int[]{0,0};
                     // 看牌抢庄模式有参与玩家传第一张牌
                     if (room.getBankerType()==GPPJConstant.BANKER_TYPE_LOOK&&room.getUserPacketMap().get(uuid).getStatus()!=GPPJConstant.GP_PJ_USER_STATUS_INIT) {
-                        myPai[0] = GPPJCore.getPaiValue(room.getUserPacketMap().get(uuid).getPai()[1]);
+                        if (room.getGid() == CommonConstant.GAME_ID_GP_PJ) {
+                            myPai[0] = GPPJCore.getPaiValue(room.getUserPacketMap().get(uuid).getPai()[1]);
+                        } else if (room.getGid() == CommonConstant.GAME_ID_MJ_PJ) {
+                            myPai[0] = MjPjCore.getCardValue(room.getUserPacketMap().get(uuid).getPai()[1]);
+                        }
                     }
                     result.put("myPai", myPai);
                     CommonConstant.sendMsgEventToSingle(room.getPlayerMap().get(uuid).getUuid(),String.valueOf(result),"gameCutPush_GPPJ");
@@ -459,7 +464,11 @@ public class GPPJGameEventDeal {
             // 通知玩家
             JSONObject result = new JSONObject();
             result.put("index", room.getPlayerMap().get(account).getMyIndex());
-            result.put("pai", GPPJCore.getPaiValue(room.getUserPacketMap().get(account).getPai()));
+            if (room.getGid() == CommonConstant.GAME_ID_GP_PJ) {
+                result.put("pai", GPPJCore.getPaiValue(room.getUserPacketMap().get(account).getPai()));
+            } else if (room.getGid() == CommonConstant.GAME_ID_MJ_PJ) {
+                result.put("pai", MjPjCore.getCardValue(room.getUserPacketMap().get(account).getPai()));
+            }
             result.put("paiType", room.getUserPacketMap().get(account).getPaiType());
             CommonConstant.sendMsgEventToAll(room.getAllUUIDList(), result.toString(), "gameShowPush_GPPJ");
         }
@@ -695,18 +704,22 @@ public class GPPJGameEventDeal {
         // 设置房间状态
         room.setGameStatus(GPPJConstant.GP_PJ_GAME_STATUS_SUMMARY);
         // 结算
-        switch (room.getBankerType()) {
-            case GPPJConstant.BANKER_TYPE_OWNER:
-                summaryBanker(roomNo);
-                break;
-            case GPPJConstant.BANKER_TYPE_LOOK:
-                summaryBanker(roomNo);
-                break;
-            case GPPJConstant.BANKER_TYPE_COMPARE:
-                summaryCompare(roomNo);
-                break;
-            default:
-                break;
+        if (room.getGid() == CommonConstant.GAME_ID_GP_PJ) {
+            switch (room.getBankerType()) {
+                case GPPJConstant.BANKER_TYPE_OWNER:
+                    summaryBanker(roomNo);
+                    break;
+                case GPPJConstant.BANKER_TYPE_LOOK:
+                    summaryBanker(roomNo);
+                    break;
+                case GPPJConstant.BANKER_TYPE_COMPARE:
+                    summaryCompare(roomNo);
+                    break;
+                default:
+                    break;
+            }
+        } else if (room.getGid() == CommonConstant.GAME_ID_MJ_PJ) {
+            summaryBankerMj(roomNo);
         }
         // 通知玩家
         changeGameStatus(roomNo);
@@ -981,7 +994,12 @@ public class GPPJGameEventDeal {
     public void startGame(String roomNo) {
         GPPJGameRoom room = (GPPJGameRoom) RoomManage.gameRoomMap.get(roomNo);
         // 洗牌
-        String[] pai = GPPJCore.ShufflePai();
+        String[] pai;
+        if (room.getGid() == CommonConstant.GAME_ID_GP_PJ) {
+            pai = GPPJCore.ShufflePai();
+        } else {
+            pai = MjPjCore.ShuffleCard();
+        }
         // 获取筛子
         JSONArray dice = dice();
         room.setDice(dice);
@@ -1054,17 +1072,64 @@ public class GPPJGameEventDeal {
                     // 设置玩家手牌
                     room.getUserPacketMap().get(account).setPai(userPai);
                     // 设置玩家牌型
-                    room.getUserPacketMap().get(account).setPaiType(GPPJCore.getPaiType(userPai));
+                    if (room.getGid() == CommonConstant.GAME_ID_GP_PJ) {
+                        room.getUserPacketMap().get(account).setPaiType(GPPJCore.getPaiType(userPai));
+                    } else if (room.getGid() == CommonConstant.GAME_ID_MJ_PJ) {
+                        room.getUserPacketMap().get(account).setPaiType(MjPjCore.getCardType(userPai));
+                    }
                 }
             }
         }
         // 设置剩余牌
         int[] left = new int[pai.length-paiIndex];
         for (int i = 0; i < left.length; i++) {
-            left[i] = GPPJCore.getPaiValue(pai[i+paiIndex]);
+            if (room.getGid() == CommonConstant.GAME_ID_GP_PJ) {
+                left[i] = GPPJCore.getPaiValue(pai[i + paiIndex]);
+            } else if (room.getGid() == CommonConstant.GAME_ID_MJ_PJ) {
+                left[i] = MjPjCore.getCardValue(pai[i + paiIndex]);
+            }
         }
         // 设置剩余牌
         room.setLeftPai(left);
+    }
+
+    /**
+     * 庄闲模式(房主坐庄，看牌抢庄)结算
+     * @param roomNo
+     */
+    public void summaryBankerMj(String roomNo) {
+        GPPJGameRoom room = (GPPJGameRoom) RoomManage.gameRoomMap.get(roomNo);
+        if (Dto.stringIsNULL(room.getBanker()) || !room.getUserPacketMap().containsKey(room.getBanker()) ||
+            room.getUserPacketMap().get(room.getBanker()) == null) {
+            return;
+        }
+        UserPacketGPPJ banker = room.getUserPacketMap().get(room.getBanker());
+        for (String account : room.getUserPacketMap().keySet()) {
+            if (room.getUserPacketMap().containsKey(account) && room.getUserPacketMap().get(account) != null) {
+                // 所有参与的非庄家玩家
+                if (room.getUserPacketMap().get(account).getStatus() > GPPJConstant.GP_PJ_USER_STATUS_INIT && !account.equals(room.getBanker())) {
+                    UserPacketGPPJ userPacketGPPJ = room.getUserPacketMap().get(account);
+                    double sum = 0D;
+                    // 牌型相同庄家赢
+                    int compareResult = MjPjCore.compareCard(userPacketGPPJ.getPai(), banker.getPai());
+                    if (compareResult == MjPjCore.COMPARE_RESULT_WIN) {
+                        sum = room.getScore() * room.getUserPacketMap().get(account).getXzTimes();
+                    } else if (compareResult == MjPjCore.COMPARE_RESULT_LOSE) {
+                        sum = -room.getScore() * room.getUserPacketMap().get(account).getXzTimes();
+                    }
+                    if (sum != 0) {
+                        // 设置玩家当局输赢分数
+                        banker.setScore(Dto.sub(banker.getScore(), sum));
+                        userPacketGPPJ.setScore(Dto.add(userPacketGPPJ.getScore(), sum));
+                        // 设置玩家总计输赢分数
+                        double bankerScoreOld = room.getPlayerMap().get(room.getBanker()).getScore();
+                        room.getPlayerMap().get(room.getBanker()).setScore(Dto.sub(bankerScoreOld, sum));
+                        double otherScoreOld = room.getPlayerMap().get(account).getScore();
+                        room.getPlayerMap().get(account).setScore(Dto.add(otherScoreOld, sum));
+                    }
+                }
+            }
+        }
     }
 
     /**
@@ -1338,7 +1403,11 @@ public class GPPJGameEventDeal {
         int[] myPai = new int[]{0,0};
         // 看牌抢庄模式有参与玩家传第一张牌
         if (room.getBankerType()==GPPJConstant.BANKER_TYPE_LOOK&&room.getUserPacketMap().get(account).getPai()!=null) {
-            myPai[0] = GPPJCore.getPaiValue(room.getUserPacketMap().get(account).getPai()[1]);
+            if (room.getGid() == CommonConstant.GAME_ID_GP_PJ) {
+                myPai[0] = GPPJCore.getPaiValue(room.getUserPacketMap().get(account).getPai()[1]);
+            } else if (room.getGid() == CommonConstant.GAME_ID_MJ_PJ) {
+                myPai[0] = MjPjCore.getCardValue(room.getUserPacketMap().get(account).getPai()[1]);
+            }
         }
         obj.put("myPai", myPai);
         return obj;
@@ -1387,7 +1456,13 @@ public class GPPJGameEventDeal {
                         if (room.getBankerType()==GPPJConstant.BANKER_TYPE_LOOK&&uuid.equals(account)) {
                             String[] myPai = room.getUserPacketMap().get(uuid).getPai();
                             if (myPai!=null&&myPai.length==2) {
-                                obj.put("pai",new int[]{GPPJCore.getPaiValue(myPai[1]),0});
+                                if (room.getGid() == CommonConstant.GAME_ID_GP_PJ) {
+                                    obj.put("pai",new int[]{GPPJCore.getPaiValue(myPai[1]),0});
+                                } else if (room.getGid() == CommonConstant.GAME_ID_MJ_PJ) {
+                                    obj.put("pai",new int[]{MjPjCore.getCardValue(myPai[1]),0});
+                                } else {
+                                    obj.put("pai",new int[]{});
+                                }
                             }else {
                                 obj.put("pai",new int[]{});
                             }
@@ -1399,7 +1474,11 @@ public class GPPJGameEventDeal {
                     if (room.getGameStatus()==GPPJConstant.GP_PJ_GAME_STATUS_SHOW) {
                         // 玩家自己或已亮牌展示牌型和牌
                         if (uuid.equals(account)||room.getUserPacketMap().get(uuid).getStatus()==GPPJConstant.GP_PJ_USER_STATUS_SHOW) {
-                            obj.put("pai",GPPJCore.getPaiValue(room.getUserPacketMap().get(uuid).getPai()));
+                            if (room.getGid() == CommonConstant.GAME_ID_GP_PJ) {
+                                obj.put("pai",GPPJCore.getPaiValue(room.getUserPacketMap().get(uuid).getPai()));
+                            } else if (room.getGid() == CommonConstant.GAME_ID_MJ_PJ) {
+                                obj.put("pai", MjPjCore.getCardValue(room.getUserPacketMap().get(uuid).getPai()));
+                            }
                             obj.put("paiType",room.getUserPacketMap().get(uuid).getPaiType());
                         }else {
                             obj.put("pai",new int[]{0,0});
@@ -1407,7 +1486,11 @@ public class GPPJGameEventDeal {
                     }
                     // 结算阶段
                     if (room.getGameStatus()==GPPJConstant.GP_PJ_GAME_STATUS_SUMMARY) {
-                        obj.put("pai",GPPJCore.getPaiValue(room.getUserPacketMap().get(uuid).getPai()));
+                        if (room.getGid() == CommonConstant.GAME_ID_GP_PJ) {
+                            obj.put("pai",GPPJCore.getPaiValue(room.getUserPacketMap().get(uuid).getPai()));
+                        } else if (room.getGid() == CommonConstant.GAME_ID_MJ_PJ) {
+                            obj.put("pai",MjPjCore.getCardValue(room.getUserPacketMap().get(uuid).getPai()));
+                        }
                         obj.put("paiType",room.getUserPacketMap().get(uuid).getPaiType());
                         obj.put("sum",room.getUserPacketMap().get(uuid).getScore());
                         obj.put("scoreLeft",room.getPlayerMap().get(uuid).getScore());
