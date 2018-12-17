@@ -3579,6 +3579,16 @@ public class BaseEventDeal {
             }
         }
         if (summaryLogs.size() > 0) {
+            Collections.sort(summaryLogs, new Comparator<JSONObject>() {
+                @Override
+                public int compare(JSONObject o1, JSONObject o2) {
+                    if (TimeUtil.isLatter(o2.getString("createtime"), o1.getString("createtime"))) {
+                        return 1;
+                    } else {
+                        return -1;
+                    }
+                }
+            });
             result.put(CommonConstant.RESULT_KEY_CODE, CommonConstant.GLOBAL_YES);
             result.put("data", summaryLogs);
             result.put("gid", gameId);
@@ -3643,6 +3653,16 @@ public class BaseEventDeal {
         }
         JSONObject result = new JSONObject();
         if (allLogs.size() > 0) {
+            Collections.sort(allLogs, new Comparator<JSONObject>() {
+                @Override
+                public int compare(JSONObject o1, JSONObject o2) {
+                    if (TimeUtil.isLatter(o2.getString("createtime"), o1.getString("createtime"))) {
+                        return 1;
+                    } else {
+                        return -1;
+                    }
+                }
+            });
             result.put(CommonConstant.RESULT_KEY_CODE, CommonConstant.GLOBAL_YES);
             result.put("gid", gameId);
             result.put("data", allLogs);
@@ -3720,16 +3740,6 @@ public class BaseEventDeal {
                 }
             }
         }
-        Collections.sort(summaryList, new Comparator<JSONObject>() {
-            @Override
-            public int compare(JSONObject o1, JSONObject o2) {
-                if (TimeUtil.isLatter(o2.getString("createtime"), o1.getString("createtime"))) {
-                    return 1;
-                } else {
-                    return -1;
-                }
-            }
-        });
         return summaryList;
     }
 
