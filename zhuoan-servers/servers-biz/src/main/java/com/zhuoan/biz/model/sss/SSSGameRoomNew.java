@@ -831,4 +831,15 @@ public class SSSGameRoomNew extends GameRoom{
         }
         return array;
     }
+    /**
+     * 根据玩家账号获取下标
+     * @param account
+     * @return
+     */
+    public int getPlayerIndex(String account) {
+        if (account!=null&&getPlayerMap().containsKey(account)&&getPlayerMap().get(account)!=null) {
+            return getPlayerMap().get(account).getMyIndex();
+        }
+        return -1;
+    }
 }

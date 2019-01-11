@@ -83,7 +83,7 @@ public class GameTimerNiuNiu{
                         obj.put("qzTimes", room.getQzTimes(room.getPlayerMap().get(account).getScore()));
                         obj.put("baseNum", room.getBaseNumTimes(room.getPlayerMap().get(account).getScore()));
                         obj.put("users", room.getAllPlayer());
-                        obj.put("gameData", room.getGameData(account));
+                        obj.put("gameData", room.getGameData(account,roomNo));
                         UUID uuid = room.getPlayerMap().get(account).getUuid();
                         if (uuid != null) {
                             CommonConstant.sendMsgEventToSingle(uuid, obj.toString(), "changeGameStatusPush_NN");

@@ -1,6 +1,8 @@
 package com.zhuoan.biz.model;
 
+import com.zhuoan.biz.model.nn.NNGameRoomNew;
 import com.zhuoan.biz.model.qzmj.QZMJGameRoom;
+import com.zhuoan.biz.model.sss.SSSGameRoomNew;
 import com.zhuoan.biz.model.zjh.ZJHGameRoomNew;
 import com.zhuoan.constant.CommonConstant;
 import com.zhuoan.util.Dto;
@@ -20,7 +22,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * @Date Created in 14:24 2018/4/21
  * @Modified By:
  **/
-public class GameRoom implements Serializable{
+public class GameRoom implements Serializable {
     /**
      * 房间号
      */
@@ -44,27 +46,27 @@ public class GameRoom implements Serializable{
     /**
      * 房间信息
      */
-	private JSONObject roomInfo;
+    private JSONObject roomInfo;
     /**
      * 游戏类型
      */
-	private int gid;
+    private int gid;
     /**
      * 游戏状态
      */
-	private int gameStatus;
+    private int gameStatus;
     /**
      * 当前局数
      */
-	private int gameIndex;
+    private int gameIndex;
     /**
      * 游戏总局数
      */
-	private int gameCount;
+    private int gameCount;
     /**
      * 游戏最大人数
      */
-	private int maxPlayer;
+    private int maxPlayer;
     /**
      * 是否允许中途加入（true：允许、false：不允许）
      */
@@ -88,35 +90,35 @@ public class GameRoom implements Serializable{
     /**
      * 玩家人数
      */
-	private int playerCount;
+    private int playerCount;
     /**
      * 一局的底分
      */
-	private double score;
+    private double score;
     /**
      * 是否开放
      */
-	private boolean isOpen;
+    private boolean isOpen;
     /**
      * 房间支付类型
      */
-	private int payType;
+    private int payType;
     /**
      * 玩家个人信息
      */
-	private ConcurrentHashMap<String,Playerinfo> playerMap = new ConcurrentHashMap<String, Playerinfo>();
+    private ConcurrentHashMap<String, Playerinfo> playerMap = new ConcurrentHashMap<String, Playerinfo>();
     /**
      * 游戏全局设置
      */
-	private JSONObject setting;
+    private JSONObject setting;
     /**
      * 游戏信息
      */
-	private String wfType;
+    private String wfType;
     /**
      * 创建时间
      */
-	private String createTime;
+    private String createTime;
     /**
      * 游戏流程
      */
@@ -124,23 +126,23 @@ public class GameRoom implements Serializable{
     /**
      * ip
      */
-	private String ip;
+    private String ip;
     /**
      * 端口
      */
-	private int port;
+    private int port;
     /**
      * 房间倒计时
      */
-	private int timeLeft;
+    private int timeLeft;
     /**
      * 房间倒计时
      */
-	private int firstTime=0;
+    private int firstTime = 0;
     /**
      * 玩家座位号
      */
-	private List<Long> userIdList;
+    private List<Long> userIdList;
     /**
      * 房主
      */
@@ -174,9 +176,11 @@ public class GameRoom implements Serializable{
      */
     private double minBankerScore;
     /**
-     *  结算数据
+     * 结算数据
      */
     private JSONObject summaryData = new JSONObject();
+
+
     /**
      * 是否需要总结算
      */
@@ -184,7 +188,7 @@ public class GameRoom implements Serializable{
     /**
      * 是否解散房间
      */
-    private int isClose=-1;
+    private int isClose = -1;
     /**
      * 最后一个座位
      */
@@ -221,6 +225,46 @@ public class GameRoom implements Serializable{
      * 是否扣费
      */
     private boolean isCost = false;
+
+    /**
+     * 加色
+     */
+    private String addColor;
+
+    /**
+     * 获取回放房间数据
+     */
+    private JSONObject roomInfoData = new JSONObject();
+
+    /**
+     * 获取回放用户数据
+     *
+     */
+    private JSONObject  userInfoData = new JSONObject();
+
+    public JSONObject getUserInfoData() {
+        return userInfoData;
+    }
+
+    public void setUserInfoData(JSONObject userInfoData) {
+        this.userInfoData = userInfoData;
+    }
+
+    public JSONObject getRoomInfoData() {
+        return roomInfoData;
+    }
+
+    public void setRoomInfoData(JSONObject roomInfoData) {
+        this.roomInfoData = roomInfoData;
+    }
+
+    public String getAddColor() {
+        return addColor;
+    }
+
+    public void setAddColor(String addColor) {
+        this.addColor = addColor;
+    }
 
     public boolean isCost() {
         return isCost;
@@ -624,12 +668,13 @@ public class GameRoom implements Serializable{
 
     /**
      * 获取当前房间内的所有人
+     *
      * @return
      */
-    public List<UUID> getAllUUIDList(){
+    public List<UUID> getAllUUIDList() {
         List<UUID> uuidList = new ArrayList<UUID>();
         for (String account : getPlayerMap().keySet()) {
-            if (getPlayerMap().containsKey(account)&&getPlayerMap().get(account)!=null) {
+            if (getPlayerMap().containsKey(account) && getPlayerMap().get(account) != null) {
                 uuidList.add(getPlayerMap().get(account).getUuid());
             }
         }
@@ -638,13 +683,14 @@ public class GameRoom implements Serializable{
 
     /**
      * 获取当前房间内的所有人(不包括自己)
+     *
      * @param uuid
      * @return
      */
-    public List<UUID> getAllUUIDList(String uuid){
+    public List<UUID> getAllUUIDList(String uuid) {
         List<UUID> uuidList = new ArrayList<UUID>();
         for (String account : getPlayerMap().keySet()) {
-            if (getPlayerMap().containsKey(account)&&getPlayerMap().get(account)!=null) {
+            if (getPlayerMap().containsKey(account) && getPlayerMap().get(account) != null) {
                 if (!uuid.equals(account)) {
                     uuidList.add(getPlayerMap().get(account).getUuid());
                 }
@@ -655,9 +701,10 @@ public class GameRoom implements Serializable{
 
     /**
      * 获取更新数据类型
+     *
      * @return
      */
-    public String getUpdateType(){
+    public String getUpdateType() {
         switch (getRoomType()) {
             case CommonConstant.ROOM_TYPE_FK:
                 return "roomcard";
@@ -678,39 +725,40 @@ public class GameRoom implements Serializable{
 
     public JSONObject getJsonObject(JSONArray array) {
         JSONObject objectDao = new JSONObject();
-        objectDao.put("array",array);
-        objectDao.put("roomNo",getRoomNo());
-        objectDao.put("gId",getGid());
-        objectDao.put("fee",getFee());
-        objectDao.put("updateType",getCurrencyType());
+        objectDao.put("array", array);
+        objectDao.put("roomNo", getRoomNo());
+        objectDao.put("gId", getGid());
+        objectDao.put("fee", getFee());
+        objectDao.put("updateType", getCurrencyType());
         return objectDao;
     }
 
-    public JSONObject getRoomCardChangeObject(JSONArray array,int roomCardCount) {
+    public JSONObject getRoomCardChangeObject(JSONArray array, int roomCardCount) {
         JSONObject obj = new JSONObject();
-        obj.put("array",array);
-        obj.put("roomNo",getRoomNo());
-        obj.put("gId",getGid());
-        obj.put("fee",roomCardCount);
-        obj.put("updateType",getCurrencyType());
+        obj.put("array", array);
+        obj.put("roomNo", getRoomNo());
+        obj.put("gId", getGid());
+        obj.put("fee", roomCardCount);
+        obj.put("updateType", getCurrencyType());
         return obj;
     }
 
     public JSONObject getPumpObject(JSONArray array) {
         JSONObject jsonObject = new JSONObject();
-        jsonObject.put("array",array);
-        jsonObject.put("updateType",getCurrencyType());
+        jsonObject.put("array", array);
+        jsonObject.put("updateType", getCurrencyType());
         return jsonObject;
     }
 
     /**
      * 获取玩家战绩数据
+     *
      * @param gameLogId
      * @param users
      * @param gameResult
      * @return
      */
-    public JSONArray obtainUserGameLog( long gameLogId, JSONArray users, String gameResult) {
+    public JSONArray obtainUserGameLog(long gameLogId, JSONArray users, String gameResult) {
         JSONArray userGameLogs = new JSONArray();
         for (int i = 0; i < users.size(); i++) {
             long userId = users.getJSONObject(i).getLong("id");
@@ -736,6 +784,7 @@ public class GameRoom implements Serializable{
 
     /**
      * 获取战绩数据
+     *
      * @param result
      * @return
      */
@@ -744,20 +793,20 @@ public class GameRoom implements Serializable{
         StringBuffer id = new StringBuffer();
         id.append(System.currentTimeMillis());
         id.append(getRoomNo());
-        gamelog.put("id",Long.valueOf(id.toString()));
+        gamelog.put("id", Long.valueOf(id.toString()));
         gamelog.put("gid", getGid());
         gamelog.put("room_no", getRoomNo());
         gamelog.put("game_index", getGameIndex());
         JSONObject baseInfo = getRoomInfo();
         gamelog.put("base_info", baseInfo);
         gamelog.put("result", result);
-        if (getGid()==CommonConstant.GAME_ID_QZMJ||getGid()==CommonConstant.GAME_ID_NAMJ) {
+        if (getGid() == CommonConstant.GAME_ID_QZMJ || getGid() == CommonConstant.GAME_ID_NAMJ) {
             baseInfo.put("game_count", getGameCount());
-            baseInfo.put("zhuang", ((QZMJGameRoom)this).getPlayerIndex(getBanker()));
-            baseInfo.put("jin", ((QZMJGameRoom)this).getJin());
-            baseInfo.put("users", ((QZMJGameRoom)this).getAllPlayer());
-            gamelog.put("base_info",baseInfo);
-            gamelog.put("result",getSummaryData());
+            baseInfo.put("zhuang", ((QZMJGameRoom) this).getPlayerIndex(getBanker()));
+            baseInfo.put("jin", ((QZMJGameRoom) this).getJin());
+            baseInfo.put("users", ((QZMJGameRoom) this).getAllPlayer());
+            gamelog.put("base_info", baseInfo);
+            gamelog.put("result", getSummaryData());
         } else if (getGid() == CommonConstant.GAME_ID_ZJH && this instanceof ZJHGameRoomNew) {
             StringBuffer roominfo = new StringBuffer();
             roominfo.append(getWfType()).append(" ").append(getPlayerCount()).append("人 ").append(getGameCount()).append("局");
@@ -774,6 +823,22 @@ public class GameRoom implements Serializable{
             baseInfo.put("users", ((ZJHGameRoomNew) this).getAllPlayer());
             gamelog.put("base_info", baseInfo);
             gamelog.put("result", getSummaryData());
+        } else if (getGid() == CommonConstant.GAME_ID_SSS && this instanceof SSSGameRoomNew) {
+//            StringBuffer roominfo = new StringBuffer();
+//            roominfo.append(getWfType()).append(" ").append(getPlayerCount()).append("人 ").append(getGameCount()).append("局 ").append(getAddColor());
+//            baseInfo.put("roominfo", String.valueOf(roominfo));
+//            baseInfo.put("game_count", getGameCount());
+//            baseInfo.put("zhuang", ((SSSGameRoomNew) this).getPlayerIndex(getBanker()));
+//            baseInfo.put("users", ((SSSGameRoomNew) this).getAllPlayer());
+            gamelog.put("base_info", getRoomInfoData());
+            gamelog.put("result", getSummaryData());
+        } else if (getGid() == CommonConstant.GAME_ID_NN && this instanceof NNGameRoomNew) {
+            baseInfo.put("game_count",getGameCount());
+            baseInfo.put("roomType", getRoomType());
+            baseInfo.put("roominfo", getRoomInfoData());
+            baseInfo.put("userData", getUserInfoData());
+            gamelog.put("base_info", baseInfo);
+            gamelog.put("result", getSummaryData());
         }
         gamelog.put("action_records", gameProcess);
         String nowTime = TimeUtil.getNowDate();
@@ -785,16 +850,18 @@ public class GameRoom implements Serializable{
         gamelog.put("roomtype", getRoomType());
         return gamelog;
     }
+
     /**
      * 取出最大分数
+     *
      * @param score
      * @return
      */
-    public double maxScore(ArrayList<Double> score ){
-        if(score.size() >0){
-            double bigWinner =0;
-            for(int i=0;i<score.size();i++){
-                if(score.get(i) > bigWinner){
+    public double maxScore(ArrayList<Double> score) {
+        if (score.size() > 0) {
+            double bigWinner = 0;
+            for (int i = 0; i < score.size(); i++) {
+                if (score.get(i) > bigWinner) {
                     bigWinner = score.get(i);
                 }
             }

@@ -1506,7 +1506,9 @@ public class SSSGameEventDealNew {
                     }
                     if (room.getGameStatus()==SSSConstant.SSS_GAME_STATUS_SUMMARY&&room.getGameIndex()==room.getGameCount()) {
                         obj.put("jiesuanData", room.obtainFinalSummaryData());
+
                     }
+
                 }
                 // 坐庄模式
                 obj.put("isBanker",CommonConstant.GLOBAL_NO);
@@ -1528,7 +1530,9 @@ public class SSSGameEventDealNew {
                 }
                 UUID uuid = room.getPlayerMap().get(account).getUuid();
                 if (uuid!=null) {
-                    CommonConstant.sendMsgEventToSingle(uuid,obj.toString(),"changeGameStatusPush_SSS");
+                    CommonConstant.sendMsgEventToSingle(uuid, obj.toString(), "changeGameStatusPush_SSS");
+                    room.setSummaryData(obj);
+
                 }
             }
         }
@@ -1646,6 +1650,7 @@ public class SSSGameEventDealNew {
             }
             roomData.put("startIndex",getStartIndex(roomNo));
         }
+        room.setRoomInfoData(roomData);
         return roomData;
     }
 
